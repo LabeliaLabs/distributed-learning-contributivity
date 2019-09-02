@@ -23,8 +23,7 @@ import constants
 
 #%% Constants
 
-epochs = 3
-nodes_count = 3
+nodes_count = 10
 
 
 #%% Preprocess data
