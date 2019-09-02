@@ -31,6 +31,8 @@ nodes_count = 3
 
 # load data
 (x_train, y_train), (x_test, y_test) = mnist.load_data()
+print(str(len(x_train)) + ' train data')
+print(str(len(x_test)) + ' test data\n')
 
 # merge everything, we will do our own train/test split later --> Do we want to do that ??
 #x = np.concatenate([x_train, x_test])
@@ -58,11 +60,11 @@ for train_idx, test_idx in zip(train_idx_idx_list, test_idx_idx_list):
     
     x_node_train = x_train[train_idx, :]
     x_node_test = x_test[test_idx]
-    x_node_list.append((x_train, x_test))
+    x_node_list.append((x_node_train, x_node_test))
     
     y_node_train = y_train[train_idx,]
     y_node_test = y_test[test_idx]
-    y_node_list.append((y_train, y_test))
+    y_node_list.append((y_node_train, y_node_test))
 
 assert(len(x_node_list) == nodes_count)
 assert(len(y_node_list) == nodes_count)
@@ -79,7 +81,7 @@ for i in range(nodes_count):
     (x_node_train, x_node_test) = x_node_list[i]
     x_node_train = utils.preprocess_input(x_node_train)
     x_node_test = utils.preprocess_input(x_node_test)
-    
+
     # Preprocess labels (y) data
     (y_node_train, y_node_test) = y_node_list[i]
     y_node_train = keras.utils.to_categorical(y_node_train, constants.NUM_CLASSES)
@@ -87,7 +89,10 @@ for i in range(nodes_count):
     
     # Crete validation dataset
     x_node_train, x_node_val, y_node_train, y_node_val = train_test_split(x_node_train, y_node_train, test_size = 0.1, random_state=42)
-   
+
+    print(str(len(x_node_train)) + ' train data for node ' + str(i))
+    print(str(len(x_node_val)) + ' val data for node ' + str(i))
+    print(str(len(x_node_test)) + ' test data for node ' + str(i))   
     x_node_list[i] = (x_node_train, x_node_val, x_node_test)
     y_node_list[i] = (y_node_train, y_node_val, y_node_test)
 
@@ -100,35 +105,68 @@ for i in range(nodes_count):
     model = utils.generate_new_cnn_model()
     model_list.append(model)
 
-print(model_list[0].summary())
+#print(model_list[0].summary())
 
 
 #%% Federated training
 
-# Training phase
-for node_index in range(nodes_count):
-    
-    print('\nTraning on node '+ str(node_index))
-    
-    node_x = x_node_list[node_index]
-    node_y = y_node_list[node_index]
-    node_model = model_list[node_index]
-    
-     
-    (x_node_train, x_node_val, x_node_test) = node_x
-    (y_node_train, y_node_val, y_node_test) = node_y
-    
-    
-    # At each step, train on whole local data set
-    history = node_model.fit(x_node_train, y_node_train,
-              batch_size=constants.BATCH_SIZE,
-              epochs=1,
-              verbose=1,
-              validation_data=(x_node_val, y_node_val))
+epochs = 10
 
+for epoch in range(epochs):
 
-# Aggregating phase : averaging the weights
+    print('\n=============================================')
+    print('Epoch ' + str(epoch))
+    is_first_epoch = epoch == 0
+    
+    
+    # Aggregation phase
+    if is_first_epoch:
+        # First epoch
+        print('First epoch, generate model from scratch')
+        base_model = utils.generate_new_cnn_model()
+        
+    else:
+        print('Aggregating models weights to build a new model')
+        # Aggregating phase : averaging the weights
+        weights = [model.get_weights() for model in model_list]
+        new_weights = list()
+        
+        # TODO : make this clearer
+        for weights_list_tuple in zip(*weights):
+            new_weights.append(
+                [np.array(weights_).mean(axis=0)\
+                    for weights_ in zip(*weights_list_tuple)])    
+        
 
-# Evaluation: evaluate data on every node test set
+    # Training phase
+    for node_index in range(nodes_count):
+        
+        print('\nTraining on node '+ str(node_index))
+        
+        node_x = x_node_list[node_index]
+        node_y = y_node_list[node_index]       
+        node_model = utils.generate_new_cnn_model()
 
-# Compute contributivykeras score 
+        (x_node_train, x_node_val, x_node_test) = node_x
+        (y_node_train, y_node_val, y_node_test) = node_y
+        
+        # Model weights are the averaged weights
+        if not is_first_epoch:
+            node_model.set_weights(new_weights)
+        node_model.compile(loss=keras.losses.categorical_crossentropy,
+              optimizer='adam',
+              metrics=['accuracy'])
+        
+        # Train on whole node local data set
+        history = node_model.fit(x_node_train, y_node_train,
+                  batch_size=constants.BATCH_SIZE,
+                  epochs=1,
+                  verbose=1,
+                  validation_data=(x_node_val, y_node_val))
+        
+        model_list[node_index] = node_model
+        
+
+    # TODO Evaluation phase: evaluate data on every node test set
+
+# TODO Compute contributivity score 
