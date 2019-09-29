@@ -19,12 +19,11 @@ import numpy as np
 
 import utils
 import constants
-
+from node import Node
 
 #%% Constants
 
-nodes_count = 10
-
+nodes_count = 3
 
 #%% Preprocess data
 
@@ -33,40 +32,32 @@ nodes_count = 10
 print(str(len(x_train)) + ' train data')
 print(str(len(x_test)) + ' test data\n')
 
-# merge everything, we will do our own train/test split later --> Do we want to do that ??
-#x = np.concatenate([x_train, x_test])
-#y = np.concatenate([y_train, y_test])
-
-# We want the same data count for every node --> Do we want to do that ??
-#data_count = len(x) - (len(x) % nodes_count)
-#assert(data_count % nodes_count == 0)
-
 # Shuffle train data
 train_idx = np.arange(len(y_train))
+np.random.seed(42)
 np.random.shuffle(train_idx)
 train_idx_idx_list = np.array_split(train_idx, nodes_count)
 
 # Shuffle test data
 test_idx = np.arange(len(y_test))
+np.random.seed(42)
 np.random.shuffle(test_idx)
 test_idx_idx_list = np.array_split(test_idx, nodes_count)
 
 # Split data between nodes
-x_node_list = []
-y_node_list = []
+node_list = []
 
 for train_idx, test_idx in zip(train_idx_idx_list, test_idx_idx_list):
     
     x_node_train = x_train[train_idx, :]
     x_node_test = x_test[test_idx]
-    x_node_list.append((x_node_train, x_node_test))
-    
     y_node_train = y_train[train_idx,]
     y_node_test = y_test[test_idx]
-    y_node_list.append((y_node_train, y_node_test))
-
-assert(len(x_node_list) == nodes_count)
-assert(len(y_node_list) == nodes_count)
+    
+    node = Node(x_node_train, x_node_test, y_node_train, y_node_test)
+    node_list.append(node)
+    
+assert(len(node_list) == nodes_count)
 
 
 # Now that the data split between the node has been done, we consider that the data
@@ -74,26 +65,21 @@ assert(len(y_node_list) == nodes_count)
 
 #%% For each node preprocess data
     
-for i in range(nodes_count):
+for node_index, node in enumerate(node_list):
     
     # Preprocess input (x) data
-    (x_node_train, x_node_test) = x_node_list[i]
-    x_node_train = utils.preprocess_input(x_node_train)
-    x_node_test = utils.preprocess_input(x_node_test)
-
-    # Preprocess labels (y) data
-    (y_node_train, y_node_test) = y_node_list[i]
-    y_node_train = keras.utils.to_categorical(y_node_train, constants.NUM_CLASSES)
-    y_node_test = keras.utils.to_categorical(y_node_test, constants.NUM_CLASSES)
+    node.preprocess_data()
     
     # Crete validation dataset
-    x_node_train, x_node_val, y_node_train, y_node_val = train_test_split(x_node_train, y_node_train, test_size = 0.1, random_state=42)
-
-    print(str(len(x_node_train)) + ' train data for node ' + str(i))
-    print(str(len(x_node_val)) + ' val data for node ' + str(i))
-    print(str(len(x_node_test)) + ' test data for node ' + str(i))   
-    x_node_list[i] = (x_node_train, x_node_val, x_node_test)
-    y_node_list[i] = (y_node_train, y_node_val, y_node_test)
+    x_node_train, x_node_val, y_node_train, y_node_val = train_test_split(node.x_train, node.y_train, test_size = 0.1, random_state=42)
+    node.x_train = x_node_train
+    node.x_val = x_node_val
+    node.y_train = y_node_train
+    node.y_val = y_node_val
+    
+    print(str(len(x_node_train)) + ' train data for node ' + str(node_index))
+    print(str(len(x_node_val)) + ' val data for node ' + str(node_index))
+    print(str(len(x_node_test)) + ' test data for node ' + str(node_index))   
 
 
 #%% For each node build model
@@ -109,7 +95,8 @@ for i in range(nodes_count):
 
 #%% Federated training
 
-epochs = 10
+epochs = 3
+score_matrix = np.zeros(shape=(epochs, nodes_count))
 
 for epoch in range(epochs):
 
@@ -138,30 +125,24 @@ for epoch in range(epochs):
         
 
     # Training phase
-    for node_index in range(nodes_count):
+    for node_index, node in enumerate(node_list):
         
         print('\nTraining on node '+ str(node_index))
-        
-        node_x = x_node_list[node_index]
-        node_y = y_node_list[node_index]       
         node_model = utils.generate_new_cnn_model()
-
-        (x_node_train, x_node_val, x_node_test) = node_x
-        (y_node_train, y_node_val, y_node_test) = node_y
         
         # Model weights are the averaged weights
         if not is_first_epoch:
             node_model.set_weights(new_weights)
-        node_model.compile(loss=keras.losses.categorical_crossentropy,
+            node_model.compile(loss=keras.losses.categorical_crossentropy,
               optimizer='adam',
               metrics=['accuracy'])
         
         # Train on whole node local data set
-        history = node_model.fit(x_node_train, y_node_train,
+        history = node_model.fit(node.x_train, node.y_train,
                   batch_size=constants.BATCH_SIZE,
                   epochs=1,
                   verbose=1,
-                  validation_data=(x_node_val, y_node_val))
+                  validation_data=(node.x_val, node.y_val))
         
         model_list[node_index] = node_model
         
