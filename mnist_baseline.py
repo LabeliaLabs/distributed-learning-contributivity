@@ -16,21 +16,43 @@ from keras.layers import Conv2D, MaxPooling2D
 import matplotlib.pyplot as plt
 from sklearn.model_selection import train_test_split
 
+import numpy as np
 import constants
 import utils
 
 
 #%% Constants
 
-epochs = 3
+epochs = 10
+nodes_count =  10
 
 
-#%% Preprocess data
+#%% Load data
 
 # load data
 (x_train, y_train), (x_test, y_test) = mnist.load_data()
 
-# Preprocess input
+ 
+# Shuffle train data
+train_idx = np.arange(len(y_train))
+np.random.shuffle(train_idx)
+train_idx_idx_list = np.array_split(train_idx, nodes_count)
+
+# Shuffle test data
+test_idx = np.arange(len(y_test))
+np.random.shuffle(test_idx)
+test_idx_idx_list = np.array_split(test_idx, nodes_count)
+
+
+x_train = x_train[train_idx_idx_list[0], :]
+x_test = x_test[test_idx_idx_list[0]]
+
+y_train = y_train[train_idx_idx_list[0],]
+y_test = y_test[test_idx_idx_list[0]]
+
+
+
+#%% Preprocess data
 x_train = utils.preprocess_input(x_train)
 x_test = utils.preprocess_input(x_test)
 
