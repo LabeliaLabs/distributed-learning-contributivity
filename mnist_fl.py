@@ -21,9 +21,12 @@ import utils
 import constants
 from node import Node
 
+import os
+os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
+
 #%% Constants
 
-nodes_count = 3
+nodes_count = 10
 
 #%% Preprocess data
 
@@ -95,8 +98,10 @@ for i in range(nodes_count):
 
 #%% Federated training
 
-epochs = 3
+epochs = 30
 score_matrix = np.zeros(shape=(epochs, nodes_count))
+val_acc_epoch = []
+acc_epoch = []
 
 for epoch in range(epochs):
 
@@ -125,6 +130,8 @@ for epoch in range(epochs):
         
 
     # Training phase
+    val_acc_list = []
+    acc_list = []
     for node_index, node in enumerate(node_list):
         
         print('\nTraining on node '+ str(node_index))
@@ -144,9 +151,27 @@ for epoch in range(epochs):
                   verbose=1,
                   validation_data=(node.x_val, node.y_val))
         
-        model_list[node_index] = node_model
+        val_acc_list.append(history.history['val_acc'])
+        acc_list.append(history.history['acc'])
         
+        model_list[node_index] = node_model
+    
+    val_acc_epoch.append(np.median(val_acc_list))
+    acc_epoch.append(np.median(acc_list))
 
     # TODO Evaluation phase: evaluate data on every node test set
 
 # TODO Compute contributivity score 
+    
+    
+#%% Plot history
+
+
+plt.figure()
+plt.plot(acc_epoch,'+-')
+plt.plot(val_acc_epoch,'+-')
+plt.title('Accuracy')
+plt.ylabel('Acc')
+plt.xlabel('Epoch')
+plt.legend(('Train', 'Val'))
+plt.show()
