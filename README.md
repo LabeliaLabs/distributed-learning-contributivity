@@ -6,5 +6,6 @@ TODO :
 * Epoch EarlyStopping
 * Learn on only one mini-batch and not one epoch
 * Estimate error on test set
+* Create a 'FL baseline': FL without aggregation of models, each node separately
 * Compute contributivity on test set errors
-* Test different data split scenario
+* [Done] Test different data split scenario
