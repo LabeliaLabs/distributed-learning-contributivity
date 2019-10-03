@@ -2,9 +2,9 @@
 """
 Created on Thu Oct  3 11:09:07 2019
 
-This enables to parameterize a desired scenario of data splitting amond nodes
+This processes the split of data among nodes according to scenario defined in my_scenario.py
 
-@author: Eric
+@author: @bowni
 """
 
 from __future__ import print_function
@@ -13,6 +13,8 @@ from keras.datasets import mnist
 
 import matplotlib.pyplot as plt
 import numpy as np
+
+import my_scenario
 
 from node import Node
 
@@ -29,7 +31,7 @@ print('- ' + str(len(x_test)) + ' test data')
 #%% Constants
 
 # Define the desired number of independant nodes
-nodes_count = 3 # USER INPUT
+nodes_count = my_scenario.NODES_COUNT
 print('\n### Description of data scenario configured:')
 print('- Number of nodes defined:', nodes_count)
 
@@ -38,7 +40,7 @@ print('- Number of nodes defined:', nodes_count)
 # ... or receive different amounts?
 
 # First we define the percentages of samples per node
-amounts_per_node = [0.1, 0.25, 0.65] # USER INPUT
+amounts_per_node = my_scenario.AMOUNTS_PER_NODE
 assert(len(amounts_per_node) == nodes_count)
 assert(np.sum(amounts_per_node) == 1)
 
@@ -56,7 +58,7 @@ print('- Splitting indices defined:', splitting_indices)
 # ... or from the complete universe?
 
 # First we indicate which scenario we want
-overlap_or_distinct = 'Overlap' # USER INPUT (Change to 'Overlap' if desired)
+overlap_or_distinct = my_scenario.OVERLAP_OR_DISTINCT
 print('- Data distribution scenario chosen:', overlap_or_distinct)
 
 # Create a list of indexes of the samples
