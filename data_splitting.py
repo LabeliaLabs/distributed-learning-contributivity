@@ -30,16 +30,17 @@ print('- ' + str(len(x_test)) + ' test data')
 
 #%% Constants
 
-# Define the desired number of independant nodes
+# Fetch the number of independant nodes
 nodes_count = my_scenario.NODES_COUNT
 print('\n### Description of data scenario configured:')
 print('- Number of nodes defined:', nodes_count)
+
 
 #%% Configure the desired splitting scenario - Datasets sizes
 # Should the nodes receive an equivalent amount of samples each...
 # ... or receive different amounts?
 
-# First we define the percentages of samples per node
+# Fetch the percentages of samples per node and control its coherence
 amounts_per_node = my_scenario.AMOUNTS_PER_NODE
 assert(len(amounts_per_node) == nodes_count)
 assert(np.sum(amounts_per_node) == 1)
@@ -57,7 +58,7 @@ print('- Splitting indices defined:', splitting_indices)
 # Should the nodes receive data from distinct regions of space...
 # ... or from the complete universe?
 
-# First we indicate which scenario we want
+# Fetch the type of distribution chosen
 overlap_or_distinct = my_scenario.OVERLAP_OR_DISTINCT
 print('- Data distribution scenario chosen:', overlap_or_distinct)
 
