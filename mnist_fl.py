@@ -63,8 +63,8 @@ for train_idx, test_idx in zip(train_idx_idx_list, test_idx_idx_list):
 assert(len(node_list) == nodes_count)
 
 
-# Now that the data split between the node has been done, we consider that the data
-# stay on each node
+# The data are now split between the different nodes. This split should not...
+# ... be modified from that point onward.
 
 #%% For each node preprocess data
     
@@ -85,19 +85,9 @@ for node_index, node in enumerate(node_list):
     print(str(len(x_node_test)) + ' test data for node ' + str(node_index))   
 
 
-#%% For each node build model
-
-model_list = []
-for i in range(nodes_count):
-    
-    model = utils.generate_new_cnn_model()
-    model_list.append(model)
-
-#print(model_list[0].summary())
-
-
 #%% Federated training
 
+model_list = [None] * nodes_count
 epochs = 30
 score_matrix = np.zeros(shape=(epochs, nodes_count))
 val_acc_epoch = []
@@ -114,7 +104,6 @@ for epoch in range(epochs):
     if is_first_epoch:
         # First epoch
         print('First epoch, generate model from scratch')
-        base_model = utils.generate_new_cnn_model()
         
     else:
         print('Aggregating models weights to build a new model')
