@@ -26,11 +26,15 @@ from node import Node
 import os
 os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
 
+
 #%% Fetch data splitting scenario
+
 nodes_count = my_scenario.NODES_COUNT
 node_list = data_splitting.process_data_splitting_scenario()
 
+
 #%% Pre-process data for ML training
+
 for node_index, node in enumerate(node_list):
     
     # Preprocess input (x) data
@@ -121,7 +125,6 @@ for epoch in range(epochs):
     
     
 #%% Plot history
-
 
 plt.figure()
 plt.plot(acc_epoch,'+-')
