@@ -11,6 +11,7 @@ The scenario is then processed by data_splitting.py
 # Define the desired number of independant nodes
 # Nodes mock different partners in a collaborative data science project
 NODES_COUNT = 3
+# Dirty trick for quicker test: NODES_COUNT=4
 
 # Configure the desired respective datasets sizes of the nodes
 # Should the nodes receive an equivalent amount of samples each...
@@ -18,6 +19,7 @@ NODES_COUNT = 3
 # Define the percentages of samples per node
 # Sum has to equal 1 and number of items has to equal NODES_COUNT
 AMOUNTS_PER_NODE = [0.1, 0.25, 0.65]
+# Dirty trick for quicker test: AMOUNTS_PER_NODE = [0.01, 0.025, 0.065, 0.9]
 
 # Configure if nodes get overlapping or distinct samples
 # Should the nodes receive data from distinct categories...
