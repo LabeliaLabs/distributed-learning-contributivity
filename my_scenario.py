@@ -22,4 +22,4 @@ AMOUNTS_PER_NODE = [0.1, 0.25, 0.65]
 # Configure if nodes get overlapping or distinct samples
 # Should the nodes receive data from distinct categories...
 # ... or just random samples?
-OVERLAP_OR_DISTINCT = 'Overlap' # Change to 'Overlap' if desired
+OVERLAP_OR_DISTINCT = 'Overlap' # Toggle between 'Overlap' and 'Distinct'
