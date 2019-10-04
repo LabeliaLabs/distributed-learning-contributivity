@@ -71,11 +71,6 @@ def single_train(node):
               verbose=1,
               validation_data=(node.x_val, node.y_val))
     
-#    # Load and preprocess test data
-#    (x_train, y_train), (x_test, y_test) = mnist.load_data()
-#    x_test = utils.preprocess_input(x_test)
-#    y_test = keras.utils.to_categorical(y_test, constants.NUM_CLASSES)
-    
     # Evaluate trained model
     print('\n### Evaluating model on test data:')
     model_eval_score = model.evaluate(node.x_test, node.y_test,
@@ -169,11 +164,6 @@ def fl_train(node_list):
     final_model.compile(loss=keras.losses.categorical_crossentropy,
                   optimizer='adam',
                   metrics=['accuracy'])
-    
-#    # Load and preprocess test data
-#    (x_train, y_train), (x_test, y_test) = mnist.load_data()
-#    x_test = utils.preprocess_input(x_test)
-#    y_test = keras.utils.to_categorical(y_test, constants.NUM_CLASSES)
     
     # Evaluate model
     print('\n### Evaluating model on test data:')
