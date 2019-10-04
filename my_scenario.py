@@ -34,3 +34,7 @@ AMOUNTS_PER_NODE = [0.2, 0.3, 0.5]
 # Should the nodes receive data from distinct categories...
 # ... or just random samples?
 OVERLAP_OR_DISTINCT = 'Overlap' # Toggle between 'Overlap' and 'Distinct'
+
+# Define if test data should be split between nodes...
+# ... or if each node should refer to the complete test set
+TESTSET_OPTION = 'Global' # Toggle between 'Global' and 'Split'

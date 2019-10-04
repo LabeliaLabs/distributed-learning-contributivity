@@ -104,21 +104,35 @@ def process_data_splitting_scenario():
         
         
     #%% Do the splitting among nodes according to desired scenarios of...
-    # ... data amount per node and overlap/distinct distribution
+    # ... data amount per node and overlap/distinct distribution and...
+    # ... test data distribution
     
     # Split data between nodes
     train_idx_idx_list = np.split(train_idx, splitting_indices_train)
     test_idx_idx_list = np.split(test_idx, splitting_indices_test)
     
+    # Fetch test data distribution scenario
+    testset_option = my_scenario.TESTSET_OPTION
+    print('- Test data distribution scenario chosen:', testset_option)
+  
     # Populate nodes
     node_list = []
-    
     for train_idx, test_idx in zip(train_idx_idx_list, test_idx_idx_list):
         
+        # Train data
         x_node_train = x_train[train_idx, :]
-        x_node_test = x_test[test_idx]
         y_node_train = y_train[train_idx,]
-        y_node_test = y_test[test_idx]
+        
+        # Test data
+        if testset_option == 'Split':
+            x_node_test = x_test[test_idx]
+            y_node_test = y_test[test_idx]
+        elif testset_option == 'Global':
+            x_node_test = my_scenario.X_TEST
+            y_node_test = my_scenario.Y_TEST
+        else:
+            print('This testset_option scenario is not recognized. Quitting with quit()')
+            quit()
         
         node = Node(x_node_train, x_node_test, y_node_train, y_node_test)
         node_list.append(node)
@@ -130,17 +144,18 @@ def process_data_splitting_scenario():
     for node_index, node in enumerate(node_list):
         print('\nNode #' + str(node_index) + ':')
         print('First 10 elements of y_train:' + str(node.y_train[:10]))
-        print('First image:')
-        first_image = node.x_train[0,:,:]
-        plt.gray()
-        plt.imshow(first_image)
-        plt.show()
+#        print('First image:')
+#        first_image = node.x_train[0,:,:]
+#        plt.gray()
+#        plt.imshow(first_image)
+#        plt.show()
         print('Last 10 elements of y_train:' + str(node.y_train[-10:]))
-        print('Last image:')
-        last_image = node.x_train[-1,:,:]
-        plt.gray()
-        plt.imshow(last_image)
-        plt.show()
+#        print('Last image:')
+#        last_image = node.x_train[-1,:,:]
+#        plt.gray()
+#        plt.imshow(last_image)
+#        plt.show()
+        print('Number of test samples: ' + str(len(node.x_test)))
         
     # Return list of nodes
     return node_list
