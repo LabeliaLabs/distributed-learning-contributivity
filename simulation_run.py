@@ -9,8 +9,6 @@ A script to run a FL training and contributivity measurement simulations
 
 from __future__ import print_function
 
-import constants
-import utils
 import my_scenario
 import data_splitting
 import fl_train_eval
