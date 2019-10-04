@@ -22,19 +22,16 @@ import contributivity_measures
 node_list = data_splitting.process_data_splitting_scenario()
 nodes_count = my_scenario.NODES_COUNT
 
+
 #%% Preprocess data
 preprocessed_node_list = fl_train_eval.preprocess_node_list(node_list)
 
+
 #%% Train and eval according to scenario
-fl_train_eval.fl_train(preprocessed_node_list)
+#fl_train_eval.fl_train(preprocessed_node_list)
 # fl_train_eval.single_train(preprocessed_node_list[0])
 
 
 #%% Contributivity measurement
-sv_0 = contributivity_measures.compute_SV_3partners(0, preprocessed_node_list)
-# sv_1 = contributivity_measures.compute_SV_3partners(1, preprocessed_node_list)
-# sv_2 = contributivity_measures.compute_SV_3partners(2, preprocessed_node_list)
-print('\nShapley Value (for 3 partners only):')
-print('sv_0: ', sv_0)
-print('sv_1: ', sv_1)
-print('sv_2: ', sv_2)
+list_shapley_value = contributivity_measures.compute_SV(preprocessed_node_list)
+print('\nShapley value for each node: ', list_shapley_value)

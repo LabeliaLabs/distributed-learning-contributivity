@@ -13,6 +13,7 @@ from keras.models import Sequential
 from keras.layers import Dense, Flatten
 from keras.layers import Conv2D, MaxPooling2D
 
+import numpy as np
 from itertools import combinations
 
 import constants
@@ -21,10 +22,12 @@ import my_scenario
 import data_splitting
 import fl_train_eval
 
+import shapley_value.shapley as sv
 
-#%% Contributivity measures functions
 
-# Shapley Value for 3 partners
+# Contributivity measures functions
+
+# Naive Shapley Value for 3 partners
 def compute_SV_3partners(node_index, node_list):
     
     # Check that there are 3 nodes
@@ -66,7 +69,7 @@ def compute_SV_3partners(node_index, node_list):
     return shapley_value
 
 
-# Shapley Value for 4 partners
+# Naive Shapley Value for 4 partners
 def compute_SV_4partners(node_index, node_list):
     
     # Check that there are 3 nodes
@@ -120,26 +123,35 @@ def compute_SV_4partners(node_index, node_list):
     return shapley_value
     
 
-# Generalization (WIP)
+# Generalization of Shapley Value computation (WIP)
+
+def compute_SV(node_list):
     
-# =============================================================================
-# # Initialize list of all players (nodes)
-# nodes_count = my_scenario.NODES_COUNT
-# players_list = np.arange(nodes_count)
-# print(players_list)
-# 
-# # Define all possible coalitions of players
-# coalitions = [0] * (nodes_count+1)
-# for i in range(1, nodes_count+1):
-#     coalitions[i] = np.array(list(combinations(players_list, i)))
-#     print(coalitions[i])
-#     print(coalitions[i].shape)
-#     
-# # For each coalition, train and evaluate model in a FL way
-# char_func = np.zeros_like(coalitions)
-# for i in range(coalitions.shape[0]):
-#     for j in range(coalitions[i].shape[0]):
-#         # TODO: char_func[i][j] = fl_train(coalitions[i][j])
-#
-# Or look at: https://github.com/susobhang70/shapley_value   
-# =============================================================================
+    print('\n### Launching computation of Shapley Value of all nodes')
+    
+    # Initialize list of all players (nodes) indexes
+    nodes_count = len(node_list)
+    players_idx = np.arange(nodes_count)
+    print('All players indexes: ', players_idx)
+    
+    # Define all possible coalitions of players
+    coalitions = [list(j) for i in range(len(players_idx)) for j in combinations(players_idx, i+1)]
+    print('All possible coalitions of players: ', coalitions)
+    
+    # For each coalition, obtain value of characteristic function...
+    # ... i.e.: train and evaluate model on nodes part of the given coalition
+    char_func = []
+    fl_train = fl_train_eval.fl_train
+    
+    for coalition in coalitions:
+        coalition_nodes = list(node_list[i] for i in coalition)
+        print('\nComputing characteristic function on coalition ', coalition)
+        char_func.append(fl_train(coalition_nodes)[1])
+    print('\nValue of characteristic function for all coalitions: ', char_func)
+    
+    # Compute Shapley Value for each node
+    # We are using this python implementation: https://github.com/susobhang70/shapley_value
+    list_shapley_value = sv.main(nodes_count, char_func)
+    
+    # Return SV of each node
+    return list_shapley_value

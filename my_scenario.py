@@ -16,8 +16,8 @@ from keras.datasets import mnist
 DATASET_NAME = 'MNIST' # For log printing purpose only
 
 # Truncate dataset for quicker debugging/testing
-X_TRAIN = X_TRAIN[:6000]
-Y_TRAIN = Y_TRAIN[:6000]
+X_TRAIN = X_TRAIN[:200]
+Y_TRAIN = Y_TRAIN[:200]
 
 # Define the desired number of independant nodes
 # Nodes mock different partners in a collaborative data science project
@@ -33,7 +33,7 @@ AMOUNTS_PER_NODE = [0.2, 0.3, 0.5]
 # Configure if nodes get overlapping or distinct samples
 # Should the nodes receive data from distinct categories...
 # ... or just random samples?
-OVERLAP_OR_DISTINCT = 'Overlap' # Toggle between 'Overlap' and 'Distinct'
+OVERLAP_OR_DISTINCT = 'Distinct' # Toggle between 'Overlap' and 'Distinct'
 
 # Define if test data should be split between nodes...
 # ... or if each node should refer to the complete test set
