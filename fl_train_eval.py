@@ -67,7 +67,7 @@ def single_train(node):
     print('\n### Training model on one single node:')
     history = model.fit(node.x_train, node.y_train,
               batch_size=constants.BATCH_SIZE,
-              epochs=2,
+              epochs=4,
               verbose=1,
               validation_data=(node.x_val, node.y_val))
     
@@ -96,7 +96,7 @@ def fl_train(node_list):
     else:
     
         model_list = [None] * nodes_count
-        epochs = 2
+        epochs = 4
         score_matrix = np.zeros(shape=(epochs, nodes_count))
         val_acc_epoch = []
         acc_epoch = []

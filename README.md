@@ -32,6 +32,10 @@ We want to start experimenting contributivity evaluations in collaborative data 
   - Comparison variables (baseline: Shapley value)
     - Contributivity relative values
     - Computation time
+  
+## Using the code files
+- Define your mock scenario in `my_scenario.py` by chaning the values of the suggested parameters
+- Define what training, evaluation, contributivity measurement you want to simulate in `simulation_run.py`, then launch it
 
 ## Contacts
 Should you be interested in this open effort and would like to share any question, suggestion or input, you can use the following channels:
