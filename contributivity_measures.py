@@ -44,6 +44,7 @@ def compute_SV_3partners(node_index, node_list):
     # Compute characteristic function
     print('\n### Starting computation of SV for node n°' + str(node_index))
     fl_train = fl_train_eval.fl_train
+    single_train = fl_train_eval.single_train
     print('\n #### FL training on all nodes:')
     cf_all_nodes = fl_train(all_nodes)[1]
     print('\n #### FL training on other nodes (all but node n°' + str(node_index) + ' in scenario defined):')
@@ -53,9 +54,9 @@ def compute_SV_3partners(node_index, node_list):
     print('\n #### FL training on nodes A and C (A being n°' + str(node_index) + ' in scenario defined):')
     cf_A_C = fl_train(nodes_A_C)[1]
     print('\n #### Training on node B (A being n°' + str(node_index) + ' in scenario defined):')
-    cf_B = fl_train([node_B])[1]
+    cf_B = single_train(node_B)[1]
     print('\n #### Training on node C (A being n°' + str(node_index) + ' in scenario defined):')
-    cf_C = fl_train([node_C])[1]
+    cf_C = single_train(node_C)[1]
     
     # Compute Shapley Value
     shapley_value = 1/6 * (   2 * (cf_all_nodes - cf_other_nodes)
@@ -90,20 +91,22 @@ def compute_SV_4partners(node_index, node_list):
     nodes_A_C_D = [node_A, node_C, node_D]
     
     # Compute characteristic function
+    fl_train = fl_train_eval.fl_train
+    single_train = fl_train_eval.single_train
     cf_all_nodes = fl_train(all_nodes)[1]
     cf_other_nodes = fl_train(other_nodes)[1]
     cf_A_B = fl_train(nodes_A_B)[1]
     cf_A_C = fl_train(nodes_A_C)[1]
     cf_A_D = fl_train(nodes_A_D)[1]
-    cf_B = fl_train([node_B])[1]
-    cf_C = fl_train([node_C])[1]
-    cf_D = fl_train([node_D])[1]
+    cf_B = single_train(node_B)[1]
+    cf_C = single_train(node_C)[1]
+    cf_D = single_train(node_D)[1]
     cf_A_B_C = fl_train(nodes_A_B_C)[1]
     cf_A_B_D = fl_train(nodes_A_B_D)[1]
     cf_A_C_D = fl_train(nodes_A_C_D)[1]
-    cf_B_C = fl_train(node_B_C)[1]
-    cf_B_D = fl_train(node_B_D)[1]
-    cf_C_D = fl_train(node_C_D)[1]
+    cf_B_C = fl_train(nodes_B_C)[1]
+    cf_B_D = fl_train(nodes_B_D)[1]
+    cf_C_D = fl_train(nodes_C_D)[1]
     
     # Compute Shapley Value
     shapley_value = 1/24 * (  6 * (cf_all_nodes - cf_other_nodes)
