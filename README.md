@@ -32,3 +32,10 @@ We want to start experimenting contributivity evaluations in collaborative data 
   - Comparison variables (baseline: Shapley value)
     - Contributivity relative values
     - Computation time
+
+## Contacts
+Should you be interested in this open effort and would like to share any question, suggestion or input, you can use the following channels:
+  - This Github repository (issues, PR...)
+  - Technical forum: *in progress - to be completed*
+  - Email: eric.boniface@substra.org, romain.goussault@substra.org
+  - Come meet with us at La Paillasse (Paris, France), La Cantine Numérique (Nantes, France) or Iconosquare Coworking (Limoges, France)
