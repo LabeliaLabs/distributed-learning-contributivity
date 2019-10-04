@@ -2,18 +2,12 @@
 """
 Created on Thu Oct  3 17:02:13 2019
 
-A script to run a FL training and contributivity measurement simulation
+A script to run a FL training and contributivity measurement simulations
 
 @author: bowni
 """
 
 from __future__ import print_function
-import keras
-from keras.models import Sequential
-from keras.layers import Dense, Flatten
-from keras.layers import Conv2D, MaxPooling2D
-
-from itertools import combinations
 
 import constants
 import utils
@@ -24,15 +18,21 @@ import contributivity_measures
 
 
 #%% Fetch data splitting scenario
-nodes_count = my_scenario.NODES_COUNT
 node_list = data_splitting.process_data_splitting_scenario()
+nodes_count = my_scenario.NODES_COUNT
 
 #%% Preprocess data
 preprocessed_node_list = fl_train_eval.preprocess_node_list(node_list)
 
 #%% Train and eval according to scenario
-score = fl_train_eval.fl_train(nodes_count, preprocessed_node_list)
-print('Score:', score)
+# score = fl_train_eval.fl_train(preprocessed_node_list)
+# print('Score:', score)
 
 #%% Contributivity measurement
-    # TODO
+sv_0 = contributivity_measures.compute_SV_3partners(0, preprocessed_node_list)
+# sv_1 = contributivity_measures.compute_SV_3partners(1, preprocessed_node_list)
+# sv_2 = contributivity_measures.compute_SV_3partners(2, preprocessed_node_list)
+print('\nShapley Value (for 3 partners only):')
+print('sv_0: ', sv_0)
+print('sv_1: ', sv_1)
+print('sv_2: ', sv_2)

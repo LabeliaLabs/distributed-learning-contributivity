@@ -27,12 +27,6 @@ import os
 os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
 
 
-#%% Fetch data splitting scenario
-
-nodes_count = my_scenario.NODES_COUNT
-node_list = data_splitting.process_data_splitting_scenario()
-
-
 #%% Pre-process data for ML training
 
 def preprocess_node_list(node_list):
@@ -63,9 +57,10 @@ def preprocess_node_list(node_list):
 
 #%% Federated training
         
-def fl_train(nodes_count, node_list):
+def fl_train(node_list):
     """Return a final aggregated model trained in a federated way on each node"""
 
+    nodes_count = len(node_list)
     model_list = [None] * nodes_count
     epochs = 2
     score_matrix = np.zeros(shape=(epochs, nodes_count))
@@ -146,9 +141,11 @@ def fl_train(nodes_count, node_list):
     (x_train, y_train), (x_test, y_test) = mnist.load_data()
     x_test = utils.preprocess_input(x_test)
     y_test = keras.utils.to_categorical(y_test, constants.NUM_CLASSES)
+    print('\nEvaluating model on test data:')
     model_eval_score = final_model.evaluate(x_test, y_test, batch_size=constants.BATCH_SIZE,
                          verbose=1)
     print('\nModel metrics names: ', final_model.metrics_names)
+    print('Model metrics values: ', model_eval_score)
     
     # Return 
     return model_eval_score
