@@ -16,8 +16,8 @@ from keras.datasets import mnist
 DATASET_NAME = 'MNIST' # For log printing purpose only
 
 # Truncate dataset for quicker debugging/testing
-X_TRAIN = X_TRAIN[:10000]
-Y_TRAIN = Y_TRAIN[:10000]
+X_TRAIN = X_TRAIN[:6000]
+Y_TRAIN = Y_TRAIN[:6000]
 
 # Define the desired number of independant nodes
 # Nodes mock different partners in a collaborative data science project

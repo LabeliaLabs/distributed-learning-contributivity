@@ -78,19 +78,19 @@ def process_data_splitting_scenario():
         y_train = y_train[y_sorted_idx]
         x_train = x_train[y_sorted_idx]
         
-        # Print and plot for controlling
-        print('\nFirst 10 elements of y_train:' + str(y_train[:10]))
-        print('First image:')
-        first_image = x_train[0,:,:]
-        plt.gray()
-        plt.imshow(first_image)
-        plt.show()
-        print('Last 10 elements of y_train' + str(y_train[-10:]))
-        print('Last image:')
-        last_image = x_train[-1,:,:]
-        plt.gray()
-        plt.imshow(last_image)
-        plt.show()
+#        # Print and plot for controlling
+#        print('\nFirst 10 elements of y_train:' + str(y_train[:10]))
+#        print('First image:')
+#        first_image = x_train[0,:,:]
+#        plt.gray()
+#        plt.imshow(first_image)
+#        plt.show()
+#        print('Last 10 elements of y_train' + str(y_train[-10:]))
+#        print('Last image:')
+#        last_image = x_train[-1,:,:]
+#        plt.gray()
+#        plt.imshow(last_image)
+#        plt.show()
         
     # In the 'Overlap' scenario we shuffle randomly the indexes
     elif overlap_or_distinct == 'Overlap':
@@ -141,21 +141,22 @@ def process_data_splitting_scenario():
     assert(len(node_list) == nodes_count)
     
     # Print and plot for controlling
+    print('\n### Splitting data among nodes:')
     for node_index, node in enumerate(node_list):
-        print('\nNode #' + str(node_index) + ':')
-        print('First 10 elements of y_train:' + str(node.y_train[:10]))
+        print('- Node #' + str(node_index) + ':')
+        print('  - Number of samples:' + str(len(node.x_train)) + ' train, ' + str(len(node.x_val)) + ' val, ' + str(len(node.x_test)) + ' test')
+        print('  - y_train first 10 values:' + str(node.y_train[:10]))
+        print('  - y_train last 10 values:' + str(node.y_train[-10:]))
 #        print('First image:')
 #        first_image = node.x_train[0,:,:]
 #        plt.gray()
 #        plt.imshow(first_image)
 #        plt.show()
-        print('Last 10 elements of y_train:' + str(node.y_train[-10:]))
 #        print('Last image:')
 #        last_image = node.x_train[-1,:,:]
 #        plt.gray()
 #        plt.imshow(last_image)
 #        plt.show()
-        print('Number of test samples: ' + str(len(node.x_test)))
         
     # Return list of nodes
     return node_list

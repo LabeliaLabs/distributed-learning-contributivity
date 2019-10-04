@@ -30,8 +30,10 @@ os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
 #%% Pre-process data for ML training
 
 def preprocess_node_list(node_list):
-    """Return node_list preprocessed"""
+    """Return node_list preprocessed for keras CNN"""
 
+    
+    print('\n### Pre-processing data for keras CNN:')
     for node_index, node in enumerate(node_list):
         
         # Preprocess input (x) data
@@ -48,9 +50,7 @@ def preprocess_node_list(node_list):
         x_node_test = node.x_test
         y_node_test = node.y_test
         
-        print(str(len(x_node_train)) + ' train data for node ' + str(node_index))
-        print(str(len(x_node_val)) + ' val data for node ' + str(node_index))
-        print(str(len(x_node_test)) + ' test data for node ' + str(node_index))   
+        print('Node #' + str(node_index) + ': done.')
         
     return node_list
 
@@ -64,21 +64,21 @@ def single_train(node):
     # print(model.summary())
 
     # Train model
-    print('\nTraining model on train/val data:')
+    print('\n### Training model on train/val data:')
     history = model.fit(node.x_train, node.y_train,
               batch_size=constants.BATCH_SIZE,
               epochs=2,
               verbose=1,
               validation_data=(node.x_val, node.y_val))
     
-    # Load and preprocess test data
-    (x_train, y_train), (x_test, y_test) = mnist.load_data()
-    x_test = utils.preprocess_input(x_test)
-    y_test = keras.utils.to_categorical(y_test, constants.NUM_CLASSES)
+#    # Load and preprocess test data
+#    (x_train, y_train), (x_test, y_test) = mnist.load_data()
+#    x_test = utils.preprocess_input(x_test)
+#    y_test = keras.utils.to_categorical(y_test, constants.NUM_CLASSES)
     
     # Evaluate trained model
-    print('\nEvaluating model on test data:')
-    model_eval_score = model.evaluate(x_test, y_test,
+    print('\n### Evaluating model on test data:')
+    model_eval_score = model.evaluate(node.x_test, node.y_test,
                            batch_size=constants.BATCH_SIZE,
                            verbose=1)
     print('\nModel metrics names: ', model.metrics_names)
@@ -170,14 +170,14 @@ def fl_train(node_list):
                   optimizer='adam',
                   metrics=['accuracy'])
     
-    # Load and preprocess test data
-    (x_train, y_train), (x_test, y_test) = mnist.load_data()
-    x_test = utils.preprocess_input(x_test)
-    y_test = keras.utils.to_categorical(y_test, constants.NUM_CLASSES)
+#    # Load and preprocess test data
+#    (x_train, y_train), (x_test, y_test) = mnist.load_data()
+#    x_test = utils.preprocess_input(x_test)
+#    y_test = keras.utils.to_categorical(y_test, constants.NUM_CLASSES)
     
     # Evaluate model
-    print('\nEvaluating model on test data:')
-    model_eval_score = final_model.evaluate(x_test, y_test, batch_size=constants.BATCH_SIZE,
+    print('\n### Evaluating model on test data:')
+    model_eval_score = final_model.evaluate(node.x_test, node.y_test, batch_size=constants.BATCH_SIZE,
                          verbose=1)
     print('\nModel metrics names: ', final_model.metrics_names)
     print('Model metrics values: ', model_eval_score)
