@@ -26,8 +26,6 @@ import contributivity_measures
 #%% Fetch data splitting scenario
 nodes_count = my_scenario.NODES_COUNT
 node_list = data_splitting.process_data_splitting_scenario()
-# Dirty trick for quicker test: nodes_count_bis = nodes_count - 1
-# Dirty trick for quicker test: del node_list[3]
 
 #%% Preprocess data
 preprocessed_node_list = fl_train_eval.preprocess_node_list(node_list)

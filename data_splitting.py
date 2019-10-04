@@ -22,16 +22,16 @@ from node import Node
 def process_data_splitting_scenario():
     """Return a list of nodes populated with their train and test data (not pre-processed)"""
 
-    #%% Load data
+    #%% Fetch parameters of scenario
     
-    # load MNIST data
-    (x_train, y_train), (x_test, y_test) = mnist.load_data()
-    print('\n### MNIST data loaded:')
-    print('- ' + str(len(x_train)) + ' train data')
-    print('- ' + str(len(x_test)) + ' test data')
-    
-    
-    #%% Constants
+    # Fetch data
+    x_train = my_scenario.X_TRAIN
+    y_train = my_scenario.Y_TRAIN
+    x_test = my_scenario.X_TEST
+    y_test = my_scenario.Y_TEST
+    print('\n### Data loaded: ', my_scenario.DATASET_NAME)
+    print('- ' + str(len(x_train)) + ' train data with ' + str(len(y_train)) + ' labels')
+    print('- ' + str(len(x_test)) + ' test data ' + str(len(y_test)) + ' labels')
     
     # Fetch the number of independant nodes
     nodes_count = my_scenario.NODES_COUNT
