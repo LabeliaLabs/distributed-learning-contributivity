@@ -27,27 +27,27 @@ def compute_SV(node_list):
     
     # Initialize list of all players (nodes) indexes
     nodes_count = len(node_list)
-    players_idx = np.arange(nodes_count)
-    print('All players indexes: ', players_idx)
+    nodes_idx = np.arange(nodes_count)
+    print('All players (nodes) indexes: ', nodes_idx)
     
     # Define all possible coalitions of players
-    coalitions = [list(j) for i in range(len(players_idx)) for j in combinations(players_idx, i+1)]
-    print('All possible coalitions of players: ', coalitions)
+    coalitions = [list(j) for i in range(len(nodes_idx)) for j in combinations(nodes_idx, i+1)]
+    print('All possible coalitions of players (nodes): ', coalitions)
     
     # For each coalition, obtain value of characteristic function...
     # ... i.e.: train and evaluate model on nodes part of the given coalition
-    char_func = []
+    characteristic_function = []
     fl_train = fl_train_eval.fl_train
     
     for coalition in coalitions:
         coalition_nodes = list(node_list[i] for i in coalition)
         print('\nComputing characteristic function on coalition ', coalition)
-        char_func.append(fl_train(coalition_nodes)[1])
-    print('\nValue of characteristic function for all coalitions: ', char_func)
+        characteristic_function.append(fl_train(coalition_nodes)[1])
+    print('\nValue of characteristic function for all coalitions: ', characteristic_function)
     
     # Compute Shapley Value for each node
     # We are using this python implementation: https://github.com/susobhang70/shapley_value
-    list_shapley_value = sv.main(nodes_count, char_func)
+    list_shapley_value = sv.main(nodes_count, characteristic_function)
     
     # Return SV of each node
     return list_shapley_value
