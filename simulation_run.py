@@ -28,8 +28,8 @@ preprocessed_node_list = fl_train_eval.preprocess_node_list(node_list)
 
 
 #%% Train and eval according to scenario
-#fl_train_eval.fl_train(preprocessed_node_list)
-# fl_train_eval.single_train(preprocessed_node_list[0])
+#fl_train_eval.fl_train_score(preprocessed_node_list)
+# fl_train_eval.single_train_score(preprocessed_node_list[0])
 
 
 #%% Contributivity measurement

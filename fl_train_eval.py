@@ -52,7 +52,7 @@ def preprocess_node_list(node_list):
 
 
 #%% Single partner training
-def single_train(node):
+def single_train_score(node):
     """Return the score on test data of a model trained on a single node"""
     
     # Initialize model
@@ -81,13 +81,13 @@ def single_train(node):
 
 #%% Distributed learning training
         
-def fl_train(node_list):
+def fl_train_score(node_list):
     """Return the score on test data of a final aggregated model trained in a federated way on each node"""
 
     nodes_count = len(node_list)
     
     if nodes_count == 1:
-        return single_train(node_list[0])
+        return single_train_score(node_list[0])
     
     else:
     
