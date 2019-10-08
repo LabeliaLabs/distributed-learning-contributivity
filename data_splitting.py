@@ -96,10 +96,9 @@ def process_data_splitting_scenario():
         np.random.seed(42)
         np.random.shuffle(train_idx)
     
-    # If neither 'Distinct' nor 'Overlap', we quit
+    # If neither 'Distinct' nor 'Overlap', we raise an exception
     else:
-        print('This overlap_or_distinct scenario is not recognized. Quitting with quit()')
-        quit()
+        raise NameError('This overlap_or_distinct scenario is not recognized')
         
         
     #%% Do the splitting among nodes according to desired scenarios of...
