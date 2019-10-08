@@ -19,8 +19,8 @@ import contributivity_measures
 
 
 #%% Fetch data splitting scenario
-node_list = data_splitting.process_data_splitting_scenario()
-nodes_count = my_scenario.NODES_COUNT
+parameters_dict = my_scenario.PARAMETERS_DICT
+node_list = data_splitting.process_data_splitting_scenario(**parameters_dict)
 
 
 #%% Preprocess data
