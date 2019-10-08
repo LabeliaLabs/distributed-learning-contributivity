@@ -47,6 +47,7 @@ def compute_SV(node_list):
     
     # Compute Shapley Value for each node
     # We are using this python implementation: https://github.com/susobhang70/shapley_value
+    # It requires coalitions to be ordered - see README of https://github.com/susobhang70/shapley_value
     list_shapley_value = sv.main(nodes_count, characteristic_function)
     
     # Return SV of each node

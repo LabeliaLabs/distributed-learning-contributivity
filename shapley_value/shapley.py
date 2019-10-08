@@ -13,27 +13,12 @@ def power_set(List):
     return PS
 
 def main(nodes_count, char_func_list):
-#    if len(sys.argv) < 2:
-#        print 'Usage: ./shapley.py <filename>'
-#        return
     
     n = nodes_count # Added by @bowni
     characteristic_function = char_func_list # Updated by @bowni
 
-#    with open(sys.argv[1]) as gamefile:
-#        for line in gamefile:
-#            try:
-#                n = int(line[line.index('=') + 1:])
-#            except:
-#                print "Invalid file format"
-#                sys.exit(0)
-#            break
-#        for line in gamefile:
-#            characteristic_function = line.strip().split(",")
-
     if n == 0:
         print("No players, exiting") # Updated by @bowni
-#        sys.exit(0)
         quit()
 
     tempList = list([i for i in range(n)])
@@ -65,6 +50,3 @@ def main(nodes_count, char_func_list):
 
 #    print(shapley_values)
     return shapley_values # Added by @bowni
-
-#if __name__ == '__main__':
-#    main()
