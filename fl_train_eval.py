@@ -46,10 +46,6 @@ def preprocess_node_list(node_list):
         node.y_train = y_node_train
         node.y_val = y_node_val
         
-        # Align variable names
-        x_node_test = node.x_test
-        y_node_test = node.y_test
-        
         print('Node #' + str(node_index) + ': done.')
         
     return node_list
