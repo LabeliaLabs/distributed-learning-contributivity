@@ -8,8 +8,6 @@ This processes the split of data among nodes according to scenario defined in my
 """
 
 from __future__ import print_function
-import keras
-from keras.datasets import mnist
 
 import matplotlib.pyplot as plt
 import numpy as np
