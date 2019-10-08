@@ -19,55 +19,22 @@ import numpy as np
 
 import utils
 import constants
+import my_scenario
+import data_splitting
 from node import Node
 
 import os
 os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
 
-#%% Constants
 
-nodes_count = 10
+#%% Fetch data splitting scenario
 
-#%% Preprocess data
-
-# load data
-(x_train, y_train), (x_test, y_test) = mnist.load_data()
-print(str(len(x_train)) + ' train data')
-print(str(len(x_test)) + ' test data\n')
-
-# Shuffle train data
-train_idx = np.arange(len(y_train))
-np.random.seed(42)
-np.random.shuffle(train_idx)
-train_idx_idx_list = np.array_split(train_idx, nodes_count)
-
-# Shuffle test data
-test_idx = np.arange(len(y_test))
-np.random.seed(42)
-np.random.shuffle(test_idx)
-test_idx_idx_list = np.array_split(test_idx, nodes_count)
-
-# Split data between nodes
-node_list = []
-
-for train_idx, test_idx in zip(train_idx_idx_list, test_idx_idx_list):
-    
-    x_node_train = x_train[train_idx, :]
-    x_node_test = x_test[test_idx]
-    y_node_train = y_train[train_idx,]
-    y_node_test = y_test[test_idx]
-    
-    node = Node(x_node_train, x_node_test, y_node_train, y_node_test)
-    node_list.append(node)
-    
-assert(len(node_list) == nodes_count)
+nodes_count = my_scenario.NODES_COUNT
+node_list = data_splitting.process_data_splitting_scenario()
 
 
-# Now that the data split between the node has been done, we consider that the data
-# stay on each node
+#%% Pre-process data for ML training
 
-#%% For each node preprocess data
-    
 for node_index, node in enumerate(node_list):
     
     # Preprocess input (x) data
@@ -80,25 +47,19 @@ for node_index, node in enumerate(node_list):
     node.y_train = y_node_train
     node.y_val = y_node_val
     
+    # Align variable names
+    x_node_test = node.x_test
+    y_node_test = node.y_test
+    
     print(str(len(x_node_train)) + ' train data for node ' + str(node_index))
     print(str(len(x_node_val)) + ' val data for node ' + str(node_index))
     print(str(len(x_node_test)) + ' test data for node ' + str(node_index))   
 
 
-#%% For each node build model
-
-model_list = []
-for i in range(nodes_count):
-    
-    model = utils.generate_new_cnn_model()
-    model_list.append(model)
-
-#print(model_list[0].summary())
-
-
 #%% Federated training
 
-epochs = 30
+model_list = [None] * nodes_count
+epochs = 2
 score_matrix = np.zeros(shape=(epochs, nodes_count))
 val_acc_epoch = []
 acc_epoch = []
@@ -114,7 +75,6 @@ for epoch in range(epochs):
     if is_first_epoch:
         # First epoch
         print('First epoch, generate model from scratch')
-        base_model = utils.generate_new_cnn_model()
         
     else:
         print('Aggregating models weights to build a new model')
@@ -165,7 +125,6 @@ for epoch in range(epochs):
     
     
 #%% Plot history
-
 
 plt.figure()
 plt.plot(acc_epoch,'+-')
