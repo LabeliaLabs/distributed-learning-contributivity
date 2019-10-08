@@ -2,7 +2,7 @@
 """
 Created on Thu Oct  3 11:09:07 2019
 
-This processes the split of data among nodes according to scenario defined in my_scenario.py
+This processes the split of data among nodes according to scenario passed as argument
 
 @author: @bowni
 """
