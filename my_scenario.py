@@ -38,3 +38,15 @@ OVERLAP_OR_DISTINCT = 'Distinct' # Toggle between 'Overlap' and 'Distinct'
 # Define if test data should be split between nodes...
 # ... or if each node should refer to the complete test set
 TESTSET_OPTION = 'Global' # Toggle between 'Global' and 'Split'
+
+PARAMETERS_DICT = {
+        'x_train' : X_TRAIN,
+        'y_train' : Y_TRAIN,
+        'x_test' : X_TEST,
+        'y_test' : Y_TEST,
+        'dataset_name' : DATASET_NAME,
+        'nodes_count' : NODES_COUNT,
+        'amounts_per_node' : AMOUNTS_PER_NODE,
+        'overlap_or_distinct' : OVERLAP_OR_DISTINCT,
+        'testset_option' : TESTSET_OPTION
+        }

@@ -12,27 +12,22 @@ from __future__ import print_function
 import matplotlib.pyplot as plt
 import numpy as np
 
-import my_scenario
-
 from node import Node
 
 
-def process_data_splitting_scenario():
+def process_data_splitting_scenario(x_train, y_train, x_test, y_test, dataset_name,
+                                    nodes_count, amounts_per_node,
+                                    overlap_or_distinct, testset_option):
     """Return a list of nodes populated with their train and test data (not pre-processed)"""
 
     #%% Fetch parameters of scenario
     
-    # Fetch data
-    x_train = my_scenario.X_TRAIN
-    y_train = my_scenario.Y_TRAIN
-    x_test = my_scenario.X_TEST
-    y_test = my_scenario.Y_TEST
-    print('\n### Data loaded: ', my_scenario.DATASET_NAME)
+    # Describe data
+    print('\n### Data loaded: ', dataset_name)
     print('- ' + str(len(x_train)) + ' train data with ' + str(len(y_train)) + ' labels')
     print('- ' + str(len(x_test)) + ' test data ' + str(len(y_test)) + ' labels')
     
-    # Fetch the number of independant nodes
-    nodes_count = my_scenario.NODES_COUNT
+    # Describe number of independant nodes
     print('\n### Description of data scenario configured:')
     print('- Number of nodes defined:', nodes_count)
     
@@ -41,8 +36,7 @@ def process_data_splitting_scenario():
     # Should the nodes receive an equivalent amount of samples each...
     # ... or receive different amounts?
     
-    # Fetch the percentages of samples per node and control its coherence
-    amounts_per_node = my_scenario.AMOUNTS_PER_NODE
+    # Check the percentages of samples per node and control its coherence
     assert(len(amounts_per_node) == nodes_count)
     assert(np.sum(amounts_per_node) == 1)
     
@@ -61,8 +55,7 @@ def process_data_splitting_scenario():
     # Should the nodes receive data from distinct regions of space...
     # ... or from the complete universe?
     
-    # Fetch the type of distribution chosen
-    overlap_or_distinct = my_scenario.OVERLAP_OR_DISTINCT
+    # Describe the type of distribution chosen
     print('- Data distribution scenario chosen:', overlap_or_distinct)
     
     # Create a list of indexes of the samples
@@ -109,8 +102,7 @@ def process_data_splitting_scenario():
     train_idx_idx_list = np.split(train_idx, splitting_indices_train)
     test_idx_idx_list = np.split(test_idx, splitting_indices_test)
     
-    # Fetch test data distribution scenario
-    testset_option = my_scenario.TESTSET_OPTION
+    # Describe test data distribution scenario
     print('- Test data distribution scenario chosen:', testset_option)
   
     # Populate nodes
@@ -126,8 +118,8 @@ def process_data_splitting_scenario():
             x_node_test = x_test[test_idx]
             y_node_test = y_test[test_idx]
         elif testset_option == 'Global':
-            x_node_test = my_scenario.X_TEST
-            y_node_test = my_scenario.Y_TEST
+            x_node_test = x_test
+            y_node_test = y_test
         else:
             print('This testset_option scenario is not recognized. Quitting with quit()')
             quit()
