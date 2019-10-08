@@ -47,6 +47,7 @@ def process_data_splitting_scenario():
     assert(np.sum(amounts_per_node) == 1)
     
     # Then we parameterize this via the splitting_indices to be passed to np.split
+    # This is to transform the % from my_scenario into indices where to split the data
     splitting_indices = np.empty((nodes_count-1,))
     splitting_indices[0] = amounts_per_node[0]
     for i in range(nodes_count-2):
