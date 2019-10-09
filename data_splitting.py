@@ -121,8 +121,7 @@ def process_data_splitting_scenario(x_train, y_train, x_test, y_test, dataset_na
             x_node_test = x_test
             y_node_test = y_test
         else:
-            print('This testset_option scenario is not recognized. Quitting with quit()')
-            quit()
+            raise NameError('This testset_option scenario is not recognized. Quitting with quit()')
         
         node = Node(x_node_train, x_node_test, y_node_train, y_node_test)
         node_list.append(node)
