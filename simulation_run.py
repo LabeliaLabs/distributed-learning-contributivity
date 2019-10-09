@@ -12,18 +12,20 @@ A script to configure and run simulations of:
 
 from __future__ import print_function
 
-import my_scenario
+import scenario
 import data_splitting
 import fl_train_eval
 import contributivity_measures
 
 
 #%% Fetch data splitting scenario
-parameters_dict = my_scenario.PARAMETERS_DICT
-node_list = data_splitting.process_data_splitting_scenario(**parameters_dict)
+
+my_basic_scenario = scenario.Scenario()
+node_list = data_splitting.process_data_splitting_scenario(my_basic_scenario)
 
 
 #%% Preprocess data
+
 preprocessed_node_list = fl_train_eval.preprocess_node_list(node_list)
 
 
@@ -42,3 +44,7 @@ print('- softmaxed * target: ', list_perf_scores[1])
 #%% Contributivity measurement
 list_shapley_value = contributivity_measures.compute_SV(preprocessed_node_list)
 print('\nShapley value for each node: ', list_shapley_value)
+
+
+#%% Save results
+my_basic_scenario.to_file()

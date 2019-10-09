@@ -19,7 +19,7 @@ import numpy as np
 
 import utils
 import constants
-import my_scenario
+import scenario
 import data_splitting
 from node import Node
 
