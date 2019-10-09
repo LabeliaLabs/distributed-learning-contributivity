@@ -11,6 +11,8 @@ The scenario is then processed by data_splitting.py
 from keras.datasets import mnist
 import json
 import numpy as np
+import os
+import datetime
 
 
 class Scenario:
@@ -66,8 +68,16 @@ class Scenario:
   def to_file(self):
     
     json_data = self.to_json()
-    # TODO create results folder and better filename
-    with open('data.json', 'w', encoding='utf-8') as f:
+    
+    target_folder = 'results'
+    os.makedirs(target_folder, exist_ok=True)
+    
+    now = datetime.datetime.now()
+    now_str = now.strftime("%Y-%m-%d_%Hh%M")
+    target_filename = now_str + '.json'
+    target_file_path = os.path.join(target_folder, target_filename)
+    
+    with open(target_file_path, 'w', encoding='utf-8') as f:
         json.dump(json_data, f, ensure_ascii=False, indent=4, sort_keys=True)
 
     
