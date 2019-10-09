@@ -12,6 +12,8 @@ from __future__ import print_function
 import numpy as np
 from itertools import combinations
 
+from scipy.special import softmax
+
 import fl_train_eval
 
 import shapley_value.shapley as sv
@@ -53,3 +55,20 @@ def compute_SV(node_list):
     # Return SV of each node
     return list_shapley_value
 
+
+# Compute independent performance scores of models trained independently on each node
+    
+def compute_independent_scores(node_list, target_score):
+    
+    # Initialize a list of performance scores
+    performance_scores = []
+    
+    # Train models independently on each node and append perf. score to list of perf. scores
+    for node in node_list:
+        performance_scores.append(fl_train_eval.single_train_score(node)[1])
+        
+    # Compute 'regularized' values of performance scores so that they are additive and their sum amount to the target performance score
+    additive_scores = softmax(performance_scores) * target_score
+    
+    # Return both raw performance scores and the regularized values
+    return [performance_scores, additive_scores]

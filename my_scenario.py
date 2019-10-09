@@ -18,6 +18,8 @@ DATASET_NAME = 'MNIST' # For log printing purpose only
 # Truncate dataset for quicker debugging/testing
 X_TRAIN = X_TRAIN[:6000]
 Y_TRAIN = Y_TRAIN[:6000]
+X_TEST = X_TEST[:3000]
+Y_TEST = Y_TEST[:3000]
 
 # Define the desired number of independant nodes
 # Nodes mock different partners in a collaborative data science project

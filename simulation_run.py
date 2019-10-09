@@ -28,8 +28,15 @@ preprocessed_node_list = fl_train_eval.preprocess_node_list(node_list)
 
 
 #%% Train and eval according to scenario
-#fl_train_eval.fl_train_score(preprocessed_node_list)
+# fl_train_eval.fl_train_score(preprocessed_node_list)
 # fl_train_eval.single_train_score(preprocessed_node_list[0])
+
+
+#%% Get performance scores of models trained independently on each node
+list_perf_scores = contributivity_measures.compute_independent_scores(preprocessed_node_list, 0.9)
+print('\nIndependent perf. scores (raw and softmaxed * target):')
+print('- raw: ', list_perf_scores[0])
+print('- softmaxed * target: ', list_perf_scores[1])
 
 
 #%% Contributivity measurement
