@@ -50,7 +50,10 @@ class Scenario:
     
     # TODO
     self.nodes_list = []
+    
+    # TODO Create contributivty object to hold contributivty score, and computation time
     self.shapley_values = []
+    self.perf_scores = []
     self.computation_time = 0
 
 

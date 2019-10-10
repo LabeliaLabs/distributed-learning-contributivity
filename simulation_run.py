@@ -35,15 +35,16 @@ preprocessed_node_list = fl_train_eval.preprocess_node_list(node_list)
 
 
 #%% Get performance scores of models trained independently on each node
-list_perf_scores = contributivity_measures.compute_independent_scores(preprocessed_node_list, 0.9)
+
+my_basic_scenario.perf_scores = contributivity_measures.compute_independent_scores(preprocessed_node_list, 0.9)
 print('\nIndependent perf. scores (raw and softmaxed * target):')
-print('- raw: ', list_perf_scores[0])
-print('- softmaxed * target: ', list_perf_scores[1])
+print('- raw: ', my_basic_scenario.perf_scores[0])
+print('- softmaxed * target: ', my_basic_scenario.perf_scores[1])
 
 
 #%% Contributivity measurement
-list_shapley_value = contributivity_measures.compute_SV(preprocessed_node_list)
-print('\nShapley value for each node: ', list_shapley_value)
+my_basic_scenario.shapley_values = contributivity_measures.compute_SV(preprocessed_node_list)
+print('\nShapley value for each node: ', my_basic_scenario.shapley_values)
 
 
 #%% Save results
