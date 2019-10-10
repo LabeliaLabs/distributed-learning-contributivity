@@ -69,6 +69,7 @@ def compute_independent_scores(node_list, target_score):
         
     # Compute 'regularized' values of performance scores so that they are additive and their sum amount to the target performance score
     additive_scores = softmax(performance_scores) * target_score
+    additive_scores = additive_scores.tolist()
     
     # Return both raw performance scores and the regularized values
     return [performance_scores, additive_scores]
