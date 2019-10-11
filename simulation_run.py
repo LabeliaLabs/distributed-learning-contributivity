@@ -23,22 +23,22 @@ parameters_dict = my_scenario.PARAMETERS_DICT
 node_list = data_splitting.process_data_splitting_scenario(**parameters_dict)
 
 
-#%% Preprocess data
+#%% Preprocess data for compatibility with keras CNN models
 preprocessed_node_list = fl_train_eval.preprocess_node_list(node_list)
 
 
-#%% Train and eval according to scenario
-# fl_train_eval.fl_train_score(preprocessed_node_list)
-# fl_train_eval.single_train_score(preprocessed_node_list[0])
+#%% Train and eval on all nodes according to scenario
+fl_score = fl_train_eval.fl_train_score(preprocessed_node_list)
 
 
 #%% Get performance scores of models trained independently on each node
-list_perf_scores = contributivity_measures.compute_independent_scores(preprocessed_node_list, 0.9)
-print('\nIndependent perf. scores (raw and softmaxed * target):')
+list_perf_scores = contributivity_measures.compute_independent_scores(preprocessed_node_list, fl_score)
+print('\nIndependent perf. scores (raw and normalized additively):')
 print('- raw: ', list_perf_scores[0])
-print('- softmaxed * target: ', list_perf_scores[1])
+print('- normalized additively (softmaxed * fl_score): ', list_perf_scores[1])
+print('- (reminder: ' + str(fl_score) + ')')
 
 
-#%% Contributivity measurement
+#%% Baseline contributivity measurement (Shapley Value)
 list_shapley_value = contributivity_measures.compute_SV(preprocessed_node_list)
 print('\nShapley value for each node: ', list_shapley_value)
