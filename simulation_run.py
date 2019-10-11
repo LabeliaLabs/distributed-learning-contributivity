@@ -32,13 +32,13 @@ fl_score = fl_train_eval.fl_train_score(preprocessed_node_list)[1]
 
 
 #%% Get performance scores of models trained independently on each node
-list_perf_scores = contributivity_measures.compute_independent_scores(preprocessed_node_list, fl_score)
-print('\nIndependent perf. scores (raw and normalized additively):')
-print('- raw: ', [ '%.3f' % elem for elem in list_perf_scores[0] ] )
-print('- normalized additively: ', [ '%.3f' % elem for elem in list_perf_scores[1] ])
+perf_scores = contributivity_measures.compute_independent_scores(preprocessed_node_list, fl_score)
+print('\n### Independent perf. scores (raw and normalized additively):')
+print('- raw: ', [ '%.3f' % elem for elem in perf_scores[0] ] )
+print('- normalized additively: ', [ '%.3f' % elem for elem in perf_scores[1] ])
 print('- (reminder: fl_score ' + ('%.3f' % fl_score) + ')')
 
 
 #%% Baseline contributivity measurement (Shapley Value)
-list_shapley_value = contributivity_measures.compute_SV(preprocessed_node_list)
-print('\nShapley value for each node: ', list_shapley_value)
+shapley_values = contributivity_measures.compute_SV(preprocessed_node_list)
+print('\n### Shapley value for each node: ', [ '%.3f' % elem for elem in shapley_values ])
