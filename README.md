@@ -13,7 +13,7 @@ The work-in-progress document describing this exploration can be found [here](ht
 In this repository, we would like to benchmark the different contributivity measurement approaches described in the document on a set of public datasets (or a single dataset artificially split in a number of individual datasets, to mock a collaborative ML project).
 The objective is to compare the contributivity figures obtained with the different approaches, and try to see how potential differences could be interpreted.
 
-## Experimental plan H2 2019
+### Experimental plan H2 2019
 We want to start experimenting contributivity evaluations in collaborative data science / distributed learning scenarios. At this stage this cannot be a thorough and complete experimentation though, as our exploration of the topic is in progress and we can dedicate only a limited amount of time and energy to this project. To make the most out of it, it is key to capitalize on this first experiment and develop it as a reproducible pipeline that we will be able to improve, enrich, complement over time.
 - Public dataset of choice: MNIST
 - Collaborative data science scenarios - Parameters:
@@ -24,22 +24,23 @@ We want to start experimenting contributivity evaluations in collaborative data 
 - Distributed learning approach: federated learning (other approaches to be tested in future improvements of this experiment)
 - Contributivity evaluation approach:
   - The approaches we would like to compare (further described in the document linked above):
-    - Shapley value: given the limited number of data partners we consider at that stage it is possible to actually compute it with a reasonable amount of resources
+    - [done] Shapley value: given the limited number of data partners we consider at that stage it is possible to actually 
+compute it with a reasonable amount of resources
+    - [done] Performance scores of models trained independently on each node
     - Truncated Monte Carlo Shapley approximation adapted for datasets instead of individual datum
-    - Simple and naive approach
     - Federated learning step-by-step
     - (More approaches to be tested in future improvements of this experiment)
   - Comparison variables (baseline: Shapley value)
     - Contributivity relative values
     - Computation time
   
-## Using the code files
-- Define your mock scenario in `my_scenario.py` by chaning the values of the suggested parameters
-- Define what training, evaluation, contributivity measurement you want to simulate in `simulation_run.py`, then launch it
+### Using the code files
+- Define your mock scenario in `my_scenario.py` by changing the values of the suggested parameters
+- Then execute `simulation_run.py` (starting from the default simulation described, you can adapt here what training, evaluation, contributivity measurement you want to simulate in)
 
 ## Contacts
 Should you be interested in this open effort and would like to share any question, suggestion or input, you can use the following channels:
   - This Github repository (issues, PR...)
-  - Technical forum: *in progress - to be completed*
+  - Substra Foundation's [technical forum](https://forum.substra.org)
   - Email: eric.boniface@substra.org, romain.goussault@substra.org
-  - Come meet with us at La Paillasse (Paris, France), La Cantine Numérique (Nantes, France) or Iconosquare Coworking (Limoges, France)
+  - Come meet with us at La Paillasse (Paris, France), La Cantine Numérique (Nantes, France) or Studio Iconosquare (Limoges, France)
