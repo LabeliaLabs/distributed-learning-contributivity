@@ -63,7 +63,7 @@ def single_train_score(node):
     print('\n### Training model on one single node:')
     history = model.fit(node.x_train, node.y_train,
               batch_size=constants.BATCH_SIZE,
-              epochs=4,
+              epochs=2,
               verbose=1,
               validation_data=(node.x_val, node.y_val))
     
@@ -73,7 +73,7 @@ def single_train_score(node):
                            batch_size=constants.BATCH_SIZE,
                            verbose=1)
     print('\nModel metrics names: ', model.metrics_names)
-    print('Model metrics values: ', model_eval_score)
+    print('Model metrics values: ', [ '%.3f' % elem for elem in model_eval_score ])
     
     # Return model score on test data
     return model_eval_score
@@ -92,7 +92,7 @@ def fl_train_score(node_list):
     else:
     
         model_list = [None] * nodes_count
-        epochs = 4
+        epochs = 2
         score_matrix = np.zeros(shape=(epochs, nodes_count))
         val_acc_epoch = []
         acc_epoch = []
@@ -172,7 +172,7 @@ def fl_train_score(node_list):
         model_eval_score = final_model.evaluate(node.x_test, node.y_test, batch_size=constants.BATCH_SIZE,
                              verbose=1)
         print('\nModel metrics names: ', final_model.metrics_names)
-        print('Model metrics values: ', model_eval_score)
+        print('Model metrics values: ', [ '%.3f' % elem for elem in model_eval_score ])
         
         # Return model score on test data
         return model_eval_score
