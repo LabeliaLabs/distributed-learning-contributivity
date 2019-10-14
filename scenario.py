@@ -52,9 +52,7 @@ class Scenario:
     self.nodes_list = []
     
     # TODO Create contributivty object to hold contributivty score, and computation time
-    self.shapley_values = []
-    self.perf_scores = []
-    self.computation_time = 0
+    self.contributity_list = []
 
 
   def to_json(self):

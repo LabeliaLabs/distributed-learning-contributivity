@@ -64,14 +64,14 @@ def single_train_score(node):
     history = model.fit(node.x_train, node.y_train,
               batch_size=constants.BATCH_SIZE,
               epochs=2,
-              verbose=1,
+              verbose=0,
               validation_data=(node.x_val, node.y_val))
     
     # Evaluate trained model
     print('\n### Evaluating model on test data:')
     model_eval_score = model.evaluate(node.x_test, node.y_test,
                            batch_size=constants.BATCH_SIZE,
-                           verbose=1)
+                           verbose=0)
     print('\nModel metrics names: ', model.metrics_names)
     print('Model metrics values: ', [ '%.3f' % elem for elem in model_eval_score ])
     
@@ -127,7 +127,7 @@ def fl_train_score(node_list):
             acc_list = []
             for node_index, node in enumerate(node_list):
                 
-                print('\nTraining on node '+ str(node_index))
+                print('Training on node '+ str(node_index))
                 node_model = utils.generate_new_cnn_model()
                 
                 # Model weights are the averaged weights
@@ -141,7 +141,7 @@ def fl_train_score(node_list):
                 history = node_model.fit(node.x_train, node.y_train,
                           batch_size=constants.BATCH_SIZE,
                           epochs=1,
-                          verbose=1,
+                          verbose=0,
                           validation_data=(node.x_val, node.y_val))
                 
                 val_acc_list.append(history.history['val_acc'])
@@ -170,7 +170,7 @@ def fl_train_score(node_list):
         # Evaluate model
         print('\n### Evaluating model on test data:')
         model_eval_score = final_model.evaluate(node.x_test, node.y_test, batch_size=constants.BATCH_SIZE,
-                             verbose=1)
+                             verbose=0)
         print('\nModel metrics names: ', final_model.metrics_names)
         print('Model metrics values: ', [ '%.3f' % elem for elem in model_eval_score ])
         
