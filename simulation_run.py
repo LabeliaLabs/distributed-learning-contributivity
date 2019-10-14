@@ -39,28 +39,36 @@ fl_score = fl_train_eval.fl_train_score(preprocessed_node_list)[1]
 
 #%% Contributivity 1: Baseline contributivity measurement (Shapley Value)
 
-contrib_name = 'shapley_values'
-shapley_contrib = contributivity.Contributivity(contrib_name)
+shapley_contrib = contributivity.Contributivity('shapley_values')
 
 start = timer()
 shapley_contrib.contributivity_scores = contributivity_measures.compute_SV(preprocessed_node_list)
 end = timer()
+
 shapley_contrib.computation_time = np.round(end - start)
-print(shapley_contrib.computation_time , 's to compute', contrib_name)
-print('\n### Shapley value for each node: ', [ '%.3f' % elem for elem in shapley_contrib.contributivity_scores])
+print(shapley_contrib)
 
       
 #%% Contributivity 1 : performance scores of models trained independently on each node
 
-start = timer()
-perf_scores = contributivity_measures.compute_independent_scores(preprocessed_node_list, fl_score)
-end = timer()
-time_taken = np.round(end - start)
+independant_raw_contrib = contributivity.Contributivity('independant_scores_raw')
+independant_additiv_contrib = contributivity.Contributivity('independant_scores_additiv')
 
-print('\n### Independent perf. scores (raw and normalized additively):')
-print('- raw: ', [ '%.3f' % elem for elem in perf_scores[0] ] )
-print('- normalized additively: ', [ '%.3f' % elem for elem in perf_scores[1] ])
-print('- (reminder: fl_score ' + ('%.3f' % fl_score) + ')')
+start = timer()
+scores = contributivity_measures.compute_independent_scores(preprocessed_node_list, fl_score)
+end = timer()
+
+independant_computation_time = np.round(end - start)
+independant_raw_contrib.computation_time = independant_computation_time
+independant_additiv_contrib.computation_time = independant_computation_time
+
+# TODO use dict instead of 0/1 indexes
+independant_raw_contrib.contributivity_scores = scores[0]
+independant_additiv_contrib.contributivity_scores = scores[1]
+
+print(independant_raw_contrib)
+print('')
+print(independant_additiv_contrib)
 
       
 #%% Save results to file

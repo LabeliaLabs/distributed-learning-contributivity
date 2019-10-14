@@ -11,4 +11,13 @@ class Contributivity:
     self.name = name
     self.contributivity_scores = contributivity_scores
     self.computation_time = computation_time
+    
+    
+  def __str__(self):
+    output = self.name + '\n'
+    output += 'computation time: ' + str(self.computation_time) + ' s' + '\n'
+    #TODO print only 3 digits
+    output += 'contributivity scores: ' + str(self.contributivity_scores) 
+      
+    return output
 
