@@ -39,20 +39,22 @@ fl_score = fl_train_eval.fl_train_score(preprocessed_node_list)[1]
 
 #%% Contributivity 1: Baseline contributivity measurement (Shapley Value)
 
-shapley_contrib = contributivity.Contributivity('shapley_values')
+shapley_contrib = contributivity.Contributivity('Shapley values')
 
 start = timer()
 shapley_contrib.contributivity_scores = contributivity_measures.compute_SV(preprocessed_node_list)
 end = timer()
 
 shapley_contrib.computation_time = np.round(end - start)
+
+my_basic_scenario.append_contributivity(shapley_contrib)
 print(shapley_contrib)
 
       
 #%% Contributivity 1 : performance scores of models trained independently on each node
 
-independant_raw_contrib = contributivity.Contributivity('independant_scores_raw')
-independant_additiv_contrib = contributivity.Contributivity('independant_scores_additiv')
+independant_raw_contrib = contributivity.Contributivity('Independant scores raw')
+independant_additiv_contrib = contributivity.Contributivity('Independant scores additiv')
 
 start = timer()
 scores = contributivity_measures.compute_independent_scores(preprocessed_node_list, fl_score)
@@ -66,6 +68,8 @@ independant_additiv_contrib.computation_time = independant_computation_time
 independant_raw_contrib.contributivity_scores = scores[0]
 independant_additiv_contrib.contributivity_scores = scores[1]
 
+my_basic_scenario.append_contributivity(independant_raw_contrib)
+my_basic_scenario.append_contributivity(independant_additiv_contrib)
 print(independant_raw_contrib)
 print('')
 print(independant_additiv_contrib)

@@ -9,8 +9,6 @@ The scenario is then processed by data_splitting.py
 """
 
 from keras.datasets import mnist
-import json
-import numpy as np
 import os
 import datetime
 
@@ -22,22 +20,22 @@ class Scenario:
     (x_train, y_train), (x_test, y_test) = mnist.load_data()
     
     # Truncate dataset for quicker debugging/testing
-    self.x_train = x_train[:6000]
-    self.y_train = y_train[:6000]
+    self.x_train = x_train[:600]
+    self.y_train = y_train[:600]
  
-    self.x_test = x_test[:3000]
-    self.y_test = y_test[:3000]
+    self.x_test = x_test[:300]
+    self.y_test = y_test[:300]
     
     # Define the desired number of independant nodes
     # Nodes mock different partners in a collaborative data science project
-    self.nodes_count = 3
+    self.nodes_count = 2
 
     # Configure the desired respective datasets sizes of the nodes
     # Should the nodes receive an equivalent amount of samples each...
     # ... or receive different amounts?
     # Define the percentages of samples per node
     # Sum has to equal 1 and number of items has to equal NODES_COUNT
-    self.amounts_per_node = [0.2, 0.3, 0.5]
+    self.amounts_per_node = [0.2, 0.8]
     
     # Configure if nodes get overlapping or distinct samples
     # Should the nodes receive data from distinct categories...
@@ -51,25 +49,29 @@ class Scenario:
     # TODO
     self.nodes_list = []
     
-    # TODO Create contributivty object to hold contributivty score, and computation time
-    self.contributity_list = []
+    self.contributivity_list = []
 
 
-  def to_json(self):
+  def append_contributivity(self, contributivity):
             
-    # Omit np.ndarray when converting to JSON.
-    # TODO : find better way to not outputs training/testing data to JSON
-    def default(o):
-        if isinstance(o, np.ndarray):
-            return np.nan
-    
-    return json.dumps(self.__dict__, default=default)
-        
+      self.contributivity_list.append(contributivity)
+      
 
   def to_file(self):
     
-    json_data = self.to_json()
+    out = ''
+    out += 'Dataset name: ' + self.dataset_name + '\n'
+    out += 'Nodes_count: ' + str(self.nodes_count) + '\n'
+    out += 'Amounts per node: ' + str(self.amounts_per_node) + '\n'
+    out += 'Overlap or distinct: ' + self.overlap_or_distinct + '\n'
+    out += 'Test set option: ' + self.testset_option + '\n'
+    out += '\n'
     
+    out += str(len(self.contributivity_list)) + ' contributivity methods: ' + '\n'
+
+    for contrib in self.contributivity_list:
+      out += str(contrib) + '\n\n'
+       
     target_folder = 'results'
     os.makedirs(target_folder, exist_ok=True)
     
@@ -79,6 +81,4 @@ class Scenario:
     target_file_path = os.path.join(target_folder, target_filename)
     
     with open(target_file_path, 'w', encoding='utf-8') as f:
-        json.dump(json_data, f, ensure_ascii=False, indent=4, sort_keys=True)
-
-    
+        f.write(out)
