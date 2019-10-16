@@ -14,7 +14,7 @@ from itertools import combinations
 
 from scipy.special import softmax
 
-import fl_train_eval
+import fl_training
 
 import shapley_value.shapley as sv
 
@@ -30,7 +30,7 @@ def compute_independent_scores(node_list, collaborative_score):
     
     # Train models independently on each node and append perf. score to list of perf. scores
     for node in node_list:
-        performance_scores.append(fl_train_eval.single_train_score(node)[1])
+        performance_scores.append(fl_training.compute_test_score_for_single_node(node))
         
     # Compute 'regularized' values of performance scores so that they are additive and their sum amount to the collaborative performance score obtained by the coalition of all players (nodes)
     perf_scores_additive = softmax(performance_scores) * collaborative_score
@@ -57,12 +57,11 @@ def compute_SV(node_list):
     # For each coalition, obtain value of characteristic function...
     # ... i.e.: train and evaluate model on nodes part of the given coalition
     characteristic_function = []
-    fl_train_score = fl_train_eval.fl_train_score
     
     for coalition in coalitions:
         coalition_nodes = list(node_list[i] for i in coalition)
         # print('\nComputing characteristic function on coalition ', coalition) # VERBOSE
-        characteristic_function.append(fl_train_score(coalition_nodes)[1])
+        characteristic_function.append(fl_training.compute_test_score(coalition_nodes))
     # print('\nValue of characteristic function for all coalitions: ', characteristic_function) # VERBOSE
     
     # Compute Shapley Value for each node

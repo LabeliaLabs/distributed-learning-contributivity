@@ -15,7 +15,7 @@ from __future__ import print_function
 import scenario
 import contributivity
 import data_splitting
-import fl_train_eval
+import fl_training
 import contributivity_measures
 from timeit import default_timer as timer
 import numpy as np
@@ -29,12 +29,12 @@ node_list = data_splitting.process_data_splitting_scenario(my_basic_scenario)
 
 #%% Preprocess data for compatibility with keras CNN models
 
-preprocessed_node_list = fl_train_eval.preprocess_node_list(node_list)
+preprocessed_node_list = fl_training.preprocess_node_list(node_list)
 
 
 #%% Train and eval on all nodes according to scenario
 
-fl_score = fl_train_eval.fl_train_score(preprocessed_node_list)[1]
+fl_score = fl_training.compute_test_score(preprocessed_node_list)
 
 
 #%% Contributivity 1: Baseline contributivity measurement (Shapley Value)
