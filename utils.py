@@ -26,7 +26,7 @@ def generate_new_cnn_model():
     model.add(Conv2D(64, (3, 3), activation='relu'))
     model.add(MaxPooling2D(pool_size=(2, 2)))
     model.add(Flatten())
-    model.add(Dense(128, activation='relu'))
+    model.add(Dense(32, activation='relu'))
     model.add(Dense(constants.NUM_CLASSES, activation='softmax'))
     
     model.compile(loss=keras.losses.categorical_crossentropy,

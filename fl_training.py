@@ -8,20 +8,12 @@ inspired from: https://keras.io/examples/mnist_cnn/
 
 from __future__ import print_function
 import keras
-from keras.datasets import mnist
-from keras.models import Sequential
-from keras.layers import Dense, Dropout, Flatten
-from keras.layers import Conv2D, MaxPooling2D
 
-import matplotlib.pyplot as plt
 from sklearn.model_selection import train_test_split
 import numpy as np
 
 import utils
 import constants
-import my_scenario
-import data_splitting
-from node import Node
 
 import os
 os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
@@ -31,7 +23,6 @@ os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
 
 def preprocess_node_list(node_list):
     """Return node_list preprocessed for keras CNN"""
-
     
     print('\n### Pre-processing data for keras CNN:')
     for node_index, node in enumerate(node_list):
@@ -52,7 +43,8 @@ def preprocess_node_list(node_list):
 
 
 #%% Single partner training
-def single_train_score(node):
+    
+def compute_test_score_for_single_node(node):
     """Return the score on test data of a model trained on a single node"""
     
     # Initialize model
@@ -64,30 +56,32 @@ def single_train_score(node):
     history = model.fit(node.x_train, node.y_train,
               batch_size=constants.BATCH_SIZE,
               epochs=2,
-              verbose=1,
+              verbose=0,
               validation_data=(node.x_val, node.y_val))
     
     # Evaluate trained model
     print('\n### Evaluating model on test data:')
-    model_eval_score = model.evaluate(node.x_test, node.y_test,
+    model_evaluation = model.evaluate(node.x_test, node.y_test,
                            batch_size=constants.BATCH_SIZE,
-                           verbose=1)
+                           verbose=0)
     print('\nModel metrics names: ', model.metrics_names)
-    print('Model metrics values: ', [ '%.3f' % elem for elem in model_eval_score ])
+    print('Model metrics values: ', ['%.3f' % elem for elem in model_evaluation])
     
+    model_eval_score = model_evaluation[1] # 0 is for the loss
+
     # Return model score on test data
     return model_eval_score
 
 
 #%% Distributed learning training
         
-def fl_train_score(node_list):
+def compute_test_score(node_list):
     """Return the score on test data of a final aggregated model trained in a federated way on each node"""
 
     nodes_count = len(node_list)
     
     if nodes_count == 1:
-        return single_train_score(node_list[0])
+        return compute_test_score_for_single_node(node_list[0])
     
     else:
     
@@ -127,7 +121,7 @@ def fl_train_score(node_list):
             acc_list = []
             for node_index, node in enumerate(node_list):
                 
-                print('\nTraining on node '+ str(node_index))
+                print('Training on node '+ str(node_index))
                 node_model = utils.generate_new_cnn_model()
                 
                 # Model weights are the averaged weights
@@ -141,7 +135,7 @@ def fl_train_score(node_list):
                 history = node_model.fit(node.x_train, node.y_train,
                           batch_size=constants.BATCH_SIZE,
                           epochs=1,
-                          verbose=1,
+                          verbose=0,
                           validation_data=(node.x_val, node.y_val))
                 
                 val_acc_list.append(history.history['val_acc'])
@@ -169,10 +163,12 @@ def fl_train_score(node_list):
         
         # Evaluate model
         print('\n### Evaluating model on test data:')
-        model_eval_score = final_model.evaluate(node.x_test, node.y_test, batch_size=constants.BATCH_SIZE,
-                             verbose=1)
+        model_evaluation = final_model.evaluate(node.x_test, node.y_test, batch_size=constants.BATCH_SIZE,
+                             verbose=0)
         print('\nModel metrics names: ', final_model.metrics_names)
-        print('Model metrics values: ', [ '%.3f' % elem for elem in model_eval_score ])
+        print('Model metrics values: ', ['%.3f' % elem for elem in model_evaluation])
+        
+        model_eval_score = model_evaluation[1] # 0 is for the loss
         
         # Return model score on test data
         return model_eval_score
