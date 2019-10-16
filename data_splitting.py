@@ -9,7 +9,6 @@ This processes the split of data among nodes according to scenario passed as arg
 
 from __future__ import print_function
 
-import matplotlib.pyplot as plt
 import numpy as np
 
 from node import Node
@@ -27,7 +26,7 @@ def process_data_splitting_scenario(scenario):
     
     # Describe data
     print('\n### Data loaded: ', scenario.dataset_name)
-    print('- ' + str(len(scenario.x_train)) + ' train data with ' + str(len(y_train)) + ' labels')
+    print('- ' + str(len(x_train)) + ' train data with ' + str(len(y_train)) + ' labels')
     print('- ' + str(len(x_test)) + ' test data ' + str(len(y_test)) + ' labels')
     
     # Describe number of independant nodes
@@ -94,7 +93,7 @@ def process_data_splitting_scenario(scenario):
     
     # If neither 'Distinct' nor 'Overlap', we raise an exception
     else:
-        raise NameError('This overlap_or_distinct scenario is not recognized')
+        raise NameError('This overlap_or_distinct scenario [' + scenario.overlap_or_distinct + '] is not recognized')
         
         
     #%% Do the splitting among nodes according to desired scenarios of...
@@ -124,7 +123,7 @@ def process_data_splitting_scenario(scenario):
             x_node_test = x_test
             y_node_test = y_test
         else:
-            raise NameError('This testset_option scenario is not recognized. Quitting with quit()')
+            raise NameError('This testset_option [' + scenario.testset_option + '] scenario is not recognized')
             
         node = Node(x_node_train, x_node_test, y_node_train, y_node_test)
         node_list.append(node)
