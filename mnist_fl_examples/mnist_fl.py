@@ -8,20 +8,18 @@ inspired from: https://keras.io/examples/mnist_cnn/
 
 from __future__ import print_function
 import keras
-from keras.datasets import mnist
-from keras.models import Sequential
-from keras.layers import Dense, Dropout, Flatten
-from keras.layers import Conv2D, MaxPooling2D
+
 
 import matplotlib.pyplot as plt
 from sklearn.model_selection import train_test_split
 import numpy as np
 
+import sys
+sys.path.append("..") 
 import utils
 import constants
 import my_scenario
 import data_splitting
-from node import Node
 
 import os
 os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
