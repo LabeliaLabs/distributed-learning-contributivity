@@ -17,14 +17,9 @@ class Scenario:
   def __init__(self):
       
     self.dataset_name = 'MNIST'
-    (x_train, y_train), (x_test, y_test) = mnist.load_data()
-    
-    # Add express option to limit the dataset size
-    
-    # Truncate dataset for quicker debugging/testing
+    (x_train, y_train), (x_test, y_test) = mnist.load_data()    
     self.x_train = x_train
     self.y_train = y_train
- 
     self.x_test = x_test
     self.y_test = y_test
     
@@ -39,15 +34,13 @@ class Scenario:
     # Sum has to equal 1 and number of items has to equal NODES_COUNT
     self.amounts_per_node = [0.33, 0.33, 0.34]
     
-    # Configure if nodes get overlapping or distinct samples
-    # Should the nodes receive data from distinct categories...
-    # ... or just random samples?
-    # TODO find better names
-    self.overlap_or_distinct = 'Overlap' # Toggle between 'Overlap' and 'Distinct'
+    # Configure if data samples are split between nodes randomly or in a stratified way...
+    # ... so that they cover distinct areas of the samples space
+    self.samples_split_option = 'Random' # Toggle between 'Random' and 'Stratified'
     
-    # Define if test data should be split between nodes...
-    # ... or if each node should refer to the complete test set
-    self.testset_option = 'Global' # Toggle between 'Global' and 'Split'
+    # Define if test data should be distributed between nodes...
+    # ... or if each node should refer to a centralised test set
+    self.testset_option = 'Centralised' # Toggle between 'Centralised' and 'Distributed'
     
     # TODO
     self.nodes_list = []
@@ -64,10 +57,10 @@ class Scenario:
     
     out = ''
     out += 'Dataset name: ' + self.dataset_name + '\n'
-    out += 'Nodes_count: ' + str(self.nodes_count) + '\n'
-    out += 'Amounts per node: ' + str(self.amounts_per_node) + '\n'
-    out += 'Overlap or distinct: ' + self.overlap_or_distinct + '\n'
-    out += 'Test set option: ' + self.testset_option + '\n'
+    out += 'Nodes count: ' + str(self.nodes_count) + '\n'
+    out += 'Percentages of data samples per node: ' + str(self.amounts_per_node) + '\n'
+    out += 'Random or stratified split of data samples: ' + self.samples_split_option + '\n'
+    out += 'Centralised or distributed test set: ' + self.testset_option + '\n'
     out += '\n'
     
     out += str(len(self.contributivity_list)) + ' contributivity methods: ' + '\n'

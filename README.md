@@ -35,8 +35,9 @@ compute it with a reasonable amount of resources
     - Computation time
   
 ### Using the code files
-- Define your mock scenario in `my_scenario.py` by changing the values of the suggested parameters
-- Then execute `simulation_run.py` (starting from the default simulation described, you can adapt here what training, evaluation, contributivity measurement you want to simulate in)
+- Define your mock scenario(s) in `simulation_run.py` by changing the values of the suggested parameters of the custom scenario
+- Then execute `simulation_run.py` (starting from the default simulation described, you can adapt here what training, evaluation, contributivity measurement you want to simulate)
+- Consult results in the results files generated
 
 ## Contacts
 Should you be interested in this open effort and would like to share any question, suggestion or input, you can use the following channels:

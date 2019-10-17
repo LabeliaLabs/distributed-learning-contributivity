@@ -50,22 +50,20 @@ def process_data_splitting_scenario(scenario):
         splitting_indices[i+1] = splitting_indices[i] + scenario.amounts_per_node[i+1]
     splitting_indices_train = (splitting_indices * len(y_train)).astype(int)
     splitting_indices_test = (splitting_indices * len(y_test)).astype(int)
-    print('- Splitting indices defined (for train data):', splitting_indices_train)
+    # print('- Splitting indices defined (for train data):', splitting_indices_train) # VERBOSE
     
     
-    #%% Configure the desired splitting scenario - Overlapping or distinct samples
-    # Should the nodes receive data from distinct regions of space...
-    # ... or from the complete universe?
+    #%% Configure the desired data distribution scenario
     
     # Describe the type of distribution chosen
-    print('- Data distribution scenario chosen:', scenario.overlap_or_distinct)
+    print('- Data distribution scenario chosen:', scenario.samples_split_option)
     
     # Create a list of indexes of the samples
     train_idx = np.arange(len(y_train))
     test_idx = np.arange(len(y_test))
     
-    # In the 'Distinct' scenario we sort MNIST by labels
-    if scenario.overlap_or_distinct == 'Distinct':
+    # In the 'Stratified' scenario we sort MNIST by labels
+    if scenario.samples_split_option == 'Stratified':
         
         # Sort MNIST by labels
         y_sorted_idx = y_train.argsort()
@@ -86,19 +84,17 @@ def process_data_splitting_scenario(scenario):
 #        plt.imshow(last_image)
 #        plt.show()
         
-    # In the 'Overlap' scenario we shuffle randomly the indexes
-    elif scenario.overlap_or_distinct == 'Overlap':
+    # In the 'Random' scenario we shuffle randomly the indexes
+    elif scenario.samples_split_option == 'Random':
         np.random.seed(42)
         np.random.shuffle(train_idx)
     
-    # If neither 'Distinct' nor 'Overlap', we raise an exception
+    # If neither 'Stratified' nor 'Random', we raise an exception
     else:
-        raise NameError('This overlap_or_distinct scenario [' + scenario.overlap_or_distinct + '] is not recognized')
+        raise NameError('This samples_split_option scenario [' + scenario.samples_split_option + '] is not recognized')
         
         
-    #%% Do the splitting among nodes according to desired scenarios of...
-    # ... data amount per node and overlap/distinct distribution and...
-    # ... test data distribution
+    #%% Do the splitting among nodes according to desired scenarios
     
     # Split data between nodes
     train_idx_idx_list = np.split(train_idx, splitting_indices_train)
@@ -116,10 +112,10 @@ def process_data_splitting_scenario(scenario):
         y_node_train = y_train[train_idx,]
         
         # Test data
-        if scenario.testset_option == 'Split':
+        if scenario.testset_option == 'Distributed':
             x_node_test = x_test[test_idx]
             y_node_test = y_test[test_idx]
-        elif scenario.testset_option == 'Global':
+        elif scenario.testset_option == 'Centralised':
             x_node_test = x_test
             y_node_test = y_test
         else:
