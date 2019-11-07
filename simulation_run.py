@@ -17,6 +17,8 @@ import contributivity
 import data_splitting
 import fl_training
 import contributivity_measures
+import constants
+
 from timeit import default_timer as timer
 import numpy as np
 
@@ -32,6 +34,7 @@ my_custom_scenario.nodes_count = 3 # Number of nodes in the collaborative ML pro
 my_custom_scenario.amounts_per_node = [0.05, 0.15, 0.8] # Percentages of the data samples for each node
 my_custom_scenario.samples_split_option = 'Stratified' # If data are split randomly between nodes or stratified to be distinct (toggle between 'Random' and 'Stratified')
 my_custom_scenario.testset_option = 'Centralised' # If test data are distributed between nodes or stays a central testset (toggle between 'Centralised' and 'Distributed')
+my_custom_scenario.nb_epochs = constants.NB_EPOCHS
 my_custom_scenario.x_train = my_custom_scenario.x_train[:600] # Truncate dataset if needed for quicker debugging/testing
 my_custom_scenario.y_train = my_custom_scenario.y_train[:600] # Truncate dataset if needed for quicker debugging/testing
 my_custom_scenario.x_test = my_custom_scenario.x_test[:100] # Truncate dataset if needed for quicker debugging/testing
