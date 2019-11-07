@@ -36,6 +36,7 @@ my_custom_scenario.x_train = my_custom_scenario.x_train[:600] # Truncate dataset
 my_custom_scenario.y_train = my_custom_scenario.y_train[:600] # Truncate dataset if needed for quicker debugging/testing
 my_custom_scenario.x_test = my_custom_scenario.x_test[:100] # Truncate dataset if needed for quicker debugging/testing
 my_custom_scenario.y_test = my_custom_scenario.y_test[:100] # Truncate dataset if needed for quicker debugging/testing
+# my_custom_scenario.to_file() # DEBUG
 
 # Gather scenarii in a list
 scenarii_list = []
