@@ -5,6 +5,8 @@ Created on Sun Sep 29 17:31:56 2019
 @author: RGOUSSAULT
 """
 
+import datetime
+
 
 class Contributivity:
   def __init__(self, name='', contributivity_scores=[], computation_time=0):
@@ -15,7 +17,7 @@ class Contributivity:
     
   def __str__(self):
     output = self.name + '\n'
-    output += 'computation time: ' + str(self.computation_time) + ' s' + '\n'
+    output += 'computation time: ' + str(datetime.timedelta(seconds=self.computation_time)) + '\n'
     #TODO print only 3 digits
     output += 'contributivity scores: ' + str(self.contributivity_scores) 
       
