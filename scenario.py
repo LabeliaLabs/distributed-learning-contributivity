@@ -46,6 +46,8 @@ class Scenario:
     self.nodes_list = []
     
     self.contributivity_list = []
+    
+    self.nb_epochs = int
 
 
   def append_contributivity(self, contributivity):
@@ -57,10 +59,13 @@ class Scenario:
     
     out = ''
     out += 'Dataset name: ' + self.dataset_name + '\n'
+    out += 'Number of data samples - train: ' + str(len(self.x_train)) + '\n'
+    out += 'Number of data samples - test: ' + str(len(self.x_test)) + '\n'
     out += 'Nodes count: ' + str(self.nodes_count) + '\n'
     out += 'Percentages of data samples per node: ' + str(self.amounts_per_node) + '\n'
     out += 'Random or stratified split of data samples: ' + self.samples_split_option + '\n'
     out += 'Centralised or distributed test set: ' + self.testset_option + '\n'
+    out += 'Number of epochs defined in learning algos: ' + str(self.nb_epochs) + '\n'
     out += '\n'
     
     out += str(len(self.contributivity_list)) + ' contributivity methods: ' + '\n'
