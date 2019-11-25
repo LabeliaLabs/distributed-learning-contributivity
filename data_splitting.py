@@ -105,7 +105,7 @@ def process_data_splitting_scenario(scenario):
   
     # Populate nodes
     node_list = []
-    nodeId=1
+    node_id=1
     for train_idx, test_idx in zip(train_idx_idx_list, test_idx_idx_list):
         
         # Train data
@@ -123,9 +123,9 @@ def process_data_splitting_scenario(scenario):
             raise NameError('This testset_option [' + scenario.testset_option + '] scenario is not recognized')
             
         node = Node(x_node_train, x_node_test, y_node_train, y_node_test, 
-                    str(nodeId))
+                    str(node_id))
         node_list.append(node)
-        nodeId += 1
+        node_id += 1
     
     # Check coherence of node_list versus nodes_count   
     assert(len(node_list) == scenario.nodes_count)

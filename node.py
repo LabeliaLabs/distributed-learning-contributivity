@@ -9,7 +9,7 @@ import constants
 import keras
 
 class Node:
-  def __init__(self, x_train, x_test, y_train, y_test, nodeId):
+  def __init__(self, x_train, x_test, y_train, y_test, node_id):
     self.x_train = x_train
     self.x_val = []
     self.x_test = x_test
@@ -18,7 +18,7 @@ class Node:
     self.y_val = []
     self.y_test = y_test
     
-    self.nodeId = nodeId
+    self.node_id = node_id
 
 
   def get_x_train_len(self):
