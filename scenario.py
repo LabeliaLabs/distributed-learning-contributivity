@@ -48,7 +48,7 @@ class Scenario:
     
     self.contributivity_list = []
     
-    self.nb_epochs = constants.NB_EPOCHS
+    self.nb_epochs = 15
 
     if is_quick_demo:
         

@@ -44,7 +44,7 @@ def preprocess_node_list(node_list):
 
 #%% Single partner training
     
-def compute_test_score_for_single_node(node):
+def compute_test_score_for_single_node(node, epoch_count):
     """Return the score on test data of a model trained on a single node"""
     
     # Initialize model
@@ -55,7 +55,7 @@ def compute_test_score_for_single_node(node):
     print('\n### Training model on one single node:')
     history = model.fit(node.x_train, node.y_train,
               batch_size=constants.BATCH_SIZE,
-              epochs=constants.NB_EPOCHS,
+              epochs=epoch_count,
               verbose=0,
               validation_data=(node.x_val, node.y_val))
     
@@ -75,18 +75,18 @@ def compute_test_score_for_single_node(node):
 
 #%% Distributed learning training
         
-def compute_test_score(node_list):
+def compute_test_score(node_list, epoch_count):
     """Return the score on test data of a final aggregated model trained in a federated way on each node"""
 
     nodes_count = len(node_list)
     
     if nodes_count == 1:
-        return compute_test_score_for_single_node(node_list[0])
+        return compute_test_score_for_single_node(node_list[0], epoch_count)
     
     else:
     
         model_list = [None] * nodes_count
-        epochs = constants.NB_EPOCHS
+        epochs = epoch_count
         score_matrix = np.zeros(shape=(epochs, nodes_count))
         val_acc_epoch = []
         acc_epoch = []
