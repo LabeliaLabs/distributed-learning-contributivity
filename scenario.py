@@ -14,6 +14,7 @@ import datetime
 import constants
 import numpy as np
 from node import Node
+from pathlib import Path
 
 class Scenario:
   def __init__(self, is_quick_demo=False):
@@ -49,16 +50,21 @@ class Scenario:
     self.contributivity_list = []
     
     self.nb_epochs = 15
+    
+    now = datetime.datetime.now()
+    now_str = now.strftime("%Y-%m-%d_%Hh%M")
+    self.save_folder = Path(now_str)
+    os.makedirs(self.save_folder, exist_ok=True)
 
     if is_quick_demo:
         
         # Use les data and less epochs to speed up the computaions
-        self.x_train = x_train[:600]
-        self.y_train = y_train[:600]
-        self.x_test = x_test[:100]
-        self.y_test = y_test[:100]
+        self.x_train = x_train[:300]
+        self.y_train = y_train[:300]
+        self.x_test = x_test[:50]
+        self.y_test = y_test[:50]
         
-        self.nb_epochs = 2
+        self.nb_epochs = 1
         
     
   def append_contributivity(self, contributivity):
@@ -191,16 +197,8 @@ class Scenario:
     for contrib in self.contributivity_list:
       out += str(contrib) + '\n\n'
        
-    target_folder = 'results'
-    os.makedirs(target_folder, exist_ok=True)
-    
-    now = datetime.datetime.now()
-    now_str = now.strftime("%Y-%m-%d_%Hh%M")
-    target_filename = now_str + '.txt'
-    target_file_path = os.path.join(target_folder, target_filename)
+
+    target_file_path = self.save_folder / 'results_summary.txt'
     
     with open(target_file_path, 'w', encoding='utf-8') as f:
         f.write(out)
-        
-        
-        

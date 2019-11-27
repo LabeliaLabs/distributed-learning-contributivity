@@ -14,6 +14,7 @@ import numpy as np
 
 import utils
 import constants
+import matplotlib.pyplot as plt
 
 import os
 os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
@@ -75,7 +76,7 @@ def compute_test_score_for_single_node(node, epoch_count):
 
 #%% Distributed learning training
         
-def compute_test_score(node_list, epoch_count):
+def compute_test_score(node_list, epoch_count, plot_path=None):
     """Return the score on test data of a final aggregated model trained in a federated way on each node"""
 
     nodes_count = len(node_list)
@@ -160,15 +161,27 @@ def compute_test_score(node_list, epoch_count):
         final_model.compile(loss=keras.losses.categorical_crossentropy,
                       optimizer='adam',
                       metrics=['accuracy'])
+
+        # Plot training history
+        plt.plot(acc_epoch)
+        plt.plot(val_acc_epoch)
+        plt.title('Model accuracy')
+        plt.ylabel('Accuracy')
+        plt.xlabel('Epoch')
+        plt.legend(['Train', 'Val'], loc='upper left')
+        plt.show()
+        if plot_path is not None:
+            plt.savefig(plot_path / 'federated_training.png')
+
         
         # Evaluate model
+        # TODO model evaluation is done only on one node now!
         print('\n### Evaluating model on test data:')
         model_evaluation = final_model.evaluate(node.x_test, node.y_test, batch_size=constants.BATCH_SIZE,
                              verbose=0)
         print('\nModel metrics names: ', final_model.metrics_names)
         print('Model metrics values: ', ['%.3f' % elem for elem in model_evaluation])
         
-        model_eval_score = model_evaluation[1] # 0 is for the loss
+        test_score = model_evaluation[1] # 0 is for the loss
         
-        # Return model score on test data
-        return model_eval_score
+        return test_score

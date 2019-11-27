@@ -46,7 +46,7 @@ for current_scenario in scenarii_list:
     
     #%% Train and eval on all nodes according to scenario
     
-    fl_score = fl_training.compute_test_score(current_scenario.nodes_list, current_scenario.nb_epochs)
+    fl_score = fl_training.compute_test_score(current_scenario.nodes_list, current_scenario.nb_epochs, current_scenario.save_folder)
     
     
     #%% Contributivity 1: Baseline contributivity measurement (Shapley Value)
