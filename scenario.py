@@ -11,10 +11,11 @@ The scenario is then processed by data_splitting.py
 from keras.datasets import mnist
 import os
 import datetime
+import constants
 
 
 class Scenario:
-  def __init__(self):
+  def __init__(self, is_quick_demo=False):
       
     self.dataset_name = 'MNIST'
     (x_train, y_train), (x_test, y_test) = mnist.load_data()    
@@ -47,9 +48,19 @@ class Scenario:
     
     self.contributivity_list = []
     
-    self.nb_epochs = int
+    self.nb_epochs = constants.NB_EPOCHS
 
-
+    if is_quick_demo:
+        
+        # Use les data and less epochs to speed up the computaions
+        self.x_train = x_train[:600]
+        self.y_train = y_train[:600]
+        self.x_test = x_test[:100]
+        self.y_test = y_test[:100]
+        
+        self.nb_epochs = 2
+        
+    
   def append_contributivity(self, contributivity):
             
       self.contributivity_list.append(contributivity)
