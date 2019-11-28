@@ -4,12 +4,11 @@ import scenario
 import data_splitting
 import fl_training
 import operator as op 
+
 from functools import reduce
 
 
 #my_custom_scenario = scenario.Scenario()
-##my_custom_scenario.nodes_count=3
-##my_custom_scenario.amounts_per_node = [0.33, 0.33, 0.34]
 #my_custom_scenario.nodes_count=5
 #my_custom_scenario.amounts_per_node = [1/my_custom_scenario.nodes_count for i in range ((my_custom_scenario.nodes_count))]
 #my_custom_scenario.samples_split_option = 'Random' # or 'Stratified'
@@ -21,34 +20,20 @@ from functools import reduce
 #
 #node_list = data_splitting.process_data_splitting_scenario(my_custom_scenario)
 #preprocessed_node_list = fl_training.preprocess_node_list(node_list)
+#
 
 
-
-
-def nCr(n, r):
-    """ compute the number of combination of size r in an ensemble of size n"""
-    r = min(r, n-r)
-    numer = reduce(op.mul, range(n, n-r, -1), 1)
-    denom = reduce(op.mul, range(1, r+1), 1)
-    return numer // denom
-
-
-def truncated_MC(preprocessed_node_list, mode="aggregated", sv_accuracy=0.0001, contrib_accuracy=0.01):
+def truncated_MC(preprocessed_node_list, sv_accuracy=0.0001, contrib_accuracy=0.01):
     """Return the vector of approximated shapeley value corresponding to a list of node and a characteristic function using the truncated monte-carlo method."""
-    if mode=="aggregated":
-        characteristic_func=fl_training.compute_test_score
-    # TODO: elif mode="merge":
-    else :
-        print("mode value must be 'aggregated'")
-        return None
-        
+    
+    characteristic_func=fl_training.compute_test_score
     n = len(preprocessed_node_list)
     
     # we store the value of the characteristic function in order to avoid recomputing it twice
     char_value_dict={} # the dictionary that will countain the values
     listn=np.arange(n)
     
-    # return the characteristic of the node list associated to the ensemble  permut and without recomputing it if it was already computed
+    # return the characteristic function of the nodelist associated to the ensemble  permut, without recomputing it if it was already computed
     def not_twice_characteristic(permut):
         #sort permut
         isin=np.repeat(False,n)
@@ -70,10 +55,9 @@ def truncated_MC(preprocessed_node_list, mode="aggregated", sv_accuracy=0.0001, 
         sv = np.zeros(n)
         t=0
         characteristic_all_node= not_twice_characteristic(np.arange(n))
-        
-        
         previous_permutation=np.zeros(n)
         firsts_are_equal =True
+        
         while (abs(sv-previous_sv)>sv_accuracy).any() or firsts_are_equal: # actualisation of sv'svalue
             t+=1
             previous_sv = np.copy(sv)
@@ -84,8 +68,6 @@ def truncated_MC(preprocessed_node_list, mode="aggregated", sv_accuracy=0.0001, 
                 else:
                     firsts_are_equal=   (permutation==previous_permutation).all()
                     previous_permutation=np.copy(permutation)
-            
-    
             char_nodelists = np.zeros(n+1)
             char_nodelists[-1]=characteristic_all_node
             for j in range(n):  # iteration on sv[permutation[j]]
@@ -104,7 +86,10 @@ def truncated_MC(preprocessed_node_list, mode="aggregated", sv_accuracy=0.0001, 
 #res3=truncated_MC(preprocessed_node_list)
 #res4=truncated_MC(preprocessed_node_list)
 #print(res1, "\n",res2, "\n",res3, "\n",res4, "\n",)
- 
+# [0.04678409 0.07898474 0.08309079 0.06642378 0.10971659] 
+# [0.09454124 0.11483221 0.06273904 0.10528716 0.10256266] 
+# [0.0808666  0.12472028 0.04013229 0.1309129  0.09346555] 
+# [0.11298114 0.10456733 0.0888828  0.08594821 0.10383444]  
         
         
         
