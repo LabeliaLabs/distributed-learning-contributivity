@@ -1,4 +1,9 @@
- 
+"""
+Created on Thu Nov  28 19:43:13 2019
+A script to  run simulations with the truncated Monte-Carlo method 
+
+@author: Thomas-Galtier
+"""
 import numpy as np 
 import scenario
 import data_splitting
