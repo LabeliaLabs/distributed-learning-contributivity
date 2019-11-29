@@ -105,7 +105,7 @@ def process_data_splitting_scenario(scenario):
   
     # Populate nodes
     node_list = []
-    node_id=1
+    node_id = 0
     for train_idx, test_idx in zip(train_idx_idx_list, test_idx_idx_list):
         
         # Train data
