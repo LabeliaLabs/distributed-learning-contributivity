@@ -17,7 +17,7 @@ import constants
 import matplotlib.pyplot as plt
 
 import os
-os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
+#os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
 
 
 #%% Pre-process data for ML training
@@ -85,7 +85,7 @@ def compute_test_score(node_list, epoch_count, plot_path=None):
         return compute_test_score_for_single_node(node_list[0], epoch_count)
     
     else:
-    
+
         model_list = [None] * nodes_count
         epochs = epoch_count
         score_matrix = np.zeros(shape=(epochs, nodes_count))
@@ -141,7 +141,7 @@ def compute_test_score(node_list, epoch_count, plot_path=None):
                 
                 val_acc_list.append(history.history['val_acc'])
                 acc_list.append(history.history['acc'])
-                
+                score_matrix[epoch, node_index] = history.history['val_acc'][0]
                 model_list[node_index] = node_model
             
             val_acc_epoch.append(np.median(val_acc_list))
@@ -163,16 +163,26 @@ def compute_test_score(node_list, epoch_count, plot_path=None):
                       metrics=['accuracy'])
 
         # Plot training history
-        plt.plot(acc_epoch)
-        plt.plot(val_acc_epoch)
-        plt.title('Model accuracy')
-        plt.ylabel('Accuracy')
-        plt.xlabel('Epoch')
-        plt.legend(['Train', 'Val'], loc='upper left')
-        plt.show()
         if plot_path is not None:
+            
+            plt.figure()
+            plt.plot(acc_epoch)
+            plt.plot(val_acc_epoch)
+            plt.title('Model accuracy')
+            plt.ylabel('Accuracy')
+            plt.xlabel('Epoch')
+            plt.legend(['Train', 'Val'], loc='upper left')
+            plt.yscale('log')
             plt.savefig(plot_path / 'federated_training.png')
-
+            
+            plt.figure()
+            plt.plot(score_matrix)
+            plt.title('Model accuracy')
+            plt.ylabel('Accuracy')
+            plt.xlabel('Epoch')
+            plt.yscale('log')
+            plt.savefig(plot_path / 'all_nodes.png')
+        
         
         # Evaluate model
         # TODO model evaluation is done only on one node now!
@@ -183,5 +193,5 @@ def compute_test_score(node_list, epoch_count, plot_path=None):
         print('Model metrics values: ', ['%.3f' % elem for elem in model_evaluation])
         
         test_score = model_evaluation[1] # 0 is for the loss
-        
+
         return test_score

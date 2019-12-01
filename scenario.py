@@ -11,7 +11,6 @@ The scenario is then processed by data_splitting.py
 from keras.datasets import mnist
 import os
 import datetime
-import constants
 import numpy as np
 from node import Node
 from pathlib import Path
@@ -53,7 +52,7 @@ class Scenario:
     
     now = datetime.datetime.now()
     now_str = now.strftime("%Y-%m-%d_%Hh%M")
-    self.save_folder = Path(now_str)
+    self.save_folder = Path('results') / Path(now_str)
     os.makedirs(self.save_folder, exist_ok=True)
 
     if is_quick_demo:
@@ -64,7 +63,7 @@ class Scenario:
         self.x_test = x_test[:50]
         self.y_test = y_test[:50]
         
-        self.nb_epochs = 1
+        self.nb_epochs = 2
         
     
   def append_contributivity(self, contributivity):
