@@ -16,7 +16,7 @@ import utils
 import constants
 import matplotlib.pyplot as plt
 
-import os
+#import os
 #os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
 
 
@@ -164,6 +164,9 @@ def compute_test_score(node_list, epoch_count, plot_path=None):
 
         # Plot training history
         if plot_path is not None:
+            
+            # Save data
+            np.save(plot_path / 'score_matrix', score_matrix)
             
             plt.figure()
             plt.plot(acc_epoch)

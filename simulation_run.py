@@ -19,7 +19,9 @@ import contributivity_measures
 
 from timeit import default_timer as timer
 import numpy as np
+import matplotlib.pyplot as plt
 
+plt.close('all')
 
 #%% Create scenarii
 
@@ -41,6 +43,8 @@ scenarii_list.append(my_custom_scenario)
 for current_scenario in scenarii_list:
     
     current_scenario.split_data()
+    current_scenario.plot_data_distribution()
+    
     current_scenario.nodes_list = fl_training.preprocess_node_list(current_scenario.nodes_list)
     
     

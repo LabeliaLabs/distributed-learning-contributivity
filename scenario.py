@@ -14,6 +14,8 @@ import datetime
 import numpy as np
 from node import Node
 from pathlib import Path
+import matplotlib.pyplot as plt
+
 
 class Scenario:
   def __init__(self, is_quick_demo=False):
@@ -179,7 +181,29 @@ class Scenario:
             print('  - y_train last 10 values:' + str(node.y_train[-10:]))
             
         return 0
-
+    
+    
+  def plot_data_distribution(self):
+      
+        for i, node in enumerate(self.nodes_list):
+            
+            plt.subplot(self.nodes_count, 1, i+1) #TODO share y axis
+            print(node.y_train)
+            #data = np.argmax(node.y_train, axis=1)
+            data_count = np.bincount(node.y_train)
+            
+            #Fill with 0
+            while len(data_count) < 10:
+                data_count = np.append(data_count, 0)
+                
+            plt.bar(np.arange(0, 10), data_count)
+            plt.ylabel('Node ' + str(i))
+        
+        plt.suptitle('Data distribution')          
+        plt.xlabel('Digits')
+        plt.savefig(self.save_folder / 'data_distribution.png')
+      
+      
   def to_file(self):
     
     out = ''
