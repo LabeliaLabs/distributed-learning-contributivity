@@ -44,6 +44,8 @@ class Scenario:
     # ... or if each node should refer to a centralised test set
     self.testset_option = 'Centralised' # Toggle between 'Centralised' and 'Distributed'
     
+    self.federated_test_score = int
+    
     self.nodes_list = []
     
     self.contributivity_list = []
@@ -189,6 +191,7 @@ class Scenario:
     out += 'Random or stratified split of data samples: ' + self.samples_split_option + '\n'
     out += 'Centralised or distributed test set: ' + self.testset_option + '\n'
     out += 'Number of epochs defined in learning algos: ' + str(self.nb_epochs) + '\n'
+    out += 'Test score of federated training: ' + str(self.federated_test_score) + '\n'
     out += '\n'
     
     out += str(len(self.contributivity_list)) + ' contributivity methods: ' + '\n'

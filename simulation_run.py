@@ -46,7 +46,7 @@ for current_scenario in scenarii_list:
     
     #%% Train and eval on all nodes according to scenario
     
-    fl_score = fl_training.compute_test_score(current_scenario.nodes_list, current_scenario.nb_epochs, current_scenario.save_folder)
+    current_scenario.federated_test_score = fl_training.compute_test_score(current_scenario.nodes_list, current_scenario.nb_epochs, current_scenario.save_folder)
     
     
     #%% Contributivity 1: Baseline contributivity measurement (Shapley Value)
@@ -69,7 +69,7 @@ for current_scenario in scenarii_list:
     independant_additiv_contrib = contributivity.Contributivity('Independant scores additiv')
     
     start = timer()
-    scores = contributivity_measures.compute_independent_scores(current_scenario.nodes_list, current_scenario.nb_epochs, fl_score)
+    scores = contributivity_measures.compute_independent_scores(current_scenario.nodes_list, current_scenario.nb_epochs, current_scenario.federated_test_score)
     end = timer()
     
     independant_computation_time = np.round(end - start)
