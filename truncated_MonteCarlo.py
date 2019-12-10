@@ -21,7 +21,7 @@ def truncated_MC(preprocessed_node_list, sv_accuracy=0.001, contrib_accuracy=0.0
     char_value_dict={():0} # the dictionary that will countain the values
     listn=np.arange(n)
     
-    # return the characteristic function of the nodelist associated to the ensemble  permut, without recomputing it if it was already computed
+    # Return the characteristic function of the nodelist associated to the ensemble permut, without recomputing it if it was already computed
     def not_twice_characteristic(permut):
         #sort permut
         isin=np.repeat(False,n)
@@ -29,7 +29,7 @@ def truncated_MC(preprocessed_node_list, sv_accuracy=0.001, contrib_accuracy=0.0
         permut=listn[isin]
         try: #return the characteristic_func(permut) if it was already computed
             return char_value_dict[tuple(permut)]
-        except KeyError: #characteristic_func(permut) has not been computedyet, so we compute, store, and return characteristic_func(permut)
+        except KeyError: # characteristic_func(permut) has not been computed yet, so we compute, store, and return characteristic_func(permut)
             small_node_list = [preprocessed_node_list[i] for i in permut]
             char_value_dict[tuple(permut)]= characteristic_func(small_node_list)
             return char_value_dict[tuple(permut)]
