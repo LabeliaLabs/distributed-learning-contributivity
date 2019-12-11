@@ -152,6 +152,7 @@ class Scenario:
         print('- Test data distribution scenario chosen:', self.testset_option)
       
         # Populate nodes
+        node_id = 0
         for train_idx, test_idx in zip(train_idx_idx_list, test_idx_idx_list):
             
             # Train data
@@ -168,8 +169,10 @@ class Scenario:
             else:
                 raise NameError('This testset_option [' + self.testset_option + '] scenario is not recognized')
                 
-            node = Node(x_node_train, x_node_test, y_node_train, y_node_test)
+            node = Node(x_node_train, x_node_test, y_node_train, y_node_test, str(node_id))
             self.node_list.append(node)
+            node_id += 1
+
         
         # Check coherence of node_list versus nodes_count   
         assert(len(self.node_list) == self.nodes_count)

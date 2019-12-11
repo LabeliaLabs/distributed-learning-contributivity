@@ -53,7 +53,7 @@ def compute_test_score_for_single_node(node, epoch_count):
     # print(model.summary())
 
     # Train model
-    print('\n### Training model on one single node:')
+    print('\n### Training model on one single node: node ' + node.node_id)
     history = model.fit(node.x_train, node.y_train,
               batch_size=constants.BATCH_SIZE,
               epochs=epoch_count,
@@ -155,7 +155,7 @@ def compute_test_score(node_list, epoch_count, is_early_stopping=True, is_save_f
             acc_list = []
             for node_index, node in enumerate(node_list):
                 
-                print('Training on node '+ str(node_index))
+                print('Training on node '+ node.node_id)
                 node_model = utils.generate_new_cnn_model()
                 
                 # Model weights are the averaged weights
