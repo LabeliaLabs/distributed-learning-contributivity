@@ -48,11 +48,13 @@ class Scenario:
     
     self.federated_test_score = int
     
-    self.nodes_list = []
+    self.node_list = []
     
     self.contributivity_list = []
     
-    self.nb_epochs = 15
+    self.epoch_count = 20
+
+    self.is_early_stopping = True
     
     now = datetime.datetime.now()
     now_str = now.strftime("%Y-%m-%d_%Hh%M")
@@ -67,7 +69,7 @@ class Scenario:
         self.x_test = x_test[:50]
         self.y_test = y_test[:50]
         
-        self.nb_epochs = 2
+        self.epoch_count = 2
         
     
   def append_contributivity(self, contributivity):
@@ -167,14 +169,14 @@ class Scenario:
                 raise NameError('This testset_option [' + self.testset_option + '] scenario is not recognized')
                 
             node = Node(x_node_train, x_node_test, y_node_train, y_node_test)
-            self.nodes_list.append(node)
+            self.node_list.append(node)
         
-        # Check coherence of nodes_list versus nodes_count   
-        assert(len(self.nodes_list) == self.nodes_count)
+        # Check coherence of node_list versus nodes_count   
+        assert(len(self.node_list) == self.nodes_count)
         
         # Print and plot for controlling
         print('\n### Splitting data among nodes:')
-        for node_index, node in enumerate(self.nodes_list):
+        for node_index, node in enumerate(self.node_list):
             print('- Node #' + str(node_index) + ':')
             print('  - Number of samples:' + str(len(node.x_train)) + ' train, ' + str(len(node.x_val)) + ' val, ' + str(len(node.x_test)) + ' test')
             print('  - y_train first 10 values:' + str(node.y_train[:10]))
@@ -185,7 +187,7 @@ class Scenario:
     
   def plot_data_distribution(self):
       
-        for i, node in enumerate(self.nodes_list):
+        for i, node in enumerate(self.node_list):
             
             plt.subplot(self.nodes_count, 1, i+1) #TODO share y axis
             print(node.y_train)
@@ -214,7 +216,8 @@ class Scenario:
     out += 'Percentages of data samples per node: ' + str(self.amounts_per_node) + '\n'
     out += 'Random or stratified split of data samples: ' + self.samples_split_option + '\n'
     out += 'Centralised or distributed test set: ' + self.testset_option + '\n'
-    out += 'Number of epochs defined in learning algos: ' + str(self.nb_epochs) + '\n'
+    out += 'Number of epochs: ' + str(self.epoch_count) + '\n'
+    out += 'Early stopping activé: ' + str(self.is_early_stopping) + '\n'
     out += 'Test score of federated training: ' + str(self.federated_test_score) + '\n'
     out += '\n'
     

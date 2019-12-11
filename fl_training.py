@@ -73,14 +73,21 @@ def compute_test_score_for_single_node(node, epoch_count):
     # Return model score on test data
     return model_eval_score
 
-
-#%% Distributed learning training
+# TODO no methods overloadin
+def compute_test_score_with_scenario(scenario, is_save_fig=False):
+    return compute_test_score(scenario.node_list, 
+                              scenario.epoch_count, 
+                              scenario.is_early_stopping,
+                              is_save_fig,
+                              save_folder=scenario.save_folder)
         
-def compute_test_score(node_list, epoch_count, plot_path=None):
+        
+# Distributed learning training      
+def compute_test_score(node_list, epoch_count, is_early_stopping=True, is_save_fig=False, save_folder=''):
     """Return the score on test data of a final aggregated model trained in a federated way on each node"""
 
     nodes_count = len(node_list)
-    
+        
     if nodes_count == 1:
         return compute_test_score_for_single_node(node_list[0], epoch_count)
     
@@ -89,8 +96,9 @@ def compute_test_score(node_list, epoch_count, plot_path=None):
         model_list = [None] * nodes_count
         epochs = epoch_count
         score_matrix = np.zeros(shape=(epochs, nodes_count))
-        val_acc_epoch = []
-        acc_epoch = []
+        global_val_acc = []
+        global_val_loss = []
+        
         
         for epoch in range(epochs):
         
@@ -115,7 +123,32 @@ def compute_test_score(node_list, epoch_count, plot_path=None):
                     new_weights.append(
                         [np.array(weights_).mean(axis=0)\
                             for weights_ in zip(*weights_list_tuple)])    
-                
+       
+                aggregated_model = utils.generate_new_cnn_model()
+                aggregated_model.set_weights(new_weights)
+                aggregated_model.compile(loss=keras.losses.categorical_crossentropy,
+                      optimizer='adam',
+                      metrics=['accuracy'])
+        
+                # Evaluate model (Note we should have a seperate validation set to do that) # TODO
+                # In centralised test set, we can pick any node test set.
+                model_evaluation = aggregated_model.evaluate(node_list[0].x_test,
+                                                             node_list[0].y_test,
+                                                             batch_size=constants.BATCH_SIZE,
+                                                             verbose=0)
+                current_val_loss = model_evaluation[0]
+                global_val_acc.append(model_evaluation[1])
+                global_val_loss.append(current_val_loss)
+
+                # Early stopping
+                if is_early_stopping:
+                    
+                    # Early stopping parameters
+                    patience = 4
+                    if epoch >= patience and current_val_loss > global_val_loss[-patience]:
+                        print("EARLY STOPPINGGGGGGGG")
+                        break
+                    
         
             # Training phase
             val_acc_list = []
@@ -143,10 +176,7 @@ def compute_test_score(node_list, epoch_count, plot_path=None):
                 acc_list.append(history.history['acc'])
                 score_matrix[epoch, node_index] = history.history['val_acc'][0]
                 model_list[node_index] = node_model
-            
-            val_acc_epoch.append(np.median(val_acc_list))
-            acc_epoch.append(np.median(acc_list))
-        
+
         
         # Final aggregation : averaging the weights
         weights = [model.get_weights() for model in model_list]
@@ -163,28 +193,36 @@ def compute_test_score(node_list, epoch_count, plot_path=None):
                       metrics=['accuracy'])
 
         # Plot training history
-        if plot_path is not None:
+        if is_save_fig:
             
             # Save data
-            np.save(plot_path / 'score_matrix', score_matrix)
+            np.save(save_folder / 'score_matrix', score_matrix)
+            np.save(save_folder / 'global_val_acc', global_val_acc)
+            np.save(save_folder / 'global_val_loss', global_val_loss)
             
             plt.figure()
-            plt.plot(acc_epoch)
-            plt.plot(val_acc_epoch)
+            plt.plot(global_val_loss)
+            plt.ylabel('Loss')
+            plt.xlabel('Epoch')
+            plt.savefig(save_folder / 'federated_training_loss.png')
+            
+            plt.figure()
+            plt.plot(global_val_acc)
+            plt.ylabel('Accuracy')
+            plt.xlabel('Epoch')
+            #plt.yscale('log')
+            plt.ylim([0, 1])
+            plt.savefig(save_folder / 'federated_training_acc.png')
+                       
+            plt.figure()
+            plt.plot(score_matrix[:epoch+1,]) #Cut the matrix
             plt.title('Model accuracy')
             plt.ylabel('Accuracy')
             plt.xlabel('Epoch')
-            plt.legend(['Train', 'Val'], loc='upper left')
-            plt.yscale('log')
-            plt.savefig(plot_path / 'federated_training.png')
-            
-            plt.figure()
-            plt.plot(score_matrix)
-            plt.title('Model accuracy')
-            plt.ylabel('Accuracy')
-            plt.xlabel('Epoch')
-            plt.yscale('log')
-            plt.savefig(plot_path / 'all_nodes.png')
+            plt.legend(['Node '+str(i) for i in range(nodes_count)])
+            #plt.yscale('log')
+            plt.ylim([0, 1])
+            plt.savefig(save_folder / 'all_nodes.png')
         
         
         # Evaluate model

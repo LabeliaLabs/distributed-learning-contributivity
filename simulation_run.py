@@ -29,7 +29,7 @@ plt.close('all')
 my_custom_scenario = scenario.Scenario(is_quick_demo=True)
 my_custom_scenario.nodes_count = 3 # Number of nodes in the collaborative ML project simulated
 my_custom_scenario.amounts_per_node = [0.20, 0.30, 0.5] # Percentages of the data samples for each node
-my_custom_scenario.samples_split_option = 'Stratified' # If data are split randomly between nodes or stratified to be distinct (toggle between 'Random' and 'Stratified')
+my_custom_scenario.samples_split_option = 'Random' # If data are split randomly between nodes or stratified to be distinct (toggle between 'Random' and 'Stratified')
 my_custom_scenario.testset_option = 'Centralised' # If test data are distributed between nodes or stays a central testset (toggle between 'Centralised' and 'Distributed')
 
 # Gather scenarii in a list
@@ -45,12 +45,13 @@ for current_scenario in scenarii_list:
     current_scenario.split_data()
     current_scenario.plot_data_distribution()
     
-    current_scenario.nodes_list = fl_training.preprocess_node_list(current_scenario.nodes_list)
+    current_scenario.node_list = fl_training.preprocess_node_list(current_scenario.node_list)
     
     
     #%% Train and eval on all nodes according to scenario
     
-    current_scenario.federated_test_score = fl_training.compute_test_score(current_scenario.nodes_list, current_scenario.nb_epochs, current_scenario.save_folder)
+    is_save_fig = True
+    current_scenario.federated_test_score = fl_training.compute_test_score_with_scenario(current_scenario, is_save_fig)    
     
     
     #%% Contributivity 1: Baseline contributivity measurement (Shapley Value)
@@ -58,7 +59,7 @@ for current_scenario in scenarii_list:
     shapley_contrib = contributivity.Contributivity('Shapley values')
     
     start = timer()
-    shapley_contrib.contributivity_scores = contributivity_measures.compute_SV(current_scenario.nodes_list, current_scenario.nb_epochs)
+    shapley_contrib.contributivity_scores = contributivity_measures.compute_SV(current_scenario.node_list, current_scenario.epoch_count)
     end = timer()
     
     shapley_contrib.computation_time = np.round(end - start)
@@ -73,7 +74,7 @@ for current_scenario in scenarii_list:
     independant_additiv_contrib = contributivity.Contributivity('Independant scores additiv')
     
     start = timer()
-    scores = contributivity_measures.compute_independent_scores(current_scenario.nodes_list, current_scenario.nb_epochs, current_scenario.federated_test_score)
+    scores = contributivity_measures.compute_independent_scores(current_scenario.node_list, current_scenario.epoch_count, current_scenario.federated_test_score)
     end = timer()
     
     independant_computation_time = np.round(end - start)
