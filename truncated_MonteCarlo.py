@@ -34,7 +34,7 @@ def truncated_MC(preprocessed_node_list,characteristic_func, sv_accuracy=0.001, 
         
     characteristic_all_node= not_twice_characteristic(np.arange(n)) # Characteristic function on all nodes
     if n==1:
-        return({'sv': characteristic_all_node,'std_vs': np.array([0]),'prop': np.array([1]), 'computed_val':char_value_dict})
+        return({'sv': characteristic_all_node,'std_sv': np.array([0]),'prop': np.array([1]), 'computed_val':char_value_dict})
     else: 
         contributions=np.array([[]])
         permutation=np.zeros(n) # Store the current permutation
@@ -60,7 +60,7 @@ def truncated_MC(preprocessed_node_list,characteristic_func, sv_accuracy=0.001, 
                 contributions[-1][permutation[j]]  =  char_nodelists[j+1]-char_nodelists[j]
             v_max=np.max(np.var(contributions,axis=0))
         sv=np.mean(contributions,axis=0)
-    return({'sv':sv,'std_vs': np.std(contributions,axis=0),'prop':sv/np.sum(sv), 'computed_val':char_value_dict})
+    return({'sv':sv,'std_sv': np.std(contributions,axis=0),'prop':sv/np.sum(sv), 'computed_val':char_value_dict})
 
         
                 
