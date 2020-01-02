@@ -144,9 +144,7 @@ def compute_test_score(node_list, epoch_count, is_early_stopping=True, is_save_f
                 if is_early_stopping:
                     
                     # Early stopping parameters
-                    patience = 4
-                    if epoch >= patience and current_val_loss > global_val_loss[-patience]:
-                        print("EARLY STOPPINGGGGGGGG")
+                    if epoch >= constants.PATIENCE and current_val_loss > global_val_loss[-constants.PATIENCE]:
                         break
                     
         
