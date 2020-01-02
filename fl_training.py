@@ -14,9 +14,10 @@ import numpy as np
 
 import utils
 import constants
+import matplotlib.pyplot as plt
 
-import os
-os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
+#import os
+#os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
 
 
 #%% Pre-process data for ML training
@@ -44,7 +45,7 @@ def preprocess_node_list(node_list):
 
 #%% Single partner training
     
-def compute_test_score_for_single_node(node):
+def compute_test_score_for_single_node(node, epoch_count):
     """Return the score on test data of a model trained on a single node"""
     
     # Initialize model
@@ -55,7 +56,7 @@ def compute_test_score_for_single_node(node):
     print('\n### Training model on one single node: node ' + node.node_id)
     history = model.fit(node.x_train, node.y_train,
               batch_size=constants.BATCH_SIZE,
-              epochs=constants.NB_EPOCHS,
+              epochs=epoch_count,
               verbose=0,
               validation_data=(node.x_val, node.y_val))
     
@@ -72,24 +73,32 @@ def compute_test_score_for_single_node(node):
     # Return model score on test data
     return model_eval_score
 
-
-#%% Distributed learning training
+# TODO no methods overloadin
+def compute_test_score_with_scenario(scenario, is_save_fig=False):
+    return compute_test_score(scenario.node_list, 
+                              scenario.epoch_count, 
+                              scenario.is_early_stopping,
+                              is_save_fig,
+                              save_folder=scenario.save_folder)
         
-def compute_test_score(node_list):
+        
+# Distributed learning training      
+def compute_test_score(node_list, epoch_count, is_early_stopping=True, is_save_fig=False, save_folder=''):
     """Return the score on test data of a final aggregated model trained in a federated way on each node"""
 
     nodes_count = len(node_list)
-    
+        
     if nodes_count == 1:
-        return compute_test_score_for_single_node(node_list[0])
+        return compute_test_score_for_single_node(node_list[0], epoch_count)
     
     else:
-    
+
         model_list = [None] * nodes_count
-        epochs = constants.NB_EPOCHS
+        epochs = epoch_count
         score_matrix = np.zeros(shape=(epochs, nodes_count))
-        val_acc_epoch = []
-        acc_epoch = []
+        global_val_acc = []
+        global_val_loss = []
+        
         
         for epoch in range(epochs):
         
@@ -114,7 +123,30 @@ def compute_test_score(node_list):
                     new_weights.append(
                         [np.array(weights_).mean(axis=0)\
                             for weights_ in zip(*weights_list_tuple)])    
-                
+       
+                aggregated_model = utils.generate_new_cnn_model()
+                aggregated_model.set_weights(new_weights)
+                aggregated_model.compile(loss=keras.losses.categorical_crossentropy,
+                      optimizer='adam',
+                      metrics=['accuracy'])
+        
+                # Evaluate model (Note we should have a seperate validation set to do that) # TODO
+                # In centralised test set, we can pick any node test set.
+                model_evaluation = aggregated_model.evaluate(node_list[0].x_test,
+                                                             node_list[0].y_test,
+                                                             batch_size=constants.BATCH_SIZE,
+                                                             verbose=0)
+                current_val_loss = model_evaluation[0]
+                global_val_acc.append(model_evaluation[1])
+                global_val_loss.append(current_val_loss)
+
+                # Early stopping
+                if is_early_stopping:
+                    
+                    # Early stopping parameters
+                    if epoch >= constants.PATIENCE and current_val_loss > global_val_loss[-constants.PATIENCE]:
+                        break
+                    
         
             # Training phase
             val_acc_list = []
@@ -140,12 +172,9 @@ def compute_test_score(node_list):
                 
                 val_acc_list.append(history.history['val_acc'])
                 acc_list.append(history.history['acc'])
-                
+                score_matrix[epoch, node_index] = history.history['val_acc'][0]
                 model_list[node_index] = node_model
-            
-            val_acc_epoch.append(np.median(val_acc_list))
-            acc_epoch.append(np.median(acc_list))
-        
+
         
         # Final aggregation : averaging the weights
         weights = [model.get_weights() for model in model_list]
@@ -160,15 +189,48 @@ def compute_test_score(node_list):
         final_model.compile(loss=keras.losses.categorical_crossentropy,
                       optimizer='adam',
                       metrics=['accuracy'])
+
+        # Plot training history
+        if is_save_fig:
+            
+            # Save data
+            np.save(save_folder / 'score_matrix', score_matrix)
+            np.save(save_folder / 'global_val_acc', global_val_acc)
+            np.save(save_folder / 'global_val_loss', global_val_loss)
+            
+            plt.figure()
+            plt.plot(global_val_loss)
+            plt.ylabel('Loss')
+            plt.xlabel('Epoch')
+            plt.savefig(save_folder / 'federated_training_loss.png')
+            
+            plt.figure()
+            plt.plot(global_val_acc)
+            plt.ylabel('Accuracy')
+            plt.xlabel('Epoch')
+            #plt.yscale('log')
+            plt.ylim([0, 1])
+            plt.savefig(save_folder / 'federated_training_acc.png')
+                       
+            plt.figure()
+            plt.plot(score_matrix[:epoch+1,]) #Cut the matrix
+            plt.title('Model accuracy')
+            plt.ylabel('Accuracy')
+            plt.xlabel('Epoch')
+            plt.legend(['Node '+str(i) for i in range(nodes_count)])
+            #plt.yscale('log')
+            plt.ylim([0, 1])
+            plt.savefig(save_folder / 'all_nodes.png')
+        
         
         # Evaluate model
+        # TODO model evaluation is done only on one node now!
         print('\n### Evaluating model on test data:')
         model_evaluation = final_model.evaluate(node.x_test, node.y_test, batch_size=constants.BATCH_SIZE,
                              verbose=0)
         print('\nModel metrics names: ', final_model.metrics_names)
         print('Model metrics values: ', ['%.3f' % elem for elem in model_evaluation])
         
-        model_eval_score = model_evaluation[1] # 0 is for the loss
-        
-        # Return model score on test data
-        return model_eval_score
+        test_score = model_evaluation[1] # 0 is for the loss
+
+        return test_score

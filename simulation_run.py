@@ -14,32 +14,23 @@ from __future__ import print_function
 
 import scenario
 import contributivity
-import data_splitting
 import fl_training
 import contributivity_measures
-import constants
 
 from timeit import default_timer as timer
 import numpy as np
+import matplotlib.pyplot as plt
 
+plt.close('all')
 
 #%% Create scenarii
 
-# Create a default scenario
-my_default_scenario = scenario.Scenario()
-
 # Create a custom scenario and comment the main scenario parameters (see scenario.py for more comments)
-my_custom_scenario = scenario.Scenario()
+my_custom_scenario = scenario.Scenario(is_quick_demo=True)
 my_custom_scenario.nodes_count = 3 # Number of nodes in the collaborative ML project simulated
 my_custom_scenario.amounts_per_node = [0.20, 0.30, 0.5] # Percentages of the data samples for each node
-my_custom_scenario.samples_split_option = 'Stratified' # If data are split randomly between nodes or stratified to be distinct (toggle between 'Random' and 'Stratified')
+my_custom_scenario.samples_split_option = 'Random' # If data are split randomly between nodes or stratified to be distinct (toggle between 'Random' and 'Stratified')
 my_custom_scenario.testset_option = 'Centralised' # If test data are distributed between nodes or stays a central testset (toggle between 'Centralised' and 'Distributed')
-my_custom_scenario.nb_epochs = constants.NB_EPOCHS
-# my_custom_scenario.x_train = my_custom_scenario.x_train[:600] # Truncate dataset if needed for quicker debugging/testing
-# my_custom_scenario.y_train = my_custom_scenario.y_train[:600] # Truncate dataset if needed for quicker debugging/testing
-# my_custom_scenario.x_test = my_custom_scenario.x_test[:100] # Truncate dataset if needed for quicker debugging/testing
-# my_custom_scenario.y_test = my_custom_scenario.y_test[:100] # Truncate dataset if needed for quicker debugging/testing
-# my_custom_scenario.to_file() # DEBUG
 
 # Gather scenarii in a list
 scenarii_list = []
@@ -51,19 +42,16 @@ scenarii_list.append(my_custom_scenario)
 
 for current_scenario in scenarii_list:
     
-    #%% Fetch data splitting scenario
+    current_scenario.split_data()
+    current_scenario.plot_data_distribution()
     
-    node_list = data_splitting.process_data_splitting_scenario(current_scenario)
-    
-    
-    #%% Preprocess data for compatibility with keras CNN models
-    
-    preprocessed_node_list = fl_training.preprocess_node_list(node_list)
+    current_scenario.node_list = fl_training.preprocess_node_list(current_scenario.node_list)
     
     
     #%% Train and eval on all nodes according to scenario
     
-    fl_score = fl_training.compute_test_score(preprocessed_node_list)
+    is_save_fig = True
+    current_scenario.federated_test_score = fl_training.compute_test_score_with_scenario(current_scenario, is_save_fig)    
     
     
     #%% Contributivity 1: Baseline contributivity measurement (Shapley Value)
@@ -71,7 +59,7 @@ for current_scenario in scenarii_list:
     shapley_contrib = contributivity.Contributivity('Shapley values')
     
     start = timer()
-    shapley_contrib.contributivity_scores = contributivity_measures.compute_SV(preprocessed_node_list)
+    shapley_contrib.contributivity_scores = contributivity_measures.compute_SV(current_scenario.node_list, current_scenario.epoch_count)
     end = timer()
     
     shapley_contrib.computation_time = np.round(end - start)
@@ -86,7 +74,7 @@ for current_scenario in scenarii_list:
     independant_additiv_contrib = contributivity.Contributivity('Independant scores additiv')
     
     start = timer()
-    scores = contributivity_measures.compute_independent_scores(preprocessed_node_list, fl_score)
+    scores = contributivity_measures.compute_independent_scores(current_scenario.node_list, current_scenario.epoch_count, current_scenario.federated_test_score)
     end = timer()
     
     independant_computation_time = np.round(end - start)
