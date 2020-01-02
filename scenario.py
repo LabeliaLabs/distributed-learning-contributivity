@@ -220,7 +220,7 @@ class Scenario:
     out += 'Random or stratified split of data samples: ' + self.samples_split_option + '\n'
     out += 'Centralised or distributed test set: ' + self.testset_option + '\n'
     out += 'Number of epochs: ' + str(self.epoch_count) + '\n'
-    out += 'Early stopping activé: ' + str(self.is_early_stopping) + '\n'
+    out += 'Early stopping on? ' + str(self.is_early_stopping) + '\n'
     out += 'Test score of federated training: ' + str(self.federated_test_score) + '\n'
     out += '\n'
     
