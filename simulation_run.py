@@ -1,13 +1,9 @@
 # -*- coding: utf-8 -*-
 """
-Created on Thu Oct  3 17:02:13 2019
-
 A script to configure and run simulations of:
     - splitting data among different nodes to mock a multi-partner ML project
-    - train a model
+    - train a model across multiple nodes
     - measure contributivity of each node to the model performance
-
-@author: bowni
 """
 
 from __future__ import print_function

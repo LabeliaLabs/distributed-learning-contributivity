@@ -1,11 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Created on Thu Oct  3 13:43:26 2019
-
-This enables to parameterize a desired scenario of data splitting amond nodes.
-The scenario is then processed by data_splitting.py
-
-@author: @bowni
+This enables to parameterize a desired scenario of data splitting among nodes.
 """
 
 from keras.datasets import mnist
@@ -67,8 +62,7 @@ class Scenario:
         self.x_train = x_train[:300]
         self.y_train = y_train[:300]
         self.x_test = x_test[:50]
-        self.y_test = y_test[:50]
-        
+        self.y_test = y_test[:50]     
         self.epoch_count = 2
         
     

@@ -1,10 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Created on Thu Oct  3 14:49:54 2019
-
 Implement contributivity measurements
-
-@author: @bowni
 """
 
 from __future__ import print_function
@@ -19,7 +15,7 @@ import fl_training
 import shapley_value.shapley as sv
 
 
-# Compute independent performance scores of models trained independently on each node
+#%% Compute independent performance scores of models trained independently on each node
     
 def compute_independent_scores(node_list, epoch_count, collaborative_score):
     
@@ -39,7 +35,7 @@ def compute_independent_scores(node_list, epoch_count, collaborative_score):
     return [performance_scores, perf_scores_additive]
 
 
-# Generalization of Shapley Value computation
+#%% Generalization of Shapley Value computation
 
 def compute_SV(node_list, epoch_count):
     

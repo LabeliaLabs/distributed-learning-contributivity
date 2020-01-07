@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Created on Sun Sep 29 17:31:56 2019
-
-@author: RGOUSSAULT
+This enables to parameterize the contributivity measurements to be performed.
 """
 
 import datetime

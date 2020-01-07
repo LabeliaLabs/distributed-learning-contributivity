@@ -1,9 +1,7 @@
 # -*- coding: utf-8 -*-
 """
-Created on Fri Aug 30 15:33:15 2019
-
-@author: RGOUSSAULT
-inspired from: https://keras.io/examples/mnist_cnn/
+Train a model across multiple nodes
+(inspired from: https://keras.io/examples/mnist_cnn/)
 """
 
 from __future__ import print_function
@@ -73,7 +71,7 @@ def compute_test_score_for_single_node(node, epoch_count):
     # Return model score on test data
     return model_eval_score
 
-# TODO no methods overloadin
+#%% TODO no methods overloading
 def compute_test_score_with_scenario(scenario, is_save_fig=False):
     return compute_test_score(scenario.node_list, 
                               scenario.epoch_count, 
@@ -82,7 +80,7 @@ def compute_test_score_with_scenario(scenario, is_save_fig=False):
                               save_folder=scenario.save_folder)
         
         
-# Distributed learning training      
+#%% Distributed learning training      
 def compute_test_score(node_list, epoch_count, is_early_stopping=True, is_save_fig=False, save_folder=''):
     """Return the score on test data of a final aggregated model trained in a federated way on each node"""
 
