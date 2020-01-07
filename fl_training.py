@@ -75,9 +75,9 @@ def compute_test_score_for_single_node(node, epoch_count):
 #%% TODO no methods overloading
 def compute_test_score_with_scenario(scenario, is_save_fig=False):
     return compute_test_score(scenario.node_list,
+                              scenario.epoch_count, 
                               scenario.x_test,
                               scenario.y_test,
-                              scenario.epoch_count, 
                               scenario.is_early_stopping,
                               is_save_fig,
                               save_folder=scenario.save_folder)
