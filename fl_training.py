@@ -59,7 +59,7 @@ def compute_test_score_for_single_node(node, epoch_count):
               validation_data=(node.x_val, node.y_val))
     
     # Evaluate trained model
-    print('\n### Evaluating model on test data:')
+    print('\n### Evaluating model on test data of the node:')
     model_evaluation = model.evaluate(node.x_test, node.y_test,
                            batch_size=constants.BATCH_SIZE,
                            verbose=0)
@@ -71,9 +71,12 @@ def compute_test_score_for_single_node(node, epoch_count):
     # Return model score on test data
     return model_eval_score
 
+
 #%% TODO no methods overloading
 def compute_test_score_with_scenario(scenario, is_save_fig=False):
-    return compute_test_score(scenario.node_list, 
+    return compute_test_score(scenario.node_list,
+                              scenario.x_test,
+                              scenario.y_test,
                               scenario.epoch_count, 
                               scenario.is_early_stopping,
                               is_save_fig,
@@ -81,7 +84,7 @@ def compute_test_score_with_scenario(scenario, is_save_fig=False):
         
         
 #%% Distributed learning training      
-def compute_test_score(node_list, epoch_count, is_early_stopping=True, is_save_fig=False, save_folder=''):
+def compute_test_score(node_list, epoch_count, x_test, y_test, is_early_stopping=True, is_save_fig=False, save_folder=''):
     """Return the score on test data of a final aggregated model trained in a federated way on each node"""
 
     nodes_count = len(node_list)
@@ -129,9 +132,8 @@ def compute_test_score(node_list, epoch_count, is_early_stopping=True, is_save_f
                       metrics=['accuracy'])
         
                 # Evaluate model (Note we should have a seperate validation set to do that) # TODO
-                # In centralised test set, we can pick any node test set.
-                model_evaluation = aggregated_model.evaluate(node_list[0].x_test,
-                                                             node_list[0].y_test,
+                model_evaluation = aggregated_model.evaluate(x_test,
+                                                             y_test,
                                                              batch_size=constants.BATCH_SIZE,
                                                              verbose=0)
                 current_val_loss = model_evaluation[0]
@@ -139,8 +141,7 @@ def compute_test_score(node_list, epoch_count, is_early_stopping=True, is_save_f
                 global_val_loss.append(current_val_loss)
 
                 # Early stopping
-                if is_early_stopping:
-                    
+                if is_early_stopping:                 
                     # Early stopping parameters
                     if epoch >= constants.PATIENCE and current_val_loss > global_val_loss[-constants.PATIENCE]:
                         break
@@ -188,6 +189,7 @@ def compute_test_score(node_list, epoch_count, is_early_stopping=True, is_save_f
                       optimizer='adam',
                       metrics=['accuracy'])
 
+
         # Plot training history
         if is_save_fig:
             
@@ -222,9 +224,8 @@ def compute_test_score(node_list, epoch_count, is_early_stopping=True, is_save_f
         
         
         # Evaluate model
-        # TODO model evaluation is done only on one node now!
         print('\n### Evaluating model on test data:')
-        model_evaluation = final_model.evaluate(node.x_test, node.y_test, batch_size=constants.BATCH_SIZE,
+        model_evaluation = final_model.evaluate(x_test, y_test, batch_size=constants.BATCH_SIZE,
                              verbose=0)
         print('\nModel metrics names: ', final_model.metrics_names)
         print('Model metrics values: ', ['%.3f' % elem for elem in model_evaluation])
