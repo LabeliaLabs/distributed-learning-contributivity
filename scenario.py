@@ -4,6 +4,7 @@ This enables to parameterize a desired scenario of data splitting among nodes.
 """
 
 from keras.datasets import mnist
+from sklearn.model_selection import train_test_split
 import os
 import datetime
 import numpy as np
@@ -17,8 +18,8 @@ class Scenario:
       
     self.dataset_name = 'MNIST'
     (x_train, y_train), (x_test, y_test) = mnist.load_data()    
-    self.x_train = x_train
-    self.y_train = y_train
+    # The train set has to be split into a train set and a validation set for early stopping (called 'esval' below)
+    self.x_train, self.x_esval, self.y_train, self.y_esval = train_test_split(x_train, y_train, test_size=0.2, random_state=42)
     self.x_test = x_test
     self.y_test = y_test
     
@@ -58,11 +59,13 @@ class Scenario:
 
     if is_quick_demo:
         
-        # Use les data and less epochs to speed up the computaions
-        self.x_train = x_train[:300]
-        self.y_train = y_train[:300]
-        self.x_test = x_test[:50]
-        self.y_test = y_test[:50]     
+        # Use less data and less epochs to speed up the computaions
+        self.x_train = self.x_train[:1000]
+        self.y_train = self.y_train[:1000]
+        self.x_esval = self.x_esval[:100]
+        self.y_esval = self.y_esval[:100]
+        self.x_test = self.x_test[:100]
+        self.y_test = self.y_test[:100]     
         self.epoch_count = 2
         
     

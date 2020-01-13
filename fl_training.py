@@ -66,7 +66,7 @@ def compute_test_score_for_single_node(node, epoch_count):
     # print(model.summary())
 
     # Train model
-    print('\n### Training model on one single node: node ' + node.node_id)
+    print('\n### Training model on one single node: ' + str(node))
     history = model.fit(node.x_train, node.y_train,
               batch_size=constants.BATCH_SIZE,
               epochs=epoch_count,
@@ -91,7 +91,9 @@ def compute_test_score_for_single_node(node, epoch_count):
 #%% TODO no methods overloading
 def compute_test_score_with_scenario(scenario, is_save_fig=False):
     return compute_test_score(scenario.node_list,
-                              scenario.epoch_count, 
+                              scenario.epoch_count,
+                              scenario.x_esval,
+                              scenario.y_esval,
                               scenario.x_test,
                               scenario.y_test,
                               scenario.is_early_stopping,
@@ -100,7 +102,7 @@ def compute_test_score_with_scenario(scenario, is_save_fig=False):
         
         
 #%% Distributed learning training      
-def compute_test_score(node_list, epoch_count, x_test, y_test, is_early_stopping=True, is_save_fig=False, save_folder=''):
+def compute_test_score(node_list, epoch_count, x_esval, y_esval, x_test, y_test, is_early_stopping=True, is_save_fig=False, save_folder=''):
     """Return the score on test data of a final aggregated model trained in a federated way on each node"""
 
     nodes_count = len(node_list)
@@ -148,9 +150,9 @@ def compute_test_score(node_list, epoch_count, x_test, y_test, is_early_stopping
                       optimizer='adam',
                       metrics=['accuracy'])
         
-                # Evaluate model (Note we should have a seperate validation set to do that) # TODO
-                model_evaluation = aggregated_model.evaluate(x_test,
-                                                             y_test,
+                # Evaluate model for early stopping, on a dedicated 'early stopping validation' set
+                model_evaluation = aggregated_model.evaluate(x_esval,
+                                                             y_esval,
                                                              batch_size=constants.BATCH_SIZE,
                                                              verbose=0)
                 current_val_loss = model_evaluation[0]
@@ -173,7 +175,7 @@ def compute_test_score(node_list, epoch_count, x_test, y_test, is_early_stopping
             acc_list = []
             for node_index, node in enumerate(node_list):
                 
-                print('   Training on node '+ node.node_id)
+                print('   Training on node '+ str(node))
                 node_model = utils.generate_new_cnn_model()
                 
                 # Model weights are the averaged weights
