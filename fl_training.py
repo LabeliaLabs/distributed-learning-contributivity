@@ -23,7 +23,7 @@ import matplotlib.pyplot as plt
 def preprocess_node_list(node_list):
     """Return node_list preprocessed for keras CNN"""
     
-    print('\n### Pre-processing data for keras CNN:')
+    print('\n### Pre-processing train data of each node for keras CNN:')
     for node_index, node in enumerate(node_list):
         
         # Preprocess input (x) data
@@ -39,6 +39,18 @@ def preprocess_node_list(node_list):
         print('Node #' + str(node_index) + ': done.')
         
     return node_list
+
+
+#%% Pre-process test data for model evaluation
+    
+def preprocess_test_data(x_test, y_test):
+    """ Return x_test and y_test preprocessed for keras CNN"""
+    
+    print('\n### Pre-processing test data for keras CNN:')
+    x_test = utils.preprocess_input(x_test)
+    y_test = keras.utils.to_categorical(y_test, constants.NUM_CLASSES)
+    
+    return x_test, y_test
 
 
 #%% Single partner training

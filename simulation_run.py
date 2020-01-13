@@ -42,6 +42,7 @@ for current_scenario in scenarii_list:
     current_scenario.plot_data_distribution()
     
     current_scenario.node_list = fl_training.preprocess_node_list(current_scenario.node_list)
+    current_scenario.x_test, current_scenario.y_test = fl_training.preprocess_test_data(current_scenario.x_test, current_scenario.y_test)
     
     
     #%% Train and eval on all nodes according to scenario
@@ -55,7 +56,7 @@ for current_scenario in scenarii_list:
     shapley_contrib = contributivity.Contributivity('Shapley values')
     
     start = timer()
-    shapley_contrib.contributivity_scores = contributivity_measures.compute_SV(current_scenario.node_list, current_scenario.epoch_count)
+    shapley_contrib.contributivity_scores = contributivity_measures.compute_SV(current_scenario.node_list, current_scenario.epoch_count, current_scenario.x_test, current_scenario.y_test)
     end = timer()
     
     shapley_contrib.computation_time = np.round(end - start)

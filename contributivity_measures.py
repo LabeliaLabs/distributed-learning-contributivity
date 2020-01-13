@@ -37,7 +37,7 @@ def compute_independent_scores(node_list, epoch_count, collaborative_score):
 
 #%% Generalization of Shapley Value computation
 
-def compute_SV(node_list, epoch_count):
+def compute_SV(node_list, epoch_count, x_test, y_test):
     
     print('\n### Launching computation of Shapley Value of all nodes')
     
@@ -57,7 +57,7 @@ def compute_SV(node_list, epoch_count):
     for coalition in coalitions:
         coalition_nodes = list(node_list[i] for i in coalition)
         # print('\nComputing characteristic function on coalition ', coalition) # VERBOSE
-        characteristic_function.append(fl_training.compute_test_score(coalition_nodes, epoch_count))
+        characteristic_function.append(fl_training.compute_test_score(coalition_nodes, epoch_count, x_test, y_test))
     # print('\nValue of characteristic function for all coalitions: ', characteristic_function) # VERBOSE
     
     # Compute Shapley Value for each node
