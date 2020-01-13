@@ -19,7 +19,7 @@ import shapley_value.shapley as sv
     
 def compute_independent_scores(node_list, epoch_count, collaborative_score):
     
-    print('\n### Launching computation of perf. scores of models trained independently on each node')
+    print('\n# Launching computation of perf. scores of models trained independently on each node')
     
     # Initialize a list of performance scores
     performance_scores = []
@@ -39,7 +39,7 @@ def compute_independent_scores(node_list, epoch_count, collaborative_score):
 
 def compute_SV(node_list, epoch_count, x_test, y_test):
     
-    print('\n### Launching computation of Shapley Value of all nodes')
+    print('\n# Launching computation of Shapley Value of all nodes')
     
     # Initialize list of all players (nodes) indexes
     nodes_count = len(node_list)

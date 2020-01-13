@@ -23,7 +23,7 @@ import matplotlib.pyplot as plt
 def preprocess_node_list(node_list):
     """Return node_list preprocessed for keras CNN"""
     
-    print('\n### Pre-processing train data of each node for keras CNN:')
+    print('\n## Pre-processing train data of each node for keras CNN:')
     for node_index, node in enumerate(node_list):
         
         # Preprocess input (x) data
@@ -36,8 +36,9 @@ def preprocess_node_list(node_list):
         node.y_train = y_node_train
         node.y_val = y_node_val
         
-        print('Node #' + str(node_index) + ': done.')
-        
+        print('   Node #' + str(node_index) + ': done.')
+    
+    print('   Done.')    
     return node_list
 
 
@@ -46,10 +47,11 @@ def preprocess_node_list(node_list):
 def preprocess_test_data(x_test, y_test):
     """ Return x_test and y_test preprocessed for keras CNN"""
     
-    print('\n### Pre-processing test data for keras CNN:')
+    print('\n## Pre-processing test data for keras CNN:')
     x_test = utils.preprocess_input(x_test)
     y_test = keras.utils.to_categorical(y_test, constants.NUM_CLASSES)
     
+    print('   Done.')
     return x_test, y_test
 
 
@@ -58,6 +60,7 @@ def preprocess_test_data(x_test, y_test):
 def compute_test_score_for_single_node(node, epoch_count):
     """Return the score on test data of a model trained on a single node"""
     
+    print('\n## Training and evaluating model on one single node.')
     # Initialize model
     model = utils.generate_new_cnn_model()
     # print(model.summary())
@@ -75,12 +78,13 @@ def compute_test_score_for_single_node(node, epoch_count):
     model_evaluation = model.evaluate(node.x_test, node.y_test,
                            batch_size=constants.BATCH_SIZE,
                            verbose=0)
-    print('\nModel metrics names: ', model.metrics_names)
-    print('Model metrics values: ', ['%.3f' % elem for elem in model_evaluation])
+    print('   Model metrics names: ', model.metrics_names)
+    print('   Model metrics values: ', ['%.3f' % elem for elem in model_evaluation])
     
     model_eval_score = model_evaluation[1] # 0 is for the loss
 
     # Return model score on test data
+    print('\nTraining and evaluation on one single node: done.')
     return model_eval_score
 
 
@@ -100,11 +104,14 @@ def compute_test_score(node_list, epoch_count, x_test, y_test, is_early_stopping
     """Return the score on test data of a final aggregated model trained in a federated way on each node"""
 
     nodes_count = len(node_list)
-        
+    
+    # If only one node, fall back to dedicated single node function    
     if nodes_count == 1:
         return compute_test_score_for_single_node(node_list[0], epoch_count)
     
+    # Else, follow a federated learning procedure
     else:
+        print('\n## Training and evaluating model on multiple nodes: ' + str(node_list))
 
         model_list = [None] * nodes_count
         epochs = epoch_count
@@ -112,27 +119,25 @@ def compute_test_score(node_list, epoch_count, x_test, y_test, is_early_stopping
         global_val_acc = []
         global_val_loss = []
         
-        
+        print('\n### Training model:')
         for epoch in range(epochs):
         
-            print('\n=============================================')
-            print('Epoch #' + str(epoch + 1) + ' out of ' + str(epochs) + ' total epochs')
+            print('\nEpoch #' + str(epoch + 1) + ' out of ' + str(epochs) + ' total epochs')
             is_first_epoch = epoch == 0
             
             
-            # Aggregation phase
+            # Aggregation, intermediate evaluation and early stopping phase
             if is_first_epoch:
-                # First epoch
-                print('First epoch, generate model from scratch')
+                # First epoch, no aggregation
+                print('   First epoch, generate model from scratch')
                 
             else:
-                print('Aggregating models weights to build a new model')
                 # Aggregating phase : averaging the weights
+                print('   Aggregating models weights to build a new model')
                 weights = [model.get_weights() for model in model_list]
                 new_weights = list()
                 
-                # TODO : make this clearer
-                for weights_list_tuple in zip(*weights):
+                for weights_list_tuple in zip(*weights): # TODO : make this clearer
                     new_weights.append(
                         [np.array(weights_).mean(axis=0)\
                             for weights_ in zip(*weights_list_tuple)])    
@@ -153,10 +158,14 @@ def compute_test_score(node_list, epoch_count, x_test, y_test, is_early_stopping
                 global_val_loss.append(current_val_loss)
 
                 # Early stopping
+                print('   Checking if early stopping critera are met:')
                 if is_early_stopping:                 
                     # Early stopping parameters
                     if epoch >= constants.PATIENCE and current_val_loss > global_val_loss[-constants.PATIENCE]:
+                        print('      -> Early stopping critera are met, stopping here.')
                         break
+                    else:
+                        print('      -> Early stopping critera are not met, continuing with training.')
                     
         
             # Training phase
@@ -164,7 +173,7 @@ def compute_test_score(node_list, epoch_count, x_test, y_test, is_early_stopping
             acc_list = []
             for node_index, node in enumerate(node_list):
                 
-                print('Training on node '+ node.node_id)
+                print('   Training on node '+ node.node_id)
                 node_model = utils.generate_new_cnn_model()
                 
                 # Model weights are the averaged weights
@@ -187,7 +196,7 @@ def compute_test_score(node_list, epoch_count, x_test, y_test, is_early_stopping
                 model_list[node_index] = node_model
 
         
-        # Final aggregation : averaging the weights
+        # Final aggregation: averaging the weights
         weights = [model.get_weights() for model in model_list]
         new_weights = list()
         for weights_list_tuple in zip(*weights):
@@ -239,9 +248,10 @@ def compute_test_score(node_list, epoch_count, x_test, y_test, is_early_stopping
         print('\n### Evaluating model on test data:')
         model_evaluation = final_model.evaluate(x_test, y_test, batch_size=constants.BATCH_SIZE,
                              verbose=0)
-        print('\nModel metrics names: ', final_model.metrics_names)
-        print('Model metrics values: ', ['%.3f' % elem for elem in model_evaluation])
+        print('   Model metrics names: ', final_model.metrics_names)
+        print('   Model metrics values: ', ['%.3f' % elem for elem in model_evaluation])
         
         test_score = model_evaluation[1] # 0 is for the loss
 
+        print('\nTraining and evaluation on multiple nodes: done.')
         return test_score

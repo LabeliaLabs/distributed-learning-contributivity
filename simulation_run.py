@@ -62,6 +62,7 @@ for current_scenario in scenarii_list:
     shapley_contrib.computation_time = np.round(end - start)
     
     current_scenario.append_contributivity(shapley_contrib)
+    print('\n## Evaluating contributivity with Shapley:')
     print(shapley_contrib)
     
           
@@ -84,6 +85,7 @@ for current_scenario in scenarii_list:
     
     current_scenario.append_contributivity(independant_raw_contrib)
     current_scenario.append_contributivity(independant_additiv_contrib)
+    print('\n## Evaluating contributivity with independent single partner models:')
     print(independant_raw_contrib)
     print('')
     print(independant_additiv_contrib)

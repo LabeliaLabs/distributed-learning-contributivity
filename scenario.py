@@ -133,7 +133,7 @@ class Scenario:
         
         # If neither 'Stratified' nor 'Random', we raise an exception
         else:
-            raise NameError('This samples_split_option scenario [' + self.samples_split_option + '] is not recognized')
+            raise NameError('This samples_split_option scenario [' + self.samples_split_option + '] is not recognized.')
             
             
         #%% Do the splitting among nodes according to desired scenarios
@@ -166,8 +166,7 @@ class Scenario:
             node = Node(x_node_train, x_node_test, y_node_train, y_node_test, str(node_id))
             self.node_list.append(node)
             node_id += 1
-
-        
+     
         # Check coherence of node_list versus nodes_count   
         assert(len(self.node_list) == self.nodes_count)
         
@@ -187,7 +186,7 @@ class Scenario:
         for i, node in enumerate(self.node_list):
             
             plt.subplot(self.nodes_count, 1, i+1) #TODO share y axis
-            print(node.y_train)
+            # print(node.y_train) # VERBOSE
             #data = np.argmax(node.y_train, axis=1)
             data_count = np.bincount(node.y_train)
             
