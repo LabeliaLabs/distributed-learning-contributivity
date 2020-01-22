@@ -54,8 +54,8 @@ scenarii_list.append(my_custom_scenario)
 my_custom_scenario = scenario.Scenario(is_quick_demo=False)
 my_custom_scenario.nodes_count = 4 # Number of nodes in the collaborative ML project simulated
 my_custom_scenario.amounts_per_node = [0.1, 0.15, 0.3, 0.45] # Percentages of the data samples for each node
-my_custom_scenario.samples_split_option = 'Random' # If data are split randomly between nodes or stratified to be distinct (toggle between 'Random' and 'Stratified')
-my_custom_scenario.testset_option = 'Stratified' # If test data are distributed between nodes or stays a central testset (toggle between 'Centralised' and 'Distributed')
+my_custom_scenario.samples_split_option = 'Stratified' # If data are split randomly between nodes or stratified to be distinct (toggle between 'Random' and 'Stratified')
+my_custom_scenario.testset_option = 'Centralised' # If test data are distributed between nodes or stays a central testset (toggle between 'Centralised' and 'Distributed')
 scenarii_list.append(my_custom_scenario)
 
 
