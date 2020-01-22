@@ -8,6 +8,13 @@ A script to configure and run simulations of:
 
 from __future__ import print_function
 
+# GPU config
+from tensorflow.compat.v1 import ConfigProto
+from tensorflow.compat.v1 import InteractiveSession
+config = ConfigProto()
+config.gpu_options.allow_growth = True
+session = InteractiveSession(config=config)
+
 import scenario
 import contributivity
 import fl_training
