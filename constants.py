@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Created on Mon Sep  2 11:04:48 2019
-
-@author: RGOUSSAULT
+Declaration of constants.
 """
 
 #%% Data constants

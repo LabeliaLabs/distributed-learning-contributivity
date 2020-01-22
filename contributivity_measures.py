@@ -1,10 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Created on Thu Oct  3 14:49:54 2019
-
 Implement contributivity measurements
-
-@author: @bowni
 """
 
 from __future__ import print_function
@@ -19,11 +15,11 @@ import fl_training
 import shapley_value.shapley as sv
 
 
-# Compute independent performance scores of models trained independently on each node
+#%% Compute independent performance scores of models trained independently on each node
     
 def compute_independent_scores(node_list, epoch_count, collaborative_score):
     
-    print('\n### Launching computation of perf. scores of models trained independently on each node')
+    print('\n# Launching computation of perf. scores of models trained independently on each node')
     
     # Initialize a list of performance scores
     performance_scores = []
@@ -39,11 +35,11 @@ def compute_independent_scores(node_list, epoch_count, collaborative_score):
     return [performance_scores, perf_scores_additive]
 
 
-# Generalization of Shapley Value computation
+#%% Generalization of Shapley Value computation
 
-def compute_SV(node_list, epoch_count):
+def compute_SV(node_list, epoch_count, x_esval, y_esval, x_test, y_test):
     
-    print('\n### Launching computation of Shapley Value of all nodes')
+    print('\n# Launching computation of Shapley Value of all nodes')
     
     # Initialize list of all players (nodes) indexes
     nodes_count = len(node_list)
@@ -61,7 +57,7 @@ def compute_SV(node_list, epoch_count):
     for coalition in coalitions:
         coalition_nodes = list(node_list[i] for i in coalition)
         # print('\nComputing characteristic function on coalition ', coalition) # VERBOSE
-        characteristic_function.append(fl_training.compute_test_score(coalition_nodes, epoch_count))
+        characteristic_function.append(fl_training.compute_test_score(coalition_nodes, epoch_count, x_esval, y_esval, x_test, y_test))
     # print('\nValue of characteristic function for all coalitions: ', characteristic_function) # VERBOSE
     
     # Compute Shapley Value for each node

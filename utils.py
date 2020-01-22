@@ -1,9 +1,7 @@
 # -*- coding: utf-8 -*-
 """
-Created on Fri Aug 30 15:33:15 2019
-
-@author: RGOUSSAULT
-inspired from: https://keras.io/examples/mnist_cnn/
+Some utils functions.
+(inspired from: https://keras.io/examples/mnist_cnn/)
 """
 
 from __future__ import print_function

@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Created on Sun Sep 29 17:31:56 2019
-
-@author: RGOUSSAULT
+This enables to parameterize the nodes that participate to the simulated federated learning scenario.
 """
 import utils
 import constants
