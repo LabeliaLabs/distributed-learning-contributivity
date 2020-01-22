@@ -192,9 +192,9 @@ def compute_test_score(node_list, epoch_count, x_esval, y_esval, x_test, y_test,
                           verbose=0,
                           validation_data=(node.x_val, node.y_val))
                 
-                val_acc_list.append(history.history['val_acc'])
-                acc_list.append(history.history['acc'])
-                score_matrix[epoch, node_index] = history.history['val_acc'][0]
+                val_acc_list.append(history.history['val_accuracy'])
+                acc_list.append(history.history['accuracy'])
+                score_matrix[epoch, node_index] = history.history['val_accuracy'][0]
                 model_list[node_index] = node_model
 
         
