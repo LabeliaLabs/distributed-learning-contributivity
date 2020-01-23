@@ -11,7 +11,7 @@ import numpy as np
 from node import Node
 from pathlib import Path
 import matplotlib.pyplot as plt
-
+import uuid
 
 class Scenario:
   def __init__(self, is_quick_demo=False):
@@ -54,7 +54,8 @@ class Scenario:
     
     now = datetime.datetime.now()
     now_str = now.strftime("%Y-%m-%d_%Hh%M")
-    self.save_folder = Path('results') / Path(now_str)
+    folder_name = now_str + '_' + uuid.uuid4().hex #TODO: this is quick hack so that the two disctincts scenario do not have the same name
+    self.save_folder = Path('results') / Path(folder_name)
     os.makedirs(self.save_folder, exist_ok=True)
 
     if is_quick_demo:
