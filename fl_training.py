@@ -6,6 +6,7 @@ Train a model across multiple nodes
 
 from __future__ import print_function
 import keras
+from keras.backend.tensorflow_backend import clear_session
 
 from sklearn.model_selection import train_test_split
 import numpy as np
@@ -126,7 +127,7 @@ def compute_test_score(node_list, epoch_count, x_esval, y_esval, x_test, y_test,
         
             print('\nEpoch #' + str(epoch + 1) + ' out of ' + str(epochs) + ' total epochs')
             is_first_epoch = epoch == 0
-            
+            clear_session()
             
             # Aggregation, intermediate evaluation and early stopping phase
             if is_first_epoch:
