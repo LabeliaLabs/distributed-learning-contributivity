@@ -48,7 +48,7 @@ class Scenario:
     
     self.contributivity_list = []
     
-    self.epoch_count = 20
+    self.epoch_count = 30
 
     self.is_early_stopping = True
     
