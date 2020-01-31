@@ -34,64 +34,65 @@ scenarii_list = []
 scenarii_list.append(my_custom_scenario)
 
 
+
+
 #%% Run the scenarii
 
 for current_scenario in scenarii_list:
-    
+
     current_scenario.split_data()
     current_scenario.plot_data_distribution()
-    
+
     # Pre-process successively train data, early stopping validation data, test data
     current_scenario.node_list = fl_training.preprocess_node_list(current_scenario.node_list)
     current_scenario.x_esval, current_scenario.y_esval = fl_training.preprocess_test_data(current_scenario.x_esval, current_scenario.y_esval)
     current_scenario.x_test, current_scenario.y_test = fl_training.preprocess_test_data(current_scenario.x_test, current_scenario.y_test)
-    
-    
+
+
     #%% Train and eval on all nodes according to scenario
-    
+
     is_save_fig = True
-    current_scenario.federated_test_score = fl_training.compute_test_score_with_scenario(current_scenario, is_save_fig)    
-    
-    
+    current_scenario.federated_test_score = fl_training.compute_test_score_with_scenario(current_scenario, is_save_fig)
+
+
     #%% Contributivity 1: Baseline contributivity measurement (Shapley Value)
-    
-    shapley_contrib = contributivity.Contributivity('Shapley values')
-    
+
     start = timer()
-    shapley_contrib.contributivity_scores = contributivity_measures.compute_SV(current_scenario.node_list, current_scenario.epoch_count, current_scenario.x_esval, current_scenario.y_esval, current_scenario.x_test, current_scenario.y_test)
+    (contributivity_scores,scores_var) = contributivity_measures.compute_SV(current_scenario.node_list, current_scenario.epoch_count, current_scenario.x_esval, current_scenario.y_esval, current_scenario.x_test, current_scenario.y_test)
     end = timer()
-    
-    shapley_contrib.computation_time = np.round(end - start)
-    
+
+    shapley_contrib = contributivity.Contributivity('Shapley values',contributivity_scores,scores_var,np.round(end - start))
+
+
     current_scenario.append_contributivity(shapley_contrib)
     print('\n## Evaluating contributivity with Shapley:')
     print(shapley_contrib)
-    
-          
+
+
     #%% Contributivity 2: Performance scores of models trained independently on each node
-    
-    independant_raw_contrib = contributivity.Contributivity('Independant scores raw')
-    independant_additiv_contrib = contributivity.Contributivity('Independant scores additive')
-    
+
+
+
     start = timer()
     scores = contributivity_measures.compute_independent_scores(current_scenario.node_list, current_scenario.epoch_count, current_scenario.federated_test_score)
     end = timer()
-    
+    # TODO use dict instead of 0/1 indexes
+    independant_raw_contrib = contributivity.Contributivity('Independant scores raw',scores[0],np.repeat (0.0,len(scores[0]) ) )
+    independant_additiv_contrib = contributivity.Contributivity('Independant scores additive',scores[1],np.repeat (0.0,len(scores[1]) ) )
+
     independant_computation_time = np.round(end - start)
     independant_raw_contrib.computation_time = independant_computation_time
     independant_additiv_contrib.computation_time = independant_computation_time
-    
-    # TODO use dict instead of 0/1 indexes
-    independant_raw_contrib.contributivity_scores = scores[0]
-    independant_additiv_contrib.contributivity_scores = scores[1]
-    
+
+
+
     current_scenario.append_contributivity(independant_raw_contrib)
     current_scenario.append_contributivity(independant_additiv_contrib)
     print('\n## Evaluating contributivity with independent single partner models:')
     print(independant_raw_contrib)
     print(independant_additiv_contrib)
-    
-          
+
+
     #%% Save results to file
-    
+
     current_scenario.to_file()
