@@ -19,6 +19,7 @@ import scenario
 import contributivity
 import fl_training
 import contributivity_measures
+import truncated_MonteCarlo
 
 from timeit import default_timer as timer
 import numpy as np
@@ -54,6 +55,34 @@ scenarii_list.append(my_custom_scenario)
 my_custom_scenario = scenario.Scenario(is_quick_demo=False)
 my_custom_scenario.nodes_count = 3 # Number of nodes in the collaborative ML project simulated
 my_custom_scenario.amounts_per_node = [0.2, 0.2, 0.6] # Percentages of the data samples for each node
+my_custom_scenario.samples_split_option = 'Stratified' # If data are split randomly between nodes or stratified to be distinct (toggle between 'Random' and 'Stratified')
+my_custom_scenario.testset_option = 'Centralised' # If test data are distributed between nodes or stays a central testset (toggle between 'Centralised' and 'Distributed')
+scenarii_list.append(my_custom_scenario)
+
+my_custom_scenario = scenario.Scenario(is_quick_demo=False)
+my_custom_scenario.nodes_count = 4 # Number of nodes in the collaborative ML project simulated
+my_custom_scenario.amounts_per_node = [0.25, 0.25, 0.25, 0.25] # Percentages of the data samples for each node
+my_custom_scenario.samples_split_option = 'Random' # If data are split randomly between nodes or stratified to be distinct (toggle between 'Random' and 'Stratified')
+my_custom_scenario.testset_option = 'Centralised' # If test data are distributed between nodes or stays a central testset (toggle between 'Centralised' and 'Distributed')
+scenarii_list.append(my_custom_scenario)
+
+my_custom_scenario = scenario.Scenario(is_quick_demo=False)
+my_custom_scenario.nodes_count = 4 # Number of nodes in the collaborative ML project simulated
+my_custom_scenario.amounts_per_node = [0.25, 0.25, 0.25, 0.25] # Percentages of the data samples for each node
+my_custom_scenario.samples_split_option = 'Stratified' # If data are split randomly between nodes or stratified to be distinct (toggle between 'Random' and 'Stratified')
+my_custom_scenario.testset_option = 'Centralised' # If test data are distributed between nodes or stays a central testset (toggle between 'Centralised' and 'Distributed')
+scenarii_list.append(my_custom_scenario)
+
+my_custom_scenario = scenario.Scenario(is_quick_demo=False)
+my_custom_scenario.nodes_count = 4 # Number of nodes in the collaborative ML project simulated
+my_custom_scenario.amounts_per_node = [0.1, 0.15, 0.3, 0.45] # Percentages of the data samples for each node
+my_custom_scenario.samples_split_option = 'Random' # If data are split randomly between nodes or stratified to be distinct (toggle between 'Random' and 'Stratified')
+my_custom_scenario.testset_option = 'Centralised' # If test data are distributed between nodes or stays a central testset (toggle between 'Centralised' and 'Distributed')
+scenarii_list.append(my_custom_scenario)
+
+my_custom_scenario = scenario.Scenario(is_quick_demo=False)
+my_custom_scenario.nodes_count = 4 # Number of nodes in the collaborative ML project simulated
+my_custom_scenario.amounts_per_node = [0.1, 0.15, 0.3, 0.45] # Percentages of the data samples for each node
 my_custom_scenario.samples_split_option = 'Stratified' # If data are split randomly between nodes or stratified to be distinct (toggle between 'Random' and 'Stratified')
 my_custom_scenario.testset_option = 'Centralised' # If test data are distributed between nodes or stays a central testset (toggle between 'Centralised' and 'Distributed')
 scenarii_list.append(my_custom_scenario)
@@ -116,15 +145,12 @@ for current_scenario in scenarii_list:
 
     shapley_contrib = contributivity.Contributivity('Shapley values',contributivity_scores,scores_var,np.round(end - start))
 
-
     current_scenario.append_contributivity(shapley_contrib)
     print('\n## Evaluating contributivity with Shapley:')
     print(shapley_contrib)
 
 
     #%% Contributivity 2: Performance scores of models trained independently on each node
-
-
 
     start = timer()
     scores = contributivity_measures.compute_independent_scores(current_scenario.node_list, current_scenario.epoch_count, current_scenario.federated_test_score)
@@ -137,13 +163,24 @@ for current_scenario in scenarii_list:
     independant_raw_contrib.computation_time = independant_computation_time
     independant_additiv_contrib.computation_time = independant_computation_time
 
-
-
     current_scenario.append_contributivity(independant_raw_contrib)
     current_scenario.append_contributivity(independant_additiv_contrib)
     print('\n## Evaluating contributivity with independent single partner models:')
     print(independant_raw_contrib)
     print(independant_additiv_contrib)
+    
+    
+    #%% Contributivity 3: Truncated Monte Carlo Shapley
+    
+    start = timer()
+    tmcs_results = truncated_MonteCarlo.truncated_MC(current_scenario.node_list, characteristic_func=fl_training.compute_test_score, sv_accuracy=0.001, alpha=0.95, contrib_accuracy=0.01)
+    end = timer()
+
+    tmcs_contrib = contributivity.Contributivity('TMCS values',tmcs_results['sv'], tmcs_results['std_sv'],scores_var,np.round(end - start))
+
+    current_scenario.append_contributivity(tmcs_contrib)
+    print('\n## Evaluating contributivity with Truncated Monte Carlo Shapley (TMCS):')
+    print(tmcs_contrib)
 
 
     #%% Save results to file
