@@ -153,7 +153,6 @@ for current_scenario in scenarii_list:
 
     #%% Corrupt the node's label in needed
     for i,node in  enumerate(current_scenario.node_list):
-        print(i,node.y_train)
         if current_scenario.corrupted_nodes[i]:
             node.corrupt_labels()
 
