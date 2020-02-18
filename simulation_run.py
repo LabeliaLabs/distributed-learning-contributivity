@@ -41,6 +41,16 @@ my_custom_scenario.nodes_count = 3 # Number of nodes in the collaborative ML pro
 my_custom_scenario.amounts_per_node = [0.33, 0.33, 0.34] # Percentages of the data samples for each node
 my_custom_scenario.samples_split_option = 'Random' # If data are split randomly between nodes or stratified to be distinct (toggle between 'Random' and 'Stratified')
 my_custom_scenario.testset_option = 'Centralised' # If test data are distributed between nodes or stays a central testset (toggle between 'Centralised' and 'Distributed')
+my_custom_scenario.corrupted_nodes = [False]*my_custom_scenario.nodes_count # no corrupted node
+scenarii_list.append(my_custom_scenario)
+
+
+my_custom_scenario = scenario.Scenario(is_quick_demo=False)
+my_custom_scenario.nodes_count = 3 # Number of nodes in the collaborative ML project simulated
+my_custom_scenario.amounts_per_node = [0.33, 0.33, 0.34] # Percentages of the data samples for each node
+my_custom_scenario.samples_split_option = 'Random' # If data are split randomly between nodes or stratified to be distinct (toggle between 'Random' and 'Stratified')
+my_custom_scenario.testset_option = 'Centralised' # If test data are distributed between nodes or stays a central testset (toggle between 'Centralised' and 'Distributed')
+my_custom_scenario.corrupted_nodes = [True,False,False] # First node is corrupted (label are wrong)
 scenarii_list.append(my_custom_scenario)
 
 my_custom_scenario = scenario.Scenario(is_quick_demo=IS_QUICK_DEMO)
@@ -48,6 +58,7 @@ my_custom_scenario.nodes_count = 3 # Number of nodes in the collaborative ML pro
 my_custom_scenario.amounts_per_node = [0.33, 0.33, 0.34] # Percentages of the data samples for each node
 my_custom_scenario.samples_split_option = 'Stratified' # If data are split randomly between nodes or stratified to be distinct (toggle between 'Random' and 'Stratified')
 my_custom_scenario.testset_option = 'Centralised' # If test data are distributed between nodes or stays a central testset (toggle between 'Centralised' and 'Distributed')
+my_custom_scenario.corrupted_nodes = [False]*my_custom_scenario.nodes_count # no corrupted node
 scenarii_list.append(my_custom_scenario)
 
 my_custom_scenario = scenario.Scenario(is_quick_demo=IS_QUICK_DEMO)
@@ -55,6 +66,7 @@ my_custom_scenario.nodes_count = 3 # Number of nodes in the collaborative ML pro
 my_custom_scenario.amounts_per_node = [0.2, 0.2, 0.6] # Percentages of the data samples for each node
 my_custom_scenario.samples_split_option = 'Random' # If data are split randomly between nodes or stratified to be distinct (toggle between 'Random' and 'Stratified')
 my_custom_scenario.testset_option = 'Centralised' # If test data are distributed between nodes or stays a central testset (toggle between 'Centralised' and 'Distributed')
+my_custom_scenario.corrupted_nodes = [False]*my_custom_scenario.nodes_count # no corrupted node
 scenarii_list.append(my_custom_scenario)
 
 my_custom_scenario = scenario.Scenario(is_quick_demo=IS_QUICK_DEMO)
@@ -62,6 +74,7 @@ my_custom_scenario.nodes_count = 3 # Number of nodes in the collaborative ML pro
 my_custom_scenario.amounts_per_node = [0.2, 0.2, 0.6] # Percentages of the data samples for each node
 my_custom_scenario.samples_split_option = 'Stratified' # If data are split randomly between nodes or stratified to be distinct (toggle between 'Random' and 'Stratified')
 my_custom_scenario.testset_option = 'Centralised' # If test data are distributed between nodes or stays a central testset (toggle between 'Centralised' and 'Distributed')
+my_custom_scenario.corrupted_nodes = [False]*my_custom_scenario.nodes_count # no corrupted node
 scenarii_list.append(my_custom_scenario)
 
 my_custom_scenario = scenario.Scenario(is_quick_demo=IS_QUICK_DEMO)
@@ -69,6 +82,7 @@ my_custom_scenario.nodes_count = 4 # Number of nodes in the collaborative ML pro
 my_custom_scenario.amounts_per_node = [0.25, 0.25, 0.25, 0.25] # Percentages of the data samples for each node
 my_custom_scenario.samples_split_option = 'Random' # If data are split randomly between nodes or stratified to be distinct (toggle between 'Random' and 'Stratified')
 my_custom_scenario.testset_option = 'Centralised' # If test data are distributed between nodes or stays a central testset (toggle between 'Centralised' and 'Distributed')
+my_custom_scenario.corrupted_nodes = [False]*my_custom_scenario.nodes_count # no corrupted node
 scenarii_list.append(my_custom_scenario)
 
 my_custom_scenario = scenario.Scenario(is_quick_demo=IS_QUICK_DEMO)
@@ -76,6 +90,7 @@ my_custom_scenario.nodes_count = 4 # Number of nodes in the collaborative ML pro
 my_custom_scenario.amounts_per_node = [0.25, 0.25, 0.25, 0.25] # Percentages of the data samples for each node
 my_custom_scenario.samples_split_option = 'Stratified' # If data are split randomly between nodes or stratified to be distinct (toggle between 'Random' and 'Stratified')
 my_custom_scenario.testset_option = 'Centralised' # If test data are distributed between nodes or stays a central testset (toggle between 'Centralised' and 'Distributed')
+my_custom_scenario.corrupted_nodes = [False]*my_custom_scenario.nodes_count # no corrupted node
 scenarii_list.append(my_custom_scenario)
 
 my_custom_scenario = scenario.Scenario(is_quick_demo=IS_QUICK_DEMO)
@@ -83,6 +98,7 @@ my_custom_scenario.nodes_count = 4 # Number of nodes in the collaborative ML pro
 my_custom_scenario.amounts_per_node = [0.1, 0.15, 0.3, 0.45] # Percentages of the data samples for each node
 my_custom_scenario.samples_split_option = 'Random' # If data are split randomly between nodes or stratified to be distinct (toggle between 'Random' and 'Stratified')
 my_custom_scenario.testset_option = 'Centralised' # If test data are distributed between nodes or stays a central testset (toggle between 'Centralised' and 'Distributed')
+my_custom_scenario.corrupted_nodes = [False]*my_custom_scenario.nodes_count # no corrupted node
 scenarii_list.append(my_custom_scenario)
 
 my_custom_scenario = scenario.Scenario(is_quick_demo=IS_QUICK_DEMO)
@@ -90,6 +106,7 @@ my_custom_scenario.nodes_count = 4 # Number of nodes in the collaborative ML pro
 my_custom_scenario.amounts_per_node = [0.1, 0.15, 0.3, 0.45] # Percentages of the data samples for each node
 my_custom_scenario.samples_split_option = 'Stratified' # If data are split randomly between nodes or stratified to be distinct (toggle between 'Random' and 'Stratified')
 my_custom_scenario.testset_option = 'Centralised' # If test data are distributed between nodes or stays a central testset (toggle between 'Centralised' and 'Distributed')
+my_custom_scenario.corrupted_nodes = [False]*my_custom_scenario.nodes_count # no corrupted node
 scenarii_list.append(my_custom_scenario)
 
 my_custom_scenario = scenario.Scenario(is_quick_demo=IS_QUICK_DEMO)
@@ -97,6 +114,7 @@ my_custom_scenario.nodes_count = 5 # Number of nodes in the collaborative ML pro
 my_custom_scenario.amounts_per_node = [0.2, 0.2, 0.2, 0.2, 0.2] # Percentages of the data samples for each node
 my_custom_scenario.samples_split_option = 'Random' # If data are split randomly between nodes or stratified to be distinct (toggle between 'Random' and 'Stratified')
 my_custom_scenario.testset_option = 'Centralised' # If test data are distributed between nodes or stays a central testset (toggle between 'Centralised' and 'Distributed')
+my_custom_scenario.corrupted_nodes = [False]*my_custom_scenario.nodes_count # no corrupted node
 scenarii_list.append(my_custom_scenario)
 
 my_custom_scenario = scenario.Scenario(is_quick_demo=IS_QUICK_DEMO)
@@ -104,6 +122,7 @@ my_custom_scenario.nodes_count = 5 # Number of nodes in the collaborative ML pro
 my_custom_scenario.amounts_per_node = [0.2, 0.2, 0.2, 0.2, 0.2] # Percentages of the data samples for each node
 my_custom_scenario.samples_split_option = 'Stratified' # If data are split randomly between nodes or stratified to be distinct (toggle between 'Random' and 'Stratified')
 my_custom_scenario.testset_option = 'Centralised' # If test data are distributed between nodes or stays a central testset (toggle between 'Centralised' and 'Distributed')
+my_custom_scenario.corrupted_nodes = [False]*my_custom_scenario.nodes_count # no corrupted node
 scenarii_list.append(my_custom_scenario)
 
 my_custom_scenario = scenario.Scenario(is_quick_demo=IS_QUICK_DEMO)
@@ -111,6 +130,7 @@ my_custom_scenario.nodes_count = 5 # Number of nodes in the collaborative ML pro
 my_custom_scenario.amounts_per_node = [0.1, 0.1, 0.2, 0.2, 0.4] # Percentages of the data samples for each node
 my_custom_scenario.samples_split_option = 'Random' # If data are split randomly between nodes or stratified to be distinct (toggle between 'Random' and 'Stratified')
 my_custom_scenario.testset_option = 'Centralised' # If test data are distributed between nodes or stays a central testset (toggle between 'Centralised' and 'Distributed')
+my_custom_scenario.corrupted_nodes = [False]*my_custom_scenario.nodes_count # no corrupted node
 scenarii_list.append(my_custom_scenario)
 
 my_custom_scenario = scenario.Scenario(is_quick_demo=IS_QUICK_DEMO)
@@ -118,6 +138,7 @@ my_custom_scenario.nodes_count = 5 # Number of nodes in the collaborative ML pro
 my_custom_scenario.amounts_per_node = [0.1, 0.1, 0.2, 0.2, 0.4] # Percentages of the data samples for each node
 my_custom_scenario.samples_split_option = 'Stratified' # If data are split randomly between nodes or stratified to be distinct (toggle between 'Random' and 'Stratified')
 my_custom_scenario.testset_option = 'Centralised' # If test data are distributed between nodes or stays a central testset (toggle between 'Centralised' and 'Distributed')
+my_custom_scenario.corrupted_nodes = [False]*my_custom_scenario.nodes_count # no corrupted node
 scenarii_list.append(my_custom_scenario)
 
 
@@ -134,6 +155,13 @@ for current_scenario in scenarii_list:
     current_scenario.node_list = fl_training.preprocess_node_list(current_scenario.node_list)
     current_scenario.x_esval, current_scenario.y_esval = fl_training.preprocess_test_data(current_scenario.x_esval, current_scenario.y_esval)
     current_scenario.x_test, current_scenario.y_test = fl_training.preprocess_test_data(current_scenario.x_test, current_scenario.y_test)
+
+    #%% Corrupt the node's label in needed
+    for i,node in  enumerate(current_scenario.node_list):
+        if current_scenario.corrupted_nodes[i]:
+            node.corrupt_labels()
+
+
 
 
     #%% Train and eval on all nodes according to scenario
@@ -173,10 +201,10 @@ for current_scenario in scenarii_list:
     print('\n## Evaluating contributivity with independent single partner models:')
     print(independant_raw_contrib)
     print(independant_additiv_contrib)
-    
-    
+
+
     #%% Contributivity 3: Truncated Monte Carlo Shapley
-    
+
     start = timer()
     tmcs_results = truncated_MonteCarlo.truncated_MC(current_scenario, characteristic_func=fl_training.compute_test_score,
       sv_accuracy=0.01, alpha=0.9, contrib_accuracy=0.05)
