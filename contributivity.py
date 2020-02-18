@@ -8,12 +8,10 @@ import numpy as np
 
 
 class Contributivity:
-    def __init__(self, name='', contributivity_scores=np.array([]), scores_variances=np.array([]), computation_time=0):
+    def __init__(self, name='', contributivity_scores=np.array([]), scores_std=np.array([]), computation_time=0):
         self.name = name
-        n=len(contributivity_scores)
-        assert(n==len(contributivity_scores[i] ) )
         self.contributivity_scores = contributivity_scores
-        self.scores_variances = scores_variances
+        self.scores_std = scores_std
 
         self.computation_time = computation_time
 
@@ -23,7 +21,7 @@ class Contributivity:
         output += 'computation time: ' + str(datetime.timedelta(seconds=self.computation_time)) + '\n'
         #TODO print only 3 digits
         output += 'contributivity scores: ' + str(self.contributivity_scores)+ '\n'
-        output += 'variances of the contributivity scores: ' + str(self.scores_variances)+ '\n'
+        output += 'Std of the contributivity scores: ' + str(self.scores_std)+ '\n'
 
 
         return output
