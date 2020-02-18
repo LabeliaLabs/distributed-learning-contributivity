@@ -109,8 +109,8 @@ for epoch in range(epochs):
                   verbose=1,
                   validation_data=(node.x_val, node.y_val))
         
-        val_acc_list.append(history.history['val_acc'])
-        acc_list.append(history.history['acc'])
+        val_acc_list.append(history.history['val_accuracy'])
+        acc_list.append(history.history['accuracy'])
         
         model_list[node_index] = node_model
     

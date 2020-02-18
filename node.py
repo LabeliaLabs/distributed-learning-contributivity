@@ -5,17 +5,18 @@ This enables to parameterize the nodes that participate to the simulated federat
 import utils
 import constants
 import keras
+import numpy as np
 
 class Node:
   def __init__(self, x_train, x_test, y_train, y_test, node_id):
     self.x_train = x_train
     self.x_val = []
     self.x_test = x_test
-    
+
     self.y_train = y_train
     self.y_val = []
     self.y_test = y_test
-    
+
     self.node_id = node_id
 
 
@@ -30,3 +31,9 @@ class Node:
     # Preprocess labels (y) data
     self.y_train = keras.utils.to_categorical(self.y_train, constants.NUM_CLASSES)
     self.y_test = keras.utils.to_categorical(self.y_test, constants.NUM_CLASSES)
+
+  def corrupt_labels(self):
+      for label in self.y_train :
+          idx_max=np.argmax(label)
+          label[idx_max]=0.
+          label[idx_max-1]=1.
