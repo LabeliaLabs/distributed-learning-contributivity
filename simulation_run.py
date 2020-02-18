@@ -9,11 +9,15 @@ A script to configure and run simulations of:
 from __future__ import print_function
 
 # GPU config
-from tensorflow.compat.v1 import ConfigProto
-from tensorflow.compat.v1 import InteractiveSession
-config = ConfigProto()
-config.gpu_options.allow_growth = True
-session = InteractiveSession(config=config)
+#from tensorflow.compat.v1 import ConfigProto
+#from tensorflow.compat.v1 import InteractiveSession
+#config = ConfigProto()
+#config.gpu_options.allow_growth = True
+#session = InteractiveSession(config=config)
+import tensorflow as tf
+
+gpus = tf.config.experimental.list_physical_devices('GPU')
+tf.config.experimental.set_memory_growth(gpus[0], True)
 
 import scenario
 import contributivity
@@ -29,86 +33,87 @@ plt.close('all')
 
 #%% Create scenarii
 scenarii_list = []
+IS_QUICK_DEMO = False
 
 # Create a custom scenario and comment the main scenario parameters (see scenario.py for more comments)
-my_custom_scenario = scenario.Scenario(is_quick_demo=False)
+my_custom_scenario = scenario.Scenario(is_quick_demo=IS_QUICK_DEMO)
 my_custom_scenario.nodes_count = 3 # Number of nodes in the collaborative ML project simulated
 my_custom_scenario.amounts_per_node = [0.33, 0.33, 0.34] # Percentages of the data samples for each node
 my_custom_scenario.samples_split_option = 'Random' # If data are split randomly between nodes or stratified to be distinct (toggle between 'Random' and 'Stratified')
 my_custom_scenario.testset_option = 'Centralised' # If test data are distributed between nodes or stays a central testset (toggle between 'Centralised' and 'Distributed')
 scenarii_list.append(my_custom_scenario)
 
-my_custom_scenario = scenario.Scenario(is_quick_demo=False)
+my_custom_scenario = scenario.Scenario(is_quick_demo=IS_QUICK_DEMO)
 my_custom_scenario.nodes_count = 3 # Number of nodes in the collaborative ML project simulated
 my_custom_scenario.amounts_per_node = [0.33, 0.33, 0.34] # Percentages of the data samples for each node
 my_custom_scenario.samples_split_option = 'Stratified' # If data are split randomly between nodes or stratified to be distinct (toggle between 'Random' and 'Stratified')
 my_custom_scenario.testset_option = 'Centralised' # If test data are distributed between nodes or stays a central testset (toggle between 'Centralised' and 'Distributed')
 scenarii_list.append(my_custom_scenario)
 
-my_custom_scenario = scenario.Scenario(is_quick_demo=False)
+my_custom_scenario = scenario.Scenario(is_quick_demo=IS_QUICK_DEMO)
 my_custom_scenario.nodes_count = 3 # Number of nodes in the collaborative ML project simulated
 my_custom_scenario.amounts_per_node = [0.2, 0.2, 0.6] # Percentages of the data samples for each node
 my_custom_scenario.samples_split_option = 'Random' # If data are split randomly between nodes or stratified to be distinct (toggle between 'Random' and 'Stratified')
 my_custom_scenario.testset_option = 'Centralised' # If test data are distributed between nodes or stays a central testset (toggle between 'Centralised' and 'Distributed')
 scenarii_list.append(my_custom_scenario)
 
-my_custom_scenario = scenario.Scenario(is_quick_demo=False)
+my_custom_scenario = scenario.Scenario(is_quick_demo=IS_QUICK_DEMO)
 my_custom_scenario.nodes_count = 3 # Number of nodes in the collaborative ML project simulated
 my_custom_scenario.amounts_per_node = [0.2, 0.2, 0.6] # Percentages of the data samples for each node
 my_custom_scenario.samples_split_option = 'Stratified' # If data are split randomly between nodes or stratified to be distinct (toggle between 'Random' and 'Stratified')
 my_custom_scenario.testset_option = 'Centralised' # If test data are distributed between nodes or stays a central testset (toggle between 'Centralised' and 'Distributed')
 scenarii_list.append(my_custom_scenario)
 
-my_custom_scenario = scenario.Scenario(is_quick_demo=False)
+my_custom_scenario = scenario.Scenario(is_quick_demo=IS_QUICK_DEMO)
 my_custom_scenario.nodes_count = 4 # Number of nodes in the collaborative ML project simulated
 my_custom_scenario.amounts_per_node = [0.25, 0.25, 0.25, 0.25] # Percentages of the data samples for each node
 my_custom_scenario.samples_split_option = 'Random' # If data are split randomly between nodes or stratified to be distinct (toggle between 'Random' and 'Stratified')
 my_custom_scenario.testset_option = 'Centralised' # If test data are distributed between nodes or stays a central testset (toggle between 'Centralised' and 'Distributed')
 scenarii_list.append(my_custom_scenario)
 
-my_custom_scenario = scenario.Scenario(is_quick_demo=False)
+my_custom_scenario = scenario.Scenario(is_quick_demo=IS_QUICK_DEMO)
 my_custom_scenario.nodes_count = 4 # Number of nodes in the collaborative ML project simulated
 my_custom_scenario.amounts_per_node = [0.25, 0.25, 0.25, 0.25] # Percentages of the data samples for each node
 my_custom_scenario.samples_split_option = 'Stratified' # If data are split randomly between nodes or stratified to be distinct (toggle between 'Random' and 'Stratified')
 my_custom_scenario.testset_option = 'Centralised' # If test data are distributed between nodes or stays a central testset (toggle between 'Centralised' and 'Distributed')
 scenarii_list.append(my_custom_scenario)
 
-my_custom_scenario = scenario.Scenario(is_quick_demo=False)
+my_custom_scenario = scenario.Scenario(is_quick_demo=IS_QUICK_DEMO)
 my_custom_scenario.nodes_count = 4 # Number of nodes in the collaborative ML project simulated
 my_custom_scenario.amounts_per_node = [0.1, 0.15, 0.3, 0.45] # Percentages of the data samples for each node
 my_custom_scenario.samples_split_option = 'Random' # If data are split randomly between nodes or stratified to be distinct (toggle between 'Random' and 'Stratified')
 my_custom_scenario.testset_option = 'Centralised' # If test data are distributed between nodes or stays a central testset (toggle between 'Centralised' and 'Distributed')
 scenarii_list.append(my_custom_scenario)
 
-my_custom_scenario = scenario.Scenario(is_quick_demo=False)
+my_custom_scenario = scenario.Scenario(is_quick_demo=IS_QUICK_DEMO)
 my_custom_scenario.nodes_count = 4 # Number of nodes in the collaborative ML project simulated
 my_custom_scenario.amounts_per_node = [0.1, 0.15, 0.3, 0.45] # Percentages of the data samples for each node
 my_custom_scenario.samples_split_option = 'Stratified' # If data are split randomly between nodes or stratified to be distinct (toggle between 'Random' and 'Stratified')
 my_custom_scenario.testset_option = 'Centralised' # If test data are distributed between nodes or stays a central testset (toggle between 'Centralised' and 'Distributed')
 scenarii_list.append(my_custom_scenario)
 
-my_custom_scenario = scenario.Scenario(is_quick_demo=False)
+my_custom_scenario = scenario.Scenario(is_quick_demo=IS_QUICK_DEMO)
 my_custom_scenario.nodes_count = 5 # Number of nodes in the collaborative ML project simulated
 my_custom_scenario.amounts_per_node = [0.2, 0.2, 0.2, 0.2, 0.2] # Percentages of the data samples for each node
 my_custom_scenario.samples_split_option = 'Random' # If data are split randomly between nodes or stratified to be distinct (toggle between 'Random' and 'Stratified')
 my_custom_scenario.testset_option = 'Centralised' # If test data are distributed between nodes or stays a central testset (toggle between 'Centralised' and 'Distributed')
 scenarii_list.append(my_custom_scenario)
 
-my_custom_scenario = scenario.Scenario(is_quick_demo=False)
+my_custom_scenario = scenario.Scenario(is_quick_demo=IS_QUICK_DEMO)
 my_custom_scenario.nodes_count = 5 # Number of nodes in the collaborative ML project simulated
 my_custom_scenario.amounts_per_node = [0.2, 0.2, 0.2, 0.2, 0.2] # Percentages of the data samples for each node
 my_custom_scenario.samples_split_option = 'Stratified' # If data are split randomly between nodes or stratified to be distinct (toggle between 'Random' and 'Stratified')
 my_custom_scenario.testset_option = 'Centralised' # If test data are distributed between nodes or stays a central testset (toggle between 'Centralised' and 'Distributed')
 scenarii_list.append(my_custom_scenario)
 
-my_custom_scenario = scenario.Scenario(is_quick_demo=False)
+my_custom_scenario = scenario.Scenario(is_quick_demo=IS_QUICK_DEMO)
 my_custom_scenario.nodes_count = 5 # Number of nodes in the collaborative ML project simulated
 my_custom_scenario.amounts_per_node = [0.1, 0.1, 0.2, 0.2, 0.4] # Percentages of the data samples for each node
 my_custom_scenario.samples_split_option = 'Random' # If data are split randomly between nodes or stratified to be distinct (toggle between 'Random' and 'Stratified')
 my_custom_scenario.testset_option = 'Centralised' # If test data are distributed between nodes or stays a central testset (toggle between 'Centralised' and 'Distributed')
 scenarii_list.append(my_custom_scenario)
 
-my_custom_scenario = scenario.Scenario(is_quick_demo=False)
+my_custom_scenario = scenario.Scenario(is_quick_demo=IS_QUICK_DEMO)
 my_custom_scenario.nodes_count = 5 # Number of nodes in the collaborative ML project simulated
 my_custom_scenario.amounts_per_node = [0.1, 0.1, 0.2, 0.2, 0.4] # Percentages of the data samples for each node
 my_custom_scenario.samples_split_option = 'Stratified' # If data are split randomly between nodes or stratified to be distinct (toggle between 'Random' and 'Stratified')
@@ -173,10 +178,11 @@ for current_scenario in scenarii_list:
     #%% Contributivity 3: Truncated Monte Carlo Shapley
     
     start = timer()
-    tmcs_results = truncated_MonteCarlo.truncated_MC(current_scenario.node_list, characteristic_func=fl_training.compute_test_score, sv_accuracy=0.001, alpha=0.95, contrib_accuracy=0.01)
+    tmcs_results = truncated_MonteCarlo.truncated_MC(current_scenario, characteristic_func=fl_training.compute_test_score,
+      sv_accuracy=0.01, alpha=0.9, contrib_accuracy=0.05)
     end = timer()
 
-    tmcs_contrib = contributivity.Contributivity('TMCS values',tmcs_results['sv'], tmcs_results['std_sv'],scores_var,np.round(end - start))
+    tmcs_contrib = contributivity.Contributivity('TMCS values', tmcs_results['sv'], tmcs_results['std_sv'], np.round(end - start))
 
     current_scenario.append_contributivity(tmcs_contrib)
     print('\n## Evaluating contributivity with Truncated Monte Carlo Shapley (TMCS):')

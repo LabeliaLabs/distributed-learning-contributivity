@@ -7,13 +7,15 @@ A script to  run simulations with the truncated Monte-Carlo method
  
 import numpy as np 
 import scenario
+import fl_training
 
 from scipy.stats import norm
 
 
-def truncated_MC(preprocessed_node_list,characteristic_func, sv_accuracy=0.001, alpha=0.95, contrib_accuracy=0.01):
+def truncated_MC(scenario, characteristic_func, sv_accuracy=0.01, alpha=0.9, contrib_accuracy=0.05):
     """Return the vector of approximated shapeley value corresponding to a list of node and a characteristic function using the truncated monte-carlo method."""
- 
+    
+    preprocessed_node_list = scenario.node_list
     n = len(preprocessed_node_list)
     
     # We store the value of the characteristic function in order to avoid recomputing it twice
@@ -28,7 +30,15 @@ def truncated_MC(preprocessed_node_list,characteristic_func, sv_accuracy=0.001, 
             return char_value_dict[tuple(permut)]
         except KeyError: # Characteristic_func(permut) has not been computed yet, so we compute, store, and return characteristic_func(permut)
             small_node_list = np.array([preprocessed_node_list[i] for i in permut])
-            char_value_dict[tuple(permut)]= characteristic_func(small_node_list)
+            char_value_dict[tuple(permut)] = fl_training.compute_test_score(small_node_list,
+                              scenario.epoch_count,
+                              scenario.x_esval,
+                              scenario.y_esval,
+                              scenario.x_test,
+                              scenario.y_test,
+                              scenario.is_early_stopping,
+                              save_folder=scenario.save_folder)
+            
             return char_value_dict[tuple(permut)]
 
         
@@ -43,6 +53,9 @@ def truncated_MC(preprocessed_node_list,characteristic_func, sv_accuracy=0.001, 
         v_max=0
         while t<100 or t<q**2 *v_max  /(sv_accuracy*characteristic_all_node)**2 : # Check if the length of the confidence interval  is below the value of sv_accuracy*characteristic_all_node
             t+=1
+            print(t)
+            print(q**2 *v_max  /(sv_accuracy*characteristic_all_node)**2)
+            print()
             
             if t==1:
                 contributions=np.array([np.zeros(n)])
@@ -60,7 +73,8 @@ def truncated_MC(preprocessed_node_list,characteristic_func, sv_accuracy=0.001, 
                 contributions[-1][permutation[j]]  =  char_nodelists[j+1]-char_nodelists[j]
             v_max=np.max(np.var(contributions,axis=0))
         sv=np.mean(contributions,axis=0)
-    return({'sv':sv,'std_sv': np.std(contributions,axis=0),'prop':sv/np.sum(sv), 'computed_val':char_value_dict})
+
+    return({'sv':sv, 'std_sv': np.std(contributions,axis=0) / np.sqrt(t-1),'prop':sv/np.sum(sv), 'computed_val':char_value_dict})
 
         
                 
