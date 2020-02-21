@@ -206,7 +206,7 @@ for current_scenario in scenarii_list:
     #%% Contributivity 3: Truncated Monte Carlo Shapley
 
     start = timer()
-    tmcs_results = truncated_MonteCarlo.truncated_MC(current_scenario, characteristic_func=fl_training.compute_test_score,
+    tmcs_results = truncated_MonteCarlo.truncated_MC(current_scenario, 
       sv_accuracy=0.01, alpha=0.9, contrib_accuracy=0.05)
     end = timer()
 
