@@ -12,16 +12,21 @@ class Contributivity:
         self.name = name
         self.contributivity_scores = contributivity_scores
         self.scores_std = scores_std
-
+        sum_contrib=np.sum(contributivity_scores)
+        if len (contributivity_scores)==0:
+            elf.normalized_scores = np.array([])
+        else:
+            self.normalized_scores = contributivity_scores/sum_contrib
         self.computation_time = computation_time
 
 
     def __str__(self):
         output = '\n' + self.name + '\n'
-        output += 'computation time: ' + str(datetime.timedelta(seconds=self.computation_time)) + '\n'
+        output += 'Computation time: ' + str(datetime.timedelta(seconds=self.computation_time)) + '\n'
         #TODO print only 3 digits
-        output += 'contributivity scores: ' + str(self.contributivity_scores)+ '\n'
+        output += 'Contributivity scores: ' + str(self.contributivity_scores)+ '\n'
         output += 'Std of the contributivity scores: ' + str(self.scores_std)+ '\n'
+        output += 'Normalized contributivity scores: ' + str(self.normalized_scores)+ '\n'
 
 
         return output

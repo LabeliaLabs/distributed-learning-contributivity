@@ -23,7 +23,6 @@ import scenario
 import contributivity
 import fl_training
 import contributivity_measures
-import truncated_MonteCarlo
 
 from timeit import default_timer as timer
 import numpy as np
@@ -206,7 +205,7 @@ for current_scenario in scenarii_list:
     #%% Contributivity 3: Truncated Monte Carlo Shapley
 
     start = timer()
-    tmcs_results = truncated_MonteCarlo.truncated_MC(current_scenario, 
+    tmcs_results = contributivity_measures.truncated_MC(current_scenario,
       sv_accuracy=0.01, alpha=0.9, contrib_accuracy=0.05)
     end = timer()
 
