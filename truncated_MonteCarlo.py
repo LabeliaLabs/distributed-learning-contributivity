@@ -12,7 +12,7 @@ import fl_training
 from scipy.stats import norm
 
 
-def truncated_MC(scenario, characteristic_func, sv_accuracy=0.01, alpha=0.9, contrib_accuracy=0.05):
+def truncated_MC(scenario, sv_accuracy=0.01, alpha=0.9, contrib_accuracy=0.05):
     """Return the vector of approximated shapeley value corresponding to a list of node and a characteristic function using the truncated monte-carlo method."""
     
     preprocessed_node_list = scenario.node_list
@@ -80,7 +80,6 @@ def truncated_MC(scenario, characteristic_func, sv_accuracy=0.01, alpha=0.9, con
                 
 # # TEST:        
 # import data_splitting
-# import fl_training
 # import constants
 # import itertools
 # import shapley_value.shapley as shap
@@ -99,7 +98,7 @@ def truncated_MC(scenario, characteristic_func, sv_accuracy=0.01, alpha=0.9, con
 # node_list = data_splitting.process_data_splitting_scenario(my_custom_scenario)
 # preprocessed_node_list = fl_training.preprocess_node_list(node_list)
 # sv_accuracy,alpha=0.005,0.95
-# res1=truncated_MC(preprocessed_node_list,characteristic_func= fl_training.compute_test_score, sv_accuracy=sv_accuracy, alpha=alpha, contrib_accuracy=0.001)
+# res1=truncated_MC(preprocessed_node_list, sv_accuracy=sv_accuracy, alpha=alpha, contrib_accuracy=0.001)
 
 # char_value_list=[   res1['computed_val'][tuple(i)]  for r in range(1,my_custom_scenario.nodes_count+1) for i in itertools.combinations(range(my_custom_scenario.nodes_count),r)]
 # res1_true=shap.main(my_custom_scenario.nodes_count,char_value_list)
