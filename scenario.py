@@ -39,7 +39,7 @@ class Scenario:
     self.samples_split_option = 'Random' # Toggle between 'Random' and 'Stratified'
 
     # Configure if the data of the nodes are corrupted or not
-    self.corrupted_nodes =  [False,False,False]
+    self.corrupted_nodes =  ["not_corrupted","not_corrupted","not_corrupted"]
 
     # Define if test data should be distributed between nodes...
     # ... or if each node should refer to a centralised test set
