@@ -37,3 +37,8 @@ class Node:
           idx_max=np.argmax(label)
           label[idx_max]=0.
           label[idx_max-1]=1.
+          
+  def shuffle_labels(self):
+      for label in self.y_train :
+          label=shuffle(label)
+
