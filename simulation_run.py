@@ -44,7 +44,7 @@ my_custom_scenario.corrupted_nodes = ["not-corrupted"]*my_custom_scenario.nodes_
 scenarii_list.append(my_custom_scenario)
 
 
-my_custom_scenario = scenario.Scenario(is_quick_demo=False)
+my_custom_scenario = scenario.Scenario(is_quick_demo=IS_QUICK_DEMO)
 my_custom_scenario.nodes_count = 3 # Number of nodes in the collaborative ML project simulated
 my_custom_scenario.amounts_per_node = [0.33, 0.33, 0.34] # Percentages of the data samples for each node
 my_custom_scenario.samples_split_option = 'Random' # If data are split randomly between nodes or stratified to be distinct (toggle between 'Random' and 'Stratified')
@@ -54,7 +54,7 @@ scenarii_list.append(my_custom_scenario)
 
 
 
-my_custom_scenario = scenario.Scenario(is_quick_demo=False)
+my_custom_scenario = scenario.Scenario(is_quick_demo=IS_QUICK_DEMO)
 my_custom_scenario.nodes_count = 3 # Number of nodes in the collaborative ML project simulated
 my_custom_scenario.amounts_per_node = [0.33, 0.33, 0.34] # Percentages of the data samples for each node
 my_custom_scenario.samples_split_option = 'Random' # If data are split randomly between nodes or stratified to be distinct (toggle between 'Random' and 'Stratified')
