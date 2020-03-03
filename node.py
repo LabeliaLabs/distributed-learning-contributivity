@@ -6,6 +6,7 @@ import utils
 import constants
 import keras
 import numpy as np
+from random import shuffle
 
 class Node:
   def __init__(self, x_train, x_test, y_train, y_test, node_id):
