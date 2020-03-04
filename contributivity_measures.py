@@ -14,7 +14,7 @@ from scipy.stats import norm
 import fl_training
 import scenario
 import shapley_value.shapley as sv
-
+from math import factorial
 
 #%% Compute independent performance scores of models trained independently on each node
 
@@ -75,7 +75,7 @@ def compute_SV(node_list, epoch_count, x_esval, y_esval, x_test, y_test):
 
 #%% compute Shapley values with the truncated Monte-carlo method
 
-def truncated_MC(scenario, sv_accuracy=0.01, alpha=0.9, contrib_accuracy=0.05):
+def truncated_MC(scenario, sv_accuracy=0.01, alpha=0.9, truncation=0.05):
     """Return the vector of approximated shapeley value corresponding to a list of node and a characteristic function using the truncated monte-carlo method."""
 
     preprocessed_node_list = scenario.node_list
@@ -113,11 +113,8 @@ def truncated_MC(scenario, sv_accuracy=0.01, alpha=0.9, contrib_accuracy=0.05):
         t=0
         q=norm.ppf((1-alpha)/2, loc=0, scale=1)
         v_max=0
-        while t<100 or t<q**2 *v_max  /(sv_accuracy*characteristic_all_node)**2 : # Check if the length of the confidence interval  is below the value of sv_accuracy*characteristic_all_node
+        while t<100 or t<q**2 *v_max  /(sv_accuracy)**2 : # Check if the length of the confidence interval  is below the value of sv_accuracy*characteristic_all_node
             t+=1
-            print(t)
-            print(q**2 *v_max  /(sv_accuracy*characteristic_all_node)**2)
-            print()
 
             if t==1:
                 contributions=np.array([np.zeros(n)])
@@ -128,7 +125,8 @@ def truncated_MC(scenario, sv_accuracy=0.01, alpha=0.9, contrib_accuracy=0.05):
             char_nodelists = np.zeros(n+1) # Store the characteristic function on each ensemble built with the first elements of the permutation
             char_nodelists[-1]=characteristic_all_node
             for j in range(n):
-                if abs(characteristic_all_node-char_nodelists[j])<contrib_accuracy :
+                #here we suppose the characteristic function is 0 for the empty set
+                if abs(characteristic_all_node-char_nodelists[j])<truncation :
                     char_nodelists[j+1] = char_nodelists[j]
                 else:
                     char_nodelists[j+1] = not_twice_characteristic(permutation[:j+1])
@@ -137,4 +135,123 @@ def truncated_MC(scenario, sv_accuracy=0.01, alpha=0.9, contrib_accuracy=0.05):
         sv=np.mean(contributions,axis=0)
 
     return({'sv':sv, 'std_sv': np.std(contributions,axis=0) / np.sqrt(t-1),'prop':sv/np.sum(sv), 'computed_val':char_value_dict})
+
+
+#%% compute Shapley values with the importance sampling method
+
+def IS(scenario, sv_accuracy=0.01, alpha=0.95):
+    """Return the vector of approximated shapeley value corresponding to a list of node and a characteristic function using the importance sampling method."""
+
+    preprocessed_node_list = scenario.node_list
+    n = len(preprocessed_node_list)
+
+    # We store the value of the characteristic function in order to avoid recomputing it twice
+    char_value_dict={():0} # the dictionary that will countain the values
+
+    # Return the characteristic function of the nodelist associated to the ensemble permut, without recomputing it if it was already computed
+    def not_twice_characteristic(permut):
+        # Sort permut
+        permut=np.sort(permut)
+        try: # Return the characteristic_func(permut) if it was already computed
+            return char_value_dict[tuple(permut)]
+        except KeyError: # Characteristic_func(permut) has not been computed yet, so we compute, store, and return characteristic_func(permut)
+            small_node_list = np.array([preprocessed_node_list[i] for i in permut])
+            char_value_dict[tuple(permut)] = fl_training.compute_test_score(small_node_list,
+                              scenario.epoch_count,
+                              scenario.x_esval,
+                              scenario.y_esval,
+                              scenario.x_test,
+                              scenario.y_test,
+                              scenario.is_early_stopping,
+                              save_folder=scenario.save_folder)
+
+            return char_value_dict[tuple(permut)]
+
+
+    characteristic_all_node= not_twice_characteristic(np.arange(n)) # Characteristic function on all nodes
+
+    if n==1:
+        return({'sv': characteristic_all_node,'std_sv': np.array([0]),'prop': np.array([1]), 'computed_val':char_value_dict})
+    else:
+        #definition of the original density
+        def prob(subset):
+            lS=len(subset)
+            return factorial(n-1-lS)*factorial(lS)/factorial(n)
+
+        #definition of the approximation of the increment
+        ### compute the last and the first increments in performance (they are needed to compute the approximated increments)
+        characteristic_no_nodes=0
+        last_increments=[]
+        first_increments=[]
+        for k in range(n):
+            last_increments.append(characteristic_all_node-not_twice_characteristic(np.delete(np.arange(n), k)))
+            first_increments.append(not_twice_characteristic(np.array([k]))-characteristic_no_nodes)
+
+
+
+        ### definition of the number of data in all datasets
+        size_of_I=0
+        for node in preprocessed_node_list:
+                size_of_I+=len(node.y_train)
+
+        def approx_increment(subset,k):
+            assert k not in subset, ""+str(k)+"is not in "+str(subset)+""
+            small_node_list = np.array([preprocessed_node_list[i] for i in subset])
+            #compute the size of subset : ||subset||
+            size_of_S=0
+            for node in small_node_list:
+                size_of_S+=len(node.y_train)
+            beta=size_of_S/size_of_I
+            return (1-beta)*first_increments[k]+beta*last_increments[k]
+
+        #compute  the importance density
+        ### compute the renormalization constant of the importance density for all datatsets
+
+        renorms=[]
+        for k in range(n):
+            list_k=np.delete(np.arange(n),k)
+            renorm=0
+            for length_combination in range(len(list_k)+1) :
+                for subset in combinations(list_k, length_combination): # could be avoided as   prob(np.array(subset))*np.abs(approx_increment(np.array(subset),j)) is constant in the combination
+                    renorm+=prob(np.array(subset))*np.abs(approx_increment(np.array(subset),k))
+            renorms.append(renorm)
+        ### defines the importance density
+        def g(subset,k):
+            return prob(np.array(subset))*np.abs(approx_increment(np.array(subset),k))/renorms[k]
+
+        # sampling
+        t=0
+        q=norm.ppf((1-alpha)/2, loc=0, scale=1)
+        v_max=0
+        while t<100 or t<q**2 *v_max  /(sv_accuracy)**2 : # Check if the length of the confidence interval  is below the value of sv_accuracy*characteristic_all_node
+            t+=1
+            if t==1:
+                contributions=np.array([np.zeros(n)])
+            else:
+                contributions=np.vstack((contributions, np.zeros(n)))
+            for k in range(n):
+                u=np.random.uniform(0,1,1)[0]
+                cumSum=0
+                list_k=np.delete(np.arange(n),k)
+                for length_combination in range(len(list_k)+1) :
+                    for subset in combinations(list_k, length_combination): # could be avoided as   prob(np.array(subset))*np.abs(approx_increment(np.array(subset),j)) is constant in the combination
+                        cumSum+=prob(np.array(subset))*np.abs(approx_increment(np.array(subset),k))
+                        if cumSum/renorms[k]>u:
+                            S=np.array(subset)
+                            break
+                    if cumSum/renorms[k]>u:
+                        break
+                SUk=np.append(S,k)
+                increment=not_twice_characteristic(SUk) - not_twice_characteristic(S)
+                contributions[t-1][k]=increment*renorms[k]/np.abs(approx_increment(np.array(S),k))
+            v_max=np.max(np.var(contributions,axis=0))
+        sv=np.mean(contributions,axis=0)
+
+    return({'sv':sv, 'std_sv': np.std(contributions,axis=0) / np.sqrt(t-1),'prop':sv/np.sum(sv), 'computed_val':char_value_dict})
+
+
+
+
+
+
 

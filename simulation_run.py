@@ -224,15 +224,42 @@ for current_scenario in scenarii_list:
 
     start = timer()
     tmcs_results = contributivity_measures.truncated_MC(current_scenario,
-      sv_accuracy=0.01, alpha=0.9, contrib_accuracy=0.05)
+      sv_accuracy=0.01, alpha=0.95, truncation=0.05)
     end = timer()
 
-    tmcs_contrib = contributivity.Contributivity('TMCS values', tmcs_results['sv'], tmcs_results['std_sv'], np.round(end - start))
+    tmcs_contrib = contributivity.Contributivity('TMC values', tmcs_results['sv'], tmcs_results['std_sv'], np.round(end - start))
 
     current_scenario.append_contributivity(tmcs_contrib)
     print('\n## Evaluating contributivity with Truncated Monte Carlo Shapley (TMCS):')
     print(tmcs_contrib)
 
+    #%% Contributivity 4:   Monte Carlo Shapley
+
+    start = timer()
+    mcs_results = contributivity_measures.truncated_MC(current_scenario,
+      sv_accuracy=0.01, alpha=0.95, truncation=0.00)
+    end = timer()
+
+    mcs_contrib = contributivity.Contributivity('MC values', mcs_results['sv'], mcs_results['std_sv'], np.round(end - start))
+
+    current_scenario.append_contributivity(tmcs_contrib)
+    print('\n## Evaluating contributivity with  Monte Carlo Shapley :')
+    print(mcs_contrib)
+
+
+
+    #%% Contributivity 5: importance sampling
+
+    start = timer()
+    IS_results = contributivity_measures.IS(current_scenario,
+      sv_accuracy=0.01, alpha=0.95)
+    end = timer()
+
+    IS_contrib = contributivity.Contributivity('IS values', IS_results['sv'], IS_results['std_sv'], np.round(end - start))
+
+    current_scenario.append_contributivity(IS_results)
+    print('\n## Evaluating contributivity with Importance sampling:')
+    print(IS_contrib)
 
     #%% Save results to file
 
