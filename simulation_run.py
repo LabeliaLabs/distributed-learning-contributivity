@@ -19,45 +19,30 @@ import tensorflow as tf
 import matplotlib.pyplot as plt
 import numpy as np
 import utils
-from loguru import logger
-
 
 import contributivity
 import contributivity_measures
 import fl_training
 import scenario
 
+gpus = tf.config.experimental.list_physical_devices("GPU")
+tf.config.experimental.set_memory_growth(gpus[0], True)
 
-def main():
+plt.close("all")
 
-    gpus = tf.config.experimental.list_physical_devices("GPU")
-    tf.config.experimental.set_memory_growth(gpus[0], True)
-    plt.close("all")
+yaml_filepath = "config.yml"
+config = utils.load_cfg(yaml_filepath)
+config = utils.init_result_folder(yaml_filepath, config)
 
-    yaml_filepath = "config.yml"
-    config = utils.load_cfg(yaml_filepath)
-    config = utils.init_result_folder(yaml_filepath, config)
-    experiment_path = config["experiment_path"]
+a = 1/ (2 - 2)
 
-    scenario_params_list = config["scenario_params_list"]
-    n_repeats = config["n_repeats"]
-
-    for i in range(n_repeats):
-
-        logger.info(f"Repeat {i+1}/{n_repeats}")
-
-        for scenario_params in scenario_params_list:
-
-            logger.info("Current params:")
-            logger.info(scenario_params)
-
-            current_scenario = scenario.Scenario(scenario_params, experiment_path)
-            run_scenario(current_scenario)
-
-    return 0
+#%% Create scenarii
+scenarii_list = []
 
 
-def run_scenario(current_scenario):
+#%% Run the scenarii
+
+for current_scenario in scenarii_list:
 
     current_scenario.split_data()
     current_scenario.plot_data_distribution()
@@ -163,9 +148,3 @@ def run_scenario(current_scenario):
     #%% Save results to file
 
     current_scenario.to_file()
-
-    return 0
-
-
-if __name__ == "__main__":
-    main()

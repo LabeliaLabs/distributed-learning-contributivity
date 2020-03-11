@@ -16,7 +16,7 @@ from node import Node
 
 
 class Scenario:
-    def __init__(self, params, experiment_path):
+    def __init__(self, is_quick_demo=False):
 
         self.dataset_name = "MNIST"
         (x_train, y_train), (x_test, y_test) = mnist.load_data()
@@ -29,27 +29,27 @@ class Scenario:
 
         # Define the desired number of independant nodes
         # Nodes mock different partners in a collaborative data science project
-        self.nodes_count = params["nodes_counts"]
+        self.nodes_count = 3
 
         # Configure the desired respective datasets sizes of the nodes
         # Should the nodes receive an equivalent amount of samples each...
         # ... or receive different amounts?
         # Define the percentages of samples per node
         # Sum has to equal 1 and number of items has to equal NODES_COUNT
-        self.amounts_per_node = params["amounts_per_node"]
+        self.amounts_per_node = [0.33, 0.33, 0.34]
 
         # Configure if data samples are split between nodes randomly or in a stratified way...
         # ... so that they cover distinct areas of the samples space
-        self.samples_split_option = params[
-            "samples_split_option"
-        ]  # Toggle between 'Random' and 'Stratified'
+        self.samples_split_option = "Random"  # Toggle between 'Random' and 'Stratified'
 
         # Configure if the data of the nodes are corrupted or not
-        self.corrupted_nodes = ["not_corrupted"] * self.nodes_count
+        self.corrupted_nodes = ["not_corrupted", "not_corrupted", "not_corrupted"]
 
         # Define if test data should be distributed between nodes...
         # ... or if each node should refer to a centralised test set
-        self.testset_option = params["testset_option"]
+        self.testset_option = (
+            "Centralised"  # Toggle between 'Centralised' and 'Distributed'
+        )
 
         self.federated_test_score = int
 
@@ -63,21 +63,12 @@ class Scenario:
 
         now = datetime.datetime.now()
         now_str = now.strftime("%Y-%m-%d_%Hh%M")
-        # TODO: this is quick hack so that the two disctincts scenario do not have the same name
-        scenario_name = (
-            self.samples_split_option
-            + "_"
-            + str(self.nodes_count)
-            + "_"
-            + now_str
-            + "_"
-            + uuid.uuid4().hex
-        )
-        self.save_folder = experiment_path / scenario_name
+        folder_name = (
+            now_str + "_" + uuid.uuid4().hex
+        )  # TODO: this is quick hack so that the two disctincts scenario do not have the same name
+        self.save_folder = Path("results") / Path(folder_name)
+        os.makedirs(self.save_folder, exist_ok=True)
 
-        self.save_folder.mkdir(parents=True, exist_ok=True)
-
-        is_quick_demo = True
         if is_quick_demo:
 
             # Use less data and less epochs to speed up the computaions
