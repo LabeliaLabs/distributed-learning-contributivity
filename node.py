@@ -10,6 +10,7 @@ from random import shuffle
 import utils
 import constants
 
+
 class Node:
     def __init__(self, x_train, x_test, y_train, y_test, node_id):
         self.x_train = x_train
