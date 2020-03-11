@@ -248,18 +248,32 @@ for current_scenario in scenarii_list:
 
 
 
-    #%% Contributivity 5: importance sampling
+    #%% Contributivity 5: importance sampling with linear approx
 
     start = timer()
-    IS_results = contributivity_measures.IS(current_scenario,
+    IS_results = contributivity_measures.IS_lin(current_scenario,
       sv_accuracy=0.01, alpha=0.95)
     end = timer()
 
-    IS_contrib = contributivity.Contributivity('IS values', IS_results['sv'], IS_results['std_sv'], np.round(end - start))
+    IS_lin_contrib = contributivity.Contributivity('IS_lin values', IS_results['sv'], IS_results['std_sv'], np.round(end - start))
 
     current_scenario.append_contributivity(IS_results)
-    print('\n## Evaluating contributivity with Importance sampling:')
-    print(IS_contrib)
+    print('\n## Evaluating contributivity with linear Importance sampling:')
+    print(IS_lin_contrib)
+
+
+    #%% Contributivity 6: importance sampling with regression approx
+
+    start = timer()
+    IS_reg_results = contributivity_measures.IS_reg(current_scenario,
+      sv_accuracy=0.01, alpha=0.95)
+    end = timer()
+
+    IS_reg_contrib = contributivity.Contributivity('IS_reg values', IS_reg_results['sv'], IS_reg_results['std_sv'], np.round(end - start))
+
+    current_scenario.append_contributivity(IS_reg_results)
+    print('\n## Evaluating contributivity with regression Importance sampling:')
+    print(IS_reg_contrib)
 
     #%% Save results to file
 
