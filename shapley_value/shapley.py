@@ -8,7 +8,6 @@ from itertools import combinations
 import math
 
 
-
 def power_set(List):
     PS = [list(j) for i in range(len(List)) for j in combinations(List, i + 1)]
     return PS

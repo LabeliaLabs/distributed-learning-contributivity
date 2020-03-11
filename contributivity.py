@@ -28,10 +28,12 @@ class Contributivity:
     def __str__(self):
         computation_time = str(datetime.timedelta(seconds=self.computation_time))
         output = "\n" + self.name + "\n"
-        output += ("Computation time: " + computation_time + "\n")
+        output += "Computation time: " + computation_time + "\n"
         # TODO print only 3 digits
         output += "Contributivity scores: " + str(self.contributivity_scores) + "\n"
         output += "Std of the contributivity scores: " + str(self.scores_std) + "\n"
-        output += ("Normalized contributivity scores: " + str(self.normalized_scores) + "\n")
+        output += (
+            "Normalized contributivity scores: " + str(self.normalized_scores) + "\n"
+        )
 
         return output
