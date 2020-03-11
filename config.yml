@@ -1,4 +1,4 @@
-experiment_name: simple_4
+experiment_name: simple_5
 n_repeats: 3
 scenario_params_list:
  - nodes_counts: 3
