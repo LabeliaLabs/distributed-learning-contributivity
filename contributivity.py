@@ -8,26 +8,30 @@ import numpy as np
 
 
 class Contributivity:
-    def __init__(self, name='', contributivity_scores=np.array([]), scores_std=np.array([]), computation_time=0):
+    def __init__(
+        self,
+        name="",
+        contributivity_scores=np.array([]),
+        scores_std=np.array([]),
+        computation_time=0,
+    ):
         self.name = name
         self.contributivity_scores = contributivity_scores
         self.scores_std = scores_std
-        sum_contrib=np.sum(contributivity_scores)
-        if len (contributivity_scores)==0:
-            elf.normalized_scores = np.array([])
+        sum_contrib = np.sum(contributivity_scores)
+        if len(contributivity_scores) == 0:
+            self.normalized_scores = np.array([])
         else:
-            self.normalized_scores = contributivity_scores/sum_contrib
+            self.normalized_scores = contributivity_scores / sum_contrib
         self.computation_time = computation_time
 
-
     def __str__(self):
-        output = '\n' + self.name + '\n'
-        output += 'Computation time: ' + str(datetime.timedelta(seconds=self.computation_time)) + '\n'
-        #TODO print only 3 digits
-        output += 'Contributivity scores: ' + str(self.contributivity_scores)+ '\n'
-        output += 'Std of the contributivity scores: ' + str(self.scores_std)+ '\n'
-        output += 'Normalized contributivity scores: ' + str(self.normalized_scores)+ '\n'
-
+        computation_time = str(datetime.timedelta(seconds=self.computation_time))
+        output = "\n" + self.name + "\n"
+        output += ("Computation time: " + computation_time + "\n")
+        # TODO print only 3 digits
+        output += "Contributivity scores: " + str(self.contributivity_scores) + "\n"
+        output += "Std of the contributivity scores: " + str(self.scores_std) + "\n"
+        output += ("Normalized contributivity scores: " + str(self.normalized_scores) + "\n")
 
         return output
-

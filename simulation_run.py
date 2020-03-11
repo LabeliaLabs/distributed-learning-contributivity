@@ -9,26 +9,25 @@ A script to configure and run simulations of:
 from __future__ import print_function
 
 # GPU config
-#from tensorflow.compat.v1 import ConfigProto
-#from tensorflow.compat.v1 import InteractiveSession
-#config = ConfigProto()
-#config.gpu_options.allow_growth = True
-#session = InteractiveSession(config=config)
+# from tensorflow.compat.v1 import ConfigProto
+# from tensorflow.compat.v1 import InteractiveSession
+# config = ConfigProto()
+# config.gpu_options.allow_growth = True
+# session = InteractiveSession(config=config)
+from timeit import default_timer as timer
 import tensorflow as tf
+import matplotlib.pyplot as plt
+import numpy as np
 
-gpus = tf.config.experimental.list_physical_devices('GPU')
+import contributivity
+import contributivity_measures
+import fl_training
+import scenario
+
+gpus = tf.config.experimental.list_physical_devices("GPU")
 tf.config.experimental.set_memory_growth(gpus[0], True)
 
-import scenario
-import contributivity
-import fl_training
-import contributivity_measures
-
-from timeit import default_timer as timer
-import numpy as np
-import matplotlib.pyplot as plt
-
-plt.close('all')
+plt.close("all")
 
 #%% Create scenarii
 scenarii_list = []
@@ -51,7 +50,6 @@ my_custom_scenario.samples_split_option = 'Random' # If data are split randomly 
 my_custom_scenario.testset_option = 'Centralised' # If test data are distributed between nodes or stays a central testset (toggle between 'Centralised' and 'Distributed')
 my_custom_scenario.corrupted_nodes = ["corrupted","not-corrupted","not-corrupted"] # First node is corrupted (label are wrong)
 scenarii_list.append(my_custom_scenario)
-
 
 
 my_custom_scenario = scenario.Scenario(is_quick_demo=IS_QUICK_DEMO)
@@ -151,8 +149,6 @@ my_custom_scenario.corrupted_nodes = ["not-corrupted"]*my_custom_scenario.nodes_
 scenarii_list.append(my_custom_scenario)
 
 
-
-
 #%% Run the scenarii
 
 for current_scenario in scenarii_list:
@@ -166,48 +162,62 @@ for current_scenario in scenarii_list:
     current_scenario.x_test, current_scenario.y_test = fl_training.preprocess_test_data(current_scenario.x_test, current_scenario.y_test)
 
     #%% Corrupt the node's label in needed
-    for i,node in  enumerate(current_scenario.node_list):
-        if current_scenario.corrupted_nodes[i]=="corrupted":
-            print("corruption of node "+ str(i)+"\n")
+    for i, node in enumerate(current_scenario.node_list):
+        if current_scenario.corrupted_nodes[i] == "corrupted":
+            print("corruption of node " + str(i) + "\n")
             node.corrupt_labels()
-        elif current_scenario.corrupted_nodes[i]=="shuffled":
-            print("shuffleling of node "+ str(i)+"\n")
+        elif current_scenario.corrupted_nodes[i] == "shuffled":
+            print("shuffleling of node " + str(i) + "\n")
             node.shuffle_labels()
-        elif current_scenario.corrupted_nodes[i]=="not-corrupted":
+        elif current_scenario.corrupted_nodes[i] == "not-corrupted":
             pass
         else:
             print("unexpeted label of corruption")
 
-
-
-
     #%% Train and eval on all nodes according to scenario
 
     is_save_fig = True
-    current_scenario.federated_test_score = fl_training.compute_test_score_with_scenario(current_scenario, is_save_fig)
-
+    current_scenario.federated_test_score = fl_training.compute_test_score_with_scenario(
+        current_scenario, is_save_fig
+    )
 
     #%% Contributivity 1: Baseline contributivity measurement (Shapley Value)
 
     start = timer()
-    (contributivity_scores,scores_var) = contributivity_measures.compute_SV(current_scenario.node_list, current_scenario.epoch_count, current_scenario.x_esval, current_scenario.y_esval, current_scenario.x_test, current_scenario.y_test)
+    (contributivity_scores, scores_var) = contributivity_measures.compute_SV(
+        current_scenario.node_list,
+        current_scenario.epoch_count,
+        current_scenario.x_esval,
+        current_scenario.y_esval,
+        current_scenario.x_test,
+        current_scenario.y_test,
+    )
     end = timer()
 
-    shapley_contrib = contributivity.Contributivity('Shapley values',contributivity_scores,scores_var,np.round(end - start))
+    shapley_contrib = contributivity.Contributivity(
+        "Shapley values", contributivity_scores, scores_var, np.round(end - start)
+    )
 
     current_scenario.append_contributivity(shapley_contrib)
-    print('\n## Evaluating contributivity with Shapley:')
+    print("\n## Evaluating contributivity with Shapley:")
     print(shapley_contrib)
-
 
     #%% Contributivity 2: Performance scores of models trained independently on each node
 
     start = timer()
-    scores = contributivity_measures.compute_independent_scores(current_scenario.node_list, current_scenario.epoch_count, current_scenario.federated_test_score)
+    scores = contributivity_measures.compute_independent_scores(
+        current_scenario.node_list,
+        current_scenario.epoch_count,
+        current_scenario.federated_test_score,
+    )
     end = timer()
     # TODO use dict instead of 0/1 indexes
-    independant_raw_contrib = contributivity.Contributivity('Independant scores raw',scores[0],np.repeat (0.0,len(scores[0]) ) )
-    independant_additiv_contrib = contributivity.Contributivity('Independant scores additive',scores[1],np.repeat (0.0,len(scores[1]) ) )
+    independant_raw_contrib = contributivity.Contributivity(
+        "Independant scores raw", scores[0], np.repeat(0.0, len(scores[0]))
+    )
+    independant_additiv_contrib = contributivity.Contributivity(
+        "Independant scores additive", scores[1], np.repeat(0.0, len(scores[1]))
+    )
 
     independant_computation_time = np.round(end - start)
     independant_raw_contrib.computation_time = independant_computation_time
@@ -215,10 +225,9 @@ for current_scenario in scenarii_list:
 
     current_scenario.append_contributivity(independant_raw_contrib)
     current_scenario.append_contributivity(independant_additiv_contrib)
-    print('\n## Evaluating contributivity with independent single partner models:')
+    print("\n## Evaluating contributivity with independent single partner models:")
     print(independant_raw_contrib)
     print(independant_additiv_contrib)
-
 
     #%% Contributivity 3: Truncated Monte Carlo Shapley
 
@@ -229,8 +238,9 @@ for current_scenario in scenarii_list:
 
     tmcs_contrib = contributivity.Contributivity('TMC values', tmcs_results['sv'], tmcs_results['std_sv'], np.round(end - start))
 
+
     current_scenario.append_contributivity(tmcs_contrib)
-    print('\n## Evaluating contributivity with Truncated Monte Carlo Shapley (TMCS):')
+    print("\n## Evaluating contributivity with Truncated Monte Carlo Shapley (TMCS):")
     print(tmcs_contrib)
 
     #%% Contributivity 4:   Monte Carlo Shapley
@@ -274,6 +284,7 @@ for current_scenario in scenarii_list:
     current_scenario.append_contributivity(IS_reg_results)
     print('\n## Evaluating contributivity with regression Importance sampling:')
     print(IS_reg_contrib)
+
 
     #%% Save results to file
 

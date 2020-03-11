@@ -18,6 +18,7 @@ from math import factorial
 
 #%% Compute independent performance scores of models trained independently on each node
 
+
 def compute_independent_scores(node_list, epoch_count, collaborative_score):
 
     print('\n# Launching computation of perf. scores of models trained independently on each node')
@@ -27,7 +28,9 @@ def compute_independent_scores(node_list, epoch_count, collaborative_score):
 
     # Train models independently on each node and append perf. score to list of perf. scores
     for node in node_list:
-        performance_scores.append(fl_training.compute_test_score_for_single_node(node, epoch_count))
+        performance_scores.append(
+            fl_training.compute_test_score_for_single_node(node, epoch_count)
+        )
 
     # Compute 'regularized' values of performance scores so that they are additive and their sum amount to the collaborative performance score obtained by the coalition of all players (nodes)
     perf_scores_additive = softmax(performance_scores) * collaborative_score
@@ -38,9 +41,10 @@ def compute_independent_scores(node_list, epoch_count, collaborative_score):
 
 #%% Generalization of Shapley Value computation
 
+
 def compute_SV(node_list, epoch_count, x_esval, y_esval, x_test, y_test):
 
-    print('\n# Launching computation of Shapley Value of all nodes')
+    print("\n# Launching computation of Shapley Value of all nodes")
 
     # Initialize list of all players (nodes) indexes
     nodes_count = len(node_list)
@@ -58,7 +62,11 @@ def compute_SV(node_list, epoch_count, x_esval, y_esval, x_test, y_test):
     for coalition in coalitions:
         coalition_nodes = list(node_list[i] for i in coalition)
         # print('\nComputing characteristic function on coalition ', coalition) # VERBOSE
-        characteristic_function.append(fl_training.compute_test_score(coalition_nodes, epoch_count, x_esval, y_esval, x_test, y_test))
+        characteristic_function.append(
+            fl_training.compute_test_score(
+                coalition_nodes, epoch_count, x_esval, y_esval, x_test, y_test
+            )
+        )
     # print('\nValue of characteristic function for all coalitions: ', characteristic_function) # VERBOSE
 
     # Compute Shapley Value for each node
@@ -67,46 +75,53 @@ def compute_SV(node_list, epoch_count, x_esval, y_esval, x_test, y_test):
     list_shapley_value = sv.main(nodes_count, characteristic_function)
 
     # Return SV of each node
-    return( np.array(list_shapley_value), np.repeat(0.0,len(list_shapley_value)) )
-
-
-
+    return (np.array(list_shapley_value), np.repeat(0.0, len(list_shapley_value)))
 
 
 #%% compute Shapley values with the truncated Monte-carlo method
 
+
 def truncated_MC(scenario, sv_accuracy=0.01, alpha=0.9, truncation=0.05):
+
     """Return the vector of approximated shapeley value corresponding to a list of node and a characteristic function using the truncated monte-carlo method."""
 
     preprocessed_node_list = scenario.node_list
     n = len(preprocessed_node_list)
 
     # We store the value of the characteristic function in order to avoid recomputing it twice
-    char_value_dict={():0} # the dictionary that will countain the values
+    char_value_dict = {(): 0}  # the dictionary that will countain the values
 
     # Return the characteristic function of the nodelist associated to the ensemble permut, without recomputing it if it was already computed
     def not_twice_characteristic(permut):
         # Sort permut
-        permut=np.sort(permut)
-        try: # Return the characteristic_func(permut) if it was already computed
+        permut = np.sort(permut)
+        try:  # Return the characteristic_func(permut) if it was already computed
             return char_value_dict[tuple(permut)]
-        except KeyError: # Characteristic_func(permut) has not been computed yet, so we compute, store, and return characteristic_func(permut)
+        except KeyError:  # Characteristic_func(permut) has not been computed yet, so we compute, store, and return characteristic_func(permut)
             small_node_list = np.array([preprocessed_node_list[i] for i in permut])
-            char_value_dict[tuple(permut)] = fl_training.compute_test_score(small_node_list,
-                              scenario.epoch_count,
-                              scenario.x_esval,
-                              scenario.y_esval,
-                              scenario.x_test,
-                              scenario.y_test,
-                              scenario.is_early_stopping,
-                              save_folder=scenario.save_folder)
+            char_value_dict[tuple(permut)] = fl_training.compute_test_score(
+                small_node_list,
+                scenario.epoch_count,
+                scenario.x_esval,
+                scenario.y_esval,
+                scenario.x_test,
+                scenario.y_test,
+                scenario.is_early_stopping,
+                save_folder=scenario.save_folder,
+            )
 
             return char_value_dict[tuple(permut)]
 
-
-    characteristic_all_node= not_twice_characteristic(np.arange(n)) # Characteristic function on all nodes
-    if n==1:
-        return({'sv': characteristic_all_node,'std_sv': np.array([0]),'prop': np.array([1]), 'computed_val':char_value_dict})
+    characteristic_all_node = not_twice_characteristic(
+        np.arange(n)
+    )  # Characteristic function on all nodes
+    if n == 1:
+        return {
+            "sv": characteristic_all_node,
+            "std_sv": np.array([0]),
+            "prop": np.array([1]),
+            "computed_val": char_value_dict,
+        }
     else:
         contributions=np.array([[]])
         permutation=np.zeros(n) # Store the current permutation
@@ -116,14 +131,17 @@ def truncated_MC(scenario, sv_accuracy=0.01, alpha=0.9, truncation=0.05):
         while t<100 or t<q**2 *v_max  /(sv_accuracy)**2 : # Check if the length of the confidence interval  is below the value of sv_accuracy*characteristic_all_node
             t+=1
 
-            if t==1:
-                contributions=np.array([np.zeros(n)])
-            else:
-                contributions=np.vstack((contributions, np.zeros(n)))
 
-            permutation = np.random.permutation(n) # Store the current permutation
-            char_nodelists = np.zeros(n+1) # Store the characteristic function on each ensemble built with the first elements of the permutation
-            char_nodelists[-1]=characteristic_all_node
+            if t == 1:
+                contributions = np.array([np.zeros(n)])
+            else:
+                contributions = np.vstack((contributions, np.zeros(n)))
+
+            permutation = np.random.permutation(n)  # Store the current permutation
+            char_nodelists = np.zeros(
+                n + 1
+            )  # Store the characteristic function on each ensemble built with the first elements of the permutation
+            char_nodelists[-1] = characteristic_all_node
             for j in range(n):
                 #here we suppose the characteristic function is 0 for the empty set
                 if abs(characteristic_all_node-char_nodelists[j])<truncation :
@@ -312,7 +330,7 @@ def IS_reg(the_scenario, sv_accuracy=0.01, alpha=0.95):
         for coalition in coalitions:
             characteristic_function.append( not_twice_characteristic(list(coalition)))
         # Compute exact Shapley Value for each node
-        shap, std= sv.main(the_scenario.nodes_count, not_twice_characteristic)
+        shap, std= sv.main(the_scenario.nodes_count, characteristic_function)
         return({'sv': shap,'std_sv':std,'prop': np.array([1]), 'computed_val':char_value_dict})
     else:
         #definition of the original density
@@ -417,7 +435,3 @@ def IS_reg(the_scenario, sv_accuracy=0.01, alpha=0.95):
         shap=np.mean(contributions,axis=0)
 
     return({'sv':shap, 'std_sv': np.std(contributions,axis=0) / np.sqrt(t-1),'prop':shap/np.sum(shap), 'computed_val':char_value_dict})
-
-
-
-
