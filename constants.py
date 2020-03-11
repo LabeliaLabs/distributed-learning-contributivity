@@ -15,4 +15,4 @@ INPUT_SHAPE = (IMG_ROWS, IMG_COLS, 1)
 #%% ML constants
 
 BATCH_SIZE = 4096
-PATIENCE = 4  # patience for early stopping
+PATIENCE = 4 # patience for early stopping

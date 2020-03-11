@@ -30,11 +30,11 @@ tf.config.experimental.set_memory_growth(gpus[0], True)
 
 plt.close("all")
 
-yaml_filepath = "config.yml"
+yaml_filepath = 'config.yml'
 config = utils.load_cfg(yaml_filepath)
 config = utils.init_result_folder(yaml_filepath, config)
 
-a = 1/ (2 - 2)
+
 
 #%% Create scenarii
 scenarii_list = []
@@ -48,18 +48,9 @@ for current_scenario in scenarii_list:
     current_scenario.plot_data_distribution()
 
     # Pre-process successively train data, early stopping validation data, test data
-    current_scenario.node_list = fl_training.preprocess_node_list(
-        current_scenario.node_list
-    )
-    (
-        current_scenario.x_esval,
-        current_scenario.y_esval,
-    ) = fl_training.preprocess_test_data(
-        current_scenario.x_esval, current_scenario.y_esval
-    )
-    current_scenario.x_test, current_scenario.y_test = fl_training.preprocess_test_data(
-        current_scenario.x_test, current_scenario.y_test
-    )
+    current_scenario.node_list = fl_training.preprocess_node_list(current_scenario.node_list)
+    current_scenario.x_esval, current_scenario.y_esval = fl_training.preprocess_test_data(current_scenario.x_esval, current_scenario.y_esval)
+    current_scenario.x_test, current_scenario.y_test = fl_training.preprocess_test_data(current_scenario.x_test, current_scenario.y_test)
 
     #%% Corrupt the node's label in needed
     for i, node in enumerate(current_scenario.node_list):

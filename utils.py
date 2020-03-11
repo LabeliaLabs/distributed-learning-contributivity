@@ -86,11 +86,12 @@ def init_result_folder(yaml_filepath, cfg):
 
     logger.info("*** init_result_folder ***")
 
-    experiment_path = Path.cwd() / "experiments" / cfg["experiment_name"]
+    experiment_path = Path.cwd() / 'experiments' / cfg["experiment_name"]
     experiment_path.mkdir(parents=True, exist_ok=True)
 
+        
     cfg["experiment_path"] = experiment_path
-    logger.info("experiment folder " + str(experiment_path) + " created.")
+    logger.info("experiment folder " + str(experiment_path)  + " created.")
 
     # TODO refactor
     os.system("cp " + yaml_filepath + ' "' + str(experiment_path) + '"')
