@@ -5,11 +5,6 @@ Some utils functions.
 """
 
 from __future__ import print_function
-import yaml
-import os
-from pathlib import Path
-from loguru import logger
-
 
 import keras
 from keras.models import Sequential
@@ -51,50 +46,3 @@ def preprocess_input(x):
     x /= 255
 
     return x
-
-
-def load_cfg(yaml_filepath):
-    """
-    Load a YAML configuration file.
-
-    Args:
-        yaml_filepath : str
-
-    Returns:
-        cfg : dict
-    """
-    print("*** load_cfg ***")
-    # Read YAML experiment definition file
-    with open(yaml_filepath, "r") as stream:
-        cfg = yaml.load(stream, Loader=yaml.FullLoader)
-
-    print(cfg)
-
-    return cfg
-
-
-def init_result_folder(yaml_filepath, cfg):
-    """
-    Init the result folder.
-
-    Args:
-        yaml_filepath : str
-
-    Returns:
-        folder_name
-    """
-
-    logger.info("*** init_result_folder ***")
-
-    experiment_path = Path.cwd() / 'experiments' / cfg["experiment_name"]
-    experiment_path.mkdir(parents=True, exist_ok=True)
-
-        
-    cfg["experiment_path"] = experiment_path
-    logger.info("experiment folder " + str(experiment_path)  + " created.")
-
-    # TODO refactor
-    os.system("cp " + yaml_filepath + ' "' + str(experiment_path) + '"')
-
-    logger.info("result folder created")
-    return cfg
