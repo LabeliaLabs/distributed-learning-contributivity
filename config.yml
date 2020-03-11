@@ -1,0 +1,11 @@
+experiment_name: simple
+n_repeats: 3
+scenario_list:
+ - nodes_counts: 3
+   amounts_per_node: [0.6, 0.2, 0.2] 
+   samples_split_option: 'Random'
+   samples_split_option: 'Centralised'
+ - nodes_counts: 4
+   amounts_per_node: [0.25, 0.25, 0.25, 0.25] 
+   samples_split_option: 'Random'
+   samples_split_option: 'Centralised'
