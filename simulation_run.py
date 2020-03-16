@@ -285,6 +285,19 @@ for current_scenario in scenarii_list:
     print('\n## Evaluating contributivity with regression Importance sampling:')
     print(IS_reg_contrib)
 
+    
+    #%% Contributivity 7: adaptative importance sampling with regression approx
+
+    start = timer()
+    AIS_results = contributivity_measures.AIS_Kriging(current_scenario,
+      sv_accuracy=0.01, alpha=0.95, update=10)
+    end = timer()
+
+    AIS_contrib = contributivity.Contributivity('AIS_reg values', AIS_results['sv'], AIS_results['std_sv'], np.round(end - start))
+
+    current_scenario.append_contributivity(AIS_results)
+    print('\n## Evaluating contributivity with Adaptive Importance sampling:')
+    print(AIS_contrib)
 
     #%% Save results to file
 
