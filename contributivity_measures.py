@@ -604,10 +604,6 @@ def AIS_Kriging(the_scenario, sv_accuracy=0.01, alpha=0.95, update=50):
     all_renorms=[]
     all_models=[]
     Subsets=[]
-    sigma=[ ]
-    for k in range(n):
-        a=copy([])
-        sigma.append( a) # created like this to avoid pointer issue
     while t<100 or t<4*q**2 *v_max  /(sv_accuracy)**2   : # Check if the length of the confidence interval  is below the value of sv_accuracy*characteristic_all_node
         if t==0:
             contributions=np.array([np.zeros(n)])
