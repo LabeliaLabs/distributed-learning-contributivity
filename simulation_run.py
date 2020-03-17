@@ -34,7 +34,7 @@ def main():
     tf.config.experimental.set_memory_growth(gpus[0], True)
     plt.close("all")
 
-    yaml_filepath = "config.yml"
+    yaml_filepath = "config_quick_test.yml"
     config = utils.load_cfg(yaml_filepath)
     config = utils.init_result_folder(yaml_filepath, config)
     experiment_path = config["experiment_path"]
@@ -53,6 +53,14 @@ def main():
 
             current_scenario = scenario.Scenario(scenario_params, experiment_path)
             run_scenario(current_scenario)
+
+            # Write results to CSV file
+            df_results = current_scenario.to_dataframe()
+            df_results["n_repeats"] = n_repeats
+
+            with open(experiment_path / 'results.csv', "a") as f:
+                df_results.to_csv(f, header=f.tell() == 0, index=False)
+                logger.info("Results saved")
 
     return 0
 
@@ -144,21 +152,21 @@ def run_scenario(current_scenario):
     print(independant_raw_contrib)
     print(independant_additiv_contrib)
 
-    #%% Contributivity 3: Truncated Monte Carlo Shapley
+    # #%% Contributivity 3: Truncated Monte Carlo Shapley
 
-    start = timer()
-    tmcs_results = contributivity_measures.truncated_MC(
-        current_scenario, sv_accuracy=0.01, alpha=0.9, contrib_accuracy=0.05
-    )
-    end = timer()
+    # start = timer()
+    # tmcs_results = contributivity_measures.truncated_MC(
+    #     current_scenario, sv_accuracy=0.01, alpha=0.9, contrib_accuracy=0.05
+    # )
+    # end = timer()
 
-    tmcs_contrib = contributivity.Contributivity(
-        "TMCS values", tmcs_results["sv"], tmcs_results["std_sv"], np.round(end - start)
-    )
+    # tmcs_contrib = contributivity.Contributivity(
+    #     "TMCS values", tmcs_results["sv"], tmcs_results["std_sv"], np.round(end - start)
+    # )
 
-    current_scenario.append_contributivity(tmcs_contrib)
-    print("\n## Evaluating contributivity with Truncated Monte Carlo Shapley (TMCS):")
-    print(tmcs_contrib)
+    # current_scenario.append_contributivity(tmcs_contrib)
+    # print("\n## Evaluating contributivity with Truncated Monte Carlo Shapley (TMCS):")
+    # print(tmcs_contrib)
 
     #%% Save results to file
 

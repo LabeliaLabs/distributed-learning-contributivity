@@ -1,0 +1,8 @@
+experiment_name: quick_2
+n_repeats: 4
+scenario_params_list:
+ - nodes_counts: 2
+   amounts_per_node: [0.1, 0.9] 
+   samples_split_option: 'Random'
+   testset_option: 'Centralised'
+
