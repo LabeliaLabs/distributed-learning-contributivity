@@ -34,7 +34,7 @@ def main():
     tf.config.experimental.set_memory_growth(gpus[0], True)
     plt.close("all")
 
-    yaml_filepath = "config_quick_test.yml"
+    yaml_filepath = "config.yml"
     config = utils.load_cfg(yaml_filepath)
     config = utils.init_result_folder(yaml_filepath, config)
     experiment_path = config["experiment_path"]
@@ -56,7 +56,7 @@ def main():
 
             # Write results to CSV file
             df_results = current_scenario.to_dataframe()
-            df_results["n_repeats"] = n_repeats
+            df_results["random_state"] = i
 
             with open(experiment_path / 'results.csv', "a") as f:
                 df_results.to_csv(f, header=f.tell() == 0, index=False)

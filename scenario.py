@@ -78,7 +78,7 @@ class Scenario:
 
         self.save_folder.mkdir(parents=True, exist_ok=True)
 
-        is_quick_demo = True
+        is_quick_demo = False
         if is_quick_demo:
 
             # Use less data and less epochs to speed up the computaions
