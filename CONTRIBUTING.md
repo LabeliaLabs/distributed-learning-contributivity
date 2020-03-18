@@ -16,7 +16,7 @@
     - [2.3 Basic module structure & Imports order](#23-basic-module-structure--imports-order)
     - [2.4 Jupyter Notebooks](#24-jupyter-notebooks)
       - [2.5 Sharing & online rendering](#25-sharing--online-rendering)
-    - [3. urther Resources](#3-urther-resources)
+  - [3. Further Resources](#3-further-resources)
 
 ## 1. Git workflow & branching
 
@@ -97,6 +97,8 @@ You don't have to take all the suggested modifications (with the help of `git di
 
 ```sh
 pip3 install black
+# with anaconda
+conda install -c conda-forge black
 ```
 
 ##### Usage
@@ -152,7 +154,7 @@ if __name__ == '__main__':
 
 Jupyter Notebooks are awesome! It allows you run Python code (but not only!) in your favorite web browser and handles for you all the backend management so you can focus on writing your code in cells, or your notes directly in markdown! There are plenty of fresh contents about ways to adopt, adapt or trick notebooks. If not yet familiar with it, you really should have a look: <https://jupyter.org/>.
 
-Plus, Jupyter Notebooks come with a serious set a crazy cool and neatly documented widgets, [help yourself](
+Plus, Jupyter Notebooks come with a serious set of crazy cool and neatly documented widgets, [help yourself](
 https://ipywidgets.readthedocs.io/en/latest/).
 
 Note: [Juperter lab](https://github.com/jupyterlab/jupyterlab) is like the future of Notebook, be sure to have a look, you might like it!
@@ -164,7 +166,7 @@ Notebooks now have really efficent ways to share your code and display your outp
 - [Binder](https://mybinder.org/) that lets you turn a Git repository into a collection of interactive notebooks!
 - [Voila](https://github.com/voila-dashboards/voila) is a newcomer that will allow to build dashboads for your presentations!
 
-### 3. urther Resources
+## 3. Further Resources
 
 - [Substra Contributing](https://github.com/SubstraFoundation/.github/blob/master/CONTRIBUTING.md) & [Coding Style](https://github.com/SubstraFoundation/.github/blob/master/CONTRIBUTING.md#coding-guidelines)
 - [RealPython](https://realpython.com)
