@@ -68,7 +68,12 @@ conda activate NAME_OF_YOUR_VENV
 deactivate
 ```
 
-Once inside your new virtual environment, you can install the project dependencies with the command `pip3 install -r requirements.txt`. What is installed inside a virtual environment is separated from your general Python setup.
+Once inside your new virtual environment, you can install the project dependencies with the commands:
+
+- pip setup: `pip3 install -r requirements.txt`
+- anaconda setup: `conda install --file requirements.txt`
+
+What is installed inside a virtual environment is separated from your general Python setup.
 
 If you want to go futher, please refer to the [official documentation](https://docs.conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html).
 
