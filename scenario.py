@@ -74,6 +74,13 @@ class Scenario:
             + "_"
             + uuid.uuid4().hex
         )
+
+        self.scenario_name = (self.samples_split_option
+            + " "
+            + str(self.nodes_count) 
+            + " "
+            + str(self.amounts_per_node) 
+            ) 
         self.save_folder = experiment_path / scenario_name
 
         self.save_folder.mkdir(parents=True, exist_ok=True)
@@ -291,24 +298,34 @@ class Scenario:
 
             dict_results = {}
 
-            # Scenario data
-            dict_results["dataset_name"] = self.dataset_name
-            dict_results["train_data_samples_count"] = len(self.x_train)
-            dict_results["test_data_samples_count"] = len(self.x_test)
-            dict_results["nodes_count"] = self.nodes_count
-            dict_results["amounts_per_node"] = self.amounts_per_node
-            dict_results["samples_split_option"] = self.samples_split_option
-            dict_results["testset_option"] = self.testset_option
-            dict_results["epoch_count"] = self.epoch_count
-            dict_results["is_early_stopping"] = self.is_early_stopping
+            for i in range(self.nodes_count):
 
-            # Contributivity data
-            dict_results["contributivity_method"] = contrib.name
-            dict_results["contributivity_scores"] = contrib.contributivity_scores
-            dict_results["contributivity_std"] = contrib.scores_std
-            dict_results["computation_time"] = contrib.computation_time
+                # Scenario data
+                dict_results["dataset_name"] = self.dataset_name
+                dict_results["train_data_samples_count"] = len(self.x_train)
+                dict_results["test_data_samples_count"] = len(self.x_test)
+                dict_results["nodes_count"] = self.nodes_count
+                dict_results["amounts_per_node"] = self.amounts_per_node
+                dict_results["samples_split_option"] = self.samples_split_option
+                dict_results["testset_option"] = self.testset_option
+                dict_results["epoch_count"] = self.epoch_count
+                dict_results["is_early_stopping"] = self.is_early_stopping
+                dict_results["federated_test_score"] = self.federated_test_score
+                dict_results["scenario_name"] = self.scenario_name
 
-            df = df.append(dict_results, ignore_index=True)
-            df.info()
+                # Contributivity data
+                dict_results["contributivity_method"] = contrib.name
+                dict_results["contributivity_scores"] = contrib.contributivity_scores
+                dict_results["contributivity_stds"] = contrib.scores_std
+                dict_results["computation_time"] = contrib.computation_time
+
+                # Node data
+                dict_results["node_id"] = i
+                dict_results["amount_per_node"] = self.amounts_per_node[i]
+                dict_results["contributivity_score"] = contrib.contributivity_scores[i]
+                dict_results["contributivity_std"] = contrib.scores_std[i]
+
+                df = df.append(dict_results, ignore_index=True)
+                df.info()
         
         return df

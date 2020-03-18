@@ -39,6 +39,8 @@ def main():
     config = utils.init_result_folder(yaml_filepath, config)
     experiment_path = config["experiment_path"]
 
+
+
     scenario_params_list = config["scenario_params_list"]
     n_repeats = config["n_repeats"]
 
@@ -46,21 +48,27 @@ def main():
 
         logger.info(f"Repeat {i+1}/{n_repeats}")
 
-        for scenario_params in scenario_params_list:
+        for scenario_id, scenario_params in enumerate(scenario_params_list):
 
             logger.info("Current params:")
             logger.info(scenario_params)
 
+            print(type(scenario_params["amounts_per_node"]))
+
             current_scenario = scenario.Scenario(scenario_params, experiment_path)
+            print(current_scenario.to_dataframe())
+
             run_scenario(current_scenario)
 
             # Write results to CSV file
             df_results = current_scenario.to_dataframe()
             df_results["random_state"] = i
+            df_results["scenario_id"] = scenario_id
 
             with open(experiment_path / 'results.csv', "a") as f:
                 df_results.to_csv(f, header=f.tell() == 0, index=False)
                 logger.info("Results saved")
+                
 
     return 0
 
