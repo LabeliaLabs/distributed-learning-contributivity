@@ -27,22 +27,36 @@ import contributivity_measures
 import fl_training
 import scenario
 
+import argparse
+
+DEFAULT_CONFIG_FILE = "config.yml"
+
 
 def main():
 
-    gpus = tf.config.experimental.list_physical_devices("GPU")
-    tf.config.experimental.set_memory_growth(gpus[0], True)
-    plt.close("all")
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-f", "--file", help="input config file")
+    args = parser.parse_args()
+    if args.file:
+        logger.info(f"Using provided config file: {args.file}")
+        config_filepath = args.file
+    else:
+        logger.info(f"Using default config file: {DEFAULT_CONFIG_FILE}")
+        config_filepath = DEFAULT_CONFIG_FILE
 
-    yaml_filepath = "config.yml"
-    config = utils.load_cfg(yaml_filepath)
-    config = utils.init_result_folder(yaml_filepath, config)
+    config = utils.load_cfg(config_filepath)
+    config = utils.init_result_folder(config_filepath, config)
     experiment_path = config["experiment_path"]
-
-
 
     scenario_params_list = config["scenario_params_list"]
     n_repeats = config["n_repeats"]
+
+    #GPU config
+    gpus = tf.config.experimental.list_physical_devices("GPU")
+    tf.config.experimental.set_memory_growth(gpus[0], True)
+
+    # Close open figures
+    plt.close("all")
 
     for i in range(n_repeats):
 
@@ -65,10 +79,9 @@ def main():
             df_results["random_state"] = i
             df_results["scenario_id"] = scenario_id
 
-            with open(experiment_path / 'results.csv', "a") as f:
+            with open(experiment_path / "results.csv", "a") as f:
                 df_results.to_csv(f, header=f.tell() == 0, index=False)
                 logger.info("Results saved")
-                
 
     return 0
 

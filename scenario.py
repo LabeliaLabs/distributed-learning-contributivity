@@ -75,12 +75,13 @@ class Scenario:
             + uuid.uuid4().hex
         )
 
-        self.scenario_name = (self.samples_split_option
+        self.scenario_name = (
+            self.samples_split_option
             + " "
-            + str(self.nodes_count) 
+            + str(self.nodes_count)
             + " "
-            + str(self.amounts_per_node) 
-            ) 
+            + str(self.amounts_per_node)
+        )
         self.save_folder = experiment_path / scenario_name
 
         self.save_folder.mkdir(parents=True, exist_ok=True)
@@ -289,7 +290,6 @@ class Scenario:
         with open(target_file_path, "w", encoding="utf-8") as f:
             f.write(out)
 
-
     def to_dataframe(self):
 
         df = pd.DataFrame()
@@ -327,5 +327,5 @@ class Scenario:
 
                 df = df.append(dict_results, ignore_index=True)
                 df.info()
-        
+
         return df
