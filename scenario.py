@@ -12,6 +12,7 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 import uuid
 import pandas as pd
+from loguru import logger
 
 from node import Node
 
@@ -97,10 +98,10 @@ class Scenario:
 
         self.save_folder.mkdir(parents=True, exist_ok=True)
 
-        is_quick_demo = False
-        if is_quick_demo:
+        if "is_quick_demo" in params and params["is_quick_demo"]:
 
             # Use less data and less epochs to speed up the computaions
+            logger.info("Quick demo: limit number of data and number of epochs.")
             self.x_train = self.x_train[:1000]
             self.y_train = self.y_train[:1000]
             self.x_esval = self.x_esval[:100]
