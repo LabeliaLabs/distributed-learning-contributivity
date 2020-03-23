@@ -9,6 +9,8 @@ import yaml
 import os
 from pathlib import Path
 from loguru import logger
+from shutil import copyfile
+import datetime
 
 
 import keras
@@ -85,15 +87,28 @@ def init_result_folder(yaml_filepath, cfg):
     """
 
     logger.info("*** init_result_folder ***")
+    
+    now = datetime.datetime.now()
+    now_str = now.strftime("%Y-%m-%d_%Hh%M")
 
-    experiment_path = Path.cwd() / "experiments" / cfg["experiment_name"]
-    experiment_path.mkdir(parents=True, exist_ok=True)
+    full_experiment_name = cfg["experiment_name"] + "_" + now_str
+    experiment_path = Path.cwd() / "experiments" / full_experiment_name
+
+    # Check if experiment folder already exists
+    if experiment_path.exists():
+        logger.warning(f"Experiment folder, {experiment_path} already exists")
+        new_experiment_name = experiment_path + "_0"
+        experiment_path = Path.cwd() / "experiments" / new_experiment_name
+        logger.warning(f"Experiment folder has been renamed to: {experiment_path}")
+
+
+    experiment_path.mkdir(parents=True, exist_ok=False)
 
     cfg["experiment_path"] = experiment_path
     logger.info("experiment folder " + str(experiment_path) + " created.")
 
-    # TODO refactor
-    os.system("cp " + yaml_filepath + ' "' + str(experiment_path) + '"')
+    target_yaml_filepath = experiment_path / Path(yaml_filepath).name
+    copyfile(yaml_filepath, target_yaml_filepath)
 
-    logger.info("result folder created")
+    logger.info("Result folder initiated")
     return cfg

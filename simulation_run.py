@@ -51,7 +51,7 @@ def main():
     scenario_params_list = config["scenario_params_list"]
     n_repeats = config["n_repeats"]
 
-    #GPU config
+    # GPU config
     gpus = tf.config.experimental.list_physical_devices("GPU")
     tf.config.experimental.set_memory_growth(gpus[0], True)
 

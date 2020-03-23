@@ -46,7 +46,10 @@ class Scenario:
         ]  # Toggle between 'Random' and 'Stratified'
 
         # Configure if the data of the nodes are corrupted or not
-        self.corrupted_nodes = ["not_corrupted"] * self.nodes_count
+        if "corrupted_nodes" in params:
+            self.corrupted_nodes = params["corrupted_nodes"]
+        else:
+            self.corrupted_nodes = ["not_corrupted"] * self.nodes_count
 
         # Define if test data should be distributed between nodes...
         # ... or if each node should refer to a centralised test set
@@ -64,25 +67,33 @@ class Scenario:
 
         now = datetime.datetime.now()
         now_str = now.strftime("%Y-%m-%d_%Hh%M")
-        # TODO: this is quick hack so that the two disctincts scenario do not have the same name
-        scenario_name = (
+        self.scenario_name = (
             self.samples_split_option
             + "_"
             + str(self.nodes_count)
             + "_"
+            + str(self.amounts_per_node)
+            + "_"
+            + str(self.corrupted_nodes)
+            + "_"
+            + str(self.testset_option)
+            + "_"
             + now_str
             + "_"
-            + uuid.uuid4().hex
+            + uuid.uuid4().hex[
+                :3
+            ]  # This is to be sure 2 distincts sceneario do no have the same name
         )
 
-        self.scenario_name = (
+        self.short_scenario_name = (
             self.samples_split_option
             + " "
             + str(self.nodes_count)
             + " "
             + str(self.amounts_per_node)
         )
-        self.save_folder = experiment_path / scenario_name
+
+        self.save_folder = experiment_path / self.scenario_name
 
         self.save_folder.mkdir(parents=True, exist_ok=True)
 
@@ -312,6 +323,7 @@ class Scenario:
                 dict_results["is_early_stopping"] = self.is_early_stopping
                 dict_results["federated_test_score"] = self.federated_test_score
                 dict_results["scenario_name"] = self.scenario_name
+                dict_results["short_scenario_name"] = self.short_scenario_name
 
                 # Contributivity data
                 dict_results["contributivity_method"] = contrib.name
