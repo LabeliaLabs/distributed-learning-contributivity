@@ -13,3 +13,4 @@ scenario_params_list:
    amounts_per_node: [0.9, 0.1] 
    samples_split_option: 'Random'
    testset_option: 'Centralised'
+   
