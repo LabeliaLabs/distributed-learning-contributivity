@@ -65,7 +65,7 @@ def load_cfg(yaml_filepath):
     Returns:
         cfg : dict
     """
-    print("*** load_cfg ***")
+    logger.info("Loading experiment yaml file")
     # Read YAML experiment definition file
     with open(yaml_filepath, "r") as stream:
         cfg = yaml.load(stream, Loader=yaml.FullLoader)
@@ -86,7 +86,7 @@ def init_result_folder(yaml_filepath, cfg):
         folder_name
     """
 
-    logger.info("*** init_result_folder ***")
+    logger.info("Init result folder")
     
     now = datetime.datetime.now()
     now_str = now.strftime("%Y-%m-%d_%Hh%M")

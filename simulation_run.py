@@ -52,8 +52,8 @@ def main():
     n_repeats = config["n_repeats"]
 
     # GPU config
-    gpus = tf.config.experimental.list_physical_devices("GPU")
-    tf.config.experimental.set_memory_growth(gpus[0], True)
+    #gpus = tf.config.experimental.list_physical_devices("GPU")
+    #tf.config.experimental.set_memory_growth(gpus[0], True)
 
     # Close open figures
     plt.close("all")
@@ -105,7 +105,7 @@ def run_scenario(current_scenario):
         current_scenario.x_test, current_scenario.y_test
     )
 
-    #%% Corrupt the node's label in needed
+    # Corrupt the node's label in needed
     for i, node in enumerate(current_scenario.node_list):
         if current_scenario.corrupted_nodes[i] == "corrupted":
             print("corruption of node " + str(i) + "\n")
@@ -118,14 +118,14 @@ def run_scenario(current_scenario):
         else:
             print("unexpeted label of corruption")
 
-    #%% Train and eval on all nodes according to scenario
+    # Train and eval on all nodes according to scenario
 
     is_save_fig = True
     current_scenario.federated_test_score = fl_training.compute_test_score_with_scenario(
         current_scenario, is_save_fig
     )
 
-    #%% Contributivity 1: Baseline contributivity measurement (Shapley Value)
+    # Contributivity 1: Baseline contributivity measurement (Shapley Value)
 
     start = timer()
     (contributivity_scores, scores_var) = contributivity_measures.compute_SV(
@@ -146,7 +146,7 @@ def run_scenario(current_scenario):
     print("\n## Evaluating contributivity with Shapley:")
     print(shapley_contrib)
 
-    #%% Contributivity 2: Performance scores of models trained independently on each node
+    # Contributivity 2: Performance scores of models trained independently on each node
 
     start = timer()
     scores = contributivity_measures.compute_independent_scores(
@@ -173,7 +173,7 @@ def run_scenario(current_scenario):
     print(independant_raw_contrib)
     print(independant_additiv_contrib)
 
-    # #%% Contributivity 3: Truncated Monte Carlo Shapley
+    # # Contributivity 3: Truncated Monte Carlo Shapley
 
     # start = timer()
     # tmcs_results = contributivity_measures.truncated_MC(
@@ -189,7 +189,7 @@ def run_scenario(current_scenario):
     # print("\n## Evaluating contributivity with Truncated Monte Carlo Shapley (TMCS):")
     # print(tmcs_contrib)
 
-    #%% Save results to file
+    # Save results to file
 
     current_scenario.to_file()
 

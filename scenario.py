@@ -116,7 +116,7 @@ class Scenario:
     def split_data(self):
         """Populates the nodes with their train and test data (not pre-processed)"""
 
-        #%% Fetch parameters of scenario
+        # Fetch parameters of scenario
 
         x_train = self.x_train
         y_train = self.y_train
@@ -138,7 +138,7 @@ class Scenario:
         print("\n### Description of data scenario configured:")
         print("- Number of nodes defined:", self.nodes_count)
 
-        #%% Configure the desired splitting scenario - Datasets sizes
+        # Configure the desired splitting scenario - Datasets sizes
         # Should the nodes receive an equivalent amount of samples each...
         # ... or receive different amounts?
 
@@ -158,7 +158,7 @@ class Scenario:
         splitting_indices_test = (splitting_indices * len(y_test)).astype(int)
         # print('- Splitting indices defined (for train data):', splitting_indices_train) # VERBOSE
 
-        #%% Configure the desired data distribution scenario
+        # Configure the desired data distribution scenario
 
         # Describe the type of distribution chosen
         print("- Data distribution scenario chosen:", self.samples_split_option)
@@ -188,7 +188,7 @@ class Scenario:
                 + "] is not recognized."
             )
 
-        #%% Do the splitting among nodes according to desired scenarios
+        # Do the splitting among nodes according to desired scenarios
 
         # Split data between nodes
         train_idx_idx_list = np.split(train_idx, splitting_indices_train)
@@ -338,6 +338,7 @@ class Scenario:
                 dict_results["contributivity_std"] = contrib.scores_std[i]
 
                 df = df.append(dict_results, ignore_index=True)
-                df.info()
+        
+        df.info()
 
         return df
