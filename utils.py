@@ -70,7 +70,7 @@ def load_cfg(yaml_filepath):
     with open(yaml_filepath, "r") as stream:
         cfg = yaml.load(stream, Loader=yaml.FullLoader)
 
-    print(cfg)
+    logger.info(cfg)
 
     return cfg
 
