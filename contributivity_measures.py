@@ -8,20 +8,22 @@ from __future__ import print_function
 import numpy as np
 from scipy.stats import norm
 from itertools import combinations
+from math import factorial 
+from sklearn.linear_model import LinearRegression
+from scipy.special import softmax 
 
-from scipy.special import softmax
-from scipy.stats import norm
-import fl_training
-import scenario
+import fl_training 
 import shapley_value.shapley as sv
-from math import factorial
 
-#%% Compute independent performance scores of models trained independently on each node
+
+# %% Compute independent performance scores of models trained independently on each node
 
 
 def compute_independent_scores(node_list, epoch_count, collaborative_score):
 
-    print('\n# Launching computation of perf. scores of models trained independently on each node')
+    print(
+        "\n# Launching computation of perf. scores of models trained independently on each node"
+    )
 
     # Initialize a list of performance scores
     performance_scores = []
@@ -39,7 +41,7 @@ def compute_independent_scores(node_list, epoch_count, collaborative_score):
     return [np.array(performance_scores), np.array(perf_scores_additive)]
 
 
-#%% Generalization of Shapley Value computation
+# %% Generalization of Shapley Value computation
 
 
 def compute_SV(node_list, epoch_count, x_esval, y_esval, x_test, y_test):
@@ -52,7 +54,9 @@ def compute_SV(node_list, epoch_count, x_esval, y_esval, x_test, y_test):
     # print('All players (nodes) indexes: ', nodes_idx) # VERBOSE
 
     # Define all possible coalitions of players
-    coalitions = [list(j) for i in range(len(nodes_idx)) for j in combinations(nodes_idx, i+1)]
+    coalitions = [
+        list(j) for i in range(len(nodes_idx)) for j in combinations(nodes_idx, i + 1)
+    ]
     # print('All possible coalitions of players (nodes): ', coalitions) # VERBOSE
 
     # For each coalition, obtain value of characteristic function...
@@ -78,12 +82,11 @@ def compute_SV(node_list, epoch_count, x_esval, y_esval, x_test, y_test):
     return (np.array(list_shapley_value), np.repeat(0.0, len(list_shapley_value)))
 
 
-#%% compute Shapley values with the truncated Monte-carlo method
+# %% compute Shapley values with the truncated Monte-carlo metho
 
 
 def truncated_MC(scenario, sv_accuracy=0.01, alpha=0.9, truncation=0.05):
-
-    """Return the vector of approximated shapeley value corresponding to a list of node and a characteristic function using the truncated monte-carlo method."""
+    """Return the vector of approximated Shapley value corresponding to a list of node and a characteristic function using the truncated monte-carlo method."""
 
     preprocessed_node_list = scenario.node_list
     n = len(preprocessed_node_list)
@@ -123,14 +126,15 @@ def truncated_MC(scenario, sv_accuracy=0.01, alpha=0.9, truncation=0.05):
             "computed_val": char_value_dict,
         }
     else:
-        contributions=np.array([[]])
-        permutation=np.zeros(n) # Store the current permutation
-        t=0
-        q=norm.ppf((1-alpha)/2, loc=0, scale=1)
-        v_max=0
-        while t<100 or t<q**2 *v_max  /(sv_accuracy)**2 : # Check if the length of the confidence interval  is below the value of sv_accuracy*characteristic_all_node
-            t+=1
-
+        contributions = np.array([[]])
+        permutation = np.zeros(n)  # Store the current permutation
+        t = 0
+        q = norm.ppf((1 - alpha) / 2, loc=0, scale=1)
+        v_max = 0
+        while (
+            t < 100 or t < q ** 2 * v_max / (sv_accuracy) ** 2
+        ):  # Check if the length of the confidence interval  is below the value of sv_accuracy*characteristic_all_node
+            t += 1
 
             if t == 1:
                 contributions = np.array([np.zeros(n)])
@@ -143,507 +147,725 @@ def truncated_MC(scenario, sv_accuracy=0.01, alpha=0.9, truncation=0.05):
             )  # Store the characteristic function on each ensemble built with the first elements of the permutation
             char_nodelists[-1] = characteristic_all_node
             for j in range(n):
-                #here we suppose the characteristic function is 0 for the empty set
-                if abs(characteristic_all_node-char_nodelists[j])<truncation :
-                    char_nodelists[j+1] = char_nodelists[j]
+                # here we suppose the characteristic function is 0 for the empty set
+                if abs(characteristic_all_node - char_nodelists[j]) < truncation:
+                    char_nodelists[j + 1] = char_nodelists[j]
                 else:
-                    char_nodelists[j+1] = not_twice_characteristic(permutation[:j+1])
-                contributions[-1][permutation[j]]  =  char_nodelists[j+1]-char_nodelists[j]
-            v_max=np.max(np.var(contributions,axis=0))
-        sv=np.mean(contributions,axis=0)
+                    char_nodelists[j + 1] = not_twice_characteristic(
+                        permutation[: j + 1]
+                    )
+                contributions[-1][permutation[j]] = (
+                    char_nodelists[j + 1] - char_nodelists[j]
+                )
+            v_max = np.max(np.var(contributions, axis=0))
+        sv = np.mean(contributions, axis=0)
 
-    return({'sv':sv, 'std_sv': np.std(contributions,axis=0) / np.sqrt(t-1),'prop':sv/np.sum(sv), 'computed_val':char_value_dict})
+    return {
+        "sv": sv,
+        "std_sv": np.std(contributions, axis=0) / np.sqrt(t - 1),
+        "prop": sv / np.sum(sv),
+        "computed_val": char_value_dict,
+    }
 
 
-#%% compute Shapley values with the linear importance sampling method
+# %% compute Shapley values with the truncated Monte-carlo method with a small bias correction
 
-def IS_lin(the_scenario, sv_accuracy=0.01, alpha=0.95):
-    """Return the vector of approximated shapeley value corresponding to a list of node and a characteristic function using the importance sampling method."""
+
+def truncated_MC2(the_scenario, sv_accuracy=0.01, alpha=0.9, truncation=0.05):
+    """Return the vector of approximated Shapley value corresponding to a list of node and a characteristic function using the truncated monte-carlo method with a small correction of the bias"""
 
     preprocessed_node_list = the_scenario.node_list
     n = len(preprocessed_node_list)
 
     # We store the value of the characteristic function in order to avoid recomputing it twice
-    char_value_dict={():0} # the dictionary that will countain the values
+    char_value_dict = {
+        (): 0
+    }  # the dictionary that will countain the values #here we suppose the characteristic function is 0 for the empty set
 
     # Return the characteristic function of the nodelist associated to the ensemble permut, without recomputing it if it was already computed
     def not_twice_characteristic(permut):
         # Sort permut
-        permut=np.sort(permut)
-        try: # Return the characteristic_func(permut) if it was already computed
+        permut = np.sort(permut)
+        try:  # Return the characteristic_func(permut) if it was already computed
             return char_value_dict[tuple(permut)]
-        except KeyError: # Characteristic_func(permut) has not been computed yet, so we compute, store, and return characteristic_func(permut)
+        except KeyError:  # Characteristic_func(permut) has not been computed yet, so we compute, store, and return characteristic_func(permut)
             small_node_list = np.array([preprocessed_node_list[i] for i in permut])
-            char_value_dict[tuple(permut)] = fl_training.compute_test_score(small_node_list,
-                              the_scenario.epoch_count,
-                              the_scenario.x_esval,
-                              the_scenario.y_esval,
-                              the_scenario.x_test,
-                              the_scenario.y_test,
-                              the_scenario.is_early_stopping,
-                              save_folder=the_scenario.save_folder)
+            char_value_dict[tuple(permut)] = fl_training.compute_test_score(
+                small_node_list,
+                the_scenario.epoch_count,
+                the_scenario.x_esval,
+                the_scenario.y_esval,
+                the_scenario.x_test,
+                the_scenario.y_test,
+                the_scenario.is_early_stopping,
+                save_folder=the_scenario.save_folder,
+            )
 
             return char_value_dict[tuple(permut)]
 
-
-    characteristic_all_node= not_twice_characteristic(np.arange(n)) # Characteristic function on all nodes
-
-    if n==1:
-        return({'sv': characteristic_all_node,'std_sv': np.array([0]),'prop': np.array([1]), 'computed_val':char_value_dict})
+    characteristic_all_node = not_twice_characteristic(
+        np.arange(n)
+    )  # Characteristic function on all nodes
+    if n == 1:
+        return {
+            "sv": characteristic_all_node,
+            "std_sv": np.array([0]),
+            "prop": np.array([1]),
+            "computed_val": char_value_dict,
+        }
     else:
-        #definition of the original density
-        def prob(subset):
-            lS=len(subset)
-            return factorial(n-1-lS)*factorial(lS)/factorial(n)
-
-        #definition of the approximation of the increment
-        ### compute the last and the first increments in performance (they are needed to compute the approximated increments)
-        characteristic_no_nodes=0
-        last_increments=[]
-        first_increments=[]
-        for k in range(n):
-            last_increments.append(characteristic_all_node-not_twice_characteristic(np.delete(np.arange(n), k)))
-            first_increments.append(not_twice_characteristic(np.array([k]))-characteristic_no_nodes)
-
-
-
-        ### definition of the number of data in all datasets
-        size_of_I=0
-        for node in preprocessed_node_list:
-                size_of_I+=len(node.y_train)
-
-        def approx_increment(subset,k):
-            assert k not in subset, ""+str(k)+"is not in "+str(subset)+""
-            small_node_list = np.array([preprocessed_node_list[i] for i in subset])
-            #compute the size of subset : ||subset||
-            size_of_S=0
-            for node in small_node_list:
-                size_of_S+=len(node.y_train)
-            beta=size_of_S/size_of_I
-            return (1-beta)*first_increments[k]+beta*last_increments[k]
-
-        #compute  the importance density
-        ### compute the renormalization constant of the importance density for all datatsets
-
-        renorms=[]
-        for k in range(n):
-            list_k=np.delete(np.arange(n),k)
-            renorm=0
-            for length_combination in range(len(list_k)+1) :
-                for subset in combinations(list_k, length_combination): # could be avoided as   prob(np.array(subset))*np.abs(approx_increment(np.array(subset),j)) is constant in the combination
-                    renorm+=prob(np.array(subset))*np.abs(approx_increment(np.array(subset),k))
-            renorms.append(renorm)
-        ### defines the importance density
-        def g(subset,k):
-            return prob(np.array(subset))*np.abs(approx_increment(np.array(subset),k))/renorms[k]
-
-        # sampling
-        t=0
-        q=norm.ppf((1-alpha)/2, loc=0, scale=1)
-        v_max=0
-        while t<100 or t<q**2 *v_max  /(sv_accuracy)**2 : # Check if the length of the confidence interval  is below the value of sv_accuracy*characteristic_all_node
-            t+=1
+        contributions = np.array([[]])
+        permutation = np.zeros(n)  # Store the current permutation
+        t = 0
+        q = -norm.ppf((1 - alpha) / 2, loc=0, scale=1)
+        v_max = 0
+        while (
+            t < 100 or t < 4 * q ** 2 * v_max / (sv_accuracy) ** 2
+        ):  # Check if the length of the confidence interval  is below the value of sv_accuracy*characteristic_all_node
+            t += 1
             print(t)
-            if t==1:
-                contributions=np.array([np.zeros(n)])
+            if t == 1:
+                contributions = np.array([np.zeros(n)])
             else:
-                contributions=np.vstack((contributions, np.zeros(n)))
-            for k in range(n):
-                u=np.random.uniform(0,1,1)[0]
-                cumSum=0
-                list_k=np.delete(np.arange(n),k)
-                for length_combination in range(len(list_k)+1) :
-                    for subset in combinations(list_k, length_combination): # could be avoided as   prob(np.array(subset))*np.abs(approx_increment(np.array(subset),j)) is constant in the combination
-                        cumSum+=prob(np.array(subset))*np.abs(approx_increment(np.array(subset),k))
-                        if cumSum/renorms[k]>u:
-                            S=np.array(subset)
-                            break
-                    if cumSum/renorms[k]>u:
-                        break
-                SUk=np.append(S,k)
-                increment=not_twice_characteristic(SUk) - not_twice_characteristic(S)
-                contributions[t-1][k]=increment*renorms[k]/np.abs(approx_increment(np.array(S),k))
-            v_max=np.max(np.var(contributions,axis=0))
-        shap=np.mean(contributions,axis=0)
+                contributions = np.vstack((contributions, np.zeros(n)))
 
-    return({'sv':shap, 'std_sv': np.std(contributions,axis=0) / np.sqrt(t-1),'prop':shap/np.sum(shap), 'computed_val':char_value_dict})
+            permutation = np.random.permutation(n)  # Store the current permutation
+            char_nodelists = np.zeros(
+                n + 1
+            )  # Store the characteristic function on each ensemble built with the first elements of the permutation
+            char_nodelists[-1] = characteristic_all_node
+            first = True
+            for j in range(n):
+                # here we suppose the characteristic function is 0 for the empty set
+                if abs(characteristic_all_node - char_nodelists[j]) < truncation:
+                    if first:
+                        size_of_rest = 0
+                        for i in range(j, n):
+                            size_of_rest += len(preprocessed_node_list[i].y_train)
+                        first = False
+                    size_of_S = len(preprocessed_node_list[j].y_train)
+                    char_nodelists[j + 1] = (
+                        char_nodelists[j]
+                        + size_of_S / size_of_rest * characteristic_all_node
+                    )
+                else:
+                    char_nodelists[j + 1] = not_twice_characteristic(
+                        permutation[: j + 1]
+                    )
+                contributions[-1][permutation[j]] = (
+                    char_nodelists[j + 1] - char_nodelists[j]
+                )
+            v_max = np.max(np.var(contributions, axis=0))
+        shap = np.mean(contributions, axis=0)
+
+    return {
+        "sv": shap,
+        "std_sv": np.std(contributions, axis=0) / np.sqrt(t - 1),
+        "prop": shap / np.sum(shap),
+        "computed_val": char_value_dict,
+    }
 
 
-#%% compute Shapley values with the regression importance sampling method
+# %% compute Shapley values with the importance sampling method
 
-def IS_reg(the_scenario, sv_accuracy=0.01, alpha=0.95):
-    """Return the vector of approximated shapeley value corresponding to a list of node and a characteristic function using the importance sampling method."""
+
+def IS_lin(the_scenario, sv_accuracy=0.01, alpha=0.95):
+    """Return the vector of approximated Shapley value corresponding to a list of node and a characteristic function using the importance sampling method and a linear interpolation model."""
 
     preprocessed_node_list = the_scenario.node_list
     n = len(preprocessed_node_list)
-    characteristic_no_nodes=0
+
     # We store the value of the characteristic function in order to avoid recomputing it twice
-    char_value_dict={():characteristic_no_nodes} # the dictionary that will countain the values
+    char_value_dict = {(): 0}  # the dictionary that will countain the values
+
+    # Return the characteristic function of the nodelist associated to the ensemble permut, without recomputing it if it was already computed
+    def not_twice_characteristic(permut):
+        # Sort permut
+        permut = np.sort(permut)
+        try:  # Return the characteristic_func(permut) if it was already computed
+            return char_value_dict[tuple(permut)]
+        except KeyError:  # Characteristic_func(permut) has not been computed yet, so we compute, store, and return characteristic_func(permut)
+            small_node_list = np.array([preprocessed_node_list[i] for i in permut])
+            char_value_dict[tuple(permut)] = fl_training.compute_test_score(
+                small_node_list,
+                the_scenario.epoch_count,
+                the_scenario.x_esval,
+                the_scenario.y_esval,
+                the_scenario.x_test,
+                the_scenario.y_test,
+                the_scenario.is_early_stopping,
+                save_folder=the_scenario.save_folder,
+            )
+
+            return char_value_dict[tuple(permut)]
+
+    characteristic_all_node = not_twice_characteristic(
+        np.arange(n)
+    )  # Characteristic function on all nodes
+
+    if n == 1:
+        return {
+            "sv": characteristic_all_node,
+            "std_sv": np.array([0]),
+            "prop": np.array([1]),
+            "computed_val": char_value_dict,
+        }
+    else:
+
+        # definition of the original density
+        def prob(subset):
+            lS = len(subset)
+            return factorial(n - 1 - lS) * factorial(lS) / factorial(n)
+
+        # definition of the approximation of the increment
+        # ## compute the last and the first increments in performance (they are needed to compute the approximated increments)
+        characteristic_no_nodes = 0
+        last_increments = []
+        first_increments = []
+        for k in range(n):
+            last_increments.append(
+                characteristic_all_node
+                - not_twice_characteristic(np.delete(np.arange(n), k))
+            )
+            first_increments.append(
+                not_twice_characteristic(np.array([k])) - characteristic_no_nodes
+            )
+
+        # ## definition of the number of data in all datasets
+        size_of_I = 0
+        for node in preprocessed_node_list:
+            size_of_I += len(node.y_train)
+
+        def approx_increment(subset, k):
+            assert k not in subset, "" + str(k) + "is not in " + str(subset) + ""
+            small_node_list = np.array([preprocessed_node_list[i] for i in subset])
+            # compute the size of subset : ||subset||
+            size_of_S = 0
+            for node in small_node_list:
+                size_of_S += len(node.y_train)
+            beta = size_of_S / size_of_I
+            return (1 - beta) * first_increments[k] + beta * last_increments[k]
+
+        # compute  the importance density
+        # ## compute the renormalization constant of the importance density for all datatsets
+
+        renorms = []
+        for k in range(n):
+            list_k = np.delete(np.arange(n), k)
+            renorm = 0
+            for length_combination in range(len(list_k) + 1):
+                for subset in combinations(
+                    list_k, length_combination
+                ):  # could be avoided as   prob(np.array(subset))*np.abs(approx_increment(np.array(subset),j)) is constant in the combination
+                    renorm += prob(np.array(subset)) * np.abs(
+                        approx_increment(np.array(subset), k)
+                    )
+            renorms.append(renorm)
+
+        # ## defines the importance density
+        def g(subset, k):
+            return (
+                prob(np.array(subset))
+                * np.abs(approx_increment(np.array(subset), k))
+                / renorms[k]
+            )
+
+        # sampling
+        t = 0
+        q = -norm.ppf((1 - alpha) / 2, loc=0, scale=1)
+        v_max = 0
+        while (
+            t < 100 or t < 4 * q ** 2 * v_max / (sv_accuracy) ** 2
+        ):  # Check if the length of the confidence interval  is below the value of sv_accuracy*characteristic_all_node
+            t += 1
+            print(t)
+            if t == 1:
+                contributions = np.array([np.zeros(n)])
+            else:
+                contributions = np.vstack((contributions, np.zeros(n)))
+            for k in range(n):
+                u = np.random.uniform(0, 1, 1)[0]
+                cumSum = 0
+                list_k = np.delete(np.arange(n), k)
+                for length_combination in range(len(list_k) + 1):
+                    for subset in combinations(
+                        list_k, length_combination
+                    ):  # could be avoided as   prob(np.array(subset))*np.abs(approx_increment(np.array(subset),j)) is constant in the combination
+                        cumSum += prob(np.array(subset)) * np.abs(
+                            approx_increment(np.array(subset), k)
+                        )
+                        if cumSum / renorms[k] > u:
+                            S = np.array(subset)
+                            break
+                    if cumSum / renorms[k] > u:
+                        break
+                SUk = np.append(S, k)
+                increment = not_twice_characteristic(SUk) - not_twice_characteristic(S)
+                contributions[t - 1][k] = (
+                    increment * renorms[k] / np.abs(approx_increment(np.array(S), k))
+                )
+            v_max = np.max(np.var(contributions, axis=0))
+        shap = np.mean(contributions, axis=0)
+
+    return {
+        "sv": shap,
+        "std_sv": np.std(contributions, axis=0) / np.sqrt(t - 1),
+        "prop": shap / np.sum(shap),
+        "computed_val": char_value_dict,
+    }
+
+
+# %% compute Shapley values with the regression importance sampling method
+
+
+def IS_reg(the_scenario, sv_accuracy=0.01, alpha=0.95):
+    """Return the vector of approximated Shapley value corresponding to a list of node and a characteristic function using the importance sampling method and a regression model."""
+
+    preprocessed_node_list = the_scenario.node_list
+    n = len(preprocessed_node_list)
+    characteristic_no_nodes = 0
+    # We store the value of the characteristic function in order to avoid recomputing it twice
+    char_value_dict = {
+        (): characteristic_no_nodes
+    }  # the dictionary that will countain the values
     # We store the value of the increment of characteristic function (they are use to built the approximation of increment)
-    increments=np.array([])# the dictionary that will countain the values
-    for i in range(n):# it is created with a for loop to avoid a pointer issue
-        increments=np.append(increments,dict())
+    increments = np.array([])  # the dictionary that will countain the values
+    for i in range(n):  # it is created with a for loop to avoid a pointer issue
+        increments = np.append(increments, dict())
+
     # Return the characteristic function of the nodelist associated to the ensemble permut, without recomputing it if it was already computed
     def not_twice_characteristic(subset):
         # Sort permut
-        subset=np.sort(subset)
-        try: # Return the characteristic_func(permut) if it was already computed
+        subset = np.sort(subset)
+        try:  # Return the characteristic_func(permut) if it was already computed
             char_value_dict[tuple(subset)]
-        except KeyError: # Characteristic_func(permut) has not been computed yet, so we compute, store, and return characteristic_func(permut)
+        except KeyError:  # Characteristic_func(permut) has not been computed yet, so we compute, store, and return characteristic_func(permut)
             small_node_list = np.array([preprocessed_node_list[i] for i in subset])
-            char_value_dict[tuple(subset)] = fl_training.compute_test_score(small_node_list,
-                              the_scenario.epoch_count,
-                              the_scenario.x_esval,
-                              the_scenario.y_esval,
-                              the_scenario.x_test,
-                              the_scenario.y_test,
-                              the_scenario.is_early_stopping,
-                              save_folder=the_scenario.save_folder)
+            char_value_dict[tuple(subset)] = fl_training.compute_test_score(
+                small_node_list,
+                the_scenario.epoch_count,
+                the_scenario.x_esval,
+                the_scenario.y_esval,
+                the_scenario.x_test,
+                the_scenario.y_test,
+                the_scenario.is_early_stopping,
+                save_folder=the_scenario.save_folder,
+            )
         # we add the new increments
         for i in range(n):
-            if (i in subset):
-                subset_without_i=np.delete(subset ,np.argwhere(subset==i))
+            if i in subset:
+                subset_without_i = np.delete(subset, np.argwhere(subset == i))
                 try:
-                    increments[i][tuple(subset_without_i)]=char_value_dict[tuple(subset)]-char_value_dict[tuple(subset_without_i)]
+                    increments[i][tuple(subset_without_i)] = (
+                        char_value_dict[tuple(subset)]
+                        - char_value_dict[tuple(subset_without_i)]
+                    )
                 except KeyError:
                     pass
             else:
-                subset_with_i=np.sort(np.append(subset ,i))
+                subset_with_i = np.sort(np.append(subset, i))
                 try:
-                    increments[i][tuple(subset)]=char_value_dict[tuple(subset_with_i)]-char_value_dict[tuple(subset)]
+                    increments[i][tuple(subset)] = (
+                        char_value_dict[tuple(subset_with_i)]
+                        - char_value_dict[tuple(subset)]
+                    )
                 except KeyError:
                     pass
         return char_value_dict[tuple(subset)]
 
-    if n<4 :
+    if n < 4:
         # Initialize list of all players (nodes) indexes
         nodes_count = len(preprocessed_node_list)
         nodes_idx = np.arange(nodes_count)
 
         # Define all possible coalitions of players
-        coalitions = [list(j) for i in range(len(nodes_idx)) for j in combinations(nodes_idx, i+1)]
+        coalitions = [
+            list(j)
+            for i in range(len(nodes_idx))
+            for j in combinations(nodes_idx, i + 1)
+        ]
 
         # For each coalition, obtain value of characteristic function...
         # ... i.e.: train and evaluate model on nodes part of the given coalition
         characteristic_function = []
 
         for coalition in coalitions:
-            characteristic_function.append( not_twice_characteristic(list(coalition)))
+            characteristic_function.append(not_twice_characteristic(list(coalition)))
         # Compute exact Shapley Value for each node
-        shap, std= sv.main(the_scenario.nodes_count, characteristic_function)
-        return({'sv': shap,'std_sv':std,'prop': np.array([1]), 'computed_val':char_value_dict})
+        shap, std = sv.main(the_scenario.nodes_count, characteristic_function)
+        return {
+            "sv": shap,
+            "std_sv": std,
+            "prop": np.array([1]),
+            "computed_val": char_value_dict,
+        }
     else:
-        #definition of the original density
-        def prob(subset):
-            lS=len(subset)
-            return factorial(n-1-lS)*factorial(lS)/factorial(n)
 
-        #definition of the approximation of the increment
-        ### compute some  increments
+        # definition of the original density
+        def prob(subset):
+            lS = len(subset)
+            return factorial(n - 1 - lS) * factorial(lS) / factorial(n)
+
+        # definition of the approximation of the increment
+        # ## compute some  increments
         permutation = np.random.permutation(n)
         for j in range(n):
-            not_twice_characteristic(permutation[:j+1])
+            not_twice_characteristic(permutation[: j + 1])
         permutation = np.flip(permutation)
         for j in range(n):
-            not_twice_characteristic(permutation[:j+1])
+            not_twice_characteristic(permutation[: j + 1])
         for k in range(n):
-            permutation = np.append(permutation[-1],permutation[:-1])
+            permutation = np.append(permutation[-1], permutation[:-1])
             for j in range(n):
-                not_twice_characteristic(permutation[:j+1])
+                not_twice_characteristic(permutation[: j + 1])
 
-
-        ### do the regressions
+        # ## do the regressions
 
         ###### make the datasets
-        def makedata(subset,k):
-            #compute the size of subset : ||subset||
+        def makedata(subset):
+            # compute the size of subset : ||subset||
             small_node_list = np.array([preprocessed_node_list[i] for i in subset])
-            size_of_S=0
+            size_of_S = 0
             for node in small_node_list:
-                size_of_S+=len(node.y_train)
-            data=[ size_of_S,size_of_S**2]
+                size_of_S += len(node.y_train)
+            data = [size_of_S, size_of_S ** 2]
             # for j in range(n):
             #     if  j!=k:
             #         data.append(j in subset)
             return data
 
-        datasets=[]
-        outputs=[]
+        datasets = []
+        outputs = []
         for k in range(n):
-            x=[]
-            y=[]
+            x = []
+            y = []
             for subset, incr in increments[k].items():
-                x.append(makedata(subset,k))
+                x.append(makedata(subset))
                 y.append(incr)
             datasets.append(x)
             outputs.append(y)
 
         ###### fit the regressions
-        models=[]
+        models = []
         for k in range(n):
             model_k = LinearRegression()
             model_k.fit(datasets[k], outputs[k])
             models.append(model_k)
 
+        # ##define the approximation
+        def approx_increment(subset, k):
+            return models[k].predict([makedata(subset)])[0]
 
-        ###define the approximation
-        def approx_increment(subset,k):
-            return  models[k].predict([makedata(subset,k)])[0]
+        # compute  the importance density
+        # ## compute the renormalization constant of the importance density for all datatsets
 
-        #compute  the importance density
-        ### compute the renormalization constant of the importance density for all datatsets
-
-        renorms=[]
+        renorms = []
         for k in range(n):
-            list_k=np.delete(np.arange(n),k)
-            renorm=0
-            for length_combination in range(len(list_k)+1) :
-                for subset in combinations(list_k, length_combination): # could be avoided as   prob(np.array(subset))*np.abs(approx_increment(np.array(subset),j)) is constant in the combination
-                    renorm+=prob(np.array(subset))*np.abs(approx_increment(np.array(subset),k))
+            list_k = np.delete(np.arange(n), k)
+            renorm = 0
+            for length_combination in range(len(list_k) + 1):
+                for subset in combinations(
+                    list_k, length_combination
+                ):  # could be avoided as   prob(np.array(subset))*np.abs(approx_increment(np.array(subset),j)) is constant in the combination
+                    renorm += prob(np.array(subset)) * np.abs(
+                        approx_increment(np.array(subset), k)
+                    )
             renorms.append(renorm)
-        ### defines the importance density
-        def g(subset,k):
-            return prob(np.array(subset))*np.abs(approx_increment(np.array(subset),k))/renorms[k]
+
+        # ## defines the importance density
+        def g(subset, k):
+            return (
+                prob(np.array(subset))
+                * np.abs(approx_increment(np.array(subset), k))
+                / renorms[k]
+            )
 
         # sampling
-        t=0
-        q=norm.ppf((1-alpha)/2, loc=0, scale=1)
-        v_max=0
-        while t<100 or t<q**2 *v_max  /(sv_accuracy)**2 : # Check if the length of the confidence interval  is below the value of sv_accuracy*characteristic_all_node
-            t+=1
+        t = 0
+        q = -norm.ppf((1 - alpha) / 2, loc=0, scale=1)
+        v_max = 0
+        while (
+            t < 100 or t < 4 * q ** 2 * v_max / (sv_accuracy) ** 2
+        ):  # Check if the length of the confidence interval  is below the value of sv_accuracy*characteristic_all_node
+            t += 1
             print(t)
-            if t==1:
-                contributions=np.array([np.zeros(n)])
+            if t == 1:
+                contributions = np.array([np.zeros(n)])
             else:
-                contributions=np.vstack((contributions, np.zeros(n)))
+                contributions = np.vstack((contributions, np.zeros(n)))
             for k in range(n):
-                u=np.random.uniform(0,1,1)[0]
-                cumSum=0
-                list_k=np.delete(np.arange(n),k)
-                for length_combination in range(len(list_k)+1) :
-                    for subset in combinations(list_k, length_combination): # could be avoided as   prob(np.array(subset))*np.abs(approx_increment(np.array(subset),j)) is constant in the combination
-                        cumSum+=prob(np.array(subset))*np.abs(approx_increment(np.array(subset),k))
-                        if cumSum/renorms[k]>u:
-                            S=np.array(subset)
+                u = np.random.uniform(0, 1, 1)[0]
+                cumSum = 0
+                list_k = np.delete(np.arange(n), k)
+                for length_combination in range(len(list_k) + 1):
+                    for subset in combinations(
+                        list_k, length_combination
+                    ):  # could be avoided as   prob(np.array(subset))*np.abs(approx_increment(np.array(subset),j)) is constant in the combination
+                        cumSum += prob(np.array(subset)) * np.abs(
+                            approx_increment(np.array(subset), k)
+                        )
+                        if cumSum / renorms[k] > u:
+                            S = np.array(subset)
                             break
-                    if cumSum/renorms[k]>u:
+                    if cumSum / renorms[k] > u:
                         break
-                SUk=np.append(S,k)
-                increment=not_twice_characteristic(SUk) - not_twice_characteristic(S)
-                contributions[t-1][k]=increment*renorms[k]/np.abs(approx_increment(np.array(S),k))
-            v_max=np.max(np.var(contributions,axis=0))
-        shap=np.mean(contributions,axis=0)
+                SUk = np.append(S, k)
+                increment = not_twice_characteristic(SUk) - not_twice_characteristic(S)
+                contributions[t - 1][k] = (
+                    increment * renorms[k] / np.abs(approx_increment(np.array(S), k))
+                )
+            v_max = np.max(np.var(contributions, axis=0))
+        shap = np.mean(contributions, axis=0)
 
-    return({'sv':shap, 'std_sv': np.std(contributions,axis=0) / np.sqrt(t-1),'prop':shap/np.sum(shap), 'computed_val':char_value_dict})
+    return {
+        "sv": shap,
+        "std_sv": np.std(contributions, axis=0) / np.sqrt(t - 1),
+        "prop": shap / np.sum(shap),
+        "computed_val": char_value_dict,
+    }
 
 
-
-#%% compute Shapley values with the Kriging adaptive importance sampling method
+# %% compute Shapley values with the Kriging adaptive importance sampling method
 
 
 class krigingModel:
-    def __init__(self, degre, covariance_func ):
-        self.X=np.array([[]])
-        self.Y=np.array([[]])
-        self.cov_f=covariance_func
-        self.degre=degre
-        self.beta=np.array([[]])
-        self.H=np.array([[]])
-        self.K=np.array([[]])
-        self.invK=np.array([[]])
+    def __init__(self, degre, covariance_func):
+        self.X = np.array([[]])
+        self.Y = np.array([[]])
+        self.cov_f = covariance_func
+        self.degre = degre
+        self.beta = np.array([[]])
+        self.H = np.array([[]])
+        self.K = np.array([[]])
+        self.invK = np.array([[]])
 
     def fit(self, X, Y):
-        self.X=X
-        self.Y=Y
-        K=np.zeros( ( len(X) , len(X) ) )
-        H=np.zeros( ( len(X) , self.degre +1 ) )
-        for i,d in enumerate(X):
-            for j,b in enumerate(X):
-                K[i,j]=self.cov_f(d,b)
-            for j in range(self.degre+1 ):
-                H[i,j]=np.sum(d)**j
-        self.H=H
-        self.K=np.linalg.inv(K)
-        self.invK=np.linalg.inv(K)
-        Ht_invK_H=H.transpose().dot(self.invK).dot(H)
-        self.beta=np.linalg.inv(Ht_invK_H ).dot(H.transpose()).dot(self.invK).dot(self.Y)
+        self.X = X
+        self.Y = Y
+        K = np.zeros((len(X), len(X)))
+        H = np.zeros((len(X), self.degre + 1))
+        for i, d in enumerate(X):
+            for j, b in enumerate(X):
+                K[i, j] = self.cov_f(d, b)
+            for j in range(self.degre + 1):
+                H[i, j] = np.sum(d) ** j
+        self.H = H
+        self.K = np.linalg.inv(K)
+        self.invK = np.linalg.inv(K)
+        Ht_invK_H = H.transpose().dot(self.invK).dot(H)
+        self.beta = (
+            np.linalg.inv(Ht_invK_H).dot(H.transpose()).dot(self.invK).dot(self.Y)
+        )
 
     def predict(self, x):
-        gx=[]
-        for i in range( self.degre+1 ):
-            gx.append(np.sum(x)**i)
-        gx=np.array(gx)
-        cx=[]
-        for i in range( len( self.X ) ):
-            cx.append([ self.cov_f(self.X[i],x ) ])
-        cx=np.array(cx)
-        pred=gx.transpose().dot(self.beta)+ cx.transpose().dot(self.invK).dot(self.Y-self.H.dot(self.beta))
-        return(pred)
+        gx = []
+        for i in range(self.degre + 1):
+            gx.append(np.sum(x) ** i)
+        gx = np.array(gx)
+        cx = []
+        for i in range(len(self.X)):
+            cx.append([self.cov_f(self.X[i], x)])
+        cx = np.array(cx)
+        pred = gx.transpose().dot(self.beta) + cx.transpose().dot(self.invK).dot(
+            self.Y - self.H.dot(self.beta)
+        )
+        return pred
+
 
 def AIS_Kriging(the_scenario, sv_accuracy=0.01, alpha=0.95, update=50):
-    """Return the vector of approximated shapeley value corresponding to a list of node and a characteristic function using the importance sampling method."""
+    """Return the vector of approximated Shapley value corresponding to a list of node and a characteristic function using the importance sampling method and a Kriging model."""
 
     preprocessed_node_list = the_scenario.node_list
     n = len(preprocessed_node_list)
-    characteristic_no_nodes=0
+    characteristic_no_nodes = 0
     # We store the value of the characteristic function in order to avoid recomputing it twice
-    char_value_dict={():characteristic_no_nodes} # the dictionary that will countain the values
+    char_value_dict = {
+        (): characteristic_no_nodes
+    }  # the dictionary that will countain the values
     # We store the value of the increment of characteristic function (they are use to built the approximation of increment)
-    increments=np.array([])# the dictionary that will countain the values
-    for i in range(n):# it is created with a for loop to avoid a pointer issue
-        increments=np.append(increments,dict())
+    increments = np.array([])  # the dictionary that will countain the values
+    for i in range(n):  # it is created with a for loop to avoid a pointer issue
+        increments = np.append(increments, dict())
+
     # Return the characteristic function of the nodelist associated to the ensemble permut, without recomputing it if it was already computed
     def not_twice_characteristic(subset):
         # Sort permut
-        subset=np.sort(subset)
-        try: # Return the characteristic_func(permut) if it was already computed
+        subset = np.sort(subset)
+        try:  # Return the characteristic_func(permut) if it was already computed
             char_value_dict[tuple(subset)]
-        except KeyError: # Characteristic_func(permut) has not been computed yet, so we compute, store, and return characteristic_func(permut)
+        except KeyError:  # Characteristic_func(permut) has not been computed yet, so we compute, store, and return characteristic_func(permut)
             small_node_list = np.array([preprocessed_node_list[i] for i in subset])
-            char_value_dict[tuple(subset)] = fl_training.compute_test_score(small_node_list,
-                              the_scenario.epoch_count,
-                              the_scenario.x_esval,
-                              the_scenario.y_esval,
-                              the_scenario.x_test,
-                              the_scenario.y_test,
-                              the_scenario.is_early_stopping,
-                              save_folder=the_scenario.save_folder)
+            char_value_dict[tuple(subset)] = fl_training.compute_test_score(
+                small_node_list,
+                the_scenario.epoch_count,
+                the_scenario.x_esval,
+                the_scenario.y_esval,
+                the_scenario.x_test,
+                the_scenario.y_test,
+                the_scenario.is_early_stopping,
+                save_folder=the_scenario.save_folder,
+            )
         # we add the new increments
         for i in range(n):
-            if (i in subset):
-                subset_without_i=np.delete(subset ,np.argwhere(subset==i))
+            if i in subset:
+                subset_without_i = np.delete(subset, np.argwhere(subset == i))
                 try:
-                    increments[i][tuple(subset_without_i)]=char_value_dict[tuple(subset)]-char_value_dict[tuple(subset_without_i)]
+                    increments[i][tuple(subset_without_i)] = (
+                        char_value_dict[tuple(subset)]
+                        - char_value_dict[tuple(subset_without_i)]
+                    )
                 except KeyError:
                     pass
             else:
-                subset_with_i=np.sort(np.append(subset ,i))
+                subset_with_i = np.sort(np.append(subset, i))
                 try:
-                    increments[i][tuple(subset)]=char_value_dict[tuple(subset_with_i)]-char_value_dict[tuple(subset)]
+                    increments[i][tuple(subset)] = (
+                        char_value_dict[tuple(subset_with_i)]
+                        - char_value_dict[tuple(subset)]
+                    )
                 except KeyError:
                     pass
         return char_value_dict[tuple(subset)]
 
-
-    #definition of the original density
+    # definition of the original density
     def prob(subset):
-        lS=len(subset)
-        return factorial(n-1-lS)*factorial(lS)/factorial(n)
+        lS = len(subset)
+        return factorial(n - 1 - lS) * factorial(lS) / factorial(n)
 
-    #definition of the approximation of the increment
-    ### compute some  increments
-    S=np.arange(n)
+#     definition of the approximation of the increment
+    ## compute some  increments to fuel the Kriging
+    S = np.arange(n)
     not_twice_characteristic(S)
     for k1 in range(n):
         for k2 in range(n):
-            S=np.array([k1])
+            S = np.array([k1])
             not_twice_characteristic(S)
-            S=np.delete(np.arange(n),[k1])
+            S = np.delete(np.arange(n), [k1])
             not_twice_characteristic(S)
-            if k1!=k2:
-                S=np.array([k1,k2])
+            if k1 != k2:
+                S = np.array([k1, k2])
                 not_twice_characteristic(S)
-                S=np.delete(np.arange(n),[k1,k2])
+                S = np.delete(np.arange(n), [k1, k2])
                 not_twice_characteristic(S)
 
+    # ## do the regressions
 
-    ### do the regressions
-
-    def make_coordinate(subset,k):
-        assert(k not in subset)
-        #compute the size of subset : ||subset||
-        coordinate=np.zeros(n)
+    def make_coordinate(subset, k):
+        assert k not in subset
+        # compute the size of subset : ||subset||
+        coordinate = np.zeros(n)
         small_node_list = np.array([preprocessed_node_list[i] for i in subset])
         for node, i in zip(small_node_list, subset):
-            coordinate[i]=len(node.y_train)
-        coordinate=np.delete(coordinate,k)
+            coordinate[i] = len(node.y_train)
+        coordinate = np.delete(coordinate, k)
         return coordinate
 
-
-    def dist(x1,x2):
-        return np.sqrt(np.sum((x1-x2)**2))
+    def dist(x1, x2):
+        return np.sqrt(np.sum((x1 - x2) ** 2))
 
     # make the covariance functions
-    phi=np.zeros(n)
-    cov=[]
+    phi = np.zeros(n)
+    cov = []
     for k in range(n):
-        phi[k]= np.median(make_coordinate(np.delete(np.arange(n),k),k))
-        def covk(x1,x2):
-            return np.exp(- dist(x1,x2)**2/phi[k]**2)
+        phi[k] = np.median(make_coordinate(np.delete(np.arange(n), k), k))
+
+        def covk(x1, x2):
+            return np.exp(-dist(x1, x2) ** 2 / phi[k] ** 2)
+
         cov.append(covk)
 
     def make_models():
         ###### make the datasets
 
-        datasets=[]
-        outputs=[]
+        datasets = []
+        outputs = []
         for k in range(n):
-            x=[]
-            y=[]
+            x = []
+            y = []
             for subset, incr in increments[k].items():
-                x.append(make_coordinate(subset,k))
+                x.append(make_coordinate(subset, k))
                 y.append(incr)
             datasets.append(x)
             outputs.append(y)
         ###### fit the kriging
-        models=[]
+        models = []
         for k in range(n):
-            model_k = krigingModel( 2,cov[k])
+            model_k = krigingModel(2, cov[k])
             model_k.fit(datasets[k], outputs[k])
             models.append(model_k)
         all_models.append(models)
 
-    ###define the approximation
-    def approx_increment(subset,k,j):
-        return  all_models[j][k].predict(make_coordinate(subset,k))[0]
+    # ##define the approximation
+    def approx_increment(subset, k, j):
+        return all_models[j][k].predict(make_coordinate(subset, k))[0]
 
     # sampling
-    t=0
-    q=-norm.ppf((1-alpha)/2, loc=0, scale=1)
-    v_max=0
-    all_renorms=[]
-    all_models=[]
-    Subsets=[]
-    while t<100 or t<4*q**2 *v_max  /(sv_accuracy)**2   : # Check if the length of the confidence interval  is below the value of sv_accuracy*characteristic_all_node
-        if t==0:
-            contributions=np.array([np.zeros(n)])
+    t = 0
+    q = -norm.ppf((1 - alpha) / 2, loc=0, scale=1)
+    v_max = 0
+    all_renorms = []
+    all_models = []
+    Subsets = []  # created like this to avoid pointer issue
+    while (
+        t < 100 or t < 4 * q ** 2 * v_max / (sv_accuracy) ** 2
+    ):  # Check if the length of the confidence interval  is below the value of sv_accuracy*characteristic_all_node
+        if t == 0:
+            contributions = np.array([np.zeros(n)])
         else:
-            contributions=np.vstack((contributions, np.zeros(n)))
-        subsets=[]
-        if t%update==0:# renew the importance density g
-            j=t//update
+            contributions = np.vstack((contributions, np.zeros(n)))
+        subsets = []
+        if t % update == 0:  # renew the importance density g
+            j = t // update
             make_models()
-            ### compute the renormalization constant of the new importance density for all datatsets
-            renorms=[]
+            # ## compute the renormalization constant of the new importance density for all datatsets
+            renorms = []
             for k in range(n):
-                list_k=np.delete(np.arange(n),k)
-                renorm=0
-                for length_combination in range(len(list_k)+1) :
-                    for subset in combinations(list_k, length_combination): # could be avoided as   prob(np.array(subset))*np.abs(approx_increment(np.array(subset),j)) is constant in the combination
-                        renorm+=prob(np.array(subset))*np.abs(approx_increment(np.array(subset),k,j))
+                list_k = np.delete(np.arange(n), k)
+                renorm = 0
+                for length_combination in range(len(list_k) + 1):
+                    for subset in combinations(
+                        list_k, length_combination
+                    ):  # could be avoided as   prob(np.array(subset))*np.abs(approx_increment(np.array(subset),j)) is constant in the combination
+                        renorm += prob(np.array(subset)) * np.abs(
+                            approx_increment(np.array(subset), k, j)
+                        )
                 renorms.append(renorm)
             all_renorms.append(renorms)
 
         # generate the new increments(subset)
         for k in range(n):
-            u=np.random.uniform(0,1,1)[0]
-            cumSum=0
-            list_k=np.delete(np.arange(n),k)
-            for length_combination in range(len(list_k)+1) :
-                for subset in combinations(list_k, length_combination): # could be avoided as   prob(np.array(subset))*np.abs(approx_increment(np.array(subset),j)) is constant in the combination
-                    cumSum+=prob(np.array(subset))*np.abs(approx_increment(np.array(subset),k,j))
-                    if cumSum/all_renorms[j][k]>u:
-                        S=np.array(subset)
+            u = np.random.uniform(0, 1, 1)[0]
+            cumSum = 0
+            list_k = np.delete(np.arange(n), k)
+            for length_combination in range(len(list_k) + 1):
+                for subset in combinations(
+                    list_k, length_combination
+                ):  # could be avoided as   prob(np.array(subset))*np.abs(approx_increment(np.array(subset),j)) is constant in the combination
+                    cumSum += prob(np.array(subset)) * np.abs(
+                        approx_increment(np.array(subset), k, j)
+                    )
+                    if cumSum / all_renorms[j][k] > u:
+                        S = np.array(subset)
                         subsets.append(S)
                         break
-                if cumSum/all_renorms[j][k]>u:
+                if cumSum / all_renorms[j][k] > u:
                     break
-            SUk=np.append(S,k)
-            increment=not_twice_characteristic(SUk) - not_twice_characteristic(S)
-            contributions[t-1][k]=increment*all_renorms[j][k]/np.abs(approx_increment(S,k,j))
+            SUk = np.append(S, k)
+            increment = not_twice_characteristic(SUk) - not_twice_characteristic(S)
+            contributions[t - 1][k] = (
+                increment * all_renorms[j][k] / np.abs(approx_increment(S, k, j))
+            )
         Subsets.append(subsets)
-        shap=np.mean(contributions,axis=0)
-        #calcul des variances
-        v_max=np.max(np.var(contributions,axis=0))
-        t+=1
-    return({'sv':shap, 'std_sv': np.std(contributions,axis=0) / np.sqrt(t-1) ,'prop':shap/np.sum(shap), 'computed_val':char_value_dict})
+        shap = np.mean(contributions, axis=0)
+        # calcul des variances
+        v_max = np.max(np.var(contributions, axis=0))
+        t += 1
+    return {
+        "sv": shap,
+        "std_sv": np.std(contributions, axis=0) / np.sqrt(t - 1),
+        "prop": shap / np.sum(shap),
+        "computed_val": char_value_dict,
+    }
+
+
+
