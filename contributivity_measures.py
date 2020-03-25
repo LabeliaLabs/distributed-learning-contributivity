@@ -171,7 +171,7 @@ def truncated_MC(scenario, sv_accuracy=0.01, alpha=0.9, truncation=0.05):
 # %% compute Shapley values with the truncated Monte-carlo method with a small bias correction
 
 
-def truncated_MC2(the_scenario, sv_accuracy=0.01, alpha=0.9, truncation=0.05):
+def interpol_trunc_MC(the_scenario, sv_accuracy=0.01, alpha=0.9, truncation=0.05):
     """Return the vector of approximated Shapley value corresponding to a list of node and a characteristic function using the truncated monte-carlo method with a small correction of the bias"""
 
     preprocessed_node_list = the_scenario.node_list
@@ -492,11 +492,11 @@ def IS_reg(the_scenario, sv_accuracy=0.01, alpha=0.95):
         for coalition in coalitions:
             characteristic_function.append(not_twice_characteristic(list(coalition)))
         # Compute exact Shapley Value for each node
-        shap, std = sv.main(the_scenario.nodes_count, characteristic_function)
+        shap = sv.main(the_scenario.nodes_count, characteristic_function)
         return {
-            "sv": shap,
-            "std_sv": std,
-            "prop": np.array([1]),
+            "sv": np.array(shap),
+            "std_sv": np.repeat(0.0, len(shap)),
+            "prop": np.array(shap)/char_value_dict[tuple(np.arange(n))],
             "computed_val": char_value_dict,
         }
     else:
@@ -528,10 +528,7 @@ def IS_reg(the_scenario, sv_accuracy=0.01, alpha=0.95):
             size_of_S = 0
             for node in small_node_list:
                 size_of_S += len(node.y_train)
-            data = [size_of_S, size_of_S ** 2]
-            # for j in range(n):
-            #     if  j!=k:
-            #         data.append(j in subset)
+            data = [size_of_S, size_of_S ** 2] 
             return data
 
         datasets = []
@@ -860,6 +857,7 @@ def AIS_Kriging(the_scenario, sv_accuracy=0.01, alpha=0.95, update=50):
         # calcul des variances
         v_max = np.max(np.var(contributions, axis=0))
         t += 1
+        print(t)
     return {
         "sv": shap,
         "std_sv": np.std(contributions, axis=0) / np.sqrt(t - 1),
