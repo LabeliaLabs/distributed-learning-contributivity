@@ -1,0 +1,8 @@
+experiment_name: debug_config
+n_repeats: 1
+scenario_params_list:
+ - nodes_counts: 2
+   amounts_per_node: [0.9, 0.1] 
+   samples_split_option: 'Random'
+   testset_option: 'Centralised'
+   is_quick_demo: True
