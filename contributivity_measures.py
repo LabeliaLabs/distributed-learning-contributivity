@@ -968,7 +968,7 @@ def Stratified_MC(the_scenario, sv_accuracy=0.01, alpha=0.95):
                 for strata in range(N):
                     n_k_strata = len(contributions[k][strata])
                     var[k] += sigma[k, strata] ** 2 / n_k_strata
-                    if n_k_strata > 10:
+                    if n_k_strata > 20:
                         continuer[k][strata] = False
                 var[k] /= N ** 2
             v_max = np.max(var)
@@ -980,4 +980,5 @@ def Stratified_MC(the_scenario, sv_accuracy=0.01, alpha=0.95):
         "computed_val": char_value_dict,
     }
 
-#test
+
+ 
