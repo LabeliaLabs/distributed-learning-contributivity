@@ -18,268 +18,75 @@ from timeit import default_timer as timer
 import tensorflow as tf
 import matplotlib.pyplot as plt
 import numpy as np
+import utils
+from loguru import logger
+
 
 import contributivity
 import contributivity_measures
 import fl_training
 import scenario
 
-# gpus = tf.config.experimental.list_physical_devices("GPU")
-# tf.config.experimental.set_memory_growth(gpus[0], True)
+import argparse
 
-plt.close("all")
-
-#%% Create scenarii
-scenarii_list = []
-IS_QUICK_DEMO = False
-
-# Create a custom scenario and comment the main scenario parameters (see scenario.py for more comments)
-my_custom_scenario = scenario.Scenario(is_quick_demo=IS_QUICK_DEMO)
-my_custom_scenario.nodes_count = (
-    3  # Number of nodes in the collaborative ML project simulated
-)
-my_custom_scenario.amounts_per_node = [
-    0.33,
-    0.33,
-    0.34,
-]  # Percentages of the data samples for each node
-my_custom_scenario.samples_split_option = "Random"  # If data are split randomly between nodes or stratified to be distinct (toggle between 'Random' and 'Stratified')
-my_custom_scenario.testset_option = "Centralised"  # If test data are distributed between nodes or stays a central testset (toggle between 'Centralised' and 'Distributed')
-my_custom_scenario.corrupted_nodes = [
-    "not-corrupted"
-] * my_custom_scenario.nodes_count  # no corrupted node
-scenarii_list.append(my_custom_scenario)
+DEFAULT_CONFIG_FILE = "config.yml"
 
 
-my_custom_scenario = scenario.Scenario(is_quick_demo=IS_QUICK_DEMO)
-my_custom_scenario.nodes_count = (
-    3  # Number of nodes in the collaborative ML project simulated
-)
-my_custom_scenario.amounts_per_node = [
-    0.33,
-    0.33,
-    0.34,
-]  # Percentages of the data samples for each node
-my_custom_scenario.samples_split_option = "Random"  # If data are split randomly between nodes or stratified to be distinct (toggle between 'Random' and 'Stratified')
-my_custom_scenario.testset_option = "Centralised"  # If test data are distributed between nodes or stays a central testset (toggle between 'Centralised' and 'Distributed')
-my_custom_scenario.corrupted_nodes = [
-    "corrupted",
-    "not-corrupted",
-    "not-corrupted",
-]  # First node is corrupted (label are wrong)
-scenarii_list.append(my_custom_scenario)
+def main():
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-f", "--file", help="input config file")
+    args = parser.parse_args()
+    if args.file:
+        logger.info(f"Using provided config file: {args.file}")
+        config_filepath = args.file
+    else:
+        logger.info(f"Using default config file: {DEFAULT_CONFIG_FILE}")
+        config_filepath = DEFAULT_CONFIG_FILE
+
+    config = utils.load_cfg(config_filepath)
+    config = utils.init_result_folder(config_filepath, config)
+    experiment_path = config["experiment_path"]
+
+    scenario_params_list = config["scenario_params_list"]
+    n_repeats = config["n_repeats"]
+
+    # GPU config
+    #gpus = tf.config.experimental.list_physical_devices("GPU")
+    #tf.config.experimental.set_memory_growth(gpus[0], True)
+
+    # Close open figures
+    plt.close("all")
+
+    for i in range(n_repeats):
+
+        logger.info(f"Repeat {i+1}/{n_repeats}")
+
+        for scenario_id, scenario_params in enumerate(scenario_params_list):
+
+            logger.info("Current params:")
+            logger.info(scenario_params)
+
+            print(type(scenario_params["amounts_per_node"]))
+
+            current_scenario = scenario.Scenario(scenario_params, experiment_path)
+            print(current_scenario.to_dataframe())
+
+            run_scenario(current_scenario)
+
+            # Write results to CSV file
+            df_results = current_scenario.to_dataframe()
+            df_results["random_state"] = i
+            df_results["scenario_id"] = scenario_id
+
+            with open(experiment_path / "results.csv", "a") as f:
+                df_results.to_csv(f, header=f.tell() == 0, index=False)
+                logger.info("Results saved")
+
+    return 0
 
 
-my_custom_scenario = scenario.Scenario(is_quick_demo=IS_QUICK_DEMO)
-my_custom_scenario.nodes_count = (
-    3  # Number of nodes in the collaborative ML project simulated
-)
-my_custom_scenario.amounts_per_node = [
-    0.33,
-    0.33,
-    0.34,
-]  # Percentages of the data samples for each node
-my_custom_scenario.samples_split_option = "Random"  # If data are split randomly between nodes or stratified to be distinct (toggle between 'Random' and 'Stratified')
-my_custom_scenario.testset_option = "Centralised"  # If test data are distributed between nodes or stays a central testset (toggle between 'Centralised' and 'Distributed')
-my_custom_scenario.corrupted_nodes = [
-    "shuffled",
-    "not-corrupted",
-    "not-corrupted",
-]  # First node is corrupted (label are wrong)
-scenarii_list.append(my_custom_scenario)
-
-my_custom_scenario = scenario.Scenario(is_quick_demo=IS_QUICK_DEMO)
-my_custom_scenario.nodes_count = (
-    3  # Number of nodes in the collaborative ML project simulated
-)
-my_custom_scenario.amounts_per_node = [
-    0.33,
-    0.33,
-    0.34,
-]  # Percentages of the data samples for each node
-my_custom_scenario.samples_split_option = "Stratified"  # If data are split randomly between nodes or stratified to be distinct (toggle between 'Random' and 'Stratified')
-my_custom_scenario.testset_option = "Centralised"  # If test data are distributed between nodes or stays a central testset (toggle between 'Centralised' and 'Distributed')
-my_custom_scenario.corrupted_nodes = [
-    "not-corrupted"
-] * my_custom_scenario.nodes_count  # no corrupted node
-scenarii_list.append(my_custom_scenario)
-
-my_custom_scenario = scenario.Scenario(is_quick_demo=IS_QUICK_DEMO)
-my_custom_scenario.nodes_count = (
-    3  # Number of nodes in the collaborative ML project simulated
-)
-my_custom_scenario.amounts_per_node = [
-    0.2,
-    0.2,
-    0.6,
-]  # Percentages of the data samples for each node
-my_custom_scenario.samples_split_option = "Random"  # If data are split randomly between nodes or stratified to be distinct (toggle between 'Random' and 'Stratified')
-my_custom_scenario.testset_option = "Centralised"  # If test data are distributed between nodes or stays a central testset (toggle between 'Centralised' and 'Distributed')
-my_custom_scenario.corrupted_nodes = [
-    "not-corrupted"
-] * my_custom_scenario.nodes_count  # no corrupted node
-scenarii_list.append(my_custom_scenario)
-
-my_custom_scenario = scenario.Scenario(is_quick_demo=IS_QUICK_DEMO)
-my_custom_scenario.nodes_count = (
-    3  # Number of nodes in the collaborative ML project simulated
-)
-my_custom_scenario.amounts_per_node = [
-    0.2,
-    0.2,
-    0.6,
-]  # Percentages of the data samples for each node
-my_custom_scenario.samples_split_option = "Stratified"  # If data are split randomly between nodes or stratified to be distinct (toggle between 'Random' and 'Stratified')
-my_custom_scenario.testset_option = "Centralised"  # If test data are distributed between nodes or stays a central testset (toggle between 'Centralised' and 'Distributed')
-my_custom_scenario.corrupted_nodes = [
-    "not-corrupted"
-] * my_custom_scenario.nodes_count  # no corrupted node
-scenarii_list.append(my_custom_scenario)
-
-my_custom_scenario = scenario.Scenario(is_quick_demo=IS_QUICK_DEMO)
-my_custom_scenario.nodes_count = (
-    4  # Number of nodes in the collaborative ML project simulated
-)
-my_custom_scenario.amounts_per_node = [
-    0.25,
-    0.25,
-    0.25,
-    0.25,
-]  # Percentages of the data samples for each node
-my_custom_scenario.samples_split_option = "Random"  # If data are split randomly between nodes or stratified to be distinct (toggle between 'Random' and 'Stratified')
-my_custom_scenario.testset_option = "Centralised"  # If test data are distributed between nodes or stays a central testset (toggle between 'Centralised' and 'Distributed')
-my_custom_scenario.corrupted_nodes = [
-    "not-corrupted"
-] * my_custom_scenario.nodes_count  # no corrupted node
-scenarii_list.append(my_custom_scenario)
-
-my_custom_scenario = scenario.Scenario(is_quick_demo=IS_QUICK_DEMO)
-my_custom_scenario.nodes_count = (
-    4  # Number of nodes in the collaborative ML project simulated
-)
-my_custom_scenario.amounts_per_node = [
-    0.25,
-    0.25,
-    0.25,
-    0.25,
-]  # Percentages of the data samples for each node
-my_custom_scenario.samples_split_option = "Stratified"  # If data are split randomly between nodes or stratified to be distinct (toggle between 'Random' and 'Stratified')
-my_custom_scenario.testset_option = "Centralised"  # If test data are distributed between nodes or stays a central testset (toggle between 'Centralised' and 'Distributed')
-my_custom_scenario.corrupted_nodes = [
-    "not-corrupted"
-] * my_custom_scenario.nodes_count  # no corrupted node
-scenarii_list.append(my_custom_scenario)
-
-my_custom_scenario = scenario.Scenario(is_quick_demo=IS_QUICK_DEMO)
-my_custom_scenario.nodes_count = (
-    4  # Number of nodes in the collaborative ML project simulated
-)
-my_custom_scenario.amounts_per_node = [
-    0.1,
-    0.15,
-    0.3,
-    0.45,
-]  # Percentages of the data samples for each node
-my_custom_scenario.samples_split_option = "Random"  # If data are split randomly between nodes or stratified to be distinct (toggle between 'Random' and 'Stratified')
-my_custom_scenario.testset_option = "Centralised"  # If test data are distributed between nodes or stays a central testset (toggle between 'Centralised' and 'Distributed')
-my_custom_scenario.corrupted_nodes = [
-    "not-corrupted"
-] * my_custom_scenario.nodes_count  # no corrupted node
-scenarii_list.append(my_custom_scenario)
-
-my_custom_scenario = scenario.Scenario(is_quick_demo=IS_QUICK_DEMO)
-my_custom_scenario.nodes_count = (
-    4  # Number of nodes in the collaborative ML project simulated
-)
-my_custom_scenario.amounts_per_node = [
-    0.1,
-    0.15,
-    0.3,
-    0.45,
-]  # Percentages of the data samples for each node
-my_custom_scenario.samples_split_option = "Stratified"  # If data are split randomly between nodes or stratified to be distinct (toggle between 'Random' and 'Stratified')
-my_custom_scenario.testset_option = "Centralised"  # If test data are distributed between nodes or stays a central testset (toggle between 'Centralised' and 'Distributed')
-my_custom_scenario.corrupted_nodes = [
-    "not-corrupted"
-] * my_custom_scenario.nodes_count  # no corrupted node
-scenarii_list.append(my_custom_scenario)
-
-my_custom_scenario = scenario.Scenario(is_quick_demo=IS_QUICK_DEMO)
-my_custom_scenario.nodes_count = (
-    5  # Number of nodes in the collaborative ML project simulated
-)
-my_custom_scenario.amounts_per_node = [
-    0.2,
-    0.2,
-    0.2,
-    0.2,
-    0.2,
-]  # Percentages of the data samples for each node
-my_custom_scenario.samples_split_option = "Random"  # If data are split randomly between nodes or stratified to be distinct (toggle between 'Random' and 'Stratified')
-my_custom_scenario.testset_option = "Centralised"  # If test data are distributed between nodes or stays a central testset (toggle between 'Centralised' and 'Distributed')
-my_custom_scenario.corrupted_nodes = [
-    "not-corrupted"
-] * my_custom_scenario.nodes_count  # no corrupted node
-scenarii_list.append(my_custom_scenario)
-
-my_custom_scenario = scenario.Scenario(is_quick_demo=IS_QUICK_DEMO)
-my_custom_scenario.nodes_count = (
-    5  # Number of nodes in the collaborative ML project simulated
-)
-my_custom_scenario.amounts_per_node = [
-    0.2,
-    0.2,
-    0.2,
-    0.2,
-    0.2,
-]  # Percentages of the data samples for each node
-my_custom_scenario.samples_split_option = "Stratified"  # If data are split randomly between nodes or stratified to be distinct (toggle between 'Random' and 'Stratified')
-my_custom_scenario.testset_option = "Centralised"  # If test data are distributed between nodes or stays a central testset (toggle between 'Centralised' and 'Distributed')
-my_custom_scenario.corrupted_nodes = [
-    "not-corrupted"
-] * my_custom_scenario.nodes_count  # no corrupted node
-scenarii_list.append(my_custom_scenario)
-
-my_custom_scenario = scenario.Scenario(is_quick_demo=IS_QUICK_DEMO)
-my_custom_scenario.nodes_count = (
-    5  # Number of nodes in the collaborative ML project simulated
-)
-my_custom_scenario.amounts_per_node = [
-    0.1,
-    0.1,
-    0.2,
-    0.2,
-    0.4,
-]  # Percentages of the data samples for each node
-my_custom_scenario.samples_split_option = "Random"  # If data are split randomly between nodes or stratified to be distinct (toggle between 'Random' and 'Stratified')
-my_custom_scenario.testset_option = "Centralised"  # If test data are distributed between nodes or stays a central testset (toggle between 'Centralised' and 'Distributed')
-my_custom_scenario.corrupted_nodes = [
-    "not-corrupted"
-] * my_custom_scenario.nodes_count  # no corrupted node
-scenarii_list.append(my_custom_scenario)
-
-my_custom_scenario = scenario.Scenario(is_quick_demo=IS_QUICK_DEMO)
-my_custom_scenario.nodes_count = (
-    5  # Number of nodes in the collaborative ML project simulated
-)
-my_custom_scenario.amounts_per_node = [
-    0.1,
-    0.1,
-    0.2,
-    0.2,
-    0.4,
-]  # Percentages of the data samples for each node
-my_custom_scenario.samples_split_option = "Stratified"  # If data are split randomly between nodes or stratified to be distinct (toggle between 'Random' and 'Stratified')
-my_custom_scenario.testset_option = "Centralised"  # If test data are distributed between nodes or stays a central testset (toggle between 'Centralised' and 'Distributed')
-my_custom_scenario.corrupted_nodes = [
-    "not-corrupted"
-] * my_custom_scenario.nodes_count  # no corrupted node
-scenarii_list.append(my_custom_scenario)
-
-
-#%% Run the scenarii
-
-for current_scenario in scenarii_list:
+def run_scenario(current_scenario):
 
     current_scenario.split_data()
     current_scenario.plot_data_distribution()
@@ -298,7 +105,7 @@ for current_scenario in scenarii_list:
         current_scenario.x_test, current_scenario.y_test
     )
 
-    #%% Corrupt the node's label in needed
+    # Corrupt the node's label in needed
     for i, node in enumerate(current_scenario.node_list):
         if current_scenario.corrupted_nodes[i] == "corrupted":
             print("corruption of node " + str(i) + "\n")
@@ -311,14 +118,14 @@ for current_scenario in scenarii_list:
         else:
             print("unexpeted label of corruption")
 
-    #%% Train and eval on all nodes according to scenario
+    # Train and eval on all nodes according to scenario
 
     is_save_fig = True
     current_scenario.federated_test_score = fl_training.compute_test_score_with_scenario(
         current_scenario, is_save_fig
     )
 
-    #%% Contributivity 1: Baseline contributivity measurement (Shapley Value)
+    # Contributivity 1: Baseline contributivity measurement (Shapley Value)
 
     start = timer()
     (contributivity_scores, scores_var) = contributivity_measures.compute_SV(
@@ -339,7 +146,7 @@ for current_scenario in scenarii_list:
     print("\n## Evaluating contributivity with Shapley:")
     print(shapley_contrib)
 
-    #%% Contributivity 2: Performance scores of models trained independently on each node
+    # Contributivity 2: Performance scores of models trained independently on each node
 
     start = timer()
     scores = contributivity_measures.compute_independent_scores(
@@ -366,107 +173,28 @@ for current_scenario in scenarii_list:
     print(independant_raw_contrib)
     print(independant_additiv_contrib)
 
-    #%% Contributivity 3: Truncated Monte Carlo Shapley
+    # Contributivity 3: Truncated Monte Carlo Shapley
 
     start = timer()
     tmcs_results = contributivity_measures.truncated_MC(
-        current_scenario, sv_accuracy=0.01, alpha=0.95, truncation=0.05
+        current_scenario, sv_accuracy=0.01, alpha=0.9, contrib_accuracy=0.05
     )
     end = timer()
 
     tmcs_contrib = contributivity.Contributivity(
-        "TMC values", tmcs_results["sv"], tmcs_results["std_sv"], np.round(end - start)
+        "TMCS values", tmcs_results["sv"], tmcs_results["std_sv"], np.round(end - start)
     )
 
     current_scenario.append_contributivity(tmcs_contrib)
     print("\n## Evaluating contributivity with Truncated Monte Carlo Shapley (TMCS):")
     print(tmcs_contrib)
 
-    #%% Contributivity 4:   Monte Carlo Shapley
-
-    start = timer()
-    mcs_results = contributivity_measures.truncated_MC(
-        current_scenario, sv_accuracy=0.01, alpha=0.95, truncation=0.00
-    )
-    end = timer()
-
-    tmcs_contrib = contributivity.Contributivity(
-        "MC values", mcs_results["sv"], mcs_results["std_sv"], np.round(end - start)
-    )
-
-    current_scenario.append_contributivity(tmcs_contrib)
-    print("\n## Evaluating contributivity with  Monte Carlo Shapley :")
-    print(mcs_contrib)
-
-    #%% Contributivity 5: importance sampling with linear approx
-
-    start = timer()
-    IS_results = contributivity_measures.IS_lin(
-        current_scenario, sv_accuracy=0.01, alpha=0.95
-    )
-    end = timer()
-
-    IS_lin_contrib = contributivity.Contributivity(
-        "IS_lin values", IS_results["sv"], IS_results["std_sv"], np.round(end - start)
-    )
-
-    current_scenario.append_contributivity(IS_lin_contrib)
-    print("\n## Evaluating contributivity with linear Importance sampling:")
-    print(IS_lin_contrib)
-
-    #%% Contributivity 6: importance sampling with regression approx
-
-    start = timer()
-    IS_reg_results = contributivity_measures.IS_reg(
-        current_scenario, sv_accuracy=0.01, alpha=0.95
-    )
-    end = timer()
-
-    IS_reg_contrib = contributivity.Contributivity(
-        "IS_reg values",
-        IS_reg_results["sv"],
-        IS_reg_results["std_sv"],
-        np.round(end - start),
-    )
-
-    current_scenario.append_contributivity(IS_reg_contrib)
-    print("\n## Evaluating contributivity with regression Importance sampling:")
-    print(IS_reg_contrib)
-
-    #%% Contributivity 7: adaptative importance sampling with regression approx
-
-    start = timer()
-    AIS_results = contributivity_measures.AIS_Kriging(
-        current_scenario, sv_accuracy=0.01, alpha=0.95, update=10
-    )
-    end = timer()
-
-    AIS_contrib = contributivity.Contributivity(
-        "AIS_Kriging values",
-        AIS_results["sv"],
-        AIS_results["std_sv"],
-        np.round(end - start),
-    )
-
-    current_scenario.append_contributivity(AIS_contrib)
-    print("\n## Evaluating contributivity with Adaptive Importance sampling:")
-    print(AIS_contrib)
-
-    #%% Contributivity 8: Stratified Monte-carlo
-    start = timer()
-    SMC_results = contributivity_measures.Stratified_MC(
-        current_scenario, sv_accuracy=0.01, alpha=0.95
-    )
-    end = timer()
-
-    SMC_contrib = contributivity.Contributivity(
-        "SMC values", SMC_results["sv"], SMC_results["std_sv"], np.round(end - start)
-    )
-
-    current_scenario.append_contributivity(SMC_results)
-    print("\n## Evaluating contributivity with Stratified Monte-Carlo:")
-    print(SMC_contrib)
-
-    #%% Save results to file
+    # Save results to file
 
     current_scenario.to_file()
+
+    return 0
+
+
+if __name__ == "__main__":
+    main()
