@@ -18,10 +18,11 @@ from node import Node
 class Scenario:
     def __init__(self, is_quick_demo=False):
 
+        # Identify and get a dataset for running experiments
         self.dataset_name = "MNIST"
         (x_train, y_train), (x_test, y_test) = mnist.load_data()
-        # The train set has to be split into a train set and a validation set for early stopping (called 'esval' below)
-        self.x_train, self.x_esval, self.y_train, self.y_esval = train_test_split(
+        # The train set has to be split into a train set and a validation set for early stopping
+        self.x_train, self.x_valearlystop, self.y_train, self.y_valearlystop = train_test_split(
             x_train, y_train, test_size=0.2, random_state=42
         )
         self.x_test = x_test
@@ -74,8 +75,8 @@ class Scenario:
             # Use less data and less epochs to speed up the computaions
             self.x_train = self.x_train[:1000]
             self.y_train = self.y_train[:1000]
-            self.x_esval = self.x_esval[:100]
-            self.y_esval = self.y_esval[:100]
+            self.x_valearlystop = self.x_valearlystop[:100]
+            self.y_valearlystop = self.y_valearlystop[:100]
             self.x_test = self.x_test[:100]
             self.y_test = self.y_test[:100]
             self.epoch_count = 2
@@ -91,6 +92,8 @@ class Scenario:
 
         x_train = self.x_train
         y_train = self.y_train
+        x_valearlystop = self.x_valearlystop
+        y_valearlystop = self.y_valearlystop
         x_test = self.x_test
         y_test = self.y_test
 
@@ -178,6 +181,10 @@ class Scenario:
                 train_idx,
             ]
 
+            # Early stopping validation data are just copied to each node
+            x_node_valearlystop = x_valearlystop
+            y_node_valearlystop = y_valearlystop
+
             # Test data
             if self.testset_option == "Distributed":
                 x_node_test = x_test[test_idx]
@@ -193,7 +200,7 @@ class Scenario:
                 )
 
             node = Node(
-                x_node_train, x_node_test, y_node_train, y_node_test, str(node_id)
+                x_node_train, x_node_valearlystop, x_node_test, y_node_train, y_node_valearlystop, y_node_test, str(node_id)
             )
             self.node_list.append(node)
             node_id += 1
@@ -209,7 +216,7 @@ class Scenario:
                 "  - Number of samples:"
                 + str(len(node.x_train))
                 + " train, "
-                + str(len(node.x_val))
+                + str(len(node.x_valearlystop))
                 + " val, "
                 + str(len(node.x_test))
                 + " test"

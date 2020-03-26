@@ -31,7 +31,7 @@ plt.close("all")
 
 #%% Create scenarii
 scenarii_list = []
-IS_QUICK_DEMO = False
+IS_QUICK_DEMO = True
 
 # Create a custom scenario and comment the main scenario parameters (see scenario.py for more comments)
 my_custom_scenario = scenario.Scenario(is_quick_demo=IS_QUICK_DEMO)
@@ -158,7 +158,7 @@ for current_scenario in scenarii_list:
 
     # Pre-process successively train data, early stopping validation data, test data
     current_scenario.node_list = fl_training.preprocess_node_list(current_scenario.node_list)
-    current_scenario.x_esval, current_scenario.y_esval = fl_training.preprocess_test_data(current_scenario.x_esval, current_scenario.y_esval)
+    current_scenario.x_valearlystop, current_scenario.y_valearlystop = fl_training.preprocess_test_data(current_scenario.x_valearlystop, current_scenario.y_valearlystop)
     current_scenario.x_test, current_scenario.y_test = fl_training.preprocess_test_data(current_scenario.x_test, current_scenario.y_test)
 
     #%% Corrupt the node's label in needed
@@ -187,8 +187,8 @@ for current_scenario in scenarii_list:
     (contributivity_scores, scores_var) = contributivity_measures.compute_SV(
         current_scenario.node_list,
         current_scenario.epoch_count,
-        current_scenario.x_esval,
-        current_scenario.y_esval,
+        current_scenario.x_valearlystop,
+        current_scenario.y_valearlystop,
         current_scenario.x_test,
         current_scenario.y_test,
     )

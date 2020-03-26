@@ -67,6 +67,7 @@ def compute_test_score_for_single_node(node, epoch_count):
     """Return the score on test data of a model trained on a single node"""
 
     print("\n## Training and evaluating model on one single node.")
+
     # Initialize model
     model = utils.generate_new_cnn_model()
     # print(model.summary())
@@ -102,8 +103,8 @@ def compute_test_score_with_scenario(scenario, is_save_fig=False):
     return compute_test_score(
         scenario.node_list,
         scenario.epoch_count,
-        scenario.x_esval,
-        scenario.y_esval,
+        scenario.x_valearlystop,
+        scenario.y_valearlystop,
         scenario.x_test,
         scenario.y_test,
         scenario.is_early_stopping,
@@ -116,8 +117,8 @@ def compute_test_score_with_scenario(scenario, is_save_fig=False):
 def compute_test_score(
     node_list,
     epoch_count,
-    x_esval,
-    y_esval,
+    x_valearlystop,
+    y_valearlystop,
     x_test,
     y_test,
     is_early_stopping=True,
@@ -184,7 +185,7 @@ def compute_test_score(
 
                 # Evaluate model for early stopping, on a dedicated 'early stopping validation' set
                 model_evaluation = aggregated_model.evaluate(
-                    x_esval, y_esval, batch_size=constants.BATCH_SIZE, verbose=0
+                    x_valearlystop, y_valearlystop, batch_size=constants.BATCH_SIZE, verbose=0
                 )
                 current_val_loss = model_evaluation[0]
                 global_val_acc.append(model_evaluation[1])
