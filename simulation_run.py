@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 """
-A script to configure and run simulations of:
-    - splitting data among different nodes to mock a multi-partner ML project
-    - train a model across multiple nodes
-    - measure contributivity of each node to the model performance
+A script for:
+    - mocking a multi-partner ML project by splitting data among different nodes
+    - train a model across multiple nodes in a distributed approach
+    - measure the respective contributions of each node to the model performance (termed "contributivity")
 """
 
 from __future__ import print_function
@@ -105,7 +105,7 @@ def run_scenario(current_scenario):
         current_scenario.x_test, current_scenario.y_test
     )
 
-    # Corrupt the node's label in needed
+    # Corrupt the node's labels when requested in the scenario
     for i, node in enumerate(current_scenario.node_list):
         if current_scenario.corrupted_nodes[i] == "corrupted":
             print("corruption of node " + str(i) + "\n")
@@ -119,7 +119,6 @@ def run_scenario(current_scenario):
             print("unexpeted label of corruption")
 
     # Train and eval on all nodes according to scenario
-
     is_save_fig = True
     current_scenario.federated_test_score = fl_training.compute_test_score_with_scenario(
         current_scenario, is_save_fig
