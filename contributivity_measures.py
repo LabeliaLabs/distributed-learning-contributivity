@@ -8,11 +8,11 @@ from __future__ import print_function
 import numpy as np
 from scipy.stats import norm
 from itertools import combinations
-from math import factorial 
+from math import factorial
 from sklearn.linear_model import LinearRegression
-from scipy.special import softmax 
+from scipy.special import softmax
 
-import fl_training 
+import fl_training
 import shapley_value.shapley as sv
 
 
@@ -223,7 +223,6 @@ def interpol_trunc_MC(the_scenario, sv_accuracy=0.01, alpha=0.9, truncation=0.05
             t < 100 or t < 4 * q ** 2 * v_max / (sv_accuracy) ** 2
         ):  # Check if the length of the confidence interval  is below the value of sv_accuracy*characteristic_all_node
             t += 1
-            print(t)
             if t == 1:
                 contributions = np.array([np.zeros(n)])
             else:
@@ -378,7 +377,6 @@ def IS_lin(the_scenario, sv_accuracy=0.01, alpha=0.95):
             t < 100 or t < 4 * q ** 2 * v_max / (sv_accuracy) ** 2
         ):  # Check if the length of the confidence interval  is below the value of sv_accuracy*characteristic_all_node
             t += 1
-            print(t)
             if t == 1:
                 contributions = np.array([np.zeros(n)])
             else:
@@ -496,7 +494,7 @@ def IS_reg(the_scenario, sv_accuracy=0.01, alpha=0.95):
         return {
             "sv": np.array(shap),
             "std_sv": np.repeat(0.0, len(shap)),
-            "prop": np.array(shap)/char_value_dict[tuple(np.arange(n))],
+            "prop": np.array(shap) / char_value_dict[tuple(np.arange(n))],
             "computed_val": char_value_dict,
         }
     else:
@@ -528,7 +526,7 @@ def IS_reg(the_scenario, sv_accuracy=0.01, alpha=0.95):
             size_of_S = 0
             for node in small_node_list:
                 size_of_S += len(node.y_train)
-            data = [size_of_S, size_of_S ** 2] 
+            data = [size_of_S, size_of_S ** 2]
             return data
 
         datasets = []
@@ -585,7 +583,6 @@ def IS_reg(the_scenario, sv_accuracy=0.01, alpha=0.95):
             t < 100 or t < 4 * q ** 2 * v_max / (sv_accuracy) ** 2
         ):  # Check if the length of the confidence interval  is below the value of sv_accuracy*characteristic_all_node
             t += 1
-            print(t)
             if t == 1:
                 contributions = np.array([np.zeros(n)])
             else:
@@ -729,7 +726,7 @@ def AIS_Kriging(the_scenario, sv_accuracy=0.01, alpha=0.95, update=50):
         lS = len(subset)
         return factorial(n - 1 - lS) * factorial(lS) / factorial(n)
 
-#     definition of the approximation of the increment
+    #     definition of the approximation of the increment
     ## compute some  increments to fuel the Kriging
     S = np.arange(n)
     not_twice_characteristic(S)
@@ -857,7 +854,6 @@ def AIS_Kriging(the_scenario, sv_accuracy=0.01, alpha=0.95, update=50):
         # calcul des variances
         v_max = np.max(np.var(contributions, axis=0))
         t += 1
-        print(t)
     return {
         "sv": shap,
         "std_sv": np.std(contributions, axis=0) / np.sqrt(t - 1),
@@ -866,4 +862,120 @@ def AIS_Kriging(the_scenario, sv_accuracy=0.01, alpha=0.95, update=50):
     }
 
 
+# %% compute Shapley values with the stratified sampling method
 
+
+def Stratified_MC(the_scenario, sv_accuracy=0.01, alpha=0.95):
+    """Return the vector of approximated Shapley values using the stratified monte-carlo method."""
+
+    preprocessed_node_list = the_scenario.node_list
+    N = len(preprocessed_node_list)
+
+    # We store the value of the characteristic function in order to avoid recomputing it twice
+    char_value_dict = {(): 0}  # the dictionary that will countain the values
+
+    # Return the characteristic function of the nodelist associated to the ensemble permut, without recomputing it if it was already computed
+    def not_twice_characteristic(permut):
+        # Sort permut
+        permut = np.sort(permut)
+        try:  # Return the characteristic_func(permut) if it was already computed
+            return char_value_dict[tuple(permut)]
+        except KeyError:  # Characteristic_func(permut) has not been computed yet, so we compute, store, and return characteristic_func(permut)
+            small_node_list = np.array([preprocessed_node_list[i] for i in permut])
+            char_value_dict[tuple(permut)] = fl_training.compute_test_score(
+                small_node_list,
+                the_scenario.epoch_count,
+                the_scenario.x_esval,
+                the_scenario.y_esval,
+                the_scenario.x_test,
+                the_scenario.y_test,
+                the_scenario.is_early_stopping,
+                save_folder=the_scenario.save_folder,
+            )
+
+            return char_value_dict[tuple(permut)]
+
+    characteristic_all_node = not_twice_characteristic(
+        np.arange(N)
+    )  # Characteristic function on all nodes
+
+    if N == 1:
+        return {
+            "sv": characteristic_all_node,
+            "std_sv": np.array([0]),
+            "prop": np.array([1]),
+            "computed_val": char_value_dict,
+        }
+    else:
+        # sampling
+        gamma = 0.2
+        beta = 0.0075
+        t = 0
+        sigma = np.zeros((N, N))
+        mu = np.zeros((N, N))
+        e = 0.0
+        q = -norm.ppf((1 - alpha) / 2, loc=0, scale=1)
+        v_max = 0
+        continuer = []
+        contributions = []
+        for k in range(N):
+            contributions.append(list())
+            continuer.append(list())
+        for k in range(N):
+            for strata in range(N):
+                contributions[k].append(list())
+                continuer[k].append(True)
+        while (
+            np.any(continuer) or (sv_accuracy) ** 2 < 4 * q ** 2 * v_max
+        ):  # Check if the length of the confidence interval  is below the value of sv_accuracy*characteristic_all_node
+            t += 1
+            print(t)
+            print(continuer)
+            print(4 * q ** 2 * v_max)
+            e = (
+                1
+                + 1 / (1 + np.exp(gamma / beta))
+                - 1 / (1 + np.exp(-(t - gamma * N) / (beta * N)))
+            )
+            for k in range(N):
+                list_k = np.delete(np.arange(N), k)
+                # select the strata to add an increment
+                if np.sum(sigma[k]) == 0:
+                    p = np.repeat(1 / N, N)
+                else:
+                    p = np.repeat(1 / N, N) * (1 - e) + sigma[k] / np.sum(sigma[k]) * e
+
+                strata = np.random.choice(np.arange(N), 1, p=p)[0]
+                # generate the increment
+                u = np.random.uniform(0, 1, 1)[0]
+                cumSum = 0
+                for subset in combinations(list_k, strata):
+                    cumSum += (
+                        factorial(N - 1 - strata) * factorial(strata) / factorial(N - 1)
+                    )
+                    if cumSum > u:
+                        S = np.array(subset, dtype=int)
+                        break
+                SUk = np.append(S, k)
+                increment = not_twice_characteristic(SUk) - not_twice_characteristic(S)
+                contributions[k][strata].append(increment)
+                # compute sthe standard deviation and means
+                sigma[k, strata] = np.std(contributions[k][strata])
+                mu[k, strata] = np.mean(contributions[k][strata])
+            shap = np.mean(mu, axis=0)
+            var = np.zeros(N)  # variance of the
+            for k in range(N):
+                for strata in range(N):
+                    n_k_strata = len(contributions[k][strata])
+                    var[k] += sigma[k, strata] ** 2 / n_k_strata
+                    if n_k_strata > 10:
+                        continuer[k][strata] = False
+                var[k] /= N ** 2
+            v_max = np.max(var)
+
+    return {
+        "sv": shap,
+        "std_sv": np.sqrt(var),
+        "prop": shap / np.sum(shap),
+        "computed_val": char_value_dict,
+    }
