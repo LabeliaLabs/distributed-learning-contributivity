@@ -979,3 +979,5 @@ def Stratified_MC(the_scenario, sv_accuracy=0.01, alpha=0.95):
         "prop": shap / np.sum(shap),
         "computed_val": char_value_dict,
     }
+
+#test
