@@ -1,0 +1,36 @@
+Dataset name: MNIST
+Number of data samples - train: 48000
+Number of data samples - test: 10000
+Nodes count: 3
+Percentages of data samples per node: [0.4, 0.3, 0.3]
+Random or stratified split of data samples: Random
+Centralised or distributed test set: Centralised
+Number of epochs: 40
+Early stopping on? True
+Test score of federated training: 0.8489000201225281
+
+3 contributivity methods: 
+
+Shapley values
+Computation time: 0:02:50
+Contributivity scores: [0.31193334 0.22543335 0.29953331]
+Std of the contributivity scores: [0. 0. 0.]
+Normalized contributivity scores: [0.37272475 0.26936713 0.35790812]
+
+
+
+Independant scores raw
+Computation time: 0:00:31
+Contributivity scores: [0.98079997 0.97869998 0.9813    ]
+Std of the contributivity scores: [0. 0. 0.]
+Normalized contributivity scores: [0.33351469 0.3328006  0.33368472]
+
+
+
+Independant scores additive
+Computation time: 0:00:31
+Contributivity scores: [0.28311745 0.28252353 0.28325905]
+Std of the contributivity scores: [0. 0. 0.]
+Normalized contributivity scores: [0.33351094 0.33281131 0.33367775]
+
+

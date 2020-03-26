@@ -1,0 +1,16 @@
+experiment_name: simple_7
+n_repeats: 10
+scenario_params_list:
+ - nodes_counts: 3
+   amounts_per_node: [0.8, 0.1, 0.1] 
+   samples_split_option: 'Random'
+   testset_option: 'Centralised'
+ - nodes_counts: 3
+   amounts_per_node: [0.9, 0.05, 0.05] 
+   samples_split_option: 'Random'
+   testset_option: 'Centralised'
+ - nodes_counts: 2
+   amounts_per_node: [0.9, 0.1] 
+   samples_split_option: 'Random'
+   testset_option: 'Centralised'
+   
