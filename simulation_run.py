@@ -173,21 +173,21 @@ def run_scenario(current_scenario):
     print(independant_raw_contrib)
     print(independant_additiv_contrib)
 
-    # # Contributivity 3: Truncated Monte Carlo Shapley
+    # Contributivity 3: Truncated Monte Carlo Shapley
 
-    # start = timer()
-    # tmcs_results = contributivity_measures.truncated_MC(
-    #     current_scenario, sv_accuracy=0.01, alpha=0.9, contrib_accuracy=0.05
-    # )
-    # end = timer()
+    start = timer()
+    tmcs_results = contributivity_measures.truncated_MC(
+        current_scenario, sv_accuracy=0.01, alpha=0.9, contrib_accuracy=0.05
+    )
+    end = timer()
 
-    # tmcs_contrib = contributivity.Contributivity(
-    #     "TMCS values", tmcs_results["sv"], tmcs_results["std_sv"], np.round(end - start)
-    # )
+    tmcs_contrib = contributivity.Contributivity(
+        "TMCS values", tmcs_results["sv"], tmcs_results["std_sv"], np.round(end - start)
+    )
 
-    # current_scenario.append_contributivity(tmcs_contrib)
-    # print("\n## Evaluating contributivity with Truncated Monte Carlo Shapley (TMCS):")
-    # print(tmcs_contrib)
+    current_scenario.append_contributivity(tmcs_contrib)
+    print("\n## Evaluating contributivity with Truncated Monte Carlo Shapley (TMCS):")
+    print(tmcs_contrib)
 
     # Save results to file
 
