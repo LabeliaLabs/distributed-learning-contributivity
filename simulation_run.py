@@ -177,7 +177,7 @@ def run_scenario(current_scenario):
 
     start = timer()
     tmcs_results = contributivity_measures.truncated_MC(
-        current_scenario, sv_accuracy=0.01, alpha=0.9, contrib_accuracy=0.05
+        current_scenario, sv_accuracy=0.01, alpha=0.9, truncation=0.05
     )
     end = timer()
 
