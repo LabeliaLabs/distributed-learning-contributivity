@@ -97,6 +97,9 @@ venv.bak/
 # Rope project settings
 .ropeproject
 
+# VScode project settings
+.vscode/
+
 # mkdocs documentation
 /site
 
@@ -104,3 +107,6 @@ venv.bak/
 .mypy_cache/
 results/
 nohup.out
+
+trash/
+experiments/

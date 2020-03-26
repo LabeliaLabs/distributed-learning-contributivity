@@ -21,7 +21,9 @@ import shapley_value.shapley as sv
 
 def compute_independent_scores(node_list, epoch_count, collaborative_score, testset_option, central_x_test, central_y_test):
 
-    print('\n# Launching computation of perf. scores of models trained independently on each node')
+    print(
+        "\n# Launching computation of perf. scores of models trained independently on each node"
+    )
 
     # Initialize a list of performance scores
     performance_scores = []
@@ -52,7 +54,9 @@ def compute_SV(node_list, epoch_count, x_valearlystop, y_valearlystop, x_test, y
     # print('All players (nodes) indexes: ', nodes_idx) # VERBOSE
 
     # Define all possible coalitions of players
-    coalitions = [list(j) for i in range(len(nodes_idx)) for j in combinations(nodes_idx, i+1)]
+    coalitions = [
+        list(j) for i in range(len(nodes_idx)) for j in combinations(nodes_idx, i + 1)
+    ]
     # print('All possible coalitions of players (nodes): ', coalitions) # VERBOSE
 
     # For each coalition, obtain value of characteristic function...
