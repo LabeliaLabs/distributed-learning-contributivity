@@ -11,12 +11,14 @@ import numpy as np
 from pathlib import Path
 import matplotlib.pyplot as plt
 import uuid
+import pandas as pd
+from loguru import logger
 
 from node import Node
 
 
 class Scenario:
-    def __init__(self, is_quick_demo=False):
+    def __init__(self, params, experiment_path):
 
         self.dataset_name = "MNIST"
         (x_train, y_train), (x_test, y_test) = mnist.load_data()
@@ -29,27 +31,30 @@ class Scenario:
 
         # Define the desired number of independant nodes
         # Nodes mock different partners in a collaborative data science project
-        self.nodes_count = 3
+        self.nodes_count = params["nodes_counts"]
 
         # Configure the desired respective datasets sizes of the nodes
         # Should the nodes receive an equivalent amount of samples each...
         # ... or receive different amounts?
         # Define the percentages of samples per node
         # Sum has to equal 1 and number of items has to equal NODES_COUNT
-        self.amounts_per_node = [0.33, 0.33, 0.34]
+        self.amounts_per_node = params["amounts_per_node"]
 
         # Configure if data samples are split between nodes randomly or in a stratified way...
         # ... so that they cover distinct areas of the samples space
-        self.samples_split_option = "Random"  # Toggle between 'Random' and 'Stratified'
+        self.samples_split_option = params[
+            "samples_split_option"
+        ]  # Toggle between 'Random' and 'Stratified'
 
         # Configure if the data of the nodes are corrupted or not
-        self.corrupted_nodes = ["not_corrupted", "not_corrupted", "not_corrupted"]
+        if "corrupted_nodes" in params:
+            self.corrupted_nodes = params["corrupted_nodes"]
+        else:
+            self.corrupted_nodes = ["not_corrupted"] * self.nodes_count
 
         # Define if test data should be distributed between nodes...
         # ... or if each node should refer to a centralised test set
-        self.testset_option = (
-            "Centralised"  # Toggle between 'Centralised' and 'Distributed'
-        )
+        self.testset_option = params["testset_option"]
 
         self.federated_test_score = int
 
@@ -63,15 +68,40 @@ class Scenario:
 
         now = datetime.datetime.now()
         now_str = now.strftime("%Y-%m-%d_%Hh%M")
-        folder_name = (
-            now_str + "_" + uuid.uuid4().hex
-        )  # TODO: this is quick hack so that the two disctincts scenario do not have the same name
-        self.save_folder = Path("results") / Path(folder_name)
-        os.makedirs(self.save_folder, exist_ok=True)
+        self.scenario_name = (
+            self.samples_split_option
+            + "_"
+            + str(self.nodes_count)
+            + "_"
+            + str(self.amounts_per_node)
+            + "_"
+            + str(self.corrupted_nodes)
+            + "_"
+            + str(self.testset_option)
+            + "_"
+            + now_str
+            + "_"
+            + uuid.uuid4().hex[
+                :3
+            ]  # This is to be sure 2 distincts sceneario do no have the same name
+        )
 
-        if is_quick_demo:
+        self.short_scenario_name = (
+            self.samples_split_option
+            + " "
+            + str(self.nodes_count)
+            + " "
+            + str(self.amounts_per_node)
+        )
+
+        self.save_folder = experiment_path / self.scenario_name
+
+        self.save_folder.mkdir(parents=True, exist_ok=True)
+
+        if "is_quick_demo" in params and params["is_quick_demo"]:
 
             # Use less data and less epochs to speed up the computaions
+            logger.info("Quick demo: limit number of data and number of epochs.")
             self.x_train = self.x_train[:1000]
             self.y_train = self.y_train[:1000]
             self.x_esval = self.x_esval[:100]
@@ -87,7 +117,7 @@ class Scenario:
     def split_data(self):
         """Populates the nodes with their train and test data (not pre-processed)"""
 
-        #%% Fetch parameters of scenario
+        # Fetch parameters of scenario
 
         x_train = self.x_train
         y_train = self.y_train
@@ -109,7 +139,7 @@ class Scenario:
         print("\n### Description of data scenario configured:")
         print("- Number of nodes defined:", self.nodes_count)
 
-        #%% Configure the desired splitting scenario - Datasets sizes
+        # Configure the desired splitting scenario - Datasets sizes
         # Should the nodes receive an equivalent amount of samples each...
         # ... or receive different amounts?
 
@@ -129,7 +159,7 @@ class Scenario:
         splitting_indices_test = (splitting_indices * len(y_test)).astype(int)
         # print('- Splitting indices defined (for train data):', splitting_indices_train) # VERBOSE
 
-        #%% Configure the desired data distribution scenario
+        # Configure the desired data distribution scenario
 
         # Describe the type of distribution chosen
         print("- Data distribution scenario chosen:", self.samples_split_option)
@@ -159,7 +189,7 @@ class Scenario:
                 + "] is not recognized."
             )
 
-        #%% Do the splitting among nodes according to desired scenarios
+        # Do the splitting among nodes according to desired scenarios
 
         # Split data between nodes
         train_idx_idx_list = np.split(train_idx, splitting_indices_train)
@@ -271,3 +301,45 @@ class Scenario:
 
         with open(target_file_path, "w", encoding="utf-8") as f:
             f.write(out)
+
+    def to_dataframe(self):
+
+        df = pd.DataFrame()
+
+        for contrib in self.contributivity_list:
+
+            dict_results = {}
+
+            for i in range(self.nodes_count):
+
+                # Scenario data
+                dict_results["dataset_name"] = self.dataset_name
+                dict_results["train_data_samples_count"] = len(self.x_train)
+                dict_results["test_data_samples_count"] = len(self.x_test)
+                dict_results["nodes_count"] = self.nodes_count
+                dict_results["amounts_per_node"] = self.amounts_per_node
+                dict_results["samples_split_option"] = self.samples_split_option
+                dict_results["testset_option"] = self.testset_option
+                dict_results["epoch_count"] = self.epoch_count
+                dict_results["is_early_stopping"] = self.is_early_stopping
+                dict_results["federated_test_score"] = self.federated_test_score
+                dict_results["scenario_name"] = self.scenario_name
+                dict_results["short_scenario_name"] = self.short_scenario_name
+
+                # Contributivity data
+                dict_results["contributivity_method"] = contrib.name
+                dict_results["contributivity_scores"] = contrib.contributivity_scores
+                dict_results["contributivity_stds"] = contrib.scores_std
+                dict_results["computation_time"] = contrib.computation_time
+
+                # Node data
+                dict_results["node_id"] = i
+                dict_results["amount_per_node"] = self.amounts_per_node[i]
+                dict_results["contributivity_score"] = contrib.contributivity_scores[i]
+                dict_results["contributivity_std"] = contrib.scores_std[i]
+
+                df = df.append(dict_results, ignore_index=True)
+        
+        df.info()
+
+        return df
