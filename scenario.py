@@ -47,7 +47,8 @@ class Scenario:
         self.corrupted_nodes = ["not_corrupted", "not_corrupted", "not_corrupted"]
 
         # Define if test data should be distributed between nodes...
-        # ... or if each node should refer to a centralised test set
+        # ... or if each node should refer to a centralised test set...
+        # ... when training on a single node
         self.testset_option = (
             "Centralised"  # Toggle between 'Centralised' and 'Distributed'
         )
@@ -243,7 +244,7 @@ class Scenario:
             + self.samples_split_option
             + "\n"
         )
-        out += "Centralised or distributed test set: " + self.testset_option + "\n"
+        out += "Centralised or distributed test set for single-node training: " + self.testset_option + "\n"
         out += "Number of epochs: " + str(self.epoch_count) + "\n"
         out += "Early stopping on? " + str(self.is_early_stopping) + "\n"
         out += (
