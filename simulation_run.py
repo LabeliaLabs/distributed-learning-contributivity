@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 """
-A script to configure and run simulations of:
-    - splitting data among different nodes to mock a multi-partner ML project
-    - train a model across multiple nodes
-    - measure contributivity of each node to the model performance
+A script for:
+    - mocking a multi-partner ML project by splitting data among different nodes
+    - train a model across multiple nodes in a distributed approach
+    - measure the respective contributions of each node to the model performance (termed "contributivity")
 """
 
 from __future__ import print_function
@@ -93,7 +93,6 @@ def run_scenario(current_scenario):
     current_scenario.split_data()
     current_scenario.plot_data_distribution()
     current_scenario = fl_training.preprocess_scenarios_data(current_scenario)
-    
 
     # Train and eval on all nodes according to scenario
     is_save_fig = True
