@@ -92,8 +92,6 @@ class Scenario:
 
         x_train = self.x_train
         y_train = self.y_train
-        x_valearlystop = self.x_valearlystop
-        y_valearlystop = self.y_valearlystop
         x_test = self.x_test
         y_test = self.y_test
 
@@ -181,26 +179,12 @@ class Scenario:
                 train_idx,
             ]
 
-            # Early stopping validation data are just copied to each node
-            x_node_valearlystop = x_valearlystop
-            y_node_valearlystop = y_valearlystop
-
-            # Test data
-            if self.testset_option == "Distributed":
-                x_node_test = x_test[test_idx]
-                y_node_test = y_test[test_idx]
-            elif self.testset_option == "Centralised":
-                x_node_test = x_test
-                y_node_test = y_test
-            else:
-                raise NameError(
-                    "This testset_option ["
-                    + self.testset_option
-                    + "] scenario is not recognized"
-                )
+            # Test data (for use in scenarios with testset_option == 'Distributed')
+            x_node_test = x_test[test_idx]
+            y_node_test = y_test[test_idx]
 
             node = Node(
-                x_node_train, x_node_valearlystop, x_node_test, y_node_train, y_node_valearlystop, y_node_test, str(node_id)
+                x_node_train, x_node_test, y_node_train, y_node_test, str(node_id)
             )
             self.node_list.append(node)
             node_id += 1
@@ -216,8 +200,6 @@ class Scenario:
                 "  - Number of samples:"
                 + str(len(node.x_train))
                 + " train, "
-                + str(len(node.x_valearlystop))
-                + " val, "
                 + str(len(node.x_test))
                 + " test"
             )

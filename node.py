@@ -25,14 +25,6 @@ class Node:
     def get_x_train_len(self):
         return len(self.x_train)
 
-    def preprocess_data(self):
-        self.x_train = utils.preprocess_input(self.x_train)
-        self.x_test = utils.preprocess_input(self.x_test)
-
-        # Preprocess labels (y) data
-        self.y_train = keras.utils.to_categorical(self.y_train, constants.NUM_CLASSES)
-        self.y_test = keras.utils.to_categorical(self.y_test, constants.NUM_CLASSES)
-
     def corrupt_labels(self):
         for label in self.y_train:
             idx_max = np.argmax(label)
