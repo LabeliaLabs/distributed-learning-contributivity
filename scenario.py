@@ -50,7 +50,7 @@ class Scenario:
         if "corrupted_nodes" in params:
             self.corrupted_nodes = params["corrupted_nodes"]
         else:
-            self.corrupted_nodes = ["not_corrupted"] * self.nodes_count
+            self.corrupted_nodes = ["not-corrupted"] * self.nodes_count
 
         # Define if test data should be distributed between nodes...
         # ... or if each node should refer to a centralised test set
