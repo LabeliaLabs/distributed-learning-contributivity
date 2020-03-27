@@ -52,8 +52,8 @@ def main():
     n_repeats = config["n_repeats"]
 
     # GPU config
-    # gpus = tf.config.experimental.list_physical_devices("GPU")
-    # tf.config.experimental.set_memory_growth(gpus[0], True)
+    #gpus = tf.config.experimental.list_physical_devices("GPU")
+    #tf.config.experimental.set_memory_growth(gpus[0], True)
 
     # Close open figures
     plt.close("all")
@@ -93,30 +93,15 @@ def run_scenario(current_scenario):
     current_scenario.split_data()
     current_scenario.plot_data_distribution()
     current_scenario = fl_training.preprocess_scenarios_data(current_scenario)
-
-    #%% Corrupt the node's label in needed
-
-    for i, node in enumerate(current_scenario.node_list):
-        if current_scenario.corrupted_nodes[i] == "corrupted":
-            print("corruption of node " + str(i) + "\n")
-            node.corrupt_labels()
-        elif current_scenario.corrupted_nodes[i] == "shuffled":
-            print("shuffleling of node " + str(i) + "\n")
-            node.shuffle_labels()
-        elif current_scenario.corrupted_nodes[i] == "not-corrupted":
-            pass
-        else:
-            print("unexpeted label of corruption")
+    
 
     # Train and eval on all nodes according to scenario
-
     is_save_fig = True
     current_scenario.federated_test_score = fl_training.compute_test_score_with_scenario(
         current_scenario, is_save_fig
     )
 
     # Contributivity 1: Baseline contributivity measurement (Shapley Value)
-
     start = timer()
     (contributivity_scores, scores_var) = contributivity_measures.compute_SV(
         current_scenario.node_list,
