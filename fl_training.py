@@ -28,20 +28,35 @@ def preprocess_scenarios_data(scenario):
 
     # First, datasets of each node
     for node_index, node in enumerate(scenario.node_list):
+        
         # Preprocess inputs (x) data
         node.x_train = utils.preprocess_input(node.x_train)
         node.x_test = utils.preprocess_input(node.x_test)
+        
         # Preprocess labels (y) data
         node.y_train = keras.utils.to_categorical(node.y_train, constants.NUM_CLASSES)
         node.y_test = keras.utils.to_categorical(node.y_test, constants.NUM_CLASSES)
-        # Crete validation dataset
+        
+        # Create validation dataset
         node.x_train, node.x_val, node.y_train, node.y_val = train_test_split(
             node.x_train, node.y_train, test_size=0.1, random_state=42
         )
-        # Print status
+
+        if scenario.corrupted_nodes[node_index] == "corrupted":
+            print("corruption of node " + str(node_index) + "\n")
+            node.corrupt_labels()
+        elif scenario.corrupted_nodes[node_index] == "shuffled":
+            print("shuffleling of node " + str(node_index) + "\n")
+            node.shuffle_labels()
+        elif scenario.corrupted_nodes[node_index] == "not-corrupted":
+            pass
+        else:
+            print("Unexpected label of corruption")
+
         print("   Node #" + str(node_index) + ": done.")
 
-    # The, central datasets of the scenario
+
+    # Then the scenario central dataset of the scenario
     scenario.x_val = utils.preprocess_input(scenario.x_val)
     scenario.y_val = keras.utils.to_categorical(scenario.y_val, constants.NUM_CLASSES)
     print("   Central early stopping validation set: done.")
