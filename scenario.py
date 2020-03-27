@@ -51,7 +51,7 @@ class Scenario:
         if "corrupted_nodes" in params:
             self.corrupted_nodes = params["corrupted_nodes"]
         else:
-            self.corrupted_nodes = ["not_corrupted"] * self.nodes_count
+            self.corrupted_nodes = ["not-corrupted"] * self.nodes_count
 
         # When training on a single node, the test set can be either the local node test set or the global test set
         self.single_partner_test_mode = params[
