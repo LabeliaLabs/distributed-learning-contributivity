@@ -132,9 +132,9 @@ def compute_test_score_with_scenario(scenario, is_save_fig=False):
         scenario.y_val,
         scenario.x_test,
         scenario.y_test,
+        scenario.aggregation_weighting,
         scenario.is_early_stopping,
         scenario.single_partner_test_mode,
-        scenario.amounts_per_node,
         is_save_fig,
         save_folder=scenario.save_folder,
     )
@@ -150,9 +150,9 @@ def compute_test_score(
     y_val_global,
     x_test,
     y_test,
+    aggregation_weighting="uniform",
     is_early_stopping=True,
     single_partner_test_mode="global",
-    aggregation_weights=None,
     is_save_fig=False,
     save_folder="",
 ):
@@ -175,6 +175,13 @@ def compute_test_score(
         score_matrix = np.zeros(shape=(epochs, nodes_count))
         global_val_acc = []
         global_val_loss = []
+
+        # Create list of weights for aggregation steps
+        aggregation_weights = []
+        if aggregation_weighting == "uniform":
+            aggregation_weights = [1] * nodes_count
+        elif aggregation_weighting == "data-volume":
+            aggregation_weights = [len(node.x_train) for node in node_list]
 
         print("\n### Training model:")
         for epoch in range(epochs):

@@ -110,6 +110,7 @@ def run_scenario(current_scenario):
         current_scenario.y_val,
         current_scenario.x_test,
         current_scenario.y_test,
+        current_scenario.aggregation_weighting,
     )
     end = timer()
 
