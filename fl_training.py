@@ -201,15 +201,6 @@ def compute_test_score(
                 weights_per_layer = list(zip(*weights_per_model))
                 new_weights = list()
 
-                # OLD:
-                # for weights_list_tuple in zip(*weights):  # TODO : make this clearer
-                #     new_weights.append(
-                #         [
-                #             np.array(weights_).mean(axis=0)
-                #             for weights_ in zip(*weights_list_tuple)
-                #         ]
-                #     )
-
                 for weights_for_layer in weights_per_layer:
                     avg_weights_for_layer = np.average(np.array(weights_for_layer), axis=0, weights=aggregation_weights)
                     new_weights.append(list(avg_weights_for_layer))
