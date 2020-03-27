@@ -53,12 +53,8 @@ class Scenario:
         else:
             self.corrupted_nodes = ["not_corrupted"] * self.nodes_count
 
-        # Define if test data should be distributed between nodes...
-
-        # ... or if each node should refer to a centralised test set...
-        # ... when training on a single node
-        # ... or if each node should refer to a centralised test set
-        self.testset_option = params["testset_option"] # Toggle between 'Centralised' and 'Distributed'
+        # When training on a single node, the test set can be either the local node test set or the global test set
+        self.single_party_testset = params["single_party_testset"] # Toggle between 'local' and 'global'
 
         self.federated_test_score = int
 
@@ -81,7 +77,7 @@ class Scenario:
             + "_"
             + str(self.corrupted_nodes)
             + "_"
-            + str(self.testset_option)
+            + str(self.single_party_testset)
             + "_"
             + now_str
             + "_"
@@ -200,7 +196,7 @@ class Scenario:
         test_idx_idx_list = np.split(test_idx, splitting_indices_test)
 
         # Describe test data distribution scenario
-        print("- Test data distribution scenario chosen:", self.testset_option)
+        print("- Test data distribution scenario chosen:", self.single_party_testset)
 
         # Populate nodes
         node_id = 0
@@ -212,7 +208,7 @@ class Scenario:
                 train_idx,
             ]
 
-            # Test data (for use in scenarios with testset_option == 'Distributed')
+            # Test data (for use in scenarios with single_party_testset == 'local')
             x_node_test = x_test[test_idx]
             y_node_test = y_test[test_idx]
 
@@ -276,7 +272,7 @@ class Scenario:
             + self.samples_split_option
             + "\n"
         )
-        out += "Centralised or distributed test set for single-node training: " + self.testset_option + "\n"
+        out += "Centralised or distributed test set for single-node training: " + self.single_party_testset + "\n"
         out += "Number of epochs: " + str(self.epoch_count) + "\n"
         out += "Early stopping on? " + str(self.is_early_stopping) + "\n"
         out += (
@@ -311,7 +307,7 @@ class Scenario:
                 dict_results["nodes_count"] = self.nodes_count
                 dict_results["amounts_per_node"] = self.amounts_per_node
                 dict_results["samples_split_option"] = self.samples_split_option
-                dict_results["testset_option"] = self.testset_option
+                dict_results["single_party_testset"] = self.single_party_testset
                 dict_results["epoch_count"] = self.epoch_count
                 dict_results["is_early_stopping"] = self.is_early_stopping
                 dict_results["federated_test_score"] = self.federated_test_score

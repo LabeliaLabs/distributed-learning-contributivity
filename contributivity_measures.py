@@ -19,7 +19,7 @@ import shapley_value.shapley as sv
 #%% Compute independent performance scores of models trained independently on each node
 
 
-def compute_independent_scores(node_list, epoch_count, collaborative_score, testset_option, central_x_test, central_y_test):
+def compute_independent_scores(node_list, epoch_count, collaborative_score, single_party_testset, global_x_test, global_y_test):
 
     print(
         "\n# Launching computation of perf. scores of models trained independently on each node"
@@ -31,7 +31,7 @@ def compute_independent_scores(node_list, epoch_count, collaborative_score, test
     # Train models independently on each node and append perf. score to list of perf. scores
     for node in node_list:
         performance_scores.append(
-            fl_training.compute_test_score_for_single_node(node, epoch_count, testset_option, central_x_test, central_y_test)
+            fl_training.compute_test_score_for_single_node(node, epoch_count, single_party_testset, global_x_test, global_y_test)
         )
 
     # Compute 'regularized' values of performance scores so that they are additive and their sum amount to the collaborative performance score obtained by the coalition of all players (nodes)

@@ -54,7 +54,7 @@ def preprocess_scenarios_data(scenario):
 
 #%% Single partner training
 
-def compute_test_score_for_single_node(node, epoch_count, testset_option, central_x_test, central_y_test):
+def compute_test_score_for_single_node(node, epoch_count, single_party_testset, global_x_test, global_y_test):
     """Return the score on test data of a model trained on a single node"""
 
     print("\n## Training and evaluating model on one single node.")
@@ -75,16 +75,16 @@ def compute_test_score_for_single_node(node, epoch_count, testset_option, centra
     )
 
     # Reference testset according to scenario
-    if testset_option == 'Centralised':
-        x_test = central_x_test
-        y_test = central_y_test
-    elif testset_option == 'Distributed':
+    if single_party_testset == 'global':
+        x_test = global_x_test
+        y_test = global_y_test
+    elif single_party_testset == 'local':
         x_test = node.x_test
         y_test = node.y_test
     else:
         raise NameError(
-            "This testset_option scenario ["
-            + testset_option
+            "This single_party_testset scenario ["
+            + single_party_testset
             + "] is not recognized."
         )
 
@@ -114,7 +114,7 @@ def compute_test_score_with_scenario(scenario, is_save_fig=False):
         scenario.x_test,
         scenario.y_test,
         scenario.is_early_stopping,
-        scenario.testset_option,
+        scenario.single_party_testset,
         is_save_fig,
         save_folder=scenario.save_folder,
     )
@@ -130,7 +130,7 @@ def compute_test_score(
     x_test,
     y_test,
     is_early_stopping=True,
-    testset_option='Centralised',
+    single_party_testset='global',
     is_save_fig=False,
     save_folder="",
 ):
@@ -140,7 +140,7 @@ def compute_test_score(
 
     # If only one node, fall back to dedicated single node function
     if nodes_count == 1:
-        return compute_test_score_for_single_node(node_list[0], epoch_count, testset_option, x_test, y_test)
+        return compute_test_score_for_single_node(node_list[0], epoch_count, single_party_testset, x_test, y_test)
 
     # Else, follow a federated learning procedure
     else:

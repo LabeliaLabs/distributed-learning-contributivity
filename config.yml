@@ -4,13 +4,13 @@ scenario_params_list:
  - nodes_counts: 3
    amounts_per_node: [0.4, 0.3, 0.3] 
    samples_split_option: 'Random'
-   testset_option: 'Centralised'
+   single_party_testset: 'global'
  - nodes_counts: 3
    amounts_per_node: [0.9, 0.05, 0.05] 
    samples_split_option: 'Random'
-   testset_option: 'Centralised'
+   single_party_testset: 'global'
  - nodes_counts: 2
    amounts_per_node: [0.9, 0.1] 
    samples_split_option: 'Random'
-   testset_option: 'Centralised'
+   single_party_testset: 'global'
    
