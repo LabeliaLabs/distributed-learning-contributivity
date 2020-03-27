@@ -44,7 +44,7 @@ def compute_independent_scores(node_list, epoch_count, collaborative_score):
 #%% Generalization of Shapley Value computation
 
 
-def compute_SV(node_list, epoch_count, x_esval, y_esval, x_test, y_test):
+def compute_SV(node_list, epoch_count, x_esval, y_esval, x_test, y_test, aggregation_weighting="uniform"):
 
     print("\n# Launching computation of Shapley Value of all nodes")
 
@@ -68,7 +68,7 @@ def compute_SV(node_list, epoch_count, x_esval, y_esval, x_test, y_test):
         # print('\nComputing characteristic function on coalition ', coalition) # VERBOSE
         characteristic_function.append(
             fl_training.compute_test_score(
-                coalition_nodes, epoch_count, x_esval, y_esval, x_test, y_test
+                coalition_nodes, epoch_count, x_esval, y_esval, x_test, y_test, aggregation_weighting
             )
         )
     # print('\nValue of characteristic function for all coalitions: ', characteristic_function) # VERBOSE
@@ -109,6 +109,7 @@ def truncated_MC(scenario, sv_accuracy=0.01, alpha=0.9, contrib_accuracy=0.05):
                 scenario.y_esval,
                 scenario.x_test,
                 scenario.y_test,
+                scenario.aggregation_weighting,
                 scenario.is_early_stopping,
                 save_folder=scenario.save_folder,
             )

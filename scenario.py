@@ -58,6 +58,13 @@ class Scenario:
 
         self.federated_test_score = int
 
+        # Define how federated learning aggregation steps are weighted. Toggle between 'uniform' and 'data-volume'
+        # Default is 'uniform'
+        if "aggregation_weighting" in params:
+            self.aggregation_weighting = params["aggregation_weighting"]
+        else:
+            self.aggregation_weighting = "uniform"
+
         self.node_list = []
 
         self.contributivity_list = []
