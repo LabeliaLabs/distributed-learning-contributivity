@@ -20,10 +20,11 @@ from node import Node
 class Scenario:
     def __init__(self, params, experiment_path):
 
+        # Identify and get a dataset for running experiments
         self.dataset_name = "MNIST"
         (x_train, y_train), (x_test, y_test) = mnist.load_data()
-        # The train set has to be split into a train set and a validation set for early stopping (called 'esval' below)
-        self.x_train, self.x_esval, self.y_train, self.y_esval = train_test_split(
+        # The train set has to be split into a train set and a validation set for early stopping
+        self.x_train, self.x_val, self.y_train, self.y_val = train_test_split(
             x_train, y_train, test_size=0.2, random_state=42
         )
         self.x_test = x_test
@@ -52,9 +53,10 @@ class Scenario:
         else:
             self.corrupted_nodes = ["not_corrupted"] * self.nodes_count
 
-        # Define if test data should be distributed between nodes...
-        # ... or if each node should refer to a centralised test set
-        self.testset_option = params["testset_option"]
+        # When training on a single node, the test set can be either the local node test set or the global test set
+        self.single_partner_test_mode = params[
+            "single_partner_test_mode"
+        ]  # Toggle between 'local' and 'global'
 
         self.federated_test_score = int
 
@@ -77,7 +79,7 @@ class Scenario:
             + "_"
             + str(self.corrupted_nodes)
             + "_"
-            + str(self.testset_option)
+            + str(self.single_partner_test_mode)
             + "_"
             + now_str
             + "_"
@@ -104,8 +106,8 @@ class Scenario:
             logger.info("Quick demo: limit number of data and number of epochs.")
             self.x_train = self.x_train[:1000]
             self.y_train = self.y_train[:1000]
-            self.x_esval = self.x_esval[:100]
-            self.y_esval = self.y_esval[:100]
+            self.x_val = self.x_val[:100]
+            self.y_val = self.y_val[:100]
             self.x_test = self.x_test[:100]
             self.y_test = self.y_test[:100]
             self.epoch_count = 2
@@ -196,7 +198,7 @@ class Scenario:
         test_idx_idx_list = np.split(test_idx, splitting_indices_test)
 
         # Describe test data distribution scenario
-        print("- Test data distribution scenario chosen:", self.testset_option)
+        print("- Test data distribution scenario chosen:", self.single_partner_test_mode)
 
         # Populate nodes
         node_id = 0
@@ -208,19 +210,9 @@ class Scenario:
                 train_idx,
             ]
 
-            # Test data
-            if self.testset_option == "Distributed":
-                x_node_test = x_test[test_idx]
-                y_node_test = y_test[test_idx]
-            elif self.testset_option == "Centralised":
-                x_node_test = x_test
-                y_node_test = y_test
-            else:
-                raise NameError(
-                    "This testset_option ["
-                    + self.testset_option
-                    + "] scenario is not recognized"
-                )
+            # Test data (for use in scenarios with single_partner_test_mode == 'local')
+            x_node_test = x_test[test_idx]
+            y_node_test = y_test[test_idx]
 
             node = Node(
                 x_node_train, x_node_test, y_node_train, y_node_test, str(node_id)
@@ -239,8 +231,6 @@ class Scenario:
                 "  - Number of samples:"
                 + str(len(node.x_train))
                 + " train, "
-                + str(len(node.x_val))
-                + " val, "
                 + str(len(node.x_test))
                 + " test"
             )
@@ -284,7 +274,11 @@ class Scenario:
             + self.samples_split_option
             + "\n"
         )
-        out += "Centralised or distributed test set: " + self.testset_option + "\n"
+        out += (
+            "When training on a single node, global or local testset: "
+            + self.single_partner_test_mode
+            + "\n"
+        )
         out += "Number of epochs: " + str(self.epoch_count) + "\n"
         out += "Early stopping on? " + str(self.is_early_stopping) + "\n"
         out += (
@@ -319,7 +313,7 @@ class Scenario:
                 dict_results["nodes_count"] = self.nodes_count
                 dict_results["amounts_per_node"] = self.amounts_per_node
                 dict_results["samples_split_option"] = self.samples_split_option
-                dict_results["testset_option"] = self.testset_option
+                dict_results["single_partner_test_mode"] = self.single_partner_test_mode
                 dict_results["epoch_count"] = self.epoch_count
                 dict_results["is_early_stopping"] = self.is_early_stopping
                 dict_results["federated_test_score"] = self.federated_test_score
@@ -339,7 +333,7 @@ class Scenario:
                 dict_results["contributivity_std"] = contrib.scores_std[i]
 
                 df = df.append(dict_results, ignore_index=True)
-        
+
         df.info()
 
         return df

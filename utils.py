@@ -87,7 +87,7 @@ def init_result_folder(yaml_filepath, cfg):
     """
 
     logger.info("Init result folder")
-    
+
     now = datetime.datetime.now()
     now_str = now.strftime("%Y-%m-%d_%Hh%M")
 
@@ -100,7 +100,6 @@ def init_result_folder(yaml_filepath, cfg):
         new_experiment_name = Path(str(experiment_path) + "_bis")
         experiment_path = Path.cwd() / "experiments" / new_experiment_name
         logger.warning(f"Experiment folder has been renamed to: {experiment_path}")
-
 
     experiment_path.mkdir(parents=True, exist_ok=False)
 

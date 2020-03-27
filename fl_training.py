@@ -22,51 +22,61 @@ import constants
 #%% Pre-process data for ML training
 
 
-def preprocess_node_list(node_list):
-    """Return node_list preprocessed for keras CNN"""
+def preprocess_scenarios_data(scenario):
+    """Return scenario with central datasets (val, test) and distributed datasets (nodes) pre-processed"""
 
-    print("\n## Pre-processing train data of each node for keras CNN:")
-    for node_index, node in enumerate(node_list):
+    print("\n## Pre-processing datasets of the scenario for keras CNN:")
 
-        # Preprocess input (x) data
-        node.preprocess_data()
+    # First, datasets of each node
+    for node_index, node in enumerate(scenario.node_list):
 
-        # Crete validation dataset
-        x_node_train, x_node_val, y_node_train, y_node_val = train_test_split(
+        # Preprocess inputs (x) data
+        node.x_train = utils.preprocess_input(node.x_train)
+        node.x_test = utils.preprocess_input(node.x_test)
+
+        # Preprocess labels (y) data
+        node.y_train = keras.utils.to_categorical(node.y_train, constants.NUM_CLASSES)
+        node.y_test = keras.utils.to_categorical(node.y_test, constants.NUM_CLASSES)
+
+        # Create validation dataset
+        node.x_train, node.x_val, node.y_train, node.y_val = train_test_split(
             node.x_train, node.y_train, test_size=0.1, random_state=42
         )
-        node.x_train = x_node_train
-        node.x_val = x_node_val
-        node.y_train = y_node_train
-        node.y_val = y_node_val
+
+        if scenario.corrupted_nodes[node_index] == "corrupted":
+            print("corruption of node " + str(node_index) + "\n")
+            node.corrupt_labels()
+        elif scenario.corrupted_nodes[node_index] == "shuffled":
+            print("shuffleling of node " + str(node_index) + "\n")
+            node.shuffle_labels()
+        elif scenario.corrupted_nodes[node_index] == "not-corrupted":
+            pass
+        else:
+            print("Unexpected label of corruption")
 
         print("   Node #" + str(node_index) + ": done.")
 
-    print("   Done.")
-    return node_list
+    # Then the scenario central dataset of the scenario
+    scenario.x_val = utils.preprocess_input(scenario.x_val)
+    scenario.y_val = keras.utils.to_categorical(scenario.y_val, constants.NUM_CLASSES)
+    print("   Central early stopping validation set: done.")
+    scenario.x_test = utils.preprocess_input(scenario.x_test)
+    scenario.y_test = keras.utils.to_categorical(scenario.y_test, constants.NUM_CLASSES)
+    print("   Central testset: done.")
 
-
-#%% Pre-process test data for model evaluation
-
-
-def preprocess_test_data(x_test, y_test):
-    """ Return x_test and y_test preprocessed for keras CNN"""
-
-    print("\n## Pre-processing test data for keras CNN:")
-    x_test = utils.preprocess_input(x_test)
-    y_test = keras.utils.to_categorical(y_test, constants.NUM_CLASSES)
-
-    print("   Done.")
-    return x_test, y_test
+    return scenario
 
 
 #%% Single partner training
 
 
-def compute_test_score_for_single_node(node, epoch_count):
+def compute_test_score_for_single_node(
+    node, epoch_count, single_partner_test_mode, global_x_test, global_y_test
+):
     """Return the score on test data of a model trained on a single node"""
 
     print("\n## Training and evaluating model on one single node.")
+
     # Initialize model
     model = utils.generate_new_cnn_model()
     # print(model.summary())
@@ -82,10 +92,24 @@ def compute_test_score_for_single_node(node, epoch_count):
         validation_data=(node.x_val, node.y_val),
     )
 
+    # Reference testset according to scenario
+    if single_partner_test_mode == "global":
+        x_test = global_x_test
+        y_test = global_y_test
+    elif single_partner_test_mode == "local":
+        x_test = node.x_test
+        y_test = node.y_test
+    else:
+        raise NameError(
+            "This single_partner_test_mode option ["
+            + single_partner_test_mode
+            + "] is not recognized."
+        )
+
     # Evaluate trained model
     print("\n### Evaluating model on test data of the node:")
     model_evaluation = model.evaluate(
-        node.x_test, node.y_test, batch_size=constants.BATCH_SIZE, verbose=0
+        x_test, y_test, batch_size=constants.BATCH_SIZE, verbose=0
     )
     print("   Model metrics names: ", model.metrics_names)
     print("   Model metrics values: ", ["%.3f" % elem for elem in model_evaluation])
@@ -98,29 +122,35 @@ def compute_test_score_for_single_node(node, epoch_count):
 
 
 #%% TODO no methods overloading
+
+
 def compute_test_score_with_scenario(scenario, is_save_fig=False):
     return compute_test_score(
         scenario.node_list,
         scenario.epoch_count,
-        scenario.x_esval,
-        scenario.y_esval,
+        scenario.x_val,
+        scenario.y_val,
         scenario.x_test,
         scenario.y_test,
         scenario.is_early_stopping,
+        scenario.single_partner_test_mode,
         is_save_fig,
         save_folder=scenario.save_folder,
     )
 
 
 #%% Distributed learning training
+
+
 def compute_test_score(
     node_list,
     epoch_count,
-    x_esval,
-    y_esval,
+    x_val_global,
+    y_val_global,
     x_test,
     y_test,
     is_early_stopping=True,
+    single_partner_test_mode="global",
     is_save_fig=False,
     save_folder="",
 ):
@@ -130,7 +160,9 @@ def compute_test_score(
 
     # If only one node, fall back to dedicated single node function
     if nodes_count == 1:
-        return compute_test_score_for_single_node(node_list[0], epoch_count)
+        return compute_test_score_for_single_node(
+            node_list[0], epoch_count, single_partner_test_mode, x_test, y_test
+        )
 
     # Else, follow a federated learning procedure
     else:
@@ -182,9 +214,12 @@ def compute_test_score(
                     metrics=["accuracy"],
                 )
 
-                # Evaluate model for early stopping, on a dedicated 'early stopping validation' set
+                # Evaluate model for early stopping, on a central and dedicated 'early stopping validation' set
                 model_evaluation = aggregated_model.evaluate(
-                    x_esval, y_esval, batch_size=constants.BATCH_SIZE, verbose=0
+                    x_val_global,
+                    y_val_global,
+                    batch_size=constants.BATCH_SIZE,
+                    verbose=0,
                 )
                 current_val_loss = model_evaluation[0]
                 global_val_acc.append(model_evaluation[1])
@@ -290,7 +325,7 @@ def compute_test_score(
             plt.ylim([0, 1])
             plt.savefig(save_folder / "all_nodes.png")
 
-        # Evaluate model
+        # Evaluate model on a central and dedicated testset
         print("\n### Evaluating model on test data:")
         model_evaluation = final_model.evaluate(
             x_test, y_test, batch_size=constants.BATCH_SIZE, verbose=0

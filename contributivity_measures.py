@@ -19,7 +19,14 @@ import shapley_value.shapley as sv
 #%% Compute independent performance scores of models trained independently on each node
 
 
-def compute_independent_scores(node_list, epoch_count, collaborative_score):
+def compute_independent_scores(
+    node_list,
+    epoch_count,
+    collaborative_score,
+    single_partner_test_mode,
+    global_x_test,
+    global_y_test,
+):
 
     print(
         "\n# Launching computation of perf. scores of models trained independently on each node"
@@ -31,7 +38,9 @@ def compute_independent_scores(node_list, epoch_count, collaborative_score):
     # Train models independently on each node and append perf. score to list of perf. scores
     for node in node_list:
         performance_scores.append(
-            fl_training.compute_test_score_for_single_node(node, epoch_count)
+            fl_training.compute_test_score_for_single_node(
+                node, epoch_count, single_partner_test_mode, global_x_test, global_y_test
+            )
         )
 
     # Compute 'regularized' values of performance scores so that they are additive and their sum amount to the collaborative performance score obtained by the coalition of all players (nodes)
@@ -44,7 +53,7 @@ def compute_independent_scores(node_list, epoch_count, collaborative_score):
 #%% Generalization of Shapley Value computation
 
 
-def compute_SV(node_list, epoch_count, x_esval, y_esval, x_test, y_test):
+def compute_SV(node_list, epoch_count, x_val_global, y_val_global, x_test, y_test):
 
     print("\n# Launching computation of Shapley Value of all nodes")
 
@@ -68,7 +77,7 @@ def compute_SV(node_list, epoch_count, x_esval, y_esval, x_test, y_test):
         # print('\nComputing characteristic function on coalition ', coalition) # VERBOSE
         characteristic_function.append(
             fl_training.compute_test_score(
-                coalition_nodes, epoch_count, x_esval, y_esval, x_test, y_test
+                coalition_nodes, epoch_count, x_val_global, y_val_global, x_test, y_test
             )
         )
     # print('\nValue of characteristic function for all coalitions: ', characteristic_function) # VERBOSE
@@ -105,8 +114,8 @@ def truncated_MC(scenario, sv_accuracy=0.01, alpha=0.9, contrib_accuracy=0.05):
             char_value_dict[tuple(permut)] = fl_training.compute_test_score(
                 small_node_list,
                 scenario.epoch_count,
-                scenario.x_esval,
-                scenario.y_esval,
+                scenario.x_val,
+                scenario.y_val,
                 scenario.x_test,
                 scenario.y_test,
                 scenario.is_early_stopping,
