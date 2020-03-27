@@ -20,7 +20,7 @@ import shapley_value.shapley as sv
 
 
 def compute_independent_scores(node_list, epoch_count, collaborative_score):
-
+    fit_count=0
     print(
         "\n# Launching computation of perf. scores of models trained independently on each node"
     )
@@ -33,19 +33,20 @@ def compute_independent_scores(node_list, epoch_count, collaborative_score):
         performance_scores.append(
             fl_training.compute_test_score_for_single_node(node, epoch_count)
         )
+        fit_count+=1
 
     # Compute 'regularized' values of performance scores so that they are additive and their sum amount to the collaborative performance score obtained by the coalition of all players (nodes)
     perf_scores_additive = softmax(performance_scores) * collaborative_score
 
     # Return performance scores both raw and additively regularized
-    return [np.array(performance_scores), np.array(perf_scores_additive)]
+    return [np.array(performance_scores), np.array(perf_scores_additive), fit_count]
 
 
 # %% Generalization of Shapley Value computation
 
 
 def compute_SV(node_list, epoch_count, x_esval, y_esval, x_test, y_test):
-
+    fit_count=0
     print("\n# Launching computation of Shapley Value of all nodes")
 
     # Initialize list of all players (nodes) indexes
@@ -71,6 +72,7 @@ def compute_SV(node_list, epoch_count, x_esval, y_esval, x_test, y_test):
                 coalition_nodes, epoch_count, x_esval, y_esval, x_test, y_test
             )
         )
+        fit_count+=1
     # print('\nValue of characteristic function for all coalitions: ', characteristic_function) # VERBOSE
 
     # Compute Shapley Value for each node
@@ -79,7 +81,7 @@ def compute_SV(node_list, epoch_count, x_esval, y_esval, x_test, y_test):
     list_shapley_value = sv.main(nodes_count, characteristic_function)
 
     # Return SV of each node
-    return (np.array(list_shapley_value), np.repeat(0.0, len(list_shapley_value)))
+    return (np.array(list_shapley_value), np.repeat(0.0, len(list_shapley_value)),fit_count)
 
 
 # %% compute Shapley values with the truncated Monte-carlo metho
