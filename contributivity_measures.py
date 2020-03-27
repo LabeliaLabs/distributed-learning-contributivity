@@ -23,7 +23,7 @@ def compute_independent_scores(
     node_list,
     epoch_count,
     collaborative_score,
-    single_party_testset,
+    single_partner_test_mode,
     global_x_test,
     global_y_test,
 ):
@@ -39,7 +39,7 @@ def compute_independent_scores(
     for node in node_list:
         performance_scores.append(
             fl_training.compute_test_score_for_single_node(
-                node, epoch_count, single_party_testset, global_x_test, global_y_test
+                node, epoch_count, single_partner_test_mode, global_x_test, global_y_test
             )
         )
 

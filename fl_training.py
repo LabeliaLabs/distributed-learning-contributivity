@@ -71,7 +71,7 @@ def preprocess_scenarios_data(scenario):
 
 
 def compute_test_score_for_single_node(
-    node, epoch_count, single_party_testset, global_x_test, global_y_test
+    node, epoch_count, single_partner_test_mode, global_x_test, global_y_test
 ):
     """Return the score on test data of a model trained on a single node"""
 
@@ -93,16 +93,16 @@ def compute_test_score_for_single_node(
     )
 
     # Reference testset according to scenario
-    if single_party_testset == "global":
+    if single_partner_test_mode == "global":
         x_test = global_x_test
         y_test = global_y_test
-    elif single_party_testset == "local":
+    elif single_partner_test_mode == "local":
         x_test = node.x_test
         y_test = node.y_test
     else:
         raise NameError(
-            "This single_party_testset scenario ["
-            + single_party_testset
+            "This single_partner_test_mode option ["
+            + single_partner_test_mode
             + "] is not recognized."
         )
 
@@ -133,7 +133,7 @@ def compute_test_score_with_scenario(scenario, is_save_fig=False):
         scenario.x_test,
         scenario.y_test,
         scenario.is_early_stopping,
-        scenario.single_party_testset,
+        scenario.single_partner_test_mode,
         is_save_fig,
         save_folder=scenario.save_folder,
     )
@@ -150,7 +150,7 @@ def compute_test_score(
     x_test,
     y_test,
     is_early_stopping=True,
-    single_party_testset="global",
+    single_partner_test_mode="global",
     is_save_fig=False,
     save_folder="",
 ):
@@ -161,7 +161,7 @@ def compute_test_score(
     # If only one node, fall back to dedicated single node function
     if nodes_count == 1:
         return compute_test_score_for_single_node(
-            node_list[0], epoch_count, single_party_testset, x_test, y_test
+            node_list[0], epoch_count, single_partner_test_mode, x_test, y_test
         )
 
     # Else, follow a federated learning procedure

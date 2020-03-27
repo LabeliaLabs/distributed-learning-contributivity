@@ -128,7 +128,7 @@ def run_scenario(current_scenario):
         current_scenario.node_list,
         current_scenario.epoch_count,
         current_scenario.federated_test_score,
-        current_scenario.single_party_testset,
+        current_scenario.single_partner_test_mode,
         current_scenario.x_test,
         current_scenario.y_test,
     )
