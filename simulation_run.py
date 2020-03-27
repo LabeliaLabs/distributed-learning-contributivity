@@ -111,6 +111,7 @@ def run_scenario(current_scenario):
         current_scenario.x_test,
         current_scenario.y_test,
         current_scenario.aggregation_weighting,
+        current_scenario.minibatch_count,
     )
     end = timer()
 

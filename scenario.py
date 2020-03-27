@@ -80,6 +80,8 @@ class Scenario:
         else:
             self.epoch_count = 40
 
+        self.minibatch_count = 20
+
         # Early stopping stops ML training when performance increase is not significant anymore
         # It is used to optimize the number of epochs and the execution time
         self.is_early_stopping = True # Toggle between True and False
