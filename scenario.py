@@ -72,6 +72,7 @@ class Scenario:
         self.contributivity_list = []
 
         self.epoch_count = 40
+        self.minibatch_count = 20
 
         self.is_early_stopping = True
 
