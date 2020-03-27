@@ -22,7 +22,7 @@ import constants
 #%% Pre-process data for ML training
 
 def preprocess_scenarios_data(scenario):
-    """Return scenario with central datasets (valearlystop, test) and distributed datasets (nodes) pre-processed"""
+    """Return scenario with central datasets (val, test) and distributed datasets (nodes) pre-processed"""
 
     print("\n## Pre-processing datasets of the scenario for keras CNN:")
 
@@ -42,8 +42,8 @@ def preprocess_scenarios_data(scenario):
         print("   Node #" + str(node_index) + ": done.")
 
     # The, central datasets of the scenario
-    scenario.x_valearlystop = utils.preprocess_input(scenario.x_valearlystop)
-    scenario.y_valearlystop = keras.utils.to_categorical(scenario.y_valearlystop, constants.NUM_CLASSES)
+    scenario.x_val = utils.preprocess_input(scenario.x_val)
+    scenario.y_val = keras.utils.to_categorical(scenario.y_val, constants.NUM_CLASSES)
     print("   Central early stopping validation set: done.")
     scenario.x_test = utils.preprocess_input(scenario.x_test)
     scenario.y_test = keras.utils.to_categorical(scenario.y_test, constants.NUM_CLASSES)
@@ -109,8 +109,8 @@ def compute_test_score_with_scenario(scenario, is_save_fig=False):
     return compute_test_score(
         scenario.node_list,
         scenario.epoch_count,
-        scenario.x_valearlystop,
-        scenario.y_valearlystop,
+        scenario.x_val,
+        scenario.y_val,
         scenario.x_test,
         scenario.y_test,
         scenario.is_early_stopping,
@@ -125,8 +125,8 @@ def compute_test_score_with_scenario(scenario, is_save_fig=False):
 def compute_test_score(
     node_list,
     epoch_count,
-    x_valearlystop,
-    y_valearlystop,
+    x_val_global,
+    y_val_global,
     x_test,
     y_test,
     is_early_stopping=True,
@@ -194,7 +194,7 @@ def compute_test_score(
 
                 # Evaluate model for early stopping, on a central and dedicated 'early stopping validation' set
                 model_evaluation = aggregated_model.evaluate(
-                    x_valearlystop, y_valearlystop, batch_size=constants.BATCH_SIZE, verbose=0
+                    x_val_global, y_val_global, batch_size=constants.BATCH_SIZE, verbose=0
                 )
                 current_val_loss = model_evaluation[0]
                 global_val_acc.append(model_evaluation[1])

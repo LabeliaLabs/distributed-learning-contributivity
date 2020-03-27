@@ -4,5 +4,5 @@ scenario_params_list:
  - nodes_counts: 2
    amounts_per_node: [0.9, 0.1]
    samples_split_option: 'Random'
-   testset_option: 'global'
+   single_party_testset: 'global'
    is_quick_demo: True

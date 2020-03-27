@@ -122,8 +122,8 @@ def run_scenario(current_scenario):
     (contributivity_scores, scores_var) = contributivity_measures.compute_SV(
         current_scenario.node_list,
         current_scenario.epoch_count,
-        current_scenario.x_valearlystop,
-        current_scenario.y_valearlystop,
+        current_scenario.x_val,
+        current_scenario.y_val,
         current_scenario.x_test,
         current_scenario.y_test,
     )

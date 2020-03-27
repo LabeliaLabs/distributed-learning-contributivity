@@ -24,7 +24,7 @@ class Scenario:
         self.dataset_name = "MNIST"
         (x_train, y_train), (x_test, y_test) = mnist.load_data()
         # The train set has to be split into a train set and a validation set for early stopping
-        self.x_train, self.x_valearlystop, self.y_train, self.y_valearlystop = train_test_split(
+        self.x_train, self.x_val, self.y_train, self.y_val = train_test_split(
             x_train, y_train, test_size=0.2, random_state=42
         )
         self.x_test = x_test
@@ -104,8 +104,8 @@ class Scenario:
             logger.info("Quick demo: limit number of data and number of epochs.")
             self.x_train = self.x_train[:1000]
             self.y_train = self.y_train[:1000]
-            self.x_valearlystop = self.x_valearlystop[:100]
-            self.y_valearlystop = self.y_valearlystop[:100]
+            self.x_val = self.x_val[:100]
+            self.y_val = self.y_val[:100]
             self.x_test = self.x_test[:100]
             self.y_test = self.y_test[:100]
             self.epoch_count = 2
