@@ -275,11 +275,14 @@ def compute_test_score(
 
                 model_list[node_index] = node_model
 
+                print("val_accuracy: ")
+                print(history.history["val_accuracy"][0])
+
                 # At the end of each epoch (last mini-batch), populate the score matrix
                 if minibatch == (minibatch_count - 1):
                     score_matrix[epoch, node_index] = history.history["val_accuracy"][0]
 
-            # Aggregating phase: averaging the weights
+            # Aggregate the individual models trained on each node (by a weigthed averaging of the weights of the models)
             print("   Aggregating models weights to build a new model")
             new_weights = aggregate_model_weights(model_list, aggregation_weights)
             aggregated_model = build_aggregated_model(new_weights)
@@ -294,6 +297,8 @@ def compute_test_score(
         current_val_loss = model_evaluation[0]
         global_val_acc.append(model_evaluation[1])
         global_val_loss.append(current_val_loss)
+        print("model_evaluation: ")
+        print(model_evaluation)
 
         print("   Checking if early stopping critera are met:")
         if is_early_stopping:
