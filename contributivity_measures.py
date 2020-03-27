@@ -19,15 +19,17 @@ import shapley_value.shapley as sv
 # %% Compute independent performance scores of models trained independently on each node
 
 
-def compute_independent_scores(
-    node_list,
-    epoch_count,
-    collaborative_score,
-    single_partner_test_mode,
-    global_x_test,
-    global_y_test,
-):
-    fit_count=0
+def compute_independent_scores(the_scenario):
+    nb_fit_begining = the_scenario.fit_count
+    collaborative_score = fl_training.compute_test_score_with_scenario(the_scenario)
+    the_scenario.fit_count += 1
+    node_list, epoch_count, x_test, y_test, single_partner_test_mode, = (
+        the_scenario.node_list,
+        the_scenario.epoch_count,
+        the_scenario.x_test,
+        the_scenario.y_test,
+        the_scenario.single_partner_test_mode,
+    )
     print(
         "\n# Launching computation of perf. scores of models trained independently on each node"
     )
@@ -39,23 +41,35 @@ def compute_independent_scores(
     for node in node_list:
         performance_scores.append(
             fl_training.compute_test_score_for_single_node(
-                node, epoch_count, single_partner_test_mode, global_x_test, global_y_test
+                node, epoch_count, single_partner_test_mode, x_test, y_test
             )
         )
-        fit_count+=1
+        the_scenario.fit_count += 1
 
     # Compute 'regularized' values of performance scores so that they are additive and their sum amount to the collaborative performance score obtained by the coalition of all players (nodes)
     perf_scores_additive = softmax(performance_scores) * collaborative_score
 
     # Return performance scores both raw and additively regularized
-    return [np.array(performance_scores), np.array(perf_scores_additive), fit_count]
+    return [
+        np.array(performance_scores),
+        np.array(perf_scores_additive),
+        the_scenario.fit_count - nb_fit_begining,
+    ]
 
 
 # %% Generalization of Shapley Value computation
 
 
-def compute_SV(node_list, epoch_count, x_val_global, y_val_global, x_test, y_test):
-    fit_count=0
+def compute_SV(the_scenario):
+    nb_fit_begining = the_scenario.fit_count
+    node_list, epoch_count, x_val_global, y_val_global, x_test, y_test = (
+        the_scenario.node_list,
+        the_scenario.epoch_count,
+        the_scenario.x_val,
+        the_scenario.y_val,
+        the_scenario.x_test,
+        the_scenario.y_test,
+    )
     print("\n# Launching computation of Shapley Value of all nodes")
 
     # Initialize list of all players (nodes) indexes
@@ -81,7 +95,7 @@ def compute_SV(node_list, epoch_count, x_val_global, y_val_global, x_test, y_tes
                 coalition_nodes, epoch_count, x_val_global, y_val_global, x_test, y_test
             )
         )
-        fit_count+=1
+        the_scenario.fit_count += 1
     # print('\nValue of characteristic function for all coalitions: ', characteristic_function) # VERBOSE
 
     # Compute Shapley Value for each node
@@ -90,16 +104,20 @@ def compute_SV(node_list, epoch_count, x_val_global, y_val_global, x_test, y_tes
     list_shapley_value = sv.main(nodes_count, characteristic_function)
 
     # Return SV of each node
-    return (np.array(list_shapley_value), np.repeat(0.0, len(list_shapley_value)),fit_count)
+    return (
+        np.array(list_shapley_value),
+        np.repeat(0.0, len(list_shapley_value)),
+        the_scenario.fit_count - nb_fit_begining,
+    )
 
 
 # %% compute Shapley values with the truncated Monte-carlo metho
 
 
-def truncated_MC(scenario, sv_accuracy=0.01, alpha=0.9, truncation=0.05):
+def truncated_MC(the_scenario, sv_accuracy=0.01, alpha=0.9, truncation=0.05):
     """Return the vector of approximated Shapley value corresponding to a list of node and a characteristic function using the truncated monte-carlo method."""
-
-    preprocessed_node_list = scenario.node_list
+    nb_fit_begining = the_scenario.fit_count
+    preprocessed_node_list = the_scenario.node_list
     n = len(preprocessed_node_list)
 
     # We store the value of the characteristic function in order to avoid recomputing it twice
@@ -115,15 +133,15 @@ def truncated_MC(scenario, sv_accuracy=0.01, alpha=0.9, truncation=0.05):
             small_node_list = np.array([preprocessed_node_list[i] for i in permut])
             char_value_dict[tuple(permut)] = fl_training.compute_test_score(
                 small_node_list,
-                scenario.epoch_count,
-                scenario.x_val,
-                scenario.y_val,
-                scenario.x_test,
-                scenario.y_test,
-                scenario.is_early_stopping,
-                save_folder=scenario.save_folder,
+                the_scenario.epoch_count,
+                the_scenario.x_val,
+                the_scenario.y_val,
+                the_scenario.x_test,
+                the_scenario.y_test,
+                the_scenario.is_early_stopping,
+                save_folder=the_scenario.save_folder,
             )
-
+            the_scenario.fit_count += 1
             return char_value_dict[tuple(permut)]
 
     characteristic_all_node = not_twice_characteristic(
@@ -135,6 +153,7 @@ def truncated_MC(scenario, sv_accuracy=0.01, alpha=0.9, truncation=0.05):
             "std_sv": np.array([0]),
             "prop": np.array([1]),
             "computed_val": char_value_dict,
+            "fit_count": the_scenario.fit_count - nb_fit_begining,
         }
     else:
         contributions = np.array([[]])
@@ -176,6 +195,7 @@ def truncated_MC(scenario, sv_accuracy=0.01, alpha=0.9, truncation=0.05):
         "std_sv": np.std(contributions, axis=0) / np.sqrt(t - 1),
         "prop": sv / np.sum(sv),
         "computed_val": char_value_dict,
+        "fit_count": the_scenario.fit_count - nb_fit_begining,
     }
 
 
@@ -185,6 +205,7 @@ def truncated_MC(scenario, sv_accuracy=0.01, alpha=0.9, truncation=0.05):
 def interpol_trunc_MC(the_scenario, sv_accuracy=0.01, alpha=0.9, truncation=0.05):
     """Return the vector of approximated Shapley value corresponding to a list of node and a characteristic function using the truncated monte-carlo method with a small correction of the bias"""
 
+    nb_fit_begining = the_scenario.fit_count
     preprocessed_node_list = the_scenario.node_list
     n = len(preprocessed_node_list)
 
@@ -211,6 +232,7 @@ def interpol_trunc_MC(the_scenario, sv_accuracy=0.01, alpha=0.9, truncation=0.05
                 the_scenario.is_early_stopping,
                 save_folder=the_scenario.save_folder,
             )
+            the_scenario.fit_count += 1
 
             return char_value_dict[tuple(permut)]
 
@@ -223,6 +245,7 @@ def interpol_trunc_MC(the_scenario, sv_accuracy=0.01, alpha=0.9, truncation=0.05
             "std_sv": np.array([0]),
             "prop": np.array([1]),
             "computed_val": char_value_dict,
+            "fit_count": the_scenario.fit_count - nb_fit_begining,
         }
     else:
         contributions = np.array([[]])
@@ -273,6 +296,7 @@ def interpol_trunc_MC(the_scenario, sv_accuracy=0.01, alpha=0.9, truncation=0.05
         "std_sv": np.std(contributions, axis=0) / np.sqrt(t - 1),
         "prop": shap / np.sum(shap),
         "computed_val": char_value_dict,
+        "fit_count": the_scenario.fit_count - nb_fit_begining,
     }
 
 
@@ -282,6 +306,7 @@ def interpol_trunc_MC(the_scenario, sv_accuracy=0.01, alpha=0.9, truncation=0.05
 def IS_lin(the_scenario, sv_accuracy=0.01, alpha=0.95):
     """Return the vector of approximated Shapley value corresponding to a list of node and a characteristic function using the importance sampling method and a linear interpolation model."""
 
+    nb_fit_begining = the_scenario.fit_count
     preprocessed_node_list = the_scenario.node_list
     n = len(preprocessed_node_list)
 
@@ -306,7 +331,7 @@ def IS_lin(the_scenario, sv_accuracy=0.01, alpha=0.95):
                 the_scenario.is_early_stopping,
                 save_folder=the_scenario.save_folder,
             )
-
+            the_scenario.fit_count += 1
             return char_value_dict[tuple(permut)]
 
     characteristic_all_node = not_twice_characteristic(
@@ -319,6 +344,7 @@ def IS_lin(the_scenario, sv_accuracy=0.01, alpha=0.95):
             "std_sv": np.array([0]),
             "prop": np.array([1]),
             "computed_val": char_value_dict,
+            "fit_count": the_scenario.fit_count - nb_fit_begining,
         }
     else:
 
@@ -421,6 +447,7 @@ def IS_lin(the_scenario, sv_accuracy=0.01, alpha=0.95):
         "std_sv": np.std(contributions, axis=0) / np.sqrt(t - 1),
         "prop": shap / np.sum(shap),
         "computed_val": char_value_dict,
+        "fit_count": the_scenario.fit_count - nb_fit_begining,
     }
 
 
@@ -430,6 +457,7 @@ def IS_lin(the_scenario, sv_accuracy=0.01, alpha=0.95):
 def IS_reg(the_scenario, sv_accuracy=0.01, alpha=0.95):
     """Return the vector of approximated Shapley value corresponding to a list of node and a characteristic function using the importance sampling method and a regression model."""
 
+    nb_fit_begining = the_scenario.fit_count
     preprocessed_node_list = the_scenario.node_list
     n = len(preprocessed_node_list)
     characteristic_no_nodes = 0
@@ -460,6 +488,7 @@ def IS_reg(the_scenario, sv_accuracy=0.01, alpha=0.95):
                 the_scenario.is_early_stopping,
                 save_folder=the_scenario.save_folder,
             )
+            the_scenario.fit_count += 1
         # we add the new increments
         for i in range(n):
             if i in subset:
@@ -507,6 +536,7 @@ def IS_reg(the_scenario, sv_accuracy=0.01, alpha=0.95):
             "std_sv": np.repeat(0.0, len(shap)),
             "prop": np.array(shap) / char_value_dict[tuple(np.arange(n))],
             "computed_val": char_value_dict,
+            "fit_count": the_scenario.fit_count - nb_fit_begining,
         }
     else:
 
@@ -627,6 +657,7 @@ def IS_reg(the_scenario, sv_accuracy=0.01, alpha=0.95):
         "std_sv": np.std(contributions, axis=0) / np.sqrt(t - 1),
         "prop": shap / np.sum(shap),
         "computed_val": char_value_dict,
+        "fit_count": the_scenario.fit_count - nb_fit_begining,
     }
 
 
@@ -680,6 +711,7 @@ class krigingModel:
 def AIS_Kriging(the_scenario, sv_accuracy=0.01, alpha=0.95, update=50):
     """Return the vector of approximated Shapley value corresponding to a list of node and a characteristic function using the importance sampling method and a Kriging model."""
 
+    nb_fit_begining = the_scenario.fit_count
     preprocessed_node_list = the_scenario.node_list
     n = len(preprocessed_node_list)
     characteristic_no_nodes = 0
@@ -710,6 +742,7 @@ def AIS_Kriging(the_scenario, sv_accuracy=0.01, alpha=0.95, update=50):
                 the_scenario.is_early_stopping,
                 save_folder=the_scenario.save_folder,
             )
+            the_scenario.fit_count += 1
         # we add the new increments
         for i in range(n):
             if i in subset:
@@ -870,6 +903,7 @@ def AIS_Kriging(the_scenario, sv_accuracy=0.01, alpha=0.95, update=50):
         "std_sv": np.std(contributions, axis=0) / np.sqrt(t - 1),
         "prop": shap / np.sum(shap),
         "computed_val": char_value_dict,
+        "fit_count": the_scenario.fit_count - nb_fit_begining,
     }
 
 
@@ -879,6 +913,7 @@ def AIS_Kriging(the_scenario, sv_accuracy=0.01, alpha=0.95, update=50):
 def Stratified_MC(the_scenario, sv_accuracy=0.01, alpha=0.95):
     """Return the vector of approximated Shapley values using the stratified monte-carlo method."""
 
+    nb_fit_begining = the_scenario.fit_count
     preprocessed_node_list = the_scenario.node_list
     N = len(preprocessed_node_list)
 
@@ -903,7 +938,7 @@ def Stratified_MC(the_scenario, sv_accuracy=0.01, alpha=0.95):
                 the_scenario.is_early_stopping,
                 save_folder=the_scenario.save_folder,
             )
-
+            the_scenario.fit_count += 1
             return char_value_dict[tuple(permut)]
 
     characteristic_all_node = not_twice_characteristic(
@@ -916,6 +951,7 @@ def Stratified_MC(the_scenario, sv_accuracy=0.01, alpha=0.95):
             "std_sv": np.array([0]),
             "prop": np.array([1]),
             "computed_val": char_value_dict,
+            "fit_count": the_scenario.fit_count - nb_fit_begining,
         }
     else:
         # sampling
@@ -986,7 +1022,5 @@ def Stratified_MC(the_scenario, sv_accuracy=0.01, alpha=0.95):
         "std_sv": np.sqrt(var),
         "prop": shap / np.sum(shap),
         "computed_val": char_value_dict,
+        "fit_count": the_scenario.fit_count - nb_fit_begining,
     }
-
-
- 

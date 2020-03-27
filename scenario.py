@@ -18,6 +18,8 @@ from node import Node
 
 
 class Scenario:
+    fit_count = 0
+
     def __init__(self, params, experiment_path):
 
         # Identify and get a dataset for running experiments
@@ -198,7 +200,9 @@ class Scenario:
         test_idx_idx_list = np.split(test_idx, splitting_indices_test)
 
         # Describe test data distribution scenario
-        print("- Test data distribution scenario chosen:", self.single_partner_test_mode)
+        print(
+            "- Test data distribution scenario chosen:", self.single_partner_test_mode
+        )
 
         # Populate nodes
         node_id = 0

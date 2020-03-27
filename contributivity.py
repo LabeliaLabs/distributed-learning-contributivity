@@ -14,6 +14,7 @@ class Contributivity:
         contributivity_scores=np.array([]),
         scores_std=np.array([]),
         computation_time=0,
+        fits=0,
     ):
         self.name = name
         self.contributivity_scores = contributivity_scores
@@ -24,11 +25,15 @@ class Contributivity:
         else:
             self.normalized_scores = contributivity_scores / sum_contrib
         self.computation_time = computation_time
+        self.fit_count = fits
 
     def __str__(self):
         computation_time = str(datetime.timedelta(seconds=self.computation_time))
         output = "\n" + self.name + "\n"
         output += "Computation time: " + computation_time + "\n"
+        output += (
+            "Number of characteristic function computed: " + str(self.fit_count) + "\n"
+        )
         # TODO print only 3 digits
         output += "Contributivity scores: " + str(self.contributivity_scores) + "\n"
         output += "Std of the contributivity scores: " + str(self.scores_std) + "\n"
