@@ -27,7 +27,7 @@ def compute_independent_scores(
     global_x_test,
     global_y_test,
 ):
-
+    fit_count=0
     print(
         "\n# Launching computation of perf. scores of models trained independently on each node"
     )
@@ -55,7 +55,7 @@ def compute_independent_scores(
 
 
 def compute_SV(node_list, epoch_count, x_val_global, y_val_global, x_test, y_test):
-
+    fit_count=0
     print("\n# Launching computation of Shapley Value of all nodes")
 
     # Initialize list of all players (nodes) indexes
@@ -204,8 +204,8 @@ def interpol_trunc_MC(the_scenario, sv_accuracy=0.01, alpha=0.9, truncation=0.05
             char_value_dict[tuple(permut)] = fl_training.compute_test_score(
                 small_node_list,
                 the_scenario.epoch_count,
-                the_scenario.x_esval,
-                the_scenario.y_esval,
+                the_scenario.x_val,
+                the_scenario.y_val,
                 the_scenario.x_test,
                 the_scenario.y_test,
                 the_scenario.is_early_stopping,
@@ -299,8 +299,8 @@ def IS_lin(the_scenario, sv_accuracy=0.01, alpha=0.95):
             char_value_dict[tuple(permut)] = fl_training.compute_test_score(
                 small_node_list,
                 the_scenario.epoch_count,
-                the_scenario.x_esval,
-                the_scenario.y_esval,
+                the_scenario.x_val,
+                the_scenario.y_val,
                 the_scenario.x_test,
                 the_scenario.y_test,
                 the_scenario.is_early_stopping,
@@ -453,8 +453,8 @@ def IS_reg(the_scenario, sv_accuracy=0.01, alpha=0.95):
             char_value_dict[tuple(subset)] = fl_training.compute_test_score(
                 small_node_list,
                 the_scenario.epoch_count,
-                the_scenario.x_esval,
-                the_scenario.y_esval,
+                the_scenario.x_val,
+                the_scenario.y_val,
                 the_scenario.x_test,
                 the_scenario.y_test,
                 the_scenario.is_early_stopping,
@@ -703,8 +703,8 @@ def AIS_Kriging(the_scenario, sv_accuracy=0.01, alpha=0.95, update=50):
             char_value_dict[tuple(subset)] = fl_training.compute_test_score(
                 small_node_list,
                 the_scenario.epoch_count,
-                the_scenario.x_esval,
-                the_scenario.y_esval,
+                the_scenario.x_val,
+                the_scenario.y_val,
                 the_scenario.x_test,
                 the_scenario.y_test,
                 the_scenario.is_early_stopping,
@@ -896,8 +896,8 @@ def Stratified_MC(the_scenario, sv_accuracy=0.01, alpha=0.95):
             char_value_dict[tuple(permut)] = fl_training.compute_test_score(
                 small_node_list,
                 the_scenario.epoch_count,
-                the_scenario.x_esval,
-                the_scenario.y_esval,
+                the_scenario.x_val,
+                the_scenario.y_val,
                 the_scenario.x_test,
                 the_scenario.y_test,
                 the_scenario.is_early_stopping,
@@ -940,9 +940,6 @@ def Stratified_MC(the_scenario, sv_accuracy=0.01, alpha=0.95):
             np.any(continuer) or (sv_accuracy) ** 2 < 4 * q ** 2 * v_max
         ):  # Check if the length of the confidence interval  is below the value of sv_accuracy*characteristic_all_node
             t += 1
-            print(t)
-            print(continuer)
-            print(4 * q ** 2 * v_max)
             e = (
                 1
                 + 1 / (1 + np.exp(gamma / beta))
