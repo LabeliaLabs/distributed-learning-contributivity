@@ -218,7 +218,6 @@ def compute_test_score(
     score_matrix = np.zeros(shape=(epochs, nodes_count))
     global_val_acc = []
     global_val_loss = []
-    aggregated_model = utils.generate_new_cnn_model()
     aggregation_weights = prepare_aggregation_weights(aggregation_weighting, nodes_count, node_list)
 
     # Train model (iterate for each epoch and mini-batch)
@@ -236,34 +235,54 @@ def compute_test_score(
         clear_session()
 
         # Split datasets in mini-batches
-            # TO DO
+        minibatched_x_train = [None] * nodes_count
+        minibatched_x_val = [None] * nodes_count
+        minibatched_y_train = [None] * nodes_count
+        minibatched_y_val = [None] * nodes_count
+        split_indices = np.arange(minibatch_count+1) / minibatch_count
+        for node_index, node in enumerate(node_list):
+            minibatched_x_train[node_index] = np.split(node.x_train, (split_indices * len(node.x_train)).astype(int))
+            minibatched_x_val[node_index] = np.split(node.x_val, (split_indices * len(node.x_val)).astype(int))
+            minibatched_y_train[node_index] = np.split(node.y_train, (split_indices * len(node.y_train)).astype(int))
+            minibatched_y_val[node_index] = np.split(node.y_val, (split_indices * len(node.y_val)).astype(int))
 
+        # Iterate over mini-batches for training and aggregation
         for minibatch in range(minibatch_count):
 
-            # Training phase
+            print("\nMini-batch " + str(minibatch+1) + " / " + str(minibatch_count))
+            is_first_minibatch = minibatch == 0
+
+            # Starting model is the aggregated model from the previous mini-batch iteration
+            if is_first_epoch and is_first_minibatch:
+                node_model = utils.generate_new_cnn_model()
+            else:
+                node_model = build_aggregated_model(aggregate_model_weights(model_list, aggregation_weights))
+
+            # Iterate over nodes for training each individual model
             for node_index, node in enumerate(node_list):
 
-                print("   Training on node " + str(node))
-                # Starting model is the aggregated model from the previous mini-batch iteration
-                node_model = aggregated_model
+                print("   Training on node " + str(node_index) + " - " + str(node))
 
                 # Train on node local data set
                 history = node_model.fit(
-                    node.x_train,
-                    node.y_train,
+                    minibatched_x_train[node_index][minibatch+1],
+                    minibatched_y_train[node_index][minibatch+1],
                     batch_size=constants.BATCH_SIZE,
                     epochs=1,
                     verbose=0,
-                    validation_data=(node.x_val, node.y_val),
+                    validation_data=(minibatched_x_val[node_index][minibatch+1], minibatched_y_val[node_index][minibatch+1]),
                 )
 
                 model_list[node_index] = node_model
+
+                print("val_accuracy: ")
+                print(history.history["val_accuracy"][0])
 
                 # At the end of each epoch (last mini-batch), populate the score matrix
                 if minibatch == (minibatch_count - 1):
                     score_matrix[epoch, node_index] = history.history["val_accuracy"][0]
 
-            # Aggregating phase: averaging the weights
+            # Aggregate the individual models trained on each node (by a weigthed averaging of the weights of the models)
             print("   Aggregating models weights to build a new model")
             new_weights = aggregate_model_weights(model_list, aggregation_weights)
             aggregated_model = build_aggregated_model(new_weights)
@@ -278,6 +297,8 @@ def compute_test_score(
         current_val_loss = model_evaluation[0]
         global_val_acc.append(model_evaluation[1])
         global_val_loss.append(current_val_loss)
+        print("model_evaluation: ")
+        print(model_evaluation)
 
         print("   Checking if early stopping critera are met:")
         if is_early_stopping:

@@ -124,11 +124,12 @@ class Scenario:
             logger.info("Quick demo: limit number of data and number of epochs.")
             self.x_train = self.x_train[:1000]
             self.y_train = self.y_train[:1000]
-            self.x_val = self.x_val[:100]
-            self.y_val = self.y_val[:100]
-            self.x_test = self.x_test[:100]
-            self.y_test = self.y_test[:100]
-            self.epoch_count = 2
+            self.x_val = self.x_val[:500]
+            self.y_val = self.y_val[:500]
+            self.x_test = self.x_test[:500]
+            self.y_test = self.y_test[:500]
+            self.epoch_count = 3
+            self.minibatch_count = 5
 
     def append_contributivity(self, contributivity):
 
