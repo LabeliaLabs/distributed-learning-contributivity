@@ -4,7 +4,7 @@ Number of data samples - test: 10000
 Nodes count: 3
 Percentages of data samples per node: [0.9, 0.05, 0.05]
 Random or stratified split of data samples: Random
-Centralised or distributed test set: Centralised
+Global or local testset: global
 Number of epochs: 40
 Early stopping on? True
 Test score of federated training: 0.9771000146865845

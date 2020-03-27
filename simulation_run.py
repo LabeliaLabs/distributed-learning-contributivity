@@ -88,51 +88,26 @@ def main():
 
 def run_scenario(current_scenario):
 
+    #%% Split data according to scenario and then pre-process successively train data, early stopping validation data, test data
+
     current_scenario.split_data()
     current_scenario.plot_data_distribution()
-
-    # Pre-process successively train data, early stopping validation data, test data
-    current_scenario.node_list = fl_training.preprocess_node_list(
-        current_scenario.node_list
-    )
-    (
-        current_scenario.x_esval,
-        current_scenario.y_esval,
-    ) = fl_training.preprocess_test_data(
-        current_scenario.x_esval, current_scenario.y_esval
-    )
-    current_scenario.x_test, current_scenario.y_test = fl_training.preprocess_test_data(
-        current_scenario.x_test, current_scenario.y_test
-    )
-
-    # Corrupt the node's label in needed
-    for i, node in enumerate(current_scenario.node_list):
-        if current_scenario.corrupted_nodes[i] == "corrupted":
-            print("corruption of node " + str(i) + "\n")
-            node.corrupt_labels()
-        elif current_scenario.corrupted_nodes[i] == "shuffled":
-            print("shuffleling of node " + str(i) + "\n")
-            node.shuffle_labels()
-        elif current_scenario.corrupted_nodes[i] == "not-corrupted":
-            pass
-        else:
-            print("unexpeted label of corruption")
+    current_scenario = fl_training.preprocess_scenarios_data(current_scenario)
+    
 
     # Train and eval on all nodes according to scenario
-
     is_save_fig = True
     current_scenario.federated_test_score = fl_training.compute_test_score_with_scenario(
         current_scenario, is_save_fig
     )
 
     # Contributivity 1: Baseline contributivity measurement (Shapley Value)
-
     start = timer()
     (contributivity_scores, scores_var,fit_count) = contributivity_measures.compute_SV(
         current_scenario.node_list,
         current_scenario.epoch_count,
-        current_scenario.x_esval,
-        current_scenario.y_esval,
+        current_scenario.x_val,
+        current_scenario.y_val,
         current_scenario.x_test,
         current_scenario.y_test,
     )
@@ -155,6 +130,9 @@ def run_scenario(current_scenario):
         current_scenario.node_list,
         current_scenario.epoch_count,
         current_scenario.federated_test_score,
+        current_scenario.single_partner_test_mode,
+        current_scenario.x_test,
+        current_scenario.y_test,
     )
     end = timer()
     # TODO use dict instead of 0/1 indexes
