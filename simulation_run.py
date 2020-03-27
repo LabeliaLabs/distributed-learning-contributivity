@@ -52,8 +52,8 @@ def main():
     n_repeats = config["n_repeats"]
 
     # GPU config
-    #gpus = tf.config.experimental.list_physical_devices("GPU")
-    #tf.config.experimental.set_memory_growth(gpus[0], True)
+    # gpus = tf.config.experimental.list_physical_devices("GPU")
+    # tf.config.experimental.set_memory_growth(gpus[0], True)
 
     # Close open figures
     plt.close("all")
@@ -93,7 +93,6 @@ def run_scenario(current_scenario):
     current_scenario.split_data()
     current_scenario.plot_data_distribution()
     current_scenario = fl_training.preprocess_scenarios_data(current_scenario)
-    
 
     #%% Corrupt the node's label in needed
 

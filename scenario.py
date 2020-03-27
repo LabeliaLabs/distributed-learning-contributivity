@@ -54,7 +54,9 @@ class Scenario:
             self.corrupted_nodes = ["not_corrupted"] * self.nodes_count
 
         # When training on a single node, the test set can be either the local node test set or the global test set
-        self.single_party_testset = params["single_party_testset"] # Toggle between 'local' and 'global'
+        self.single_party_testset = params[
+            "single_party_testset"
+        ]  # Toggle between 'local' and 'global'
 
         self.federated_test_score = int
 
@@ -272,7 +274,11 @@ class Scenario:
             + self.samples_split_option
             + "\n"
         )
-        out += "Centralised or distributed test set for single-node training: " + self.single_party_testset + "\n"
+        out += (
+            "Centralised or distributed test set for single-node training: "
+            + self.single_party_testset
+            + "\n"
+        )
         out += "Number of epochs: " + str(self.epoch_count) + "\n"
         out += "Early stopping on? " + str(self.is_early_stopping) + "\n"
         out += (
@@ -327,7 +333,7 @@ class Scenario:
                 dict_results["contributivity_std"] = contrib.scores_std[i]
 
                 df = df.append(dict_results, ignore_index=True)
-        
+
         df.info()
 
         return df

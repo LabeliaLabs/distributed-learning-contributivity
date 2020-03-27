@@ -21,6 +21,7 @@ import constants
 
 #%% Pre-process data for ML training
 
+
 def preprocess_scenarios_data(scenario):
     """Return scenario with central datasets (val, test) and distributed datasets (nodes) pre-processed"""
 
@@ -28,15 +29,15 @@ def preprocess_scenarios_data(scenario):
 
     # First, datasets of each node
     for node_index, node in enumerate(scenario.node_list):
-        
+
         # Preprocess inputs (x) data
         node.x_train = utils.preprocess_input(node.x_train)
         node.x_test = utils.preprocess_input(node.x_test)
-        
+
         # Preprocess labels (y) data
         node.y_train = keras.utils.to_categorical(node.y_train, constants.NUM_CLASSES)
         node.y_test = keras.utils.to_categorical(node.y_test, constants.NUM_CLASSES)
-        
+
         # Create validation dataset
         node.x_train, node.x_val, node.y_train, node.y_val = train_test_split(
             node.x_train, node.y_train, test_size=0.1, random_state=42
@@ -55,7 +56,6 @@ def preprocess_scenarios_data(scenario):
 
         print("   Node #" + str(node_index) + ": done.")
 
-
     # Then the scenario central dataset of the scenario
     scenario.x_val = utils.preprocess_input(scenario.x_val)
     scenario.y_val = keras.utils.to_categorical(scenario.y_val, constants.NUM_CLASSES)
@@ -69,7 +69,10 @@ def preprocess_scenarios_data(scenario):
 
 #%% Single partner training
 
-def compute_test_score_for_single_node(node, epoch_count, single_party_testset, global_x_test, global_y_test):
+
+def compute_test_score_for_single_node(
+    node, epoch_count, single_party_testset, global_x_test, global_y_test
+):
     """Return the score on test data of a model trained on a single node"""
 
     print("\n## Training and evaluating model on one single node.")
@@ -90,10 +93,10 @@ def compute_test_score_for_single_node(node, epoch_count, single_party_testset, 
     )
 
     # Reference testset according to scenario
-    if single_party_testset == 'global':
+    if single_party_testset == "global":
         x_test = global_x_test
         y_test = global_y_test
-    elif single_party_testset == 'local':
+    elif single_party_testset == "local":
         x_test = node.x_test
         y_test = node.y_test
     else:
@@ -120,6 +123,7 @@ def compute_test_score_for_single_node(node, epoch_count, single_party_testset, 
 
 #%% TODO no methods overloading
 
+
 def compute_test_score_with_scenario(scenario, is_save_fig=False):
     return compute_test_score(
         scenario.node_list,
@@ -137,6 +141,7 @@ def compute_test_score_with_scenario(scenario, is_save_fig=False):
 
 #%% Distributed learning training
 
+
 def compute_test_score(
     node_list,
     epoch_count,
@@ -145,7 +150,7 @@ def compute_test_score(
     x_test,
     y_test,
     is_early_stopping=True,
-    single_party_testset='global',
+    single_party_testset="global",
     is_save_fig=False,
     save_folder="",
 ):
@@ -155,7 +160,9 @@ def compute_test_score(
 
     # If only one node, fall back to dedicated single node function
     if nodes_count == 1:
-        return compute_test_score_for_single_node(node_list[0], epoch_count, single_party_testset, x_test, y_test)
+        return compute_test_score_for_single_node(
+            node_list[0], epoch_count, single_party_testset, x_test, y_test
+        )
 
     # Else, follow a federated learning procedure
     else:
@@ -209,7 +216,10 @@ def compute_test_score(
 
                 # Evaluate model for early stopping, on a central and dedicated 'early stopping validation' set
                 model_evaluation = aggregated_model.evaluate(
-                    x_val_global, y_val_global, batch_size=constants.BATCH_SIZE, verbose=0
+                    x_val_global,
+                    y_val_global,
+                    batch_size=constants.BATCH_SIZE,
+                    verbose=0,
                 )
                 current_val_loss = model_evaluation[0]
                 global_val_acc.append(model_evaluation[1])
