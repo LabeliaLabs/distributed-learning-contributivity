@@ -1,9 +1,0 @@
-experiment_name: debug
-n_repeats: 1
-scenario_params_list:
- - nodes_counts: 3
-   amounts_per_node: [0.8, 0.1, 0.1] 
-   samples_split_option: 'Random'
-   single_party_testset: 'global'
-   is_quick_demo: True
-   
