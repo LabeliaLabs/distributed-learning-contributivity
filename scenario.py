@@ -275,7 +275,7 @@ class Scenario:
             + "\n"
         )
         out += (
-            "Centralised or distributed test set for single-node training: "
+            "When training on a single node, global or local testset: "
             + self.single_partner_test_mode
             + "\n"
         )
