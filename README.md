@@ -2,11 +2,11 @@
 
 ## Introduction
 
-In data science projects involving multiple data providers, each one contributing data for the training of the same model, the partners might have to agree on how to share the reward of the ML challenge or the future revenues derived from the predictive model. We explore this question and the opportunity to implement some mechanisms helping partners to easily agree a value sharing model.
+In data science projects involving multiple data providers, each one contributing data for the training of the same model, the partners might have to agree on how to share the reward of the ML challenge or the future revenues derived from the predictive model. We explore this question and the opportunity to implement some mechanisms helping partners to easily agree on a value sharing model.
 
 ## Context of this work
 
-This work is being carried out in the context of the [HealthChain research consortium](https://www.substra.ai/en/healthchain-project). It is work in progress, very early stage. We would like to share with various interested parties and business partners to get their feedback and potential contributions. This is why it is shared as open source content on Substra Foundation’s repositories.
+This work is being carried out in the context of the [HealthChain research consortium](https://www.substra.ai/en/healthchain-project). It is work in progress, early stage. We would like to share it with various interested parties and business partners to get their feedback and potential contributions. This is why it is shared as open source content on Substra Foundation’s repositories.
 
 ## Work-in-progress exploration document
 
@@ -45,15 +45,16 @@ compute it with a reasonable amount of resources
   
 ### Using the code files
 
-- Define your mock scenario(s) in `simulation_run.py` by changing the values of the suggested parameters of the custom scenario
-- Then execute `simulation_run.py` (starting from the default simulation described, you can adapt here what training, evaluation, contributivity measurement you want to simulate)
-- Consult results in the results files generated
+- Define your mock scenario(s) in `config.yml` by changing the values of the suggested parameters of the custom scenario (you can browse more available parameters in `scenario.py`)
+- Clear `results.csv` if you want a clean sheet for starters
+- Then execute `simulation_run.py -f config.yml`
+- Consult results in the `results.csv` generated file or via the `analyse_results.ipynb` notebook
 
 ## Contacts
 
 Should you be interested in this open effort and would like to share any question, suggestion or input, you can use the following channels:
   - This Github repository (issues, PR...)
-  - Substra Foundation's [technical forum](https://forum.substra.org)
-  - Email: eric.boniface@substra.org, romain.goussault@substra.org
-  - Come meet with us at La Paillasse (Paris, France), La Cantine Numérique (Nantes, France) or Studio Iconosquare (Limoges, France)
+  - Substra Foundation's [Slack workspace](https://substra-workspace.slack.com/join/shared_invite/zt-cpyedcab-FHYgpy08efKJ2FCadE2yCA)
+  - Email: hello@substra.org
+  - Come meet with us at La Paillasse (Paris, France), Le Palace (Nantes, France) or Studio Iconosquare (Limoges, France)
 
