@@ -23,12 +23,12 @@ def compute_independent_scores(the_scenario):
     nb_fit_begining = the_scenario.fit_count
     collaborative_score = fl_training.compute_test_score_with_scenario(the_scenario)
     the_scenario.fit_count += 1
-    node_list, epoch_count, x_test, y_test, single_partner_test_mode, = (
+    node_list, epoch_count, x_test, y_test, single_partner_test_mode= (
         the_scenario.node_list,
         the_scenario.epoch_count,
         the_scenario.x_test,
         the_scenario.y_test,
-        the_scenario.single_partner_test_mode,
+        the_scenario.single_partner_test_mode, 
     )
     print(
         "\n# Launching computation of perf. scores of models trained independently on each node"
@@ -62,13 +62,15 @@ def compute_independent_scores(the_scenario):
 
 def compute_SV(the_scenario):
     nb_fit_begining = the_scenario.fit_count
-    node_list, epoch_count, x_val_global, y_val_global, x_test, y_test = (
+    node_list, epoch_count, x_val_global, y_val_global, x_test, y_test, aggregation_weighting, minibatch_count = (
         the_scenario.node_list,
         the_scenario.epoch_count,
         the_scenario.x_val,
         the_scenario.y_val,
         the_scenario.x_test,
         the_scenario.y_test,
+        the_scenario.aggregation_weighting,
+        the_scenario.minibatch_count,
     )
     print("\n# Launching computation of Shapley Value of all nodes")
 
@@ -138,17 +140,10 @@ def truncated_MC(the_scenario, sv_accuracy=0.01, alpha=0.9, truncation=0.05):
                 the_scenario.y_val,
                 the_scenario.x_test,
                 the_scenario.y_test,
+                the_scenario.aggregation_weighting,
+                the_scenario.minibatch_count,
                 the_scenario.is_early_stopping,
                 save_folder=the_scenario.save_folder,
-                scenario.epoch_count,
-                scenario.x_val,
-                scenario.y_val,
-                scenario.x_test,
-                scenario.y_test,
-                scenario.aggregation_weighting,
-                scenario.minibatch_count,
-                scenario.is_early_stopping,
-                save_folder=scenario.save_folder,
             )
             the_scenario.fit_count += 1
             return char_value_dict[tuple(permut)]
@@ -238,6 +233,8 @@ def interpol_trunc_MC(the_scenario, sv_accuracy=0.01, alpha=0.9, truncation=0.05
                 the_scenario.y_val,
                 the_scenario.x_test,
                 the_scenario.y_test,
+                the_scenario.aggregation_weighting,
+                the_scenario.minibatch_count,
                 the_scenario.is_early_stopping,
                 save_folder=the_scenario.save_folder,
             )
@@ -337,6 +334,8 @@ def IS_lin(the_scenario, sv_accuracy=0.01, alpha=0.95):
                 the_scenario.y_val,
                 the_scenario.x_test,
                 the_scenario.y_test,
+                the_scenario.aggregation_weighting,
+                the_scenario.minibatch_count,
                 the_scenario.is_early_stopping,
                 save_folder=the_scenario.save_folder,
             )
@@ -494,6 +493,8 @@ def IS_reg(the_scenario, sv_accuracy=0.01, alpha=0.95):
                 the_scenario.y_val,
                 the_scenario.x_test,
                 the_scenario.y_test,
+                the_scenario.aggregation_weighting,
+                the_scenario.minibatch_count,
                 the_scenario.is_early_stopping,
                 save_folder=the_scenario.save_folder,
             )
@@ -748,6 +749,8 @@ def AIS_Kriging(the_scenario, sv_accuracy=0.01, alpha=0.95, update=50):
                 the_scenario.y_val,
                 the_scenario.x_test,
                 the_scenario.y_test,
+                the_scenario.aggregation_weighting,
+                the_scenario.minibatch_count,
                 the_scenario.is_early_stopping,
                 save_folder=the_scenario.save_folder,
             )
@@ -944,6 +947,8 @@ def Stratified_MC(the_scenario, sv_accuracy=0.01, alpha=0.95):
                 the_scenario.y_val,
                 the_scenario.x_test,
                 the_scenario.y_test,
+                the_scenario.aggregation_weighting,
+                the_scenario.minibatch_count,
                 the_scenario.is_early_stopping,
                 save_folder=the_scenario.save_folder,
             )
@@ -1066,6 +1071,8 @@ def Support(the_scenario, sv_accuracy=0.01, alpha=0.95):
                 the_scenario.y_val,
                 the_scenario.x_test,
                 the_scenario.y_test,
+                the_scenario.aggregation_weighting,
+                the_scenario.minibatch_count,
                 the_scenario.is_early_stopping,
                 save_folder=the_scenario.save_folder,
             )
