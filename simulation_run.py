@@ -44,10 +44,6 @@ def main():
         logger.info(f"Using default config file: {DEFAULT_CONFIG_FILE}")
         config_filepath = DEFAULT_CONFIG_FILE
 
-
-    fdsfdsfdsfsd
-
-    
     config = utils.load_cfg(config_filepath)
     config = utils.init_result_folder(config_filepath, config)
     experiment_path = config["experiment_path"]
