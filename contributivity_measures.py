@@ -92,7 +92,7 @@ def compute_SV(the_scenario):
         # print('\nComputing characteristic function on coalition ', coalition) # VERBOSE
         characteristic_function.append(
             fl_training.compute_test_score(
-                coalition_nodes, epoch_count, x_val_global, y_val_global, x_test, y_test
+                coalition_nodes, epoch_count, x_val_global, y_val_global, x_test, y_test, aggregation_weighting, minibatch_count
             )
         )
         the_scenario.fit_count += 1
@@ -140,6 +140,15 @@ def truncated_MC(the_scenario, sv_accuracy=0.01, alpha=0.9, truncation=0.05):
                 the_scenario.y_test,
                 the_scenario.is_early_stopping,
                 save_folder=the_scenario.save_folder,
+                scenario.epoch_count,
+                scenario.x_val,
+                scenario.y_val,
+                scenario.x_test,
+                scenario.y_test,
+                scenario.aggregation_weighting,
+                scenario.minibatch_count,
+                scenario.is_early_stopping,
+                save_folder=scenario.save_folder,
             )
             the_scenario.fit_count += 1
             return char_value_dict[tuple(permut)]

@@ -53,7 +53,7 @@ class Scenario:
         if "corrupted_nodes" in params:
             self.corrupted_nodes = params["corrupted_nodes"]
         else:
-            self.corrupted_nodes = ["not_corrupted"] * self.nodes_count
+            self.corrupted_nodes = ["not-corrupted"] * self.nodes_count
 
         # When training on a single node, the test set can be either the local node test set or the global test set
         self.single_partner_test_mode = params[
@@ -62,11 +62,19 @@ class Scenario:
 
         self.federated_test_score = int
 
+        # Define how federated learning aggregation steps are weighted. Toggle between 'uniform' and 'data-volume'
+        # Default is 'uniform'
+        if "aggregation_weighting" in params:
+            self.aggregation_weighting = params["aggregation_weighting"]
+        else:
+            self.aggregation_weighting = "uniform"
+
         self.node_list = []
 
         self.contributivity_list = []
 
         self.epoch_count = 40
+        self.minibatch_count = 20
 
         self.is_early_stopping = True
 
@@ -108,11 +116,12 @@ class Scenario:
             logger.info("Quick demo: limit number of data and number of epochs.")
             self.x_train = self.x_train[:1000]
             self.y_train = self.y_train[:1000]
-            self.x_val = self.x_val[:100]
-            self.y_val = self.y_val[:100]
-            self.x_test = self.x_test[:100]
-            self.y_test = self.y_test[:100]
-            self.epoch_count = 2
+            self.x_val = self.x_val[:500]
+            self.y_val = self.y_val[:500]
+            self.x_test = self.x_test[:500]
+            self.y_test = self.y_test[:500]
+            self.epoch_count = 3
+            self.minibatch_count = 5
 
     def append_contributivity(self, contributivity):
 
