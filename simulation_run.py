@@ -2,8 +2,13 @@
 """
 A script for:
     - mocking a multi-partner ML project by splitting data among different nodes
+<<<<<<< HEAD
     - training a model across multiple nodes in a distributed approach
     - measuring the respective contributions of each node to the model performance (termed "contributivity")
+=======
+    - train a model across multiple nodes in a distributed approach
+    - measure the respective contributions of each node to the model performance (termed "contributivity")
+>>>>>>> 08b0954c971aa60ee934ba67fa9770c129803791
 """
 
 from __future__ import print_function
