@@ -8,37 +8,33 @@ In data science projects involving multiple data providers, each one contributin
 
 This work is being carried out in the context of the [HealthChain research consortium](https://www.substra.ai/en/healthchain-project). It is work in progress, early stage. We would like to share it with various interested parties and business partners to get their feedback and potential contributions. This is why it is shared as open source content on Substra Foundation’s repositories.
 
-## Work-in-progress exploration document
+## Exploratory document
 
-The work-in-progress document describing this exploration can be found [here](https://docs.google.com/document/d/1dILvplN7h3-KB6OcHFNx9lSpAKyaBrwNaIRQ9j6XDT8/edit?usp=sharing). It is an ongoing effort, eager to welcome collaborations, feedbacks and questions.
+An exploratory document provides a deeper context description and details certain contributivity measurement approaches. This document can be found [here](https://docs.google.com/document/d/1dILvplN7h3-KB6OcHFNx9lSpAKyaBrwNaIRQ9j6XDT8/edit?usp=sharing). It is an ongoing effort, eager to welcome collaborations, feedbacks and questions.
 
 ## About this repository
 
-In this repository, we would like to benchmark the different contributivity measurement approaches described in the document on a set of public datasets (or a single dataset artificially split in a number of individual datasets, to mock a collaborative ML project).
+In this repository, we would like to benchmark different contributivity measurement approaches on a public dataset artificially split in a number of individual datasets, to mock a collaborative ML project.
 
 The objective is to compare the contributivity figures obtained with the different approaches, and try to see how potential differences could be interpreted.
 
-### Experimental plan H2 2019
+### Experimental approach
 
-TODO: reformulate
-
-We want to start experimenting contributivity evaluations in collaborative data science / distributed learning scenarios. At this stage this cannot be a thorough and complete experimentation though, as our exploration of the topic is in progress and we can dedicate only a limited amount of time and energy to this project. To make the most out of it, it is key to capitalize on this first experiment and develop it as a reproducible pipeline that we will be able to improve, enrich, complement over time.
+We want to start experimenting contributivity evaluations in collaborative data science / distributed learning scenarios. At this stage this cannot be a thorough and complete experimentation though, as our exploration of the topic is in progress and we can dedicate only a limited amount of time and energy to this project. To make the most out of it, it is key to capitalize on this effort and develop it as a reproducible pipeline that we will be able to improve, enrich, complement over time.
 
 - Public dataset of choice: MNIST
 - Collaborative data science scenarios - Parameters:
-  - Overlap of respective datasets: distinct (by stratifying MNIST figures) vs. overlapping (randomized split)
+  - Overlap of respective datasets: distinct (by stratifying MNIST figures) vs. overlapping (with a randomized split)
   - Size of respective datasets: equivalent vs. different
-  - Number of data partners: 3 databases A, B, C (to be parameterized in future improvements of this experiment)
-- ML algorithm: CNN, not too deep so it can run on CPU
+  - Number of data partners: 3 databases A, B, C is our default scenario, but this is to be parameterized
+- ML algorithm: CNN adapted to MNIST, not too deep so it can run on CPU
 - Distributed learning approach: federated learning (other approaches to be tested in future improvements of this experiment)
 - Contributivity evaluation approach:
   - The approaches we would like to compare (further described in the document linked above):
-    - [done] Shapley value: given the limited number of data partners we consider at that stage it is possible to actually 
-compute it with a reasonable amount of resources
+    - [done] Shapley value: given the limited number of data partners we consider at that stage it is possible to actually compute it with a reasonable amount of resources
     - [done] Performance scores of models trained independently on each node
-    - Truncated Monte Carlo Shapley approximation adapted for datasets instead of individual datum
-    - Federated learning step-by-step
-    - (More approaches to be tested in future improvements of this experiment)
+    - [done] Truncated Monte Carlo Shapley approximation adapted for datasets instead of individual datum (including optimized variants)
+    - [in progress] Information sampling method (including optimized variants: regression importance sampling method, Kriging adaptive importance sampling method)
   - Comparison variables (baseline: Shapley value)
     - Contributivity relative values
     - Computation time
