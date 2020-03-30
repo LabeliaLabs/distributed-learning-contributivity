@@ -132,6 +132,7 @@ def compute_test_score_with_scenario(scenario, is_save_fig=False):
         scenario.y_val,
         scenario.x_test,
         scenario.y_test,
+        scenario.aggregation_weighting,
         scenario.is_early_stopping,
         scenario.single_partner_test_mode,
         is_save_fig,
@@ -149,6 +150,7 @@ def compute_test_score(
     y_val_global,
     x_test,
     y_test,
+    aggregation_weighting="uniform",
     is_early_stopping=True,
     single_partner_test_mode="global",
     is_save_fig=False,
@@ -174,6 +176,15 @@ def compute_test_score(
         global_val_acc = []
         global_val_loss = []
 
+        # Create list of weights for aggregation steps
+        aggregation_weights = []
+        if aggregation_weighting == "uniform":
+            aggregation_weights = [1/nodes_count] * nodes_count
+        elif aggregation_weighting == "data-volume":
+            node_sizes = [len(node.x_train) for node in node_list]
+            aggregation_weights = node_sizes / np.sum(node_sizes)
+        assert (np.sum(aggregation_weights) == 1)
+
         print("\n### Training model:")
         for epoch in range(epochs):
 
@@ -193,18 +204,15 @@ def compute_test_score(
                 print("   First epoch, generate model from scratch")
 
             else:
-                # Aggregating phase : averaging the weights
+                # Aggregating phase: averaging the weights
                 print("   Aggregating models weights to build a new model")
-                weights = [model.get_weights() for model in model_list]
+                weights_per_model = [model.get_weights() for model in model_list]
+                weights_per_layer = list(zip(*weights_per_model))
                 new_weights = list()
 
-                for weights_list_tuple in zip(*weights):  # TODO : make this clearer
-                    new_weights.append(
-                        [
-                            np.array(weights_).mean(axis=0)
-                            for weights_ in zip(*weights_list_tuple)
-                        ]
-                    )
+                for weights_for_layer in weights_per_layer:
+                    avg_weights_for_layer = np.average(np.array(weights_for_layer), axis=0, weights=aggregation_weights)
+                    new_weights.append(list(avg_weights_for_layer))
 
                 aggregated_model = utils.generate_new_cnn_model()
                 aggregated_model.set_weights(new_weights)

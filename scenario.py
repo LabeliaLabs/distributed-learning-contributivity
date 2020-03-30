@@ -51,7 +51,7 @@ class Scenario:
         if "corrupted_nodes" in params:
             self.corrupted_nodes = params["corrupted_nodes"]
         else:
-            self.corrupted_nodes = ["not_corrupted"] * self.nodes_count
+            self.corrupted_nodes = ["not-corrupted"] * self.nodes_count
 
         # When training on a single node, the test set can be either the local node test set or the global test set
         self.single_partner_test_mode = params[
@@ -59,6 +59,13 @@ class Scenario:
         ]  # Toggle between 'local' and 'global'
 
         self.federated_test_score = int
+
+        # Define how federated learning aggregation steps are weighted. Toggle between 'uniform' and 'data-volume'
+        # Default is 'uniform'
+        if "aggregation_weighting" in params:
+            self.aggregation_weighting = params["aggregation_weighting"]
+        else:
+            self.aggregation_weighting = "uniform"
 
         self.node_list = []
 
