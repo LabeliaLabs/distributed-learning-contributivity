@@ -23,6 +23,7 @@ class Scenario:
         # Identify and get a dataset for running experiments
         self.dataset_name = "MNIST"
         (x_train, y_train), (x_test, y_test) = mnist.load_data()
+
         # The train set has to be split into a train set and a validation set for early stopping
         self.x_train, self.x_val, self.y_train, self.y_val = train_test_split(
             x_train, y_train, test_size=0.2, random_state=42

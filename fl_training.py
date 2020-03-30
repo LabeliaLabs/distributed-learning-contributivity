@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Train a model across multiple nodes
+Functions for model training and evaluation (single-partner and multi-partner cases)
 (inspired from: https://keras.io/examples/mnist_cnn/)
 """
 
@@ -79,7 +79,6 @@ def compute_test_score_for_single_node(
 
     # Initialize model
     model = utils.generate_new_cnn_model()
-    # print(model.summary())
 
     # Train model
     print("\n### Training model on one single node: " + str(node))
@@ -92,7 +91,7 @@ def compute_test_score_for_single_node(
         validation_data=(node.x_val, node.y_val),
     )
 
-    # Reference testset according to scenario
+    # Reference a testset according to the scenario configuration
     if single_partner_test_mode == "global":
         x_test = global_x_test
         y_test = global_y_test
