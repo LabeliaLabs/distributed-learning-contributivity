@@ -221,7 +221,30 @@ def run_scenario(current_scenario):
     print(SMCS_contib)
     print("\n## Number of fits with Stratified Monte Carlo Shapley (SMCS):")
     print(SMCS_results["fit_count"])
-    # Contributivity 6: Adaptative importance sampling with kriging model
+    
+    # Contributivity 6:   importance sampling with linear regresion model
+
+    start = timer()
+    Support_results = contributivity_measures.Stratified_MC(
+        current_scenario, sv_accuracy=0.01, alpha=0.95
+    )
+    end = timer()
+
+    Support_contib = contributivity.Contributivity(
+        "SMCS values",
+        Support_results["sv"],
+        Support_results["std_sv"],
+        np.round(end - start),
+        Support_results["fit_count"],
+    )
+
+    current_scenario.append_contributivity(Support_contib)
+    print("\n## Evaluating contributivity with Stratified Monte Carlo Shapley (SMCS):")
+    print(Support_contib)
+    print("\n## Number of fits with Stratified Monte Carlo Shapley (SMCS):")
+    print(Support_results["fit_count"])
+    
+    # Contributivity 7: Adaptative importance sampling with kriging model
 
     start = timer()
     AISS_results = contributivity_measures.AIS_Kriging(
@@ -243,7 +266,7 @@ def run_scenario(current_scenario):
     print("\n## Number of fits with Adaptative importance sampling (AISS):")
     print(AISS_results["fit_count"])
 
-    # Contributivity 7:   importance sampling with linear interpolation model
+    # Contributivity 8:   importance sampling with linear interpolation model
 
     start = timer()
     ISS_lin_results = contributivity_measures.IS_lin(
@@ -269,10 +292,10 @@ def run_scenario(current_scenario):
     )
     print(ISS_lin_results["fit_count"])
 
-    # Contributivity 8:   importance sampling with linear regresion model
+    # Contributivity 9:   importance sampling with   regresion model
 
     start = timer()
-    ISS_reg_results = contributivity_measures.IS_lin(
+    ISS_reg_results = contributivity_measures.IS_reg(
         current_scenario, sv_accuracy=0.01, alpha=0.95
     )
     end = timer()
@@ -294,6 +317,8 @@ def run_scenario(current_scenario):
         "\n## Number of fits  with  importance sampling Shapley with regression model  (ISS_reg):"
     )
     print(ISS_reg_results["fit_count"])
+    
+
 
     # Save results to file
 
