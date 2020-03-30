@@ -145,9 +145,6 @@ def truncated_MC(scenario, sv_accuracy=0.01, alpha=0.9, contrib_accuracy=0.05):
             t < 100 or t < q ** 2 * v_max / (sv_accuracy * characteristic_all_node) ** 2
         ):  # Check if the length of the confidence interval  is below the value of sv_accuracy*characteristic_all_node
             t += 1
-            print(t)
-            print(q ** 2 * v_max / (sv_accuracy * characteristic_all_node) ** 2)
-            print()
 
             if t == 1:
                 contributions = np.array([np.zeros(n)])
