@@ -74,6 +74,7 @@ class Scenario:
         self.epoch_count = 40
         if 'minibatch_count' in params.keys():
             self.minibatch_count = params['minibatch_count']
+            assert self.minibatch_count > 0
         else:
             self.minibatch_count = 20
 
@@ -233,6 +234,9 @@ class Scenario:
 
         # Check coherence of node_list versus nodes_count
         assert len(self.node_list) == self.nodes_count
+
+        # Check coherence of number of mini-batches versus smaller node
+        assert self.minibatch_count <= (min(self.amounts_per_node) * len(x_train))
 
         # Print and plot for controlling
         print("\n### Splitting data among nodes:")
