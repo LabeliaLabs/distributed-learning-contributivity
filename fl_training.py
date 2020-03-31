@@ -272,7 +272,7 @@ def compute_test_score(
                     batch_size=constants.BATCH_SIZE,
                     epochs=1,
                     verbose=0,
-                    validation_data=(minibatched_x_val[node_index][minibatch+1], minibatched_y_val[node_index][minibatch+1]),
+                    validation_data=(x_val_global, y_val_global),
                 )
 
                 model_list[node_index] = node_model
