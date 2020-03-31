@@ -237,21 +237,17 @@ def compute_test_score(
 
         # Split datasets in mini-batches
         minibatched_x_train = [None] * nodes_count
-        minibatched_x_val = [None] * nodes_count
         minibatched_y_train = [None] * nodes_count
-        minibatched_y_val = [None] * nodes_count
         split_indices = np.arange(minibatch_count+1) / minibatch_count
         for node_index, node in enumerate(node_list):
             minibatched_x_train[node_index] = np.split(node.x_train, (split_indices * len(node.x_train)).astype(int))
-            minibatched_x_val[node_index] = np.split(node.x_val, (split_indices * len(node.x_val)).astype(int))
             minibatched_y_train[node_index] = np.split(node.y_train, (split_indices * len(node.y_train)).astype(int))
-            minibatched_y_val[node_index] = np.split(node.y_val, (split_indices * len(node.y_val)).astype(int))
 
         # Iterate over mini-batches for training and aggregation
-        for minibatch in range(minibatch_count):
+        for minibatch_index in range(1, minibatch_count):
 
-            print("\nMini-batch " + str(minibatch+1) + " / " + str(minibatch_count))
-            is_first_minibatch = minibatch == 0
+            print("\nMini-batch " + str(minibatch_index) + " / " + str(minibatch_count))
+            is_first_minibatch = minibatch_index == 1
 
             # Starting model is the aggregated model from the previous mini-batch iteration
             if is_first_epoch and is_first_minibatch:
@@ -266,8 +262,8 @@ def compute_test_score(
 
                 # Train on node local data set
                 history = node_model.fit(
-                    minibatched_x_train[node_index][minibatch+1],
-                    minibatched_y_train[node_index][minibatch+1],
+                    minibatched_x_train[node_index][minibatch_index],
+                    minibatched_y_train[node_index][minibatch_index],
                     batch_size=constants.BATCH_SIZE,
                     epochs=1,
                     verbose=0,
@@ -280,7 +276,7 @@ def compute_test_score(
                 print(history.history["val_accuracy"][0])
 
                 # At the end of each epoch (last mini-batch), populate the score matrix
-                if minibatch == (minibatch_count - 1):
+                if minibatch_index == (minibatch_count - 1):
                     score_matrix[epoch, node_index] = history.history["val_accuracy"][0]
 
             # Aggregate the individual models trained on each node (by a weigthed averaging of the weights of the models)
