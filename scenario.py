@@ -75,6 +75,10 @@ class Scenario:
             self.epoch_count = params['epoch_count']
         else:
             self.epoch_count = 40
+            
+        self.methods = ["Shapley values",
+                        "Independant scores",
+                        "TMCS values"]
 
         self.is_early_stopping = True
 
