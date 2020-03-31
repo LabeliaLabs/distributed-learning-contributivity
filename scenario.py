@@ -72,7 +72,10 @@ class Scenario:
         self.contributivity_list = []
 
         self.epoch_count = 40
-        self.minibatch_count = 20
+        if 'minibatch_count' in params.keys():
+            self.minibatch_count = params['minibatch_count']
+        else:
+            self.minibatch_count = 20
 
         self.is_early_stopping = True
 
@@ -119,7 +122,6 @@ class Scenario:
             self.x_test = self.x_test[:500]
             self.y_test = self.y_test[:500]
             self.epoch_count = 3
-            self.minibatch_count = 5
 
     def append_contributivity(self, contributivity):
 
