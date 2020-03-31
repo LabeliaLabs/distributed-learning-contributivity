@@ -4,7 +4,7 @@ scenario_params_list:
  - nodes_counts: 3
    amounts_per_node: [0.4, 0.3, 0.3] 
    samples_split_option: 'Random'
-   aggregation_weighting: 'data-volume'
+   aggregation_weighting: 'data_volume'
    single_partner_test_mode: 'global'
  - nodes_counts: 3
    amounts_per_node: [0.9, 0.05, 0.05] 
@@ -14,6 +14,6 @@ scenario_params_list:
  - nodes_counts: 2
    amounts_per_node: [0.9, 0.1] 
    samples_split_option: 'Random'
-   aggregation_weighting: 'data-volume'
+   aggregation_weighting: 'data_volume'
    single_partner_test_mode: 'global'
    

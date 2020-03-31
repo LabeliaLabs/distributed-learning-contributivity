@@ -149,7 +149,7 @@ def prepare_aggregation_weights(aggregation_weighting, nodes_count, node_list):
     aggregation_weights = []
     if aggregation_weighting == "uniform":
         aggregation_weights = [1/nodes_count] * nodes_count
-    elif aggregation_weighting == "data-volume":
+    elif aggregation_weighting == "data_volume":
         node_sizes = [len(node.x_train) for node in node_list]
         aggregation_weights = node_sizes / np.sum(node_sizes)
     else:
