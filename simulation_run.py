@@ -23,7 +23,6 @@ from loguru import logger
 
 
 import contributivity
-import contributivity_measures
 import fl_training
 import scenario
 
@@ -101,224 +100,99 @@ def run_scenario(current_scenario):
     )
 
     # Contributivity 1: Baseline contributivity measurement (Shapley Value)
-    start = timer()
-    (contributivity_scores, scores_var, fit_count) = contributivity_measures.compute_SV(
-        current_scenario
-    )
-    end = timer()
 
-    shapley_contrib = contributivity.Contributivity(
-        "Shapley values",
-        contributivity_scores,
-        scores_var,
-        np.round(end - start),
-        fit_count,
-    )
+    shapley_contrib = contributivity.Contributivity(scenario=current_scenario)
+    shapley_contrib.compute_SV(current_scenario)
 
     current_scenario.append_contributivity(shapley_contrib)
     print("\n## Evaluating contributivity with Shapley:")
     print(shapley_contrib)
-    print("\n## Number of fits with Shapley:")
-    print(fit_count)
 
     # Contributivity 2: Performance scores of models trained independently on each node
 
-    start = timer()
-    scores = contributivity_measures.compute_independent_scores(current_scenario)
-    end = timer()
-    # TODO use dict instead of 0/1 indexes
-    independant_raw_contrib = contributivity.Contributivity(
-        "Independant scores raw",
-        scores[0],
-        np.repeat(0.0, len(scores[0])),
-        np.round(end - start),
-        fits=scores[2],
-    )
-    independant_additiv_contrib = contributivity.Contributivity(
-        "Independant scores additive",
-        scores[1],
-        np.repeat(0.0, len(scores[1])),
-        np.round(end - start),
-        fits=scores[2],
-    )
-
-    independant_computation_time = np.round(end - start)
-    independant_raw_contrib.computation_time = independant_computation_time
-    independant_additiv_contrib.computation_time = independant_computation_time
+    independant_raw_contrib = contributivity.Contributivity(scenario=current_scenario)
+    independant_raw_contrib.compute_independent_scores_raws(current_scenario)
 
     current_scenario.append_contributivity(independant_raw_contrib)
-    current_scenario.append_contributivity(independant_additiv_contrib)
     print("\n## Evaluating contributivity with independent single partner models:")
     print(independant_raw_contrib)
+
+    # Contributivity 3: Performance scores of models trained independently on each node
+
+    independant_additiv_contrib = contributivity.Contributivity(
+        scenario=current_scenario
+    )
+    independant_additiv_contrib.compute_independent_scores_additive(current_scenario)
+
+    current_scenario.append_contributivity(independant_additiv_contrib)
+    print(
+        "\n## Evaluating contributivity with independent single partner models (additive contrib):"
+    )
     print(independant_additiv_contrib)
-    print("\n## Number of fits with independent single partner models:")
-    print(scores[2])
 
-    # Contributivity 3: Truncated Monte Carlo Shapley
+    # Contributivity 4: Truncated Monte Carlo Shapley
 
-    start = timer()
-    tmcs_results = contributivity_measures.truncated_MC(
-        current_scenario, sv_accuracy=0.01, alpha=0.95, truncation=0.05
-    )
-    end = timer()
-
-    tmcs_contrib = contributivity.Contributivity(
-        "TMCS values",
-        tmcs_results["sv"],
-        tmcs_results["std_sv"],
-        np.round(end - start),
-        tmcs_results["fit_count"],
-    )
+    tmcs_contrib = contributivity.Contributivity(scenario=current_scenario)
+    tmcs_contrib.truncated_MC(current_scenario)
 
     current_scenario.append_contributivity(tmcs_contrib)
-    print("\n## Evaluating contributivity with Truncated Monte Carlo Shapley (TMCS):")
+    print("\n## Evaluating contributivity with Truncated Monte Carlo Shapley:")
     print(tmcs_contrib)
-    print("\n## Number of fits with Truncated Monte Carlo Shapley (TMCS):")
-    print(tmcs_results["fit_count"])
 
-    # Contributivity 4: imterpolated monte-carlo
+    # Contributivity 5: interpolated monte-carlo
 
-    start = timer()
-    IMCS_results = contributivity_measures.interpol_trunc_MC(
-        current_scenario, sv_accuracy=0.01, alpha=0.95
-    )
-    end = timer()
+    itmcs_contrib = contributivity.Contributivity(scenario=current_scenario)
+    itmcs_contrib.interpol_trunc_MC(current_scenario)
 
-    IMC_contib = contributivity.Contributivity(
-        "IMCS values",
-        IMCS_results["sv"],
-        IMCS_results["std_sv"],
-        np.round(end - start),
-        IMCS_results["fit_count"],
-    )
-
-    current_scenario.append_contributivity(IMC_contib)
+    current_scenario.append_contributivity(itmcs_contrib)
     print(
-        "\n## Evaluating contributivity with imterpolated Monte Carlo Shapley (IMCS):"
+        "\n## Evaluating contributivity with interpolated truncated Monte Carlo Shapley:"
     )
-    print(IMC_contib)
-    print("\n## Number of fits with imterpolated Monte Carlo Shapley (IMCS):")
-    print(IMCS_results["fit_count"])
+    print(itmcs_contrib)
 
-    # Contributivity 5: Stratified Monte Carlo
+    # Contributivity 6:   importance sampling with linear interpolation model
+    IS_lin_contrib = contributivity.Contributivity(scenario=current_scenario)
+    IS_lin_contrib.IS_lin(current_scenario)
 
-    start = timer()
-    SMCS_results = contributivity_measures.Stratified_MC(
-        current_scenario, sv_accuracy=0.01, alpha=0.95
+    current_scenario.append_contributivity(IS_lin_contrib)
+    print(
+        "\n## Evaluating contributivity with importance sampling with linear interpolation model:"
     )
-    end = timer()
+    print(IS_lin_contrib)
 
-    SMCS_contib = contributivity.Contributivity(
-        "SMCS values",
-        SMCS_results["sv"],
-        SMCS_results["std_sv"],
-        np.round(end - start),
-        SMCS_results["fit_count"],
+    # Contributivity 7: mportance sampling with regression model
+    IS_reg_contrib = contributivity.Contributivity(scenario=current_scenario)
+    IS_reg_contrib.IS_reg(current_scenario)
+
+    current_scenario.append_contributivity(IS_reg_contrib)
+    print(
+        "\n## Evaluating contributivity with importance sampling with regresion model:"
     )
+    print(IS_reg_contrib)
 
-    current_scenario.append_contributivity(SMCS_contib)
-    print("\n## Evaluating contributivity with Stratified Monte Carlo Shapley (SMCS):")
-    print(SMCS_contib)
-    print("\n## Number of fits with Stratified Monte Carlo Shapley (SMCS):")
-    print(SMCS_results["fit_count"])
-    
-    # Contributivity 6:   importance sampling with linear regresion model
-
-    start = timer()
-    Support_results = contributivity_measures.Stratified_MC(
-        current_scenario, sv_accuracy=0.01, alpha=0.95
-    )
-    end = timer()
-
-    Support_contib = contributivity.Contributivity(
-        "SMCS values",
-        Support_results["sv"],
-        Support_results["std_sv"],
-        np.round(end - start),
-        Support_results["fit_count"],
-    )
-
-    current_scenario.append_contributivity(Support_contib)
-    print("\n## Evaluating contributivity with Stratified Monte Carlo Shapley (SMCS):")
-    print(Support_contib)
-    print("\n## Number of fits with Stratified Monte Carlo Shapley (SMCS):")
-    print(Support_results["fit_count"])
-    
-    # Contributivity 7: Adaptative importance sampling with kriging model
-
-    start = timer()
-    AISS_results = contributivity_measures.AIS_Kriging(
-        current_scenario, sv_accuracy=0.01, alpha=0.95
-    )
-    end = timer()
-
-    AISS_contib = contributivity.Contributivity(
-        "AISS values",
-        AISS_results["sv"],
-        AISS_results["std_sv"],
-        np.round(end - start),
-        AISS_results["fit_count"],
-    )
+    # Contributivity 8: Adaptative importance sampling with kriging model
+    AISS_contib = contributivity.Contributivity(scenario=current_scenario)
+    AISS_contib.AIS_Kriging(current_scenario)
 
     current_scenario.append_contributivity(AISS_contib)
     print("\n## Evaluating contributivity with Adaptative importance sampling (AISS):")
     print(AISS_contib)
-    print("\n## Number of fits with Adaptative importance sampling (AISS):")
-    print(AISS_results["fit_count"])
 
-    # Contributivity 8:   importance sampling with linear interpolation model
+    # # Contributivity 9:  Stratified Monte Carlo
+    SMC_contib = contributivity.Contributivity(scenario=current_scenario)
+    SMC_contib.Stratified_MC(current_scenario)
 
-    start = timer()
-    ISS_lin_results = contributivity_measures.IS_lin(
-        current_scenario, sv_accuracy=0.01, alpha=0.95
-    )
-    end = timer()
+    current_scenario.append_contributivity(SMC_contib)
+    print("\n## Evaluating contributivity with stratified Monte Carlo Shapley:")
+    print(SMC_contib)
 
-    ISS_lin_contib = contributivity.Contributivity(
-        "ISS_lin values",
-        ISS_lin_results["sv"],
-        ISS_lin_results["std_sv"],
-        np.round(end - start),
-        ISS_lin_results["fit_count"],
-    )
+    # # # Contributivity 10:  Stratified Monte Carlo
+    Support_contib = contributivity.Contributivity(scenario=current_scenario)
+    Support_contib.support(current_scenario)
 
-    current_scenario.append_contributivity(ISS_lin_contib)
-    print(
-        "\n## Evaluating contributivity with  importance sampling Shapley with linear interpolation model  (ISS_lin):"
-    )
-    print(ISS_lin_contib)
-    print(
-        "\n## Number of fits with  importance sampling Shapley with linear interpolation model  (ISS_lin):"
-    )
-    print(ISS_lin_results["fit_count"])
-
-    # Contributivity 9:   importance sampling with   regresion model
-
-    start = timer()
-    ISS_reg_results = contributivity_measures.IS_reg(
-        current_scenario, sv_accuracy=0.01, alpha=0.95
-    )
-    end = timer()
-
-    ISS_reg_contib = contributivity.Contributivity(
-        "ISS_reg values",
-        ISS_reg_results["sv"],
-        ISS_reg_results["std_sv"],
-        np.round(end - start),
-        ISS_reg_results["fit_count"],
-    )
-
-    current_scenario.append_contributivity(ISS_reg_contib)
-    print(
-        "\n## Evaluating contributivity with  importance sampling Shapley with regression model  (ISS_reg):"
-    )
-    print(ISS_reg_contib)
-    print(
-        "\n## Number of fits  with  importance sampling Shapley with regression model  (ISS_reg):"
-    )
-    print(ISS_reg_results["fit_count"])
-    
-
+    current_scenario.append_contributivity(Support_contib)
+    print("\n## Evaluating contributivity with support stratified Monte Carlo Shapley:")
+    print(Support_contib)
 
     # Save results to file
 

@@ -18,8 +18,6 @@ from node import Node
 
 
 class Scenario:
-    fit_count = 0
-
     def __init__(self, params, experiment_path):
 
         # Identify and get a dataset for running experiments
