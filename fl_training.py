@@ -49,7 +49,7 @@ def preprocess_scenarios_data(scenario):
         elif scenario.corrupted_nodes[node_index] == "shuffled":
             print("shuffleling of node " + str(node_index) + "\n")
             node.shuffle_labels()
-        elif scenario.corrupted_nodes[node_index] == "not-corrupted":
+        elif scenario.corrupted_nodes[node_index] == "not_corrupted":
             pass
         else:
             print("Unexpected label of corruption")
