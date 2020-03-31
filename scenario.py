@@ -71,7 +71,10 @@ class Scenario:
 
         self.contributivity_list = []
 
-        self.epoch_count = 40
+        if 'epoch_count' in params.keys():
+            self.epoch_count = params['epoch_count']
+        else:
+            self.epoch_count = 40
 
         self.is_early_stopping = True
 
