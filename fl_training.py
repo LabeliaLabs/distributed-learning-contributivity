@@ -239,16 +239,16 @@ def compute_test_score(
         # Split datasets in mini-batches
         minibatched_x_train = [None] * nodes_count
         minibatched_y_train = [None] * nodes_count
-        split_indices = np.arange(minibatch_count+1) / minibatch_count
+        split_indices = np.arange(1, minibatch_count+1) / minibatch_count
         for node_index, node in enumerate(node_list):
             minibatched_x_train[node_index] = np.split(node.x_train, (split_indices * len(node.x_train)).astype(int))
             minibatched_y_train[node_index] = np.split(node.y_train, (split_indices * len(node.y_train)).astype(int))
 
         # Iterate over mini-batches for training and aggregation
-        for minibatch_index in range(1, minibatch_count):
+        for minibatch_index in range(minibatch_count):
 
-            print("\nMini-batch " + str(minibatch_index) + " / " + str(minibatch_count))
-            is_first_minibatch = minibatch_index == 1
+            print("\nMini-batch " + str(minibatch_index) + " / " + str(minibatch_count-1))
+            is_first_minibatch = minibatch_index == 0
 
             # Starting model is the aggregated model from the previous mini-batch iteration
             if is_first_epoch and is_first_minibatch:
