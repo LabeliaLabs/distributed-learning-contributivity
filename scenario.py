@@ -71,14 +71,18 @@ class Scenario:
 
         self.contributivity_list = []
 
-        if 'epoch_count' in params.keys():
+        if 'epoch_count' in params:
             self.epoch_count = params['epoch_count']
         else:
             self.epoch_count = 40
             
-        self.methods = ["Shapley values",
-                        "Independant scores",
-                        "TMCS values"]
+        if 'methods' in params:
+            self.methods = params['methods']
+        else:
+            self.methods = ["Shapley values",
+                            "Independant scores",
+                            "TMCS values"
+                            ]
 
         self.is_early_stopping = True
 

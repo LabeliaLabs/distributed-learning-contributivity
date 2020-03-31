@@ -104,38 +104,8 @@ def run_scenario(current_scenario):
     for method in current_scenario.methods:
         print(method)
         start = timer()
-        if method == "Shapley values":
-            # Contributivity 1: Baseline contributivity measurement (Shapley Value)
-            (contributivity_scores, scores_var) = contributivity_measures.compute_SV(
-                current_scenario.node_list,
-                current_scenario.epoch_count,
-                current_scenario.x_val,
-                current_scenario.y_val,
-                current_scenario.x_test,
-                current_scenario.y_test,
-                current_scenario.aggregation_weighting,
-            )
-            score_dict = {"Shapley values": (contributivity_scores, scores_var)}
-        elif method == "Independant scores":
-            # Contributivity 2: Performance scores of models trained independently on each node
-            scores = contributivity_measures.compute_independent_scores(
-                current_scenario.node_list,
-                current_scenario.epoch_count,
-                current_scenario.federated_test_score,
-                current_scenario.single_partner_test_mode,
-                current_scenario.x_test,
-                current_scenario.y_test,
-            )
-            score_dict = {"Independant scores raw": (scores[0], np.repeat(0.0, len(scores[0]))),
-                          "Independant scores additive": (scores[1], np.repeat(0.0, len(scores[1])))}
-        elif method == "TMCS values":
-            # Contributivity 3: Truncated Monte Carlo Shapley
-            tmcs_results = contributivity_measures.truncated_MC(
-                            current_scenario, sv_accuracy=0.01, 
-                            alpha=0.9, contrib_accuracy=0.05
-                            )
-            score_dict = {"TMCS values": (tmcs_results["sv"], 
-                                          tmcs_results["std_sv"])}
+        score_dict = contributivity_measures.compute_contributivity(method, 
+                                                                    current_scenario)
         end = timer()
         
         for score_method in score_dict:
