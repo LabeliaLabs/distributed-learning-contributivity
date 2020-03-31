@@ -240,8 +240,8 @@ def compute_test_score(
         minibatched_y_train = [None] * nodes_count
         split_indices = np.arange(1, minibatch_count+1) / minibatch_count
         for node_index, node in enumerate(node_list):
-            minibatched_x_train[node_index] = np.split(node.x_train, (split_indices * len(node.x_train)).astype(int))
-            minibatched_y_train[node_index] = np.split(node.y_train, (split_indices * len(node.y_train)).astype(int))
+            minibatched_x_train[node_index] = np.split(node.x_train, (split_indices[:-1] * len(node.x_train)).astype(int))
+            minibatched_y_train[node_index] = np.split(node.y_train, (split_indices[:-1] * len(node.y_train)).astype(int))
 
         # Iterate over mini-batches for training and aggregation
         for minibatch_index in range(minibatch_count):
