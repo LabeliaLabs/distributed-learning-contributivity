@@ -53,7 +53,7 @@ def compute_independent_scores(
 #%% Generalization of Shapley Value computation
 
 
-def compute_SV(node_list, epoch_count, x_val_global, y_val_global, x_test, y_test, aggregation_weighting="uniform", minibatch_count=20):
+def compute_SV(node_list, epoch_count, x_val_global, y_val_global, x_test, y_test, aggregation_weighting, minibatch_count):
 
     print("\n# Launching computation of Shapley Value of all nodes")
 
