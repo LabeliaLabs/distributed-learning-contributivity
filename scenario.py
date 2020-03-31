@@ -80,7 +80,10 @@ class Scenario:
         else:
             self.epoch_count = 40
 
-        self.minibatch_count = 20
+        if 'minibatch_count' in params.keys():
+            self.minibatch_count = params['minibatch_count']
+        else:
+            self.minibatch_count = 20
 
         # Early stopping stops ML training when performance increase is not significant anymore
         # It is used to optimize the number of epochs and the execution time
@@ -129,7 +132,6 @@ class Scenario:
             self.x_test = self.x_test[:500]
             self.y_test = self.y_test[:500]
             self.epoch_count = 3
-            self.minibatch_count = 5
 
     def append_contributivity(self, contributivity):
 

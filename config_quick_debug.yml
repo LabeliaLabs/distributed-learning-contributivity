@@ -6,4 +6,5 @@ scenario_params_list:
    samples_split_option: 'Random'
    aggregation_weighting: 'data_volume'
    single_partner_test_mode: 'global'
+   minibatch_count: 5
    is_quick_demo: True
