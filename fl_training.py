@@ -148,9 +148,10 @@ def prepare_aggregation_weights(aggregation_weighting, nodes_count, node_list):
 
     aggregation_weights = []
     if aggregation_weighting == "uniform":
-        aggregation_weights = [1] * nodes_count
+        aggregation_weights = [1/nodes_count] * nodes_count
     elif aggregation_weighting == "data-volume":
-        aggregation_weights = [len(node.x_train) for node in node_list]
+        node_sizes = [len(node.x_train) for node in node_list]
+        aggregation_weights = node_sizes / np.sum(node_sizes)
     else:
         raise NameError(
             "This aggregation_weighting scenario ["
