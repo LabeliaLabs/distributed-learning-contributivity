@@ -336,6 +336,7 @@ class Scenario:
                 dict_results["federated_test_score"] = self.federated_test_score
                 dict_results["scenario_name"] = self.scenario_name
                 dict_results["short_scenario_name"] = self.short_scenario_name
+                dict_results["minibatch_count"] = self.minibatch_count
 
                 # Contributivity data
                 dict_results["contributivity_method"] = contrib.name
