@@ -101,73 +101,53 @@ def run_scenario(current_scenario):
         current_scenario, is_save_fig
     )
 
-    # Contributivity 1: Baseline contributivity measurement (Shapley Value)
-    start = timer()
-    (contributivity_scores, scores_var) = contributivity_measures.compute_SV(
-        current_scenario.node_list,
-        current_scenario.epoch_count,
-        current_scenario.x_val,
-        current_scenario.y_val,
-        current_scenario.x_test,
-        current_scenario.y_test,
-        current_scenario.aggregation_weighting,
-    )
-    end = timer()
-
-    shapley_contrib = contributivity.Contributivity(
-        "Shapley values", contributivity_scores, scores_var, np.round(end - start)
-    )
-
-    current_scenario.append_contributivity(shapley_contrib)
-    print("\n## Evaluating contributivity with Shapley:")
-    print(shapley_contrib)
-
-    # Contributivity 2: Performance scores of models trained independently on each node
-
-    start = timer()
-    scores = contributivity_measures.compute_independent_scores(
-        current_scenario.node_list,
-        current_scenario.epoch_count,
-        current_scenario.federated_test_score,
-        current_scenario.single_partner_test_mode,
-        current_scenario.x_test,
-        current_scenario.y_test,
-    )
-    end = timer()
-    # TODO use dict instead of 0/1 indexes
-    independant_raw_contrib = contributivity.Contributivity(
-        "Independant scores raw", scores[0], np.repeat(0.0, len(scores[0]))
-    )
-    independant_additiv_contrib = contributivity.Contributivity(
-        "Independant scores additive", scores[1], np.repeat(0.0, len(scores[1]))
-    )
-
-    independant_computation_time = np.round(end - start)
-    independant_raw_contrib.computation_time = independant_computation_time
-    independant_additiv_contrib.computation_time = independant_computation_time
-
-    current_scenario.append_contributivity(independant_raw_contrib)
-    current_scenario.append_contributivity(independant_additiv_contrib)
-    print("\n## Evaluating contributivity with independent single partner models:")
-    print(independant_raw_contrib)
-    print(independant_additiv_contrib)
-
-    # Contributivity 3: Truncated Monte Carlo Shapley
-
-    start = timer()
-    tmcs_results = contributivity_measures.truncated_MC(
-        current_scenario, sv_accuracy=0.01, alpha=0.9, contrib_accuracy=0.05
-    )
-    end = timer()
-
-    tmcs_contrib = contributivity.Contributivity(
-        "TMCS values", tmcs_results["sv"], tmcs_results["std_sv"], np.round(end - start)
-    )
-
-    current_scenario.append_contributivity(tmcs_contrib)
-    print("\n## Evaluating contributivity with Truncated Monte Carlo Shapley (TMCS):")
-    print(tmcs_contrib)
-
+    for method in current_scenario.methods:
+        print(method)
+        start = timer()
+        if method == "Shapley values":
+            # Contributivity 1: Baseline contributivity measurement (Shapley Value)
+            (contributivity_scores, scores_var) = contributivity_measures.compute_SV(
+                current_scenario.node_list,
+                current_scenario.epoch_count,
+                current_scenario.x_val,
+                current_scenario.y_val,
+                current_scenario.x_test,
+                current_scenario.y_test,
+                current_scenario.aggregation_weighting,
+            )
+            score_dict = {"Shapley values": (contributivity_scores, scores_var)}
+        elif method == "Independant scores":
+            # Contributivity 2: Performance scores of models trained independently on each node
+            scores = contributivity_measures.compute_independent_scores(
+                current_scenario.node_list,
+                current_scenario.epoch_count,
+                current_scenario.federated_test_score,
+                current_scenario.single_partner_test_mode,
+                current_scenario.x_test,
+                current_scenario.y_test,
+            )
+            score_dict = {"Independant scores raw": (scores[0], np.repeat(0.0, len(scores[0]))),
+                          "Independant scores additive": (scores[1], np.repeat(0.0, len(scores[1])))}
+        elif method == "TMCS values":
+            # Contributivity 3: Truncated Monte Carlo Shapley
+            tmcs_results = contributivity_measures.truncated_MC(
+                            current_scenario, sv_accuracy=0.01, 
+                            alpha=0.9, contrib_accuracy=0.05
+                            )
+            score_dict = {"TMCS values": (tmcs_results["sv"], 
+                                          tmcs_results["std_sv"])}
+        end = timer()
+        
+        for score_method in score_dict:
+            score =  score_dict[score_method]
+            contrib = contributivity.Contributivity(
+                score_method, score[0], score[1], np.round(end - start)
+                )
+    
+            current_scenario.append_contributivity(contrib)
+            print("\n## Evaluating contributivity with " + method + ":")
+            print(contrib)
+ 
     # Save results to file
 
     current_scenario.to_file()
