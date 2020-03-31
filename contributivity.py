@@ -553,14 +553,14 @@ class Contributivity:
             # ## compute some  increments
             permutation = np.random.permutation(n)
             for j in range(n):
-                self.not_twice_characteristic(permutation[: j + 1])
+                self.not_twice_characteristic(permutation[: j + 1], the_scenario)
             permutation = np.flip(permutation)
             for j in range(n):
-                self.not_twice_characteristic(permutation[: j + 1])
+                self.not_twice_characteristic(permutation[: j + 1], the_scenario)
             for k in range(n):
                 permutation = np.append(permutation[-1], permutation[:-1])
                 for j in range(n):
-                    self.not_twice_characteristic(permutation[: j + 1])
+                    self.not_twice_characteristic(permutation[: j + 1], the_scenario)
 
             # ## do the regressions
 

@@ -160,7 +160,7 @@ def run_scenario(current_scenario):
     )
     print(IS_lin_contrib)
 
-    # Contributivity 7: mportance sampling with regression model
+    # Contributivity 7: importance sampling with regression model
     IS_reg_contrib = contributivity.Contributivity(scenario=current_scenario)
     IS_reg_contrib.IS_reg(current_scenario)
 
