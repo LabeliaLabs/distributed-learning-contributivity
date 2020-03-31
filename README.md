@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/SubstraFoundation/distributed-learning-contributivity.svg?branch=master)](https://travis-ci.org/SubstraFoundation/distributed-learning-contributivity)
+
 # Exploration of dataset contributivity to a model in collaborative ML projects
 
 ## Introduction

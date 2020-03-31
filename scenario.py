@@ -71,10 +71,15 @@ class Scenario:
 
         self.contributivity_list = []
 
-        self.epoch_count = 40
+        if 'epoch_count' in params.keys():
+            self.epoch_count = params['epoch_count']
+            assert(self.epoch_count > 0)
+        else:
+            self.epoch_count = 40
+        
         if 'minibatch_count' in params.keys():
             self.minibatch_count = params['minibatch_count']
-            assert self.minibatch_count > 0
+            assert(self.minibatch_count > 0)
         else:
             self.minibatch_count = 20
 
