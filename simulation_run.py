@@ -109,7 +109,7 @@ def run_scenario(current_scenario):
         end = timer()
         
         for score_method in score_dict:
-            score =  score_dict[score_method]
+            score = score_dict[score_method]
             contrib = contributivity.Contributivity(
                 score_method, score[0], score[1], np.round(end - start)
                 )
