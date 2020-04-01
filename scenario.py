@@ -178,8 +178,7 @@ class Scenario:
         splitting_indices_test = (splitting_indices * len(y_test)).astype(int)
         # print('- Splitting indices defined (for train data):', splitting_indices_train) # VERBOSE
 
-        # Describe the type of data distribution chosen
-        print("- Data distribution scenario chosen:", self.samples_split_option)
+        # Configure the desired data distribution scenario
 
         # Create a list of indexes of the samples
         train_idx = np.arange(len(y_train))
@@ -211,9 +210,6 @@ class Scenario:
         train_idx_idx_list = np.split(train_idx, splitting_indices_train)
         test_idx_idx_list = np.split(test_idx, splitting_indices_test)
 
-        # Describe test data distribution scenario
-        print("- Test data distribution scenario chosen:", self.single_partner_test_mode)
-
         # Populate nodes
         node_id = 0
         for train_idx, test_idx in zip(train_idx_idx_list, test_idx_idx_list):
@@ -239,6 +235,14 @@ class Scenario:
 
         # Check coherence of number of mini-batches versus smaller node
         assert self.minibatch_count <= (min(self.amounts_per_node) * len(x_train))
+
+        # Print the description of the scenario configured
+        print("\n### Description of data scenario configured:")
+        print("- Number of nodes defined:", self.nodes_count)
+        print("- Data distribution scenario chosen:", self.samples_split_option)
+        print("- Test data distribution scenario chosen:", self.single_partner_test_mode)
+        print("- Weighting option:", self.aggregation_weighting)
+        print("- Number of epochs and mini-batches: " + str(self.epoch_count) + " epochs and " + str(self.minibatch_count) + " mini-batches")
 
         # Print and plot for controlling
         print("\n### Splitting data among nodes:")

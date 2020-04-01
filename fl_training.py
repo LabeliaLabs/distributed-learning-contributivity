@@ -224,22 +224,24 @@ def compute_test_score(
     print("\n### Training model:")
     for epoch in range(epoch_count):
 
-        print("\nEpoch #" + str(epoch) + " / " + str(epoch_count-1) + " total epochs")
+        print("\n   Epoch " + str(epoch) + " out of " + str(epoch_count-1) + " total epochs")
         is_first_epoch = epoch == 0
         clear_session()
 
-        # Split datasets in mini-batches
+        # Shuffle datasets and split them in mini-batches
         minibatched_x_train = [None] * nodes_count
         minibatched_y_train = [None] * nodes_count
         split_indices = np.arange(1, minibatch_count+1) / minibatch_count
         for node_index, node in enumerate(node_list):
+            idx = np.random.permutation(len(node.x_train))
+            node.x_train, node.y_train = node.x_train[idx], node.y_train[idx]
             minibatched_x_train[node_index] = np.split(node.x_train, (split_indices[:-1] * len(node.x_train)).astype(int))
             minibatched_y_train[node_index] = np.split(node.y_train, (split_indices[:-1] * len(node.y_train)).astype(int))
 
         # Iterate over mini-batches for training and aggregation
         for minibatch_index in range(minibatch_count):
 
-            print("\nMini-batch #" + str(minibatch_index) + " / " + str(minibatch_count-1) + " total mini-batches")
+            print("\n      Mini-batch " + str(minibatch_index) + " out of " + str(minibatch_count-1) + " total mini-batches")
             is_first_minibatch = minibatch_index == 0
 
             # Starting model is the aggregated model from the previous mini-batch iteration
@@ -251,7 +253,7 @@ def compute_test_score(
             # Iterate over nodes for training each individual model
             for node_index, node in enumerate(node_list):
 
-                print("   Training on node " + str(node_index) + " - " + str(node))
+                print("         Training on node " + str(node_index) + " - " + str(node))
 
                 # Train on node local data set
                 history = node_model.fit(
@@ -262,12 +264,10 @@ def compute_test_score(
                     verbose=0,
                     validation_data=(x_val_global, y_val_global),
                 )
+                print("            val_accuracy: " + str(history.history["val_accuracy"][0])) # DEBUG
 
                 # Update the node's model in the models' list
                 model_list[node_index] = node_model
-
-                print("val_accuracy: ")
-                print(history.history["val_accuracy"][0])
 
                 # At the end of each epoch (on the last mini-batch), populate the score matrix
                 if minibatch_index == (minibatch_count - 1):
@@ -284,20 +284,19 @@ def compute_test_score(
         current_val_loss = model_evaluation[0]
         global_val_acc.append(model_evaluation[1])
         global_val_loss.append(current_val_loss)
-        print("model_evaluation: ")
-        print(model_evaluation)
+        print("\n   Aggregated model evaluation at the end of the epoch:", model_evaluation)
 
-        print("   Checking if early stopping critera are met:")
+        print("      Checking if early stopping critera are met:")
         if is_early_stopping:
             # Early stopping parameters
             if (
                 epoch >= constants.PATIENCE
                 and current_val_loss > global_val_loss[-constants.PATIENCE]
             ):
-                print("      -> Early stopping critera are met, stopping here.")
+                print("         -> Early stopping critera are met, stopping here.")
                 break
             else:
-                print("      -> Early stopping critera are not met, continuing with training.")
+                print("         -> Early stopping critera are not met, continuing with training.")
 
     # Evaluate model on a central and dedicated testset
     print("\n### Evaluating model on test data:")
