@@ -244,12 +244,12 @@ def compute_test_score(
         is_first_epoch = epoch == 0
         clear_session()
 
-        # Shuffle datasets and split them in mini-batches
+        # Split the train dataset in mini-batches
         minibatched_x_train, minibatched_y_train = [None] * nodes_count, [None] * nodes_count
         for node_index, node in enumerate(node_list):
             minibatched_x_train[node_index], minibatched_y_train[node_index] = split_in_minibatches(minibatch_count, node.x_train, node.y_train)
 
-        # Iterate over mini-batches for training and aggregation
+        # Iterate over mini-batches for training, starting each new iteration with an aggregation of the previous one
         for minibatch_index in range(minibatch_count):
 
             print("\n      Mini-batch " + str(minibatch_index) + " out of " + str(minibatch_count-1) + " total mini-batches")
@@ -264,9 +264,8 @@ def compute_test_score(
             # Iterate over nodes for training each individual model
             for node_index, node in enumerate(node_list):
 
-                print("         Training on node " + str(node_index) + " - " + str(node))
-
                 # Train on node local data set
+                print("         Training on node " + str(node_index) + " - " + str(node))
                 history = node_model.fit(
                     minibatched_x_train[node_index][minibatch_index],
                     minibatched_y_train[node_index][minibatch_index],
@@ -280,7 +279,7 @@ def compute_test_score(
                 # Update the node's model in the models' list
                 model_list[node_index] = node_model
 
-                # At the end of each epoch (on the last mini-batch), populate the score matrix
+                # At the end of each epoch (on the last mini-batch), for each node, populate the score matrix
                 if minibatch_index == (minibatch_count - 1):
                     score_matrix[epoch, node_index] = history.history["val_accuracy"][0]
 
@@ -309,14 +308,14 @@ def compute_test_score(
             else:
                 print("         -> Early stopping critera are not met, continuing with training.")
 
-    # Evaluate model on a central and dedicated testset
+    # After last epoch or if early stopping was triggered, evaluate model on the global testset
     print("\n### Evaluating model on test data:")
     model_evaluation = aggregated_model.evaluate(
         x_test, y_test, batch_size=constants.BATCH_SIZE, verbose=0
     )
     print("   Model metrics names: ", aggregated_model.metrics_names)
     print("   Model metrics values: ", ["%.3f" % elem for elem in model_evaluation])
-    test_score = model_evaluation[1]  # 0 is for the loss
+    test_score = model_evaluation[1] # 0 is for the loss
 
     # Plot training history
     if is_save_fig:
