@@ -82,7 +82,7 @@ def compute_test_score_for_single_node(
     # print(model.summary())
 
     # Train model
-    print("\n### Training model on one single node: " + str(node))
+    print("\n### Training model on one single node: " + str(node.node_id))
     history = model.fit(
         node.x_train,
         node.y_train,

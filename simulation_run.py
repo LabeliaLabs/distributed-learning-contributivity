@@ -102,6 +102,23 @@ def run_scenario(current_scenario):
     end = timer()
     current_scenario.federated_computation_time = np.round(end - start)
 
+    for method in current_scenario.methods:
+        print(method)
+        start = timer()
+        score_dict = contributivity_measures.compute_contributivity(method, 
+                                                                    current_scenario)
+        end = timer()
+        
+        for score_method in score_dict:
+            score =  score_dict[score_method]
+            contrib = contributivity.Contributivity(
+                score_method, score[0], score[1], np.round(end - start)
+                )
+    
+            current_scenario.append_contributivity(contrib)
+            print("\n## Evaluating contributivity with " + method + ":")
+            print(contrib)
+ 
     # Contributivity 1: Baseline contributivity measurement (Shapley Value)
 
     shapley_contrib = contributivity.Contributivity(scenario=current_scenario)

@@ -73,11 +73,19 @@ class Scenario:
 
         self.contributivity_list = []
 
-        if 'epoch_count' in params.keys():
+        if 'epoch_count' in params:
             self.epoch_count = params['epoch_count']
             assert(self.epoch_count > 0)
         else:
             self.epoch_count = 40
+            
+        if 'methods' in params:
+            self.methods = params['methods']
+        else:
+            self.methods = ["Shapley values",
+                            "Independant scores",
+                            "TMCS values"
+                            ]
         
         if 'minibatch_count' in params.keys():
             self.minibatch_count = params['minibatch_count']
