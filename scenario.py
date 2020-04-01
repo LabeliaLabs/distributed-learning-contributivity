@@ -6,6 +6,7 @@ This enables to parameterize a desired scenario of data splitting among nodes.
 from keras.datasets import mnist
 from sklearn.model_selection import train_test_split
 import os
+import sys
 import datetime
 import numpy as np
 from pathlib import Path
@@ -76,13 +77,23 @@ class Scenario:
         else:
             self.epoch_count = 40
             
-        if 'methods' in params:
-            self.methods = params['methods']
+        methods_default = ["Shapley values",
+                           "Independant scores",
+                           "TMCS values"
+                           ]
+        
+        self.methods = []
+        if not 'methods' in params:
+            self.methods = methods_default
         else:
-            self.methods = ["Shapley values",
-                            "Independant scores",
-                            "TMCS values"
-                            ]
+            if not params['methods']:
+                sys.exit('No contributivity method given in config file')
+            else:
+                for el in params['methods']:
+                    if el in methods_default:
+                        self.methods.append(el)
+                    else:
+                        sys.exit('method ' + el + ' is not in methods list.')
 
         self.is_early_stopping = True
 

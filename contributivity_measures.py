@@ -56,6 +56,9 @@ def compute_contributivity(method_to_compute,
                         )
         score_dict = {"TMCS values": (tmcs_results["sv"], 
                                       tmcs_results["std_sv"])}
+        
+    else:
+        score_dict = {}
 
     
     return score_dict
