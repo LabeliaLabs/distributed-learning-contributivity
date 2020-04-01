@@ -216,23 +216,16 @@ def compute_test_score(
 
     # Initialize variables
     model_list = [None] * nodes_count
-    epochs = epoch_count
-    score_matrix = np.zeros(shape=(epochs, nodes_count))
+    score_matrix = np.zeros(shape=(epoch_count, nodes_count))
     global_val_acc = []
     global_val_loss = []
     aggregation_weights = prepare_aggregation_weights(aggregation_weighting, nodes_count, node_list)
 
     # Train model (iterate for each epoch and mini-batch)
     print("\n### Training model:")
-    for epoch in range(epochs):
+    for epoch in range(epoch_count):
 
-        print(
-            "\nEpoch #"
-            + str(epoch + 1)
-            + " out of "
-            + str(epochs)
-            + " total epochs"
-        )
+        print("\nEpoch #" + str(epoch) + " / " + str(epoch_count-1) + " total epochs")
         is_first_epoch = epoch == 0
         clear_session()
 
@@ -247,7 +240,7 @@ def compute_test_score(
         # Iterate over mini-batches for training and aggregation
         for minibatch_index in range(minibatch_count):
 
-            print("\nMini-batch " + str(minibatch_index) + " / " + str(minibatch_count-1))
+            print("\nMini-batch #" + str(minibatch_index) + " / " + str(minibatch_count-1) + " total mini-batches")
             is_first_minibatch = minibatch_index == 0
 
             # Starting model is the aggregated model from the previous mini-batch iteration
