@@ -1,26 +1,34 @@
 experiment_name: simple_16
-n_repeats: 1
+n_repeats: 10
 scenario_params_list:
  - nodes_counts: 3
    amounts_per_node: [0.4, 0.3, 0.3] 
    samples_split_option: 'Random'
    aggregation_weighting: 'data-volume'
    single_partner_test_mode: 'global'
-   epoch_count: 2
+   epoch_count: 38
    methods:
     - "Shapley values"
     - "Independant scores"
     - "TMCS values"
- # - nodes_counts: 3
- #   amounts_per_node: [0.9, 0.05, 0.05] 
- #   samples_split_option: 'Random'
- #   aggregation_weighting: 'uniform'
- #   single_partner_test_mode: 'global'
- #   epoch_count: 38
- # - nodes_counts: 2
- #   amounts_per_node: [0.9, 0.1] 
- #   samples_split_option: 'Random'
- #   aggregation_weighting: 'data-volume'
- #   single_partner_test_mode: 'global'
- #   epoch_count: 38
+ - nodes_counts: 3
+   amounts_per_node: [0.9, 0.05, 0.05] 
+   samples_split_option: 'Random'
+   aggregation_weighting: 'uniform'
+   single_partner_test_mode: 'global'
+   epoch_count: 38
+   methods:
+    - "Shapley values"
+    - "Independant scores"
+    - "TMCS values"
+ - nodes_counts: 2
+   amounts_per_node: [0.9, 0.1] 
+   samples_split_option: 'Random'
+   aggregation_weighting: 'data-volume'
+   single_partner_test_mode: 'global'
+   epoch_count: 38
+   methods:
+    - "Shapley values"
+    - "Independant scores"
+    - "TMCS values"
    
