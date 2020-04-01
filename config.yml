@@ -9,9 +9,9 @@ scenario_params_list:
 <<<<<<< HEAD
    epoch_count: 38
    methods:
-    - "Shapley values"
+    # - "Shapley values"
     - "Independant scores"
-    - "TMCS values"
+    # - "TMCS values"
  - nodes_counts: 3
    amounts_per_node: [0.9, 0.05, 0.05] 
    samples_split_option: 'Random'
