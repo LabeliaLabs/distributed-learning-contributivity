@@ -82,7 +82,7 @@ def compute_test_score_for_single_node(
     # print(model.summary())
 
     # Train model
-    print("\n### Training model on one single node: " + str(node))
+    print("\n### Training model on one single node: " + str(node.node_id))
     history = model.fit(
         node.x_train,
         node.y_train,
@@ -253,7 +253,7 @@ def compute_test_score(
             acc_list = []
             for node_index, node in enumerate(node_list):
 
-                print("   Training on node " + str(node))
+                print("   Training on node " + str(node.node_id))
                 node_model = utils.generate_new_cnn_model()
 
                 # Model weights are the averaged weights
