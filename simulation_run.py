@@ -95,9 +95,12 @@ def run_scenario(current_scenario):
 
     # Train and eval on all nodes according to scenario
     is_save_fig = True
+    start = timer()
     current_scenario.federated_test_score = fl_training.compute_test_score_with_scenario(
         current_scenario, is_save_fig
     )
+    end = timer()
+    current_scenario.federated_computation_time = np.round(end - start)
 
     # Contributivity 1: Baseline contributivity measurement (Shapley Value)
 

@@ -49,7 +49,7 @@ def preprocess_scenarios_data(scenario):
         elif scenario.corrupted_nodes[node_index] == "shuffled":
             print("shuffleling of node " + str(node_index) + "\n")
             node.shuffle_labels()
-        elif scenario.corrupted_nodes[node_index] == "not-corrupted":
+        elif scenario.corrupted_nodes[node_index] == "not_corrupted":
             pass
         else:
             print("Unexpected label of corruption")
@@ -148,9 +148,10 @@ def prepare_aggregation_weights(aggregation_weighting, nodes_count, node_list):
 
     aggregation_weights = []
     if aggregation_weighting == "uniform":
-        aggregation_weights = [1] * nodes_count
-    elif aggregation_weighting == "data-volume":
-        aggregation_weights = [len(node.x_train) for node in node_list]
+        aggregation_weights = [1/nodes_count] * nodes_count
+    elif aggregation_weighting == "data_volume":
+        node_sizes = [len(node.x_train) for node in node_list]
+        aggregation_weights = node_sizes / np.sum(node_sizes)
     else:
         raise NameError(
             "This aggregation_weighting scenario ["
@@ -194,8 +195,8 @@ def compute_test_score(
     y_val_global,
     x_test,
     y_test,
-    aggregation_weighting="uniform",
-    minibatch_count=20,
+    aggregation_weighting,
+    minibatch_count,
     is_early_stopping=True,
     single_partner_test_mode="global",
     is_save_fig=False,
@@ -215,43 +216,34 @@ def compute_test_score(
 
     # Initialize variables
     model_list = [None] * nodes_count
-    epochs = epoch_count
-    score_matrix = np.zeros(shape=(epochs, nodes_count))
+    score_matrix = np.zeros(shape=(epoch_count, nodes_count))
     global_val_acc = []
     global_val_loss = []
     aggregation_weights = prepare_aggregation_weights(aggregation_weighting, nodes_count, node_list)
 
     # Train model (iterate for each epoch and mini-batch)
     print("\n### Training model:")
-    for epoch in range(epochs):
+    for epoch in range(epoch_count):
 
-        print(
-            "\nEpoch #"
-            + str(epoch + 1)
-            + " out of "
-            + str(epochs)
-            + " total epochs"
-        )
+        print("\n   Epoch " + str(epoch) + " out of " + str(epoch_count-1) + " total epochs")
         is_first_epoch = epoch == 0
         clear_session()
 
-        # Split datasets in mini-batches
+        # Shuffle datasets and split them in mini-batches
         minibatched_x_train = [None] * nodes_count
-        minibatched_x_val = [None] * nodes_count
         minibatched_y_train = [None] * nodes_count
-        minibatched_y_val = [None] * nodes_count
-        split_indices = np.arange(minibatch_count+1) / minibatch_count
+        split_indices = np.arange(1, minibatch_count+1) / minibatch_count
         for node_index, node in enumerate(node_list):
-            minibatched_x_train[node_index] = np.split(node.x_train, (split_indices * len(node.x_train)).astype(int))
-            minibatched_x_val[node_index] = np.split(node.x_val, (split_indices * len(node.x_val)).astype(int))
-            minibatched_y_train[node_index] = np.split(node.y_train, (split_indices * len(node.y_train)).astype(int))
-            minibatched_y_val[node_index] = np.split(node.y_val, (split_indices * len(node.y_val)).astype(int))
+            idx = np.random.permutation(len(node.x_train))
+            node.x_train, node.y_train = node.x_train[idx], node.y_train[idx]
+            minibatched_x_train[node_index] = np.split(node.x_train, (split_indices[:-1] * len(node.x_train)).astype(int))
+            minibatched_y_train[node_index] = np.split(node.y_train, (split_indices[:-1] * len(node.y_train)).astype(int))
 
         # Iterate over mini-batches for training and aggregation
-        for minibatch in range(minibatch_count):
+        for minibatch_index in range(minibatch_count):
 
-            print("\nMini-batch " + str(minibatch+1) + " / " + str(minibatch_count))
-            is_first_minibatch = minibatch == 0
+            print("\n      Mini-batch " + str(minibatch_index) + " out of " + str(minibatch_count-1) + " total mini-batches")
+            is_first_minibatch = minibatch_index == 0
 
             # Starting model is the aggregated model from the previous mini-batch iteration
             if is_first_epoch and is_first_minibatch:
@@ -262,33 +254,28 @@ def compute_test_score(
             # Iterate over nodes for training each individual model
             for node_index, node in enumerate(node_list):
 
-                print("   Training on node " + str(node_index) + " - " + str(node))
+                print("         Training on node " + str(node_index) + " - " + str(node))
 
                 # Train on node local data set
                 history = node_model.fit(
-                    minibatched_x_train[node_index][minibatch+1],
-                    minibatched_y_train[node_index][minibatch+1],
+                    minibatched_x_train[node_index][minibatch_index],
+                    minibatched_y_train[node_index][minibatch_index],
                     batch_size=constants.BATCH_SIZE,
                     epochs=1,
                     verbose=0,
-                    validation_data=(minibatched_x_val[node_index][minibatch+1], minibatched_y_val[node_index][minibatch+1]),
+                    validation_data=(x_val_global, y_val_global),
                 )
+                print("            val_accuracy: " + str(history.history["val_accuracy"][0])) # DEBUG
 
+                # Update the node's model in the models' list
                 model_list[node_index] = node_model
 
-                print("val_accuracy: ")
-                print(history.history["val_accuracy"][0])
-
-                # At the end of each epoch (last mini-batch), populate the score matrix
-                if minibatch == (minibatch_count - 1):
+                # At the end of each epoch (on the last mini-batch), populate the score matrix
+                if minibatch_index == (minibatch_count - 1):
                     score_matrix[epoch, node_index] = history.history["val_accuracy"][0]
 
-            # Aggregate the individual models trained on each node (by a weigthed averaging of the weights of the models)
-            print("   Aggregating models weights to build a new model")
-            new_weights = aggregate_model_weights(model_list, aggregation_weights)
-            aggregated_model = build_aggregated_model(new_weights)
-
-        # At the end of each epoch, evaluate model for early stopping on a global validation set
+        # At the end of each epoch, evaluate the aggregated model for early stopping on a global validation set
+        aggregated_model = build_aggregated_model(aggregate_model_weights(model_list, aggregation_weights))
         model_evaluation = aggregated_model.evaluate(
             x_val_global,
             y_val_global,
@@ -298,22 +285,19 @@ def compute_test_score(
         current_val_loss = model_evaluation[0]
         global_val_acc.append(model_evaluation[1])
         global_val_loss.append(current_val_loss)
-        print("model_evaluation: ")
-        print(model_evaluation)
+        print("\n   Aggregated model evaluation at the end of the epoch:", model_evaluation)
 
-        print("   Checking if early stopping critera are met:")
+        print("      Checking if early stopping critera are met:")
         if is_early_stopping:
             # Early stopping parameters
             if (
                 epoch >= constants.PATIENCE
                 and current_val_loss > global_val_loss[-constants.PATIENCE]
             ):
-                print("      -> Early stopping critera are met, stopping here.")
+                print("         -> Early stopping critera are met, stopping here.")
                 break
             else:
-                print(
-                    "      -> Early stopping critera are not met, continuing with training."
-                )
+                print("         -> Early stopping critera are not met, continuing with training.")
 
     # Evaluate model on a central and dedicated testset
     print("\n### Evaluating model on test data:")

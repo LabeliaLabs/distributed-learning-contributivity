@@ -51,7 +51,7 @@ class Scenario:
         if "corrupted_nodes" in params:
             self.corrupted_nodes = params["corrupted_nodes"]
         else:
-            self.corrupted_nodes = ["not-corrupted"] * self.nodes_count
+            self.corrupted_nodes = ["not_corrupted"] * self.nodes_count
 
         # When training on a single node, the test set can be either the local node test set or the global test set
         self.single_partner_test_mode = params[
@@ -60,7 +60,9 @@ class Scenario:
 
         self.federated_test_score = int
 
-        # Define how federated learning aggregation steps are weighted. Toggle between 'uniform' and 'data-volume'
+        self.federated_computation_time = int
+
+        # Define how federated learning aggregation steps are weighted. Toggle between 'uniform' and 'data_volume'
         # Default is 'uniform'
         if "aggregation_weighting" in params:
             self.aggregation_weighting = params["aggregation_weighting"]
@@ -71,8 +73,17 @@ class Scenario:
 
         self.contributivity_list = []
 
-        self.epoch_count = 40
-        self.minibatch_count = 20
+        if 'epoch_count' in params.keys():
+            self.epoch_count = params['epoch_count']
+            assert(self.epoch_count > 0)
+        else:
+            self.epoch_count = 40
+        
+        if 'minibatch_count' in params.keys():
+            self.minibatch_count = params['minibatch_count']
+            assert(self.minibatch_count > 0)
+        else:
+            self.minibatch_count = 20
 
         self.is_early_stopping = True
 
@@ -119,7 +130,6 @@ class Scenario:
             self.x_test = self.x_test[:500]
             self.y_test = self.y_test[:500]
             self.epoch_count = 3
-            self.minibatch_count = 5
 
     def append_contributivity(self, contributivity):
 
@@ -146,10 +156,6 @@ class Scenario:
         )
         print("- " + str(len(x_test)) + " test data " + str(len(y_test)) + " labels")
 
-        # Describe number of independant nodes
-        print("\n### Description of data scenario configured:")
-        print("- Number of nodes defined:", self.nodes_count)
-
         # Configure the desired splitting scenario - Datasets sizes
         # Should the nodes receive an equivalent amount of samples each...
         # ... or receive different amounts?
@@ -171,9 +177,6 @@ class Scenario:
         # print('- Splitting indices defined (for train data):', splitting_indices_train) # VERBOSE
 
         # Configure the desired data distribution scenario
-
-        # Describe the type of distribution chosen
-        print("- Data distribution scenario chosen:", self.samples_split_option)
 
         # Create a list of indexes of the samples
         train_idx = np.arange(len(y_train))
@@ -206,11 +209,6 @@ class Scenario:
         train_idx_idx_list = np.split(train_idx, splitting_indices_train)
         test_idx_idx_list = np.split(test_idx, splitting_indices_test)
 
-        # Describe test data distribution scenario
-        print(
-            "- Test data distribution scenario chosen:", self.single_partner_test_mode
-        )
-
         # Populate nodes
         node_id = 0
         for train_idx, test_idx in zip(train_idx_idx_list, test_idx_idx_list):
@@ -233,6 +231,17 @@ class Scenario:
 
         # Check coherence of node_list versus nodes_count
         assert len(self.node_list) == self.nodes_count
+
+        # Check coherence of number of mini-batches versus smaller node
+        assert self.minibatch_count <= (min(self.amounts_per_node) * len(x_train))
+
+        # Print the description of the scenario configured
+        print("\n### Description of data scenario configured:")
+        print("- Number of nodes defined:", self.nodes_count)
+        print("- Data distribution scenario chosen:", self.samples_split_option)
+        print("- Test data distribution scenario chosen:", self.single_partner_test_mode)
+        print("- Weighting option:", self.aggregation_weighting)
+        print("- Number of epochs and mini-batches: " + str(self.epoch_count) + " epochs and " + str(self.minibatch_count) + " mini-batches")
 
         # Print and plot for controlling
         print("\n### Splitting data among nodes:")
@@ -291,6 +300,7 @@ class Scenario:
             + "\n"
         )
         out += "Number of epochs: " + str(self.epoch_count) + "\n"
+        out += "Number of mini-batches: " + str(self.minibatch_count) + "\n"
         out += "Early stopping on? " + str(self.is_early_stopping) + "\n"
         out += (
             "Test score of federated training: " + str(self.federated_test_score) + "\n"
@@ -328,8 +338,10 @@ class Scenario:
                 dict_results["epoch_count"] = self.epoch_count
                 dict_results["is_early_stopping"] = self.is_early_stopping
                 dict_results["federated_test_score"] = self.federated_test_score
+                dict_results["federated_computation_time"] = self.federated_computation_time
                 dict_results["scenario_name"] = self.scenario_name
                 dict_results["short_scenario_name"] = self.short_scenario_name
+                dict_results["minibatch_count"] = self.minibatch_count
 
                 # Contributivity data
                 dict_results["contributivity_method"] = contrib.name
