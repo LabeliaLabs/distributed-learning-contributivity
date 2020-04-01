@@ -263,21 +263,18 @@ def compute_test_score(
                     validation_data=(x_val_global, y_val_global),
                 )
 
+                # Update the node's model in the models' list
                 model_list[node_index] = node_model
 
                 print("val_accuracy: ")
                 print(history.history["val_accuracy"][0])
 
-                # At the end of each epoch (last mini-batch), populate the score matrix
+                # At the end of each epoch (on the last mini-batch), populate the score matrix
                 if minibatch_index == (minibatch_count - 1):
                     score_matrix[epoch, node_index] = history.history["val_accuracy"][0]
 
-            # Aggregate the individual models trained on each node (by a weigthed averaging of the weights of the models)
-            print("   Aggregating models weights to build a new model")
-            new_weights = aggregate_model_weights(model_list, aggregation_weights)
-            aggregated_model = build_aggregated_model(new_weights)
-
-        # At the end of each epoch, evaluate model for early stopping on a global validation set
+        # At the end of each epoch, evaluate the aggregated model for early stopping on a global validation set
+        aggregated_model = build_aggregated_model(aggregate_model_weights(model_list, aggregation_weights))
         model_evaluation = aggregated_model.evaluate(
             x_val_global,
             y_val_global,
