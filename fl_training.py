@@ -297,9 +297,7 @@ def compute_test_score(
                 print("      -> Early stopping critera are met, stopping here.")
                 break
             else:
-                print(
-                    "      -> Early stopping critera are not met, continuing with training."
-                )
+                print("      -> Early stopping critera are not met, continuing with training.")
 
     # Evaluate model on a central and dedicated testset
     print("\n### Evaluating model on test data:")
