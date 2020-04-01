@@ -60,6 +60,8 @@ class Scenario:
 
         self.federated_test_score = int
 
+        self.federated_computation_time = int
+
         # Define how federated learning aggregation steps are weighted. Toggle between 'uniform' and 'data_volume'
         # Default is 'uniform'
         if "aggregation_weighting" in params:
@@ -332,6 +334,7 @@ class Scenario:
                 dict_results["epoch_count"] = self.epoch_count
                 dict_results["is_early_stopping"] = self.is_early_stopping
                 dict_results["federated_test_score"] = self.federated_test_score
+                dict_results["federated_computation_time"] = self.federated_computation_time
                 dict_results["scenario_name"] = self.scenario_name
                 dict_results["short_scenario_name"] = self.short_scenario_name
                 dict_results["minibatch_count"] = self.minibatch_count
