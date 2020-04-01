@@ -433,9 +433,7 @@ class Contributivity:
                 beta = size_of_S / size_of_I
                 return (1 - beta) * first_increments[k] + beta * last_increments[k]
 
-            # compute  the importance density
             # ## compute the renormalization constant of the importance density for all datatsets
-
             renorms = []
             for k in range(n):
                 list_k = np.delete(np.arange(n), k)
@@ -596,7 +594,6 @@ class Contributivity:
             def approx_increment(subset, k):
                 return models[k].predict([makedata(subset)])[0]
 
-            # compute  the importance density
             # ## compute the renormalization constant of the importance density for all datatsets
 
             renorms = []
@@ -836,7 +833,7 @@ class Contributivity:
             end = timer()
             self.computation_time = end - start
         else:
-            # sampling
+            # initialization
             gamma = 0.2
             beta = 0.0075
             t = 0
@@ -854,30 +851,32 @@ class Contributivity:
                 for strata in range(N):
                     contributions[k].append(list())
                     continuer[k].append(True)
+            # sampling
             while (
                 np.any(continuer) or (sv_accuracy) ** 2 < 4 * q ** 2 * v_max
-            ):  # Check if the length of the confidence interval  is below the value of sv_accuracy*characteristic_all_node
+            ):  # Check if the length of the confidence interval  is below the value of sv_accuracy 
                 t += 1
                 e = (
                     1
                     + 1 / (1 + np.exp(gamma / beta))
                     - 1 / (1 + np.exp(-(t - gamma * N) / (beta * N)))
-                )
+                )# e is used in the allocation to each strata, here we take the formula adviced in the litterature
                 for k in range(N):
-                    list_k = np.delete(np.arange(N), k)
                     # select the strata to add an increment
-                    if np.sum(sigma2[k]) == 0:
-                        p = np.repeat(1 / N, N)
+                    if np.sum(sigma2[k]) == 0: 
+                        p = np.repeat(1 / N, N) # alocate uniformly if np.sum(sigma2[k]) == 0
                     else:
                         p = (
                             np.repeat(1 / N, N) * (1 - e)
                             + sigma2[k] / np.sum(sigma2[k]) * e
-                        )
+                        )  # alocate more and more as according to sigma2[k] / np.sum(sigma2[k]) as t grows
 
                     strata = np.random.choice(np.arange(N), 1, p=p)[0]
+                    
                     # generate the increment
                     u = np.random.uniform(0, 1, 1)[0]
                     cumSum = 0
+                    list_k = np.delete(np.arange(N), k)
                     for subset in combinations(list_k, strata):
                         cumSum += (
                             factorial(N - 1 - strata)
@@ -892,8 +891,8 @@ class Contributivity:
                         SUk, the_scenario
                     ) - self.not_twice_characteristic(S, the_scenario)
                     contributions[k][strata].append(increment)
-                    # compute sthe standard deviation and means
-                    sigma2[k, strata] = np.std(contributions[k][strata])
+                    # computes the var and means of each strata
+                    sigma2[k, strata] = np.var(contributions[k][strata])
                     mu[k, strata] = np.mean(contributions[k][strata])
                 shap = np.mean(mu, axis=0)
                 var = np.zeros(N)  # variance of the estimator
@@ -925,9 +924,10 @@ class Contributivity:
         start = timer()
 
         N = len(the_scenario.node_list)
+        # Characteristic function on all nodes
         characteristic_all_node = self.not_twice_characteristic(
             np.arange(N), the_scenario
-        )  # Characteristic function on all nodes
+        )  
 
         if N == 1:
             self.name = "SSMC Shapley values"
@@ -939,7 +939,7 @@ class Contributivity:
             end = timer()
             self.computation_time = end - start
         else:
-            # sampling
+            # initialisation
             gamma = 0.2
             beta = 0.0075
             t = 0
@@ -957,30 +957,31 @@ class Contributivity:
                 for strata in range(N):
                     contributions[k].append(dict())
                     continuer[k].append(True)
+            # sampnling
             while (
-                np.any(continuer) or (sv_accuracy) ** 2 < 4 * q ** 2 * v_max
-            ):  # Check if the length of the confidence interval  is below the value of sv_accuracy*characteristic_all_node
+                np.any(continuer) or (sv_accuracy) < 2 * q * np.sqrt(v_max)
+            ):  # Check if the length of the confidence interval  is below the value of sv_accuracy 
                 t += 1
                 e = (
                     1
                     + 1 / (1 + np.exp(gamma / beta))
                     - 1 / (1 + np.exp(-(t - gamma * N) / (beta * N)))
-                )
+                ) # e is used in the allocation to each strata, here we take the formula adviced in the litterature
                 for k in range(N):
-                    list_k = np.delete(np.arange(N), k)
                     # select the strata to add an increment
                     if np.sum(sigma2[k]) == 0:
-                        p = np.repeat(1 / N, N)
+                        p = np.repeat(1 / N, N)  # alocate uniformly if np.sum(sigma2[k]) == 0
                     else:
                         p = (
                             np.repeat(1 / N, N) * (1 - e)
                             + sigma2[k] / np.sum(sigma2[k]) * e
-                        )
+                        ) # alocate more and more as according to sigma2[k] / np.sum(sigma2[k]) as t grows
 
                     strata = np.random.choice(np.arange(N), 1, p=p)[0]
                     # generate the increment
                     u = np.random.uniform(0, 1, 1)[0]
                     cumSum = 0
+                    list_k = np.delete(np.arange(N), k)
                     for subset in combinations(list_k, strata):
                         cumSum += (
                             factorial(N - 1 - strata)
@@ -994,11 +995,13 @@ class Contributivity:
                     increment = self.not_twice_characteristic(
                         SUk, the_scenario
                     ) - self.not_twice_characteristic(S, the_scenario)
+                    # store the increment or count the number of time it was generated
                     if tuple(S) in contributions[k][strata]:
                         contributions[k][strata][tuple(S)][1] += 1
                     else:
                         contributions[k][strata][tuple(S)] = [increment, 1]
-                        # computes  the intra-strata means
+                        # updates  the intra-strata means, 
+                        ## it is in the "else" statement because it change only when there is a newly geneated increment
                         length = len(contributions[k][strata])
                         mu[k, strata] = (
                             mu[k, strata] * (length - 1) + increment
@@ -1008,25 +1011,31 @@ class Contributivity:
                     count = 0
                     for v in contributions[k][strata].values():
                         sigma2[k, strata] += v[1] * (v[0] - mu[k, strata]) ** 2
-                        count += v[1]
-
-                    if count > 1:
-                        sigma2[k, strata] /= count - 1
-                    sigma2[k, strata] = np.sqrt(sigma2[k, strata])
+                        count += v[1] 
+                    if count > 1: #avoid creating a Nan value as sigma2[k, strata]= 0 when count= 1
+                        sigma2[k, strata] /= count - 1 
                 shap = np.mean(mu, axis=0)
                 var = np.zeros(N)  # variance of the estimator
                 for k in range(N):
                     for strata in range(N):
+                        # compute the allocation of a strata
                         n_k_strata = 0
                         for v in contributions[k][strata].values():
-                            n_k_strata += v[1]
+                            n_k_strata += v[1] 
+                        # compute the variance of the estimator times N**2
                         if n_k_strata == 0:
                             var[k] = np.Inf
                         else:
                             var[k] += sigma2[k, strata] ** 2 / n_k_strata
-                        if n_k_strata > 20:
+                        # handle the while condition and the next allocations 
+                        ## if the number of allocation is above 20 in each strat we can stop
+                        if n_k_strata > 20 : 
                             continuer[k][strata] = False
-                    var[k] /= N ** 2
+                        ## if a strata as been fully explored we can stop allocating to this strata
+                        if  len(contributions[k][strata]) >  factorial(N-1)/ (factorial(N - 1 - strata) * factorial(strata) ) :
+                            continuer[k][strata] = False
+                            sigma2[k, strata]= 0 
+                    var[k] /= N ** 2 #correct the variance of the estimator
                 v_max = np.max(var)
             self.name = "SSMC Shapley values"
             self.contributivity_scores = shap
