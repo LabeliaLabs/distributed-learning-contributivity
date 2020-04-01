@@ -142,6 +142,22 @@ def compute_test_score_with_scenario(scenario, is_save_fig=False):
 
 #%% Distributed learning training
 
+def split_in_minibatches(minibatch_count, x_train, y_train):
+    """Returns the list of mini-batches into which the dataset has been split"""
+
+    # Shuffle the dataset
+    idx = np.random.permutation(len(x_train))
+    x_train, y_train = x_train[idx], y_train[idx]
+
+    # Create the indices where to split
+    split_indices = np.arange(1, minibatch_count + 1) / minibatch_count
+
+    # Split the samples and labels
+    minibatched_x_train = np.split(x_train, (split_indices[:-1] * len(x_train)).astype(int))
+    minibatched_y_train = np.split(y_train, (split_indices[:-1] * len(y_train)).astype(int))
+
+    return minibatched_x_train, minibatched_y_train
+
 def prepare_aggregation_weights(aggregation_weighting, nodes_count, node_list):
     """Returns a list of weights for the weighted average aggregation of model weights"""
 
@@ -229,14 +245,9 @@ def compute_test_score(
         clear_session()
 
         # Shuffle datasets and split them in mini-batches
-        minibatched_x_train = [None] * nodes_count
-        minibatched_y_train = [None] * nodes_count
-        split_indices = np.arange(1, minibatch_count+1) / minibatch_count
+        minibatched_x_train, minibatched_y_train = [None] * nodes_count, [None] * nodes_count
         for node_index, node in enumerate(node_list):
-            idx = np.random.permutation(len(node.x_train))
-            node.x_train, node.y_train = node.x_train[idx], node.y_train[idx]
-            minibatched_x_train[node_index] = np.split(node.x_train, (split_indices[:-1] * len(node.x_train)).astype(int))
-            minibatched_y_train[node_index] = np.split(node.y_train, (split_indices[:-1] * len(node.y_train)).astype(int))
+            minibatched_x_train[node_index], minibatched_y_train[node_index] = split_in_minibatches(minibatch_count, node.x_train, node.y_train)
 
         # Iterate over mini-batches for training and aggregation
         for minibatch_index in range(minibatch_count):
