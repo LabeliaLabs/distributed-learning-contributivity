@@ -303,6 +303,7 @@ class Scenario:
             + "\n"
         )
         out += "Number of epochs: " + str(self.epoch_count) + "\n"
+        out += "Number of mini-batches: " + str(self.minibatch_count) + "\n"
         out += "Early stopping on? " + str(self.is_early_stopping) + "\n"
         out += (
             "Test score of federated training: " + str(self.federated_test_score) + "\n"
