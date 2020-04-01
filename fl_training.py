@@ -158,7 +158,7 @@ def split_in_minibatches(minibatch_count, x_train, y_train):
 
     return minibatched_x_train, minibatched_y_train
 
-def prepare_aggregation_weights(aggregation_weighting, nodes_count, node_list):
+def prepare_aggregation_weights(aggregation_weighting, nodes_count, node_list, input_weights):
     """Returns a list of weights for the weighted average aggregation of model weights"""
 
     aggregation_weights = []
@@ -167,6 +167,8 @@ def prepare_aggregation_weights(aggregation_weighting, nodes_count, node_list):
     elif aggregation_weighting == "data_volume":
         node_sizes = [len(node.x_train) for node in node_list]
         aggregation_weights = node_sizes / np.sum(node_sizes)
+    elif aggregation_weighting == "local_perf":
+        aggregation_weights = input_weights / np.sum(input_weights)
     else:
         raise NameError(
             "This aggregation_weighting scenario ["
@@ -230,11 +232,9 @@ def compute_test_score(
     print("\n## Training and evaluating model on multiple nodes: " + str(node_list))
 
     # Initialize variables
-    model_list = [None] * nodes_count
+    model_list, local_perf_list = [None] * nodes_count, [None] * nodes_count
     score_matrix = np.zeros(shape=(epoch_count, nodes_count))
-    global_val_acc = []
-    global_val_loss = []
-    aggregation_weights = prepare_aggregation_weights(aggregation_weighting, nodes_count, node_list)
+    global_val_acc, global_val_loss = [], []
 
     # Train model (iterate for each epoch and mini-batch)
     print("\n### Training model:")
@@ -282,12 +282,14 @@ def compute_test_score(
 
                 # Update the node's model in the models' list
                 model_list[node_index] = node_model
+                local_perf_list[node_index] = history.history["val_accuracy"][0]
 
                 # At the end of each epoch (on the last mini-batch), for each node, populate the score matrix
                 if minibatch_index == (minibatch_count - 1):
                     score_matrix[epoch, node_index] = history.history["val_accuracy"][0]
 
         # At the end of each epoch, evaluate the aggregated model for early stopping on a global validation set
+        aggregation_weights = prepare_aggregation_weights(aggregation_weighting, nodes_count, node_list, local_perf_list)
         aggregated_model = build_aggregated_model(aggregate_model_weights(model_list, aggregation_weights))
         model_evaluation = aggregated_model.evaluate(
             x_val_global,
