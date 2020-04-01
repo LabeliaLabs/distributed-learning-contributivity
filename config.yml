@@ -9,8 +9,8 @@ scenario_params_list:
    epoch_count: 38
    methods:
     - "Shapley values"
-    - "Independant scores"
-    - "TMCS values"
+    - "Independant scores raws"
+    - "TMCS"
    minibatch_count: 20
  - nodes_counts: 3
    amounts_per_node: [0.9, 0.05, 0.05] 
@@ -22,7 +22,7 @@ scenario_params_list:
    methods:
     - "Shapley values"
     - "Independant scores"
-    - "TMCS values"
+    - "TMCS"
  - nodes_counts: 2
    amounts_per_node: [0.9, 0.1] 
    samples_split_option: 'Random'

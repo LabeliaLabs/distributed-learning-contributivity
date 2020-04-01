@@ -7,4 +7,15 @@ scenario_params_list:
    aggregation_weighting: 'data_volume'
    single_partner_test_mode: 'global'
    minibatch_count: 5
+   methods:
+    - "Shapley values"
+    - "Independant scores raws"
+    - "Independant scores additive"
+    - "TMCS"
+    # - "ITMCS"
+    # - "IS_lin_S"
+    # - "IS_reg_S"
+    # - "AIS_Kriging_S"
+    # - "SMCS"
+    # - "SupportSMCS"
    is_quick_demo: True

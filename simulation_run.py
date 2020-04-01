@@ -104,116 +104,12 @@ def run_scenario(current_scenario):
 
     for method in current_scenario.methods:
         print(method)
-        start = timer()
-        score_dict = contributivity_measures.compute_contributivity(method, 
-                                                                    current_scenario)
-        end = timer()
-        
-        for score_method in score_dict:
-            score =  score_dict[score_method]
-            contrib = contributivity.Contributivity(
-                score_method, score[0], score[1], np.round(end - start)
-                )
-    
-            current_scenario.append_contributivity(contrib)
-            print("\n## Evaluating contributivity with " + method + ":")
-            print(contrib)
+        contrib = contributivity.Contributivity(scenario=current_scenario)
+        contrib.compute_contributivity(method, current_scenario)
+        current_scenario.append_contributivity(contrib)
+        print("\n## Evaluating contributivity with " + method + ":")
+        print(contrib)
  
-    # Contributivity 1: Baseline contributivity measurement (Shapley Value)
-
-    shapley_contrib = contributivity.Contributivity(scenario=current_scenario)
-    shapley_contrib.compute_SV(current_scenario)
-
-    current_scenario.append_contributivity(shapley_contrib)
-    print("\n## Evaluating contributivity with Shapley:")
-    print(shapley_contrib)
-
-    # Contributivity 2: Performance scores of models trained independently on each node
-
-    independant_raw_contrib = contributivity.Contributivity(scenario=current_scenario)
-    independant_raw_contrib.compute_independent_scores_raws(current_scenario)
-
-    current_scenario.append_contributivity(independant_raw_contrib)
-    print("\n## Evaluating contributivity with independent single partner models:")
-    print(independant_raw_contrib)
-
-    # Contributivity 3: Performance scores of models trained independently on each node
-
-    independant_additiv_contrib = contributivity.Contributivity(
-        scenario=current_scenario
-    )
-    independant_additiv_contrib.compute_independent_scores_additive(current_scenario)
-
-    current_scenario.append_contributivity(independant_additiv_contrib)
-    print(
-        "\n## Evaluating contributivity with independent single partner models (additive contrib):"
-    )
-    print(independant_additiv_contrib)
-
-    # Contributivity 4: Truncated Monte Carlo Shapley
-
-    tmcs_contrib = contributivity.Contributivity(scenario=current_scenario)
-    tmcs_contrib.truncated_MC(current_scenario)
-
-    current_scenario.append_contributivity(tmcs_contrib)
-    print("\n## Evaluating contributivity with Truncated Monte Carlo Shapley:")
-    print(tmcs_contrib)
-
-    # Contributivity 5: interpolated monte-carlo
-
-    itmcs_contrib = contributivity.Contributivity(scenario=current_scenario)
-    itmcs_contrib.interpol_trunc_MC(current_scenario)
-
-    current_scenario.append_contributivity(itmcs_contrib)
-    print(
-        "\n## Evaluating contributivity with interpolated truncated Monte Carlo Shapley:"
-    )
-    print(itmcs_contrib)
-
-    # Contributivity 6:   importance sampling with linear interpolation model
-    IS_lin_contrib = contributivity.Contributivity(scenario=current_scenario)
-    IS_lin_contrib.IS_lin(current_scenario)
-
-    current_scenario.append_contributivity(IS_lin_contrib)
-    print(
-        "\n## Evaluating contributivity with importance sampling with linear interpolation model:"
-    )
-    print(IS_lin_contrib)
-
-    # Contributivity 7: importance sampling with regression model
-    IS_reg_contrib = contributivity.Contributivity(scenario=current_scenario)
-    IS_reg_contrib.IS_reg(current_scenario)
-
-    current_scenario.append_contributivity(IS_reg_contrib)
-    print(
-        "\n## Evaluating contributivity with importance sampling with regresion model:"
-    )
-    print(IS_reg_contrib)
-
-    # Contributivity 8: Adaptative importance sampling with kriging model
-    AISS_contib = contributivity.Contributivity(scenario=current_scenario)
-    AISS_contib.AIS_Kriging(current_scenario)
-
-    current_scenario.append_contributivity(AISS_contib)
-    print("\n## Evaluating contributivity with Adaptative importance sampling (AISS):")
-    print(AISS_contib)
-
-    # # Contributivity 9:  Stratified Monte Carlo
-    SMC_contib = contributivity.Contributivity(scenario=current_scenario)
-    SMC_contib.Stratified_MC(current_scenario)
-
-    current_scenario.append_contributivity(SMC_contib)
-    print("\n## Evaluating contributivity with stratified Monte Carlo Shapley:")
-    print(SMC_contib)
-
-    # # # Contributivity 10:  Stratified Monte Carlo
-    Support_contib = contributivity.Contributivity(scenario=current_scenario)
-    Support_contib.support(current_scenario)
-
-    current_scenario.append_contributivity(Support_contib)
-    print("\n## Evaluating contributivity with support stratified Monte Carlo Shapley:")
-    print(Support_contib)
-
     # Save results to file
 
     current_scenario.to_file()

@@ -143,8 +143,7 @@ class Contributivity:
     def compute_SV(self, the_scenario):
         start = timer()
         print("\n# Launching computation of Shapley Value of all nodes")
-
-        self.charac_fct_calls_count += 1
+ 
         # Initialize list of all players (nodes) indexes
         nodes_count = len(the_scenario.node_list)
         nodes_idx = np.arange(nodes_count)
@@ -301,7 +300,7 @@ class Contributivity:
 
     # %% compute Shapley values with the truncated Monte-carlo method with a small bias correction
 
-    def interpol_trunc_MC(
+    def interpol_TMC(
         self, the_scenario, sv_accuracy=0.01, alpha=0.9, truncation=0.05
     ):
         """Return the vector of approximated Shapley value corresponding to a list of node and a characteristic function using the interpolated truncated monte-carlo method."""
@@ -312,7 +311,7 @@ class Contributivity:
             np.arange(n), the_scenario
         )
         if n == 1:
-            self.name = "ITMC Shapley values"
+            self.name = "ITMCS values"
             self.contributivity_scores = np.array([characteristic_all_node])
             self.scores_std = np.array([0])
             self.normalized_scores = self.contributivity_scores / np.sum(
@@ -365,7 +364,7 @@ class Contributivity:
                     )
                 v_max = np.max(np.var(contributions, axis=0))
             sv = np.mean(contributions, axis=0)
-            self.name = "ITMC Shapley values"
+            self.name = "ITMCS values"
             self.contributivity_scores = sv
             self.scores_std = np.std(contributions, axis=0) / np.sqrt(t - 1)
             self.normalized_scores = self.contributivity_scores / np.sum(
@@ -1045,3 +1044,62 @@ class Contributivity:
             )
             end = timer()
             self.computation_time = end - start
+            
+        
+    def compute_contributivity(self, method_to_compute, 
+                               current_scenario,
+                               sv_accuracy=0.01, 
+                               alpha=0.95, 
+                               truncation=0.05,
+                               update=50):
+        
+        if method_to_compute == "Shapley values":
+            # Contributivity 1: Baseline contributivity measurement (Shapley Value)
+            self.compute_SV(current_scenario) 
+        elif method_to_compute == "Independant scores raws":
+            # Contributivity 2: Performance scores of models trained independently on each node 
+            self.compute_independent_scores_raws(current_scenario)
+        elif method_to_compute == "Independant scores additive":
+            # Contributivity 3: Performance scores of models trained independently on each node (additive score)
+            self.compute_independent_scores_additive(current_scenario) 
+        elif method_to_compute == "TMCS":
+            # Contributivity 4: Truncated Monte Carlo Shapley
+            self.truncated_MC(current_scenario,
+                              sv_accuracy=sv_accuracy, 
+                              alpha=alpha, 
+                              truncation=truncation)
+        elif method_to_compute == "ITMCS":
+            # Contributivity 5: interpolated monte-carlo
+            self.interpol_TMC(current_scenario,
+                              sv_accuracy=sv_accuracy, 
+                              alpha=alpha, 
+                              truncation=truncation)
+        elif method_to_compute == "IS_lin_S":
+            # Contributivity 6:   importance sampling with linear interpolation model
+            self.IS_lin(current_scenario,
+                        sv_accuracy=sv_accuracy,
+                        alpha=alpha)
+        elif method_to_compute == "IS_reg_S":
+            # Contributivity 7: importance sampling with regression model
+            self.IS_reg(current_scenario,
+                        sv_accuracy=sv_accuracy,
+                        alpha=alpha)
+        elif method_to_compute == "AIS_Kriging_S":
+            # Contributivity 8: Adaptative importance sampling with kriging model
+            self.AIS_Kriging(current_scenario,
+                              sv_accuracy=sv_accuracy,
+                              alpha=alpha,
+                              update=update)
+        elif method_to_compute == "SMCS":
+            # Contributivity 9:  Stratified Monte Carlo
+            self.Stratified_MC(current_scenario,
+                              sv_accuracy=sv_accuracy,
+                              alpha=alpha)
+        elif method_to_compute == "SupportSMCS":
+            # Contributivity 10:  Stratified Monte Carlo
+            self.support(current_scenario,
+                              sv_accuracy=sv_accuracy,
+                              alpha=alpha )
+        else: 
+            print("Unrecognized name of method, statment ignored !!! ")
+
