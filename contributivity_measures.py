@@ -20,7 +20,7 @@ import shapley_value.shapley as sv
 
 def compute_contributivity(method_to_compute, 
                            current_scenario,
-                           v_accuracy=0.01, 
+                           sv_accuracy=0.01, 
                            alpha=0.9, 
                            contrib_accuracy=0.05):
     
@@ -51,8 +51,8 @@ def compute_contributivity(method_to_compute,
     elif method_to_compute == "TMCS values":
         # Contributivity 3: Truncated Monte Carlo Shapley
         tmcs_results = truncated_MC(
-                        current_scenario, sv_accuracy=0.01, 
-                        alpha=0.9, contrib_accuracy=0.05
+                        current_scenario, sv_accuracy, 
+                        alpha, contrib_accuracy
                         )
         score_dict = {"TMCS values": (tmcs_results["sv"], 
                                       tmcs_results["std_sv"])}

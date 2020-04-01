@@ -1,5 +1,5 @@
 experiment_name: simple_16
-n_repeats: 1
+n_repeats: 10
 scenario_params_list:
  - nodes_counts: 3
    amounts_per_node: [0.4, 0.3, 0.3] 
