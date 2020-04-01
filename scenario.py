@@ -154,10 +154,6 @@ class Scenario:
         )
         print("- " + str(len(x_test)) + " test data " + str(len(y_test)) + " labels")
 
-        # Describe number of independant nodes
-        print("\n### Description of data scenario configured:")
-        print("- Number of nodes defined:", self.nodes_count)
-
         # Configure the desired splitting scenario - Datasets sizes
         # Should the nodes receive an equivalent amount of samples each...
         # ... or receive different amounts?
@@ -179,9 +175,6 @@ class Scenario:
         # print('- Splitting indices defined (for train data):', splitting_indices_train) # VERBOSE
 
         # Configure the desired data distribution scenario
-
-        # Describe the type of distribution chosen
-        print("- Data distribution scenario chosen:", self.samples_split_option)
 
         # Create a list of indexes of the samples
         train_idx = np.arange(len(y_train))
@@ -214,9 +207,6 @@ class Scenario:
         train_idx_idx_list = np.split(train_idx, splitting_indices_train)
         test_idx_idx_list = np.split(test_idx, splitting_indices_test)
 
-        # Describe test data distribution scenario
-        print("- Test data distribution scenario chosen:", self.single_partner_test_mode)
-
         # Populate nodes
         node_id = 0
         for train_idx, test_idx in zip(train_idx_idx_list, test_idx_idx_list):
@@ -242,6 +232,14 @@ class Scenario:
 
         # Check coherence of number of mini-batches versus smaller node
         assert self.minibatch_count <= (min(self.amounts_per_node) * len(x_train))
+
+        # Print the description of the scenario configured
+        print("\n### Description of data scenario configured:")
+        print("- Number of nodes defined:", self.nodes_count)
+        print("- Data distribution scenario chosen:", self.samples_split_option)
+        print("- Test data distribution scenario chosen:", self.single_partner_test_mode)
+        print("- Weighting option:", self.aggregation_weighting)
+        print("- Number of epochs and mini-batches: " + str(self.epoch_count) + " epochs and " + str(self.minibatch_count) + " mini-batches")
 
         # Print and plot for controlling
         print("\n### Splitting data among nodes:")
