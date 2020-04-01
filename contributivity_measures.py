@@ -18,6 +18,48 @@ import shapley_value.shapley as sv
 
 #%% Compute independent performance scores of models trained independently on each node
 
+def compute_contributivity(method_to_compute, 
+                           current_scenario,
+                           v_accuracy=0.01, 
+                           alpha=0.9, 
+                           contrib_accuracy=0.05):
+    
+    if method_to_compute == "Shapley values":
+        # Contributivity 1: Baseline contributivity measurement (Shapley Value)
+        (contributivity_scores, scores_var) = compute_SV(
+            current_scenario.node_list,
+            current_scenario.epoch_count,
+            current_scenario.x_val,
+            current_scenario.y_val,
+            current_scenario.x_test,
+            current_scenario.y_test,
+            current_scenario.aggregation_weighting,
+        )
+        score_dict = {"Shapley values": (contributivity_scores, scores_var)}
+    elif method_to_compute == "Independant scores":
+        # Contributivity 2: Performance scores of models trained independently on each node
+        scores = compute_independent_scores(
+            current_scenario.node_list,
+            current_scenario.epoch_count,
+            current_scenario.federated_test_score,
+            current_scenario.single_partner_test_mode,
+            current_scenario.x_test,
+            current_scenario.y_test,
+        )
+        score_dict = {"Independant scores raw": (scores[0], np.repeat(0.0, len(scores[0]))),
+                      "Independant scores additive": (scores[1], np.repeat(0.0, len(scores[1])))}
+    elif method_to_compute == "TMCS values":
+        # Contributivity 3: Truncated Monte Carlo Shapley
+        tmcs_results = truncated_MC(
+                        current_scenario, sv_accuracy=0.01, 
+                        alpha=0.9, contrib_accuracy=0.05
+                        )
+        score_dict = {"TMCS values": (tmcs_results["sv"], 
+                                      tmcs_results["std_sv"])}
+
+    
+    return score_dict
+
 
 def compute_independent_scores(
     node_list,
