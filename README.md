@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/SubstraFoundation/distributed-learning-contributivity.svg?branch=master)](https://travis-ci.org/SubstraFoundation/distributed-learning-contributivity)
+
 # Exploration of dataset contributivity to a model in collaborative ML projects
 
 ## Introduction
@@ -52,4 +54,3 @@ Should you be interested in this open effort and would like to share any questio
   - Substra Foundation's [Slack workspace](https://substra-workspace.slack.com/join/shared_invite/zt-cpyedcab-FHYgpy08efKJ2FCadE2yCA)
   - Email: hello@substra.org
   - Come meet with us at La Paillasse (Paris, France), Le Palace (Nantes, France) or Studio Iconosquare (Limoges, France)
-

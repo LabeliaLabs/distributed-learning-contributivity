@@ -75,7 +75,10 @@ class Scenario:
         self.contributivity_list = []
 
         # Number of epochs in ML training
-        self.epoch_count = 40
+        if 'epoch_count' in params.keys():
+            self.epoch_count = params['epoch_count']
+        else:
+            self.epoch_count = 40
 
         # Early stopping stops ML training when performance increase is not significant anymore
         # It is used to optimize the number of epochs and the execution time
