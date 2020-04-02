@@ -79,8 +79,15 @@ class Scenario:
         # Number of epochs and mini-batches in ML training
         if 'epoch_count' in params.keys():
             self.epoch_count = params['epoch_count']
+            assert(self.epoch_count > 0)
         else:
             self.epoch_count = 40
+        
+        if 'minibatch_count' in params.keys():
+            self.minibatch_count = params['minibatch_count']
+            assert(self.minibatch_count > 0)
+        else:
+            self.minibatch_count = 20
 
         if 'minibatch_count' in params.keys():
             self.minibatch_count = params['minibatch_count']
@@ -157,6 +164,9 @@ class Scenario:
         print("- " + str(len(x_val)) + " val data with " + str(len(y_val)) + " labels")
         print("- " + str(len(x_test)) + " test data " + str(len(y_test)) + " labels")
 
+        # Configure the desired splitting scenario - Datasets sizes
+        # Should the nodes receive an equivalent amount of samples each...
+        # ... or receive different amounts?
         # Check the percentages of samples per node and control its coherence
         assert len(self.amounts_per_node) == self.nodes_count
         assert np.sum(self.amounts_per_node) == 1
