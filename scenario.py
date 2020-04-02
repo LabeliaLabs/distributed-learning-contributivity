@@ -77,10 +77,11 @@ class Scenario:
         else:
             self.epoch_count = 40
             
-        methods_default = ["Shapley values",
-                           "Independant scores",
-                           "TMCS values"
-                           ]
+        methods_default = [
+            "Shapley values",
+            "Independant scores",
+            "TMCS values"
+        ]
         
         self.methods = []
         if not 'methods' in params:
