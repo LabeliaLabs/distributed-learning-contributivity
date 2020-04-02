@@ -14,13 +14,13 @@ An exploratory document provides a deeper context description and details certai
 
 ## About this repository
 
-In this repository, we would like to benchmark different contributivity measurement approaches on a public dataset artificially split in a number of individual datasets, to mock a collaborative ML project.
+In this repository, we benchmark different contributivity measurement approaches on a public dataset artificially split in a number of individual datasets, to mock a collaborative ML project.
 
 The objective is to compare the contributivity figures obtained with the different approaches, and try to see how potential differences could be interpreted.
 
 ### Experimental approach
 
-We want to start experimenting contributivity evaluations in collaborative data science / distributed learning scenarios. At this stage this cannot be a thorough and complete experimentation though, as our exploration of the topic is in progress and we can dedicate only a limited amount of time and energy to this project. To make the most out of it, it is key to capitalize on this effort and develop it as a reproducible pipeline that we will be able to improve, enrich, complement over time.
+We want to start experimenting contributivity evaluations in collaborative data science / distributed learning scenarios. At this stage this cannot be a thorough and complete experimentation though, as our exploration of the topic is in progress. To make the most out of it, it is key to capitalize on this effort and develop it as a reproducible pipeline that we will be able to improve, enrich, complement over time.
 
 - Public dataset of choice: MNIST
 - Collaborative data science scenarios - Parameters:
@@ -42,9 +42,8 @@ We want to start experimenting contributivity evaluations in collaborative data 
 ### Using the code files
 
 - Define your mock scenario(s) in `config.yml` by changing the values of the suggested parameters of the custom scenario (you can browse more available parameters in `scenario.py`)
-- Clear `results.csv` if you want a clean sheet for starters
 - Then execute `simulation_run.py -f config.yml`
-- Consult results in the `results.csv` generated file or via the `analyse_results.ipynb` notebook
+- A `results.csv` file will be generated in a new folder for your experiment under `/experiments`. You can read this raw `results.csv` file or use the `analyse_results.ipynb` notebook to quickly generate figures.
 
 ## Contacts
 
