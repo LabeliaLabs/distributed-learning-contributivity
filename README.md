@@ -44,7 +44,26 @@ We want to start experimenting contributivity evaluations in collaborative data 
   
 ### Using the code files
 
-- Define your mock scenario(s) in `config.yml` by changing the values of the suggested parameters of the custom scenario (you can browse more available parameters in `scenario.py`)
+- Define your mock scenario(s) in `config.yml` by changing the values of the suggested parameters of the custom scenario (you can browse more available parameters in `scenario.py`). For example:
+    ```yaml
+    experiment_name: my_custom_experiment
+    n_repeats: 10
+    scenario_params_list:
+     - nodes_counts: 3
+       amounts_per_node: [0.4, 0.3, 0.3] 
+       samples_split_option: 'Random'
+       aggregation_weighting: 'data-volume'
+       single_partner_test_mode: 'global'
+       epoch_count: 38
+       minibatch_count: 20
+     - nodes_counts: 4
+       amounts_per_node: [0.3, 0.3, 0.1, 0.3] 
+       samples_split_option: 'Stratified'
+       aggregation_weighting: 'data-volume'
+       single_partner_test_mode: 'global'
+       epoch_count: 38
+       minibatch_count: 20
+    ```
 - Then execute `simulation_run.py -f config.yml`
 - A `results.csv` file will be generated in a new folder for your experiment under `/experiments`. You can read this raw `results.csv` file or use the `analyse_results.ipynb` notebook to quickly generate figures.
 
