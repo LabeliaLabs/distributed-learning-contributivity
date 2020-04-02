@@ -88,13 +88,13 @@ class Scenario:
             self.methods = methods_default
         else:
             if not params['methods']:
-                sys.exit('No contributivity method given in config file')
+                raise Exception("No contributivity method given in config file")
             else:
                 for el in params['methods']:
                     if el in methods_default:
                         self.methods.append(el)
                     else:
-                        sys.exit('method ' + el + ' is not in methods list.')
+                        raise Exception('method ' + el + ' is not in methods list.')
 
         self.is_early_stopping = True
 
