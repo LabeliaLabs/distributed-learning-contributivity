@@ -255,16 +255,18 @@ def compute_test_score(
             print("\n      Mini-batch " + str(minibatch_index) + " out of " + str(minibatch_count-1) + " total mini-batches")
             is_first_minibatch = minibatch_index == 0
 
-            # Starting model is the aggregated model from the previous mini-batch iteration
-            if is_first_epoch and is_first_minibatch:
-                agg_model_for_iteration = utils.generate_new_cnn_model()
-            else:
-                agg_model_for_iteration = build_aggregated_model(aggregate_model_weights(model_list, aggregation_weights))
+            # Starting model for each node is the aggregated model from the previous mini-batch iteration
+            agg_model_for_iteration = [None] * nodes_count
+            for node_index, node in enumerate(node_list):
+                if is_first_epoch and is_first_minibatch:
+                    agg_model_for_iteration[node_index] = utils.generate_new_cnn_model()
+                else:
+                    agg_model_for_iteration[node_index] = build_aggregated_model(aggregate_model_weights(model_list, aggregation_weights))
 
             # Iterate over nodes for training each individual model
             for node_index, node in enumerate(node_list):
 
-                node_model = agg_model_for_iteration
+                node_model = agg_model_for_iteration[node_index]
 
                 # Train on node local data set
                 print("         Training on node " + str(node_index) + " - " + str(node))
