@@ -146,18 +146,15 @@ class Scenario:
         # Fetch parameters of scenario
         x_train = self.x_train
         y_train = self.y_train
+        x_val = self.x_val
+        y_val = self.y_val
         x_test = self.x_test
         y_test = self.y_test
 
         # Describe data
         print("\n### Data loaded: ", self.dataset_name)
-        print(
-            "- "
-            + str(len(x_train))
-            + " train data with "
-            + str(len(y_train))
-            + " labels"
-        )
+        print("- " + str(len(x_train)) + " train data with " + str(len(y_train)) + " labels")
+        print("- " + str(len(x_val)) + " val data with " + str(len(y_val)) + " labels")
         print("- " + str(len(x_test)) + " test data " + str(len(y_test)) + " labels")
 
         # Describe number of independent nodes
