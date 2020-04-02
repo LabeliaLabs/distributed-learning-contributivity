@@ -839,7 +839,6 @@ class Contributivity:
             sigma2 = np.zeros((N, N))
             mu = np.zeros((N, N))
             e = 0.0
-            q = -norm.ppf((1 - alpha) / 2, loc=0, scale=1)
             v_max = 0
             continuer = []
             contributions = []
@@ -852,7 +851,7 @@ class Contributivity:
                     continuer[k].append(True)
             # sampling
             while (
-                np.any(continuer) or (sv_accuracy) ** 2 < 4 * q ** 2 * v_max
+                np.any(continuer) or (1 - alpha)  <  v_max / (sv_accuracy ** 2)
             ):  # Check if the length of the confidence interval  is below the value of sv_accuracy 
                 t += 1
                 e = (
@@ -945,8 +944,7 @@ class Contributivity:
             # initialisation 
             t = 0
             sigma2 = np.zeros((N, N))
-            mu = np.zeros((N, N)) 
-            q = -norm.ppf((1 - alpha) / 2, loc=0, scale=1)
+            mu = np.zeros((N, N))  
             v_max = 0
             continuer = []
             increments_generated = []
@@ -966,7 +964,7 @@ class Contributivity:
                 
             # sampnling
             while (
-                np.any(continuer) or (sv_accuracy) < 2 * q * np.sqrt(v_max)
+                np.any(continuer) or (1 - alpha)  <  v_max / (sv_accuracy ** 2)
             ):  # Check if the length of the confidence interval  is below the value of sv_accuracy 
                 t += 1
                 print(t)
