@@ -76,7 +76,7 @@ class Scenario:
         # List of contributivity measures selected and computed in the scenario
         self.contributivity_list = []
 
-        # Number of epochs in ML training
+        # Number of epochs and mini-batches in ML training
         if 'epoch_count' in params.keys():
             self.epoch_count = params['epoch_count']
         else:
@@ -156,10 +156,6 @@ class Scenario:
         print("- " + str(len(x_train)) + " train data with " + str(len(y_train)) + " labels")
         print("- " + str(len(x_val)) + " val data with " + str(len(y_val)) + " labels")
         print("- " + str(len(x_test)) + " test data " + str(len(y_test)) + " labels")
-
-        # Describe number of independent nodes
-        print("\n### Description of data scenario configured:")
-        print("- Number of nodes defined:", self.nodes_count)
 
         # Check the percentages of samples per node and control its coherence
         assert len(self.amounts_per_node) == self.nodes_count
@@ -247,13 +243,7 @@ class Scenario:
         print("\n### Splitting data among nodes:")
         for node_index, node in enumerate(self.node_list):
             print("- Node #" + str(node_index) + ":")
-            print(
-                "  - Number of samples:"
-                + str(len(node.x_train))
-                + " train, "
-                + str(len(node.x_test))
-                + " test"
-            )
+            print("  - Number of samples:" + str(len(node.x_train)) + " train samples")
             print("  - y_train first 10 values:" + str(node.y_train[:10]))
             print("  - y_train last 10 values:" + str(node.y_train[-10:]))
 
