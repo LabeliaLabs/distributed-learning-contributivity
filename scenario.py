@@ -85,18 +85,22 @@ class Scenario:
             assert(self.minibatch_count > 0)
         else:
             self.minibatch_count = 20
-            
         methods_default = ["Shapley values",
                            "Independant scores raws",
-                           "Independant scores additive",
-                           "TMCS",
                            "ITMCS",
-                           "IS_lin_S",
-                           "IS_reg_S",
-                           "AIS_Kriging_S",
-                           "SMCS",
-                           "SupportSMCS"
-                           ]
+                           "SMCS"  
+                           ]    
+        methods_list = ["Shapley values",
+                        "Independant scores raws",
+                        "Independant scores additive",
+                        "TMCS",
+                        "ITMCS",
+                        "IS_lin_S",
+                        "IS_reg_S",
+                        "AIS_Kriging_S",
+                        "SMCS",
+                        "WR_SMC"
+                        ]
         
         self.methods = []
         if not 'methods' in params:
@@ -106,7 +110,7 @@ class Scenario:
                 sys.exit('No contributivity method given in config file')
             else:
                 for el in params['methods']:
-                    if el in methods_default:
+                    if el in methods_list:
                         self.methods.append(el)
                     else:
                         sys.exit('method \"' + el + '\" is not in methods list.')

@@ -17,5 +17,5 @@ scenario_params_list:
     # - "IS_reg_S"
     # - "AIS_Kriging_S"
     # - "SMCS"
-    # - "SupportSMCS"
+    # - "WR_SMC"
    is_quick_demo: True
