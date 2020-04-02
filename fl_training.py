@@ -257,6 +257,7 @@ def compute_test_score(
 
             # Starting model for each node is the aggregated model from the previous mini-batch iteration
             agg_model_for_iteration = [None] * nodes_count
+            aggregation_weights = prepare_aggregation_weights(aggregation_weighting, nodes_count, node_list, local_perf_list)
             for node_index, node in enumerate(node_list):
                 if is_first_epoch and is_first_minibatch:
                     agg_model_for_iteration[node_index] = utils.generate_new_cnn_model()
@@ -317,7 +318,10 @@ def compute_test_score(
     # After last epoch or if early stopping was triggered, evaluate model on the global testset
     print("\n### Evaluating model on test data:")
     model_evaluation = aggregated_model.evaluate(
-        x_test, y_test, batch_size=constants.BATCH_SIZE, verbose=0
+        x_test,
+        y_test,
+        batch_size=constants.BATCH_SIZE,
+        verbose=0,
     )
     print("   Model metrics names: ", aggregated_model.metrics_names)
     print("   Model metrics values: ", ["%.3f" % elem for elem in model_evaluation])
