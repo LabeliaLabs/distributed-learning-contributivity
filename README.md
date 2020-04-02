@@ -36,6 +36,7 @@ We want to start experimenting contributivity evaluations in collaborative data 
     - [done] Shapley value: given the limited number of data partners we consider at that stage it is possible to actually compute it with a reasonable amount of resources
     - [done] Performance scores of models trained independently on each node
     - [done] Truncated Monte Carlo Shapley approximation adapted for datasets instead of individual datum (including optimized variants)
+    - [done] Stratified Monte Carlo Shapley approximation
     - [in progress] Information sampling method (including optimized variants: regression importance sampling method, Kriging adaptive importance sampling method)
   - Comparison variables (baseline: Shapley value)
     - Contributivity relative values
