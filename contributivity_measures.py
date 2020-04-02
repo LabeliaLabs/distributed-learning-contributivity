@@ -24,6 +24,8 @@ def compute_contributivity(method_to_compute,
                            alpha=0.9, 
                            contrib_accuracy=0.05):
     
+    score_dict = {}
+    
     if method_to_compute == "Shapley values":
         # Contributivity 1: Baseline contributivity measurement (Shapley Value)
         (contributivity_scores, scores_var) = compute_SV(
@@ -56,10 +58,6 @@ def compute_contributivity(method_to_compute,
                         )
         score_dict = {"TMCS values": (tmcs_results["sv"], 
                                       tmcs_results["std_sv"])}
-        
-    else:
-        score_dict = {}
-
     
     return score_dict
 
