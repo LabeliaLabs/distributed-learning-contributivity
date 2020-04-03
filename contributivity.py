@@ -183,7 +183,7 @@ class Contributivity:
         self.computation_time = end - start
 
     # %% compute independent raw scores
-    def compute_independent_scores_raws(self, the_scenario):
+    def compute_independent_scores(self, the_scenario):
         start = timer()
 
         print(
@@ -205,37 +205,6 @@ class Contributivity:
         end = timer()
         self.computation_time = end - start
 
-    # %% compute independent additive scores
-
-    def compute_independent_scores_additive(self, the_scenario):
-        start = timer()
-
-        collaborative_score = self.not_twice_characteristic(
-            np.arange(len(the_scenario.node_list)), the_scenario
-        )
-
-        print(
-            "\n# Launching computation of perf. scores of models trained independently on each node"
-        )
-
-        # Initialize a list of performance scores
-        performance_scores = []
-
-        # Train models independently on each node and append perf. score to list of perf. scores
-        for i in range(len(the_scenario.node_list)):
-            performance_scores.append(
-                self.not_twice_characteristic(np.array([i]), the_scenario)
-            )
-
-        # Compute 'regularized' values of performance scores so that they are additive and their sum amount to the collaborative performance score obtained by the coalition of all players (nodes)
-        perf_scores_additive = softmax(performance_scores) * collaborative_score
-
-        self.name = "Independant scores additive"
-        self.contributivity_scores = np.array(perf_scores_additive)
-        self.scores_std = np.zeros(len(performance_scores))
-        self.normalized_scores = perf_scores_additive / np.sum(perf_scores_additive)
-        end = timer()
-        self.computation_time = end - start
 
     # %% compute Shapley values with the truncated Monte-carlo metho
 
@@ -1048,45 +1017,42 @@ class Contributivity:
             self.compute_SV(current_scenario) 
         elif method_to_compute == "Independant scores raws":
             # Contributivity 2: Performance scores of models trained independently on each node 
-            self.compute_independent_scores_raws(current_scenario)
-        elif method_to_compute == "Independant scores additive":
-            # Contributivity 3: Performance scores of models trained independently on each node (additive score)
-            self.compute_independent_scores_additive(current_scenario) 
+            self.compute_independent_scores(current_scenario) 
         elif method_to_compute == "TMCS":
-            # Contributivity 4: Truncated Monte Carlo Shapley
+            # Contributivity 3: Truncated Monte Carlo Shapley
             self.truncated_MC(current_scenario,
                               sv_accuracy=sv_accuracy, 
                               alpha=alpha, 
                               truncation=truncation)
         elif method_to_compute == "ITMCS":
-            # Contributivity 5: interpolated monte-carlo
+            # Contributivity 4: interpolated monte-carlo
             self.interpol_TMC(current_scenario,
                               sv_accuracy=sv_accuracy, 
                               alpha=alpha, 
                               truncation=truncation)
         elif method_to_compute == "IS_lin_S":
-            # Contributivity 6:   importance sampling with linear interpolation model
+            # Contributivity 5:   importance sampling with linear interpolation model
             self.IS_lin(current_scenario,
                         sv_accuracy=sv_accuracy,
                         alpha=alpha)
         elif method_to_compute == "IS_reg_S":
-            # Contributivity 7: importance sampling with regression model
+            # Contributivity 6: importance sampling with regression model
             self.IS_reg(current_scenario,
                         sv_accuracy=sv_accuracy,
                         alpha=alpha)
         elif method_to_compute == "AIS_Kriging_S":
-            # Contributivity 8: Adaptative importance sampling with kriging model
+            # Contributivity 7: Adaptative importance sampling with kriging model
             self.AIS_Kriging(current_scenario,
                               sv_accuracy=sv_accuracy,
                               alpha=alpha,
                               update=update)
         elif method_to_compute == "SMCS":
-            # Contributivity 9:  Stratified Monte Carlo
+            # Contributivity 8:  Stratified Monte Carlo
             self.Stratified_MC(current_scenario,
                               sv_accuracy=sv_accuracy,
                               alpha=alpha) 
         elif method_to_compute == "WR_SMC":
-            # Contributivity 10:  Stratified Monte Carlo
+            # Contributivity 9: Without replacement Stratified Monte Carlo
             self.without_replacment_SMC(current_scenario,
                               sv_accuracy=sv_accuracy,
                               alpha=alpha )

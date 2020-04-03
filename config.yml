@@ -9,7 +9,7 @@ scenario_params_list:
    epoch_count: 38
    methods:
     - "Shapley values"
-    - "Independant scores raws"
+    - "Independant scores"
     - "TMCS"
    minibatch_count: 20
  - nodes_counts: 3
