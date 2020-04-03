@@ -89,6 +89,7 @@ class Scenario:
             assert(self.minibatch_count > 0)
         else:
             self.minibatch_count = 20
+
         methods_default = ["Shapley values",
                            "Independant scores raws",
                            "ITMCS",
@@ -118,6 +119,12 @@ class Scenario:
                         self.methods.append(el)
                     else:
                         sys.exit('method \"' + el + '\" is not in methods list.')
+
+        if 'minibatch_count' in params.keys():
+            self.minibatch_count = params['minibatch_count']
+            assert self.minibatch_count > 0
+        else:
+            self.minibatch_count = 20
 
         # Early stopping stops ML training when performance increase is not significant anymore
         # It is used to optimize the number of epochs and the execution time
@@ -177,18 +184,15 @@ class Scenario:
         # Fetch parameters of scenario
         x_train = self.x_train
         y_train = self.y_train
+        x_val = self.x_val
+        y_val = self.y_val
         x_test = self.x_test
         y_test = self.y_test
 
         # Describe data
         print("\n### Data loaded: ", self.dataset_name)
-        print(
-            "- "
-            + str(len(x_train))
-            + " train data with "
-            + str(len(y_train))
-            + " labels"
-        )
+        print("- " + str(len(x_train)) + " train data with " + str(len(y_train)) + " labels")
+        print("- " + str(len(x_val)) + " val data with " + str(len(y_val)) + " labels")
         print("- " + str(len(x_test)) + " test data " + str(len(y_test)) + " labels")
 
         # Configure the desired splitting scenario - Datasets sizes
@@ -281,13 +285,7 @@ class Scenario:
         print("\n### Splitting data among nodes:")
         for node_index, node in enumerate(self.node_list):
             print("- Node #" + str(node_index) + ":")
-            print(
-                "  - Number of samples:"
-                + str(len(node.x_train))
-                + " train, "
-                + str(len(node.x_test))
-                + " test"
-            )
+            print("  - Number of samples:" + str(len(node.x_train)) + " train samples")
             print("  - y_train first 10 values:" + str(node.y_train[:10]))
             print("  - y_train last 10 values:" + str(node.y_train[-10:]))
 

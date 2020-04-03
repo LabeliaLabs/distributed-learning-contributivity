@@ -102,7 +102,6 @@ def run_scenario(current_scenario):
         current_scenario, is_save_fig
     )
     end = timer()
-
     current_scenario.federated_computation_time = np.round(end - start)
 
     for method in current_scenario.methods:
@@ -114,7 +113,6 @@ def run_scenario(current_scenario):
         print(contrib)
 
     # Save results to file
-
     current_scenario.to_file()
 
     return 0
