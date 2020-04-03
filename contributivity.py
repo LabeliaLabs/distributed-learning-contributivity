@@ -113,6 +113,7 @@ class Contributivity:
                 the_scenario.aggregation_weighting,
                 the_scenario.minibatch_count,
                 the_scenario.is_early_stopping,
+                the_scenario.single_partner_test_mode,
                 save_folder=the_scenario.save_folder,
             )
             # we add the new increments
