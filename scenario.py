@@ -80,21 +80,16 @@ class Scenario:
         # Number of epochs and mini-batches in ML training
         if 'epoch_count' in params:
             self.epoch_count = params['epoch_count']
-            assert(self.epoch_count > 0)
+            assert self.epoch_count > 0 
         else:
             self.epoch_count = 40
         
         if 'minibatch_count' in params:
             self.minibatch_count = params['minibatch_count']
-            assert(self.minibatch_count > 0)
+            assert self.minibatch_count > 0 
         else:
             self.minibatch_count = 20
 
-        methods_default = ["Shapley values",
-                           "Independant scores raws",
-                           "ITMCS",
-                           "SMCS"  
-                           ]    
         methods_list = ["Shapley values",
                         "Independant scores raws",
                         "Independant scores additive",
@@ -107,19 +102,26 @@ class Scenario:
                         "WR_SMC"
                         ]
         
+        # Contributivity methods
+        methods_default = [
+            "Shapley values",
+            "Independant scores",
+            "TMCS values"
+        ]
+        
         self.methods = []
         if not 'methods' in params:
             self.methods = methods_default
         else:
-            if not params['methods']:
-                sys.exit('No contributivity method given in config file')
-            else:
+            if params['methods']:
                 for el in params['methods']:
                     if el in methods_list:
                         self.methods.append(el)
                     else:
-                        sys.exit('method \"' + el + '\" is not in methods list.')
-
+                        raise Exception('method ' + el + ' is not in methods list.')
+            else:
+                raise Exception("No contributivity method given in config file")
+        
         # Early stopping stops ML training when performance increase is not significant anymore
         # It is used to optimize the number of epochs and the execution time
         self.is_early_stopping = True # Toggle between True and False
