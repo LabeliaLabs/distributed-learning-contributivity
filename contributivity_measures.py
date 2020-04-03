@@ -37,7 +37,7 @@ def compute_contributivity(method_to_compute,
             current_scenario.y_test,
             current_scenario.aggregation_weighting,
             current_scenario.minibatch_count,
-            current_scenario.is_early_stopping
+            current_scenario.is_early_stopping,
             current_scenario.single_partner_test_mode
         )
         score_dict = {"Shapley values": (contributivity_scores, scores_var)}
