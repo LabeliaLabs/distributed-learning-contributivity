@@ -414,16 +414,8 @@ class Contributivity:
                         renorm += prob(np.array(subset)) * np.abs(
                             approx_increment(np.array(subset), k)
                         )
-                renorms.append(renorm)
-
-            # ## defines the importance density
-            def g(subset, k):
-                return (
-                    prob(np.array(subset))
-                    * np.abs(approx_increment(np.array(subset), k))
-                    / renorms[k]
-                )
-
+                renorms.append(renorm) 
+                
             # sampling
             t = 0
             q = -norm.ppf((1 - alpha) / 2, loc=0, scale=1)
@@ -437,13 +429,14 @@ class Contributivity:
                 else:
                     contributions = np.vstack((contributions, np.zeros(n)))
                 for k in range(n):
+                    #generate the new subset (for the increment) with the inverse method
                     u = np.random.uniform(0, 1, 1)[0]
                     cumSum = 0
                     list_k = np.delete(np.arange(n), k)
                     for length_combination in range(len(list_k) + 1):
                         for subset in combinations(
                             list_k, length_combination
-                        ):  # could be avoided as   prob(np.array(subset))*np.abs(approx_increment(np.array(subset),j)) is constant in the combination
+                            ):
                             cumSum += prob(np.array(subset)) * np.abs(
                                 approx_increment(np.array(subset), k)
                             )
@@ -452,10 +445,12 @@ class Contributivity:
                                 break
                         if cumSum / renorms[k] > u:
                             break
+                    #compute the increment
                     SUk = np.append(S, k)
                     increment = self.not_twice_characteristic(
                         SUk, the_scenario
                     ) - self.not_twice_characteristic(S, the_scenario)
+                    #computed the weight p/g
                     contributions[t - 1][k] = (
                         increment
                         * renorms[k]
