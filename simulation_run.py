@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 """
-A script to configure and run simulations of:
-    - splitting data among different nodes to mock a multi-partner ML project
-    - train a model across multiple nodes
-    - measure contributivity of each node to the model performance
+A script for:
+    - mocking a multi-partner ML project by splitting data among different nodes
+    - training a model across multiple nodes in a distributed approach
+    - measuring the respective contributions of each node to the model performance (termed "contributivity")
 """
 
 from __future__ import print_function
@@ -33,6 +33,7 @@ DEFAULT_CONFIG_FILE = "config.yml"
 
 def main():
 
+    # Parse config file for scenarios to be experimented
     parser = argparse.ArgumentParser()
     parser.add_argument("-f", "--file", help="input config file")
     args = parser.parse_args()
@@ -50,13 +51,14 @@ def main():
     scenario_params_list = config["scenario_params_list"]
     n_repeats = config["n_repeats"]
 
-    # GPU config
+    # # GPU config
     # gpus = tf.config.experimental.list_physical_devices("GPU")
     # tf.config.experimental.set_memory_growth(gpus[0], True)
 
     # Close open figures
     plt.close("all")
 
+    # Iterate over repeats of all scenarios experiments
     for i in range(n_repeats):
 
         logger.info(f"Repeat {i+1}/{n_repeats}")
@@ -87,8 +89,7 @@ def main():
 
 def run_scenario(current_scenario):
 
-    #%% Split data according to scenario and then pre-process successively train data, early stopping validation data, test data
-
+    # Split data according to scenario and then pre-process successively train data, early stopping validation data, test data
     current_scenario.split_data()
     current_scenario.plot_data_distribution()
     current_scenario = fl_training.preprocess_scenarios_data(current_scenario)
