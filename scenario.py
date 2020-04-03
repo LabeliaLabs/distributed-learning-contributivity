@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-This enables to parameterize a desired scenario of data splitting among nodes.
+This enables to parameterize a desired scenario to mock a multi-partner ML project.
 """
 
 from keras.datasets import mnist
@@ -24,6 +24,7 @@ class Scenario:
         # Identify and get a dataset for running experiments
         self.dataset_name = "MNIST"
         (x_train, y_train), (x_test, y_test) = mnist.load_data()
+
         # The train set has to be split into a train set and a validation set for early stopping
         self.x_train, self.x_val, self.y_train, self.y_val = train_test_split(
             x_train, y_train, test_size=0.2, random_state=42
@@ -31,24 +32,23 @@ class Scenario:
         self.x_test = x_test
         self.y_test = y_test
 
-        # Define the desired number of independant nodes
         # Nodes mock different partners in a collaborative data science project
+        # For defining the number of nodes
         self.nodes_count = params["nodes_counts"]
 
-        # Configure the desired respective datasets sizes of the nodes
-        # Should the nodes receive an equivalent amount of samples each...
-        # ... or receive different amounts?
+        # For configuring the respective sizes of the nodes' datasets
+        # Should the nodes receive an equivalent amount of samples each or receive different amounts?
         # Define the percentages of samples per node
         # Sum has to equal 1 and number of items has to equal NODES_COUNT
         self.amounts_per_node = params["amounts_per_node"]
 
-        # Configure if data samples are split between nodes randomly or in a stratified way...
+        # For configuring if data samples are split between nodes randomly or in a stratified way...
         # ... so that they cover distinct areas of the samples space
         self.samples_split_option = params[
             "samples_split_option"
         ]  # Toggle between 'Random' and 'Stratified'
 
-        # Configure if the data of the nodes are corrupted or not
+        # For configuring if the data of the nodes are corrupted or not (useful for testing contributivity measures)
         if "corrupted_nodes" in params:
             self.corrupted_nodes = params["corrupted_nodes"]
         else:
@@ -59,6 +59,7 @@ class Scenario:
             "single_partner_test_mode"
         ]  # Toggle between 'local' and 'global'
 
+        # Performance of the model trained in a distributed way on all nodes
         self.federated_test_score = int
 
         self.federated_computation_time = int
@@ -70,10 +71,13 @@ class Scenario:
         else:
             self.aggregation_weighting = "uniform"
 
+        # List of all nodes defined in the scenario
         self.node_list = []
 
+        # List of contributivity measures selected and computed in the scenario
         self.contributivity_list = []
 
+        # Number of epochs in ML training
         if 'epoch_count' in params:
             self.epoch_count = params['epoch_count']
             assert(self.epoch_count > 0)
@@ -115,7 +119,9 @@ class Scenario:
                     else:
                         sys.exit('method \"' + el + '\" is not in methods list.')
 
-        self.is_early_stopping = True
+        # Early stopping stops ML training when performance increase is not significant anymore
+        # It is used to optimize the number of epochs and the execution time
+        self.is_early_stopping = True # Toggle between True and False
 
         now = datetime.datetime.now()
         now_str = now.strftime("%Y-%m-%d_%Hh%M")
@@ -134,7 +140,7 @@ class Scenario:
             + "_"
             + uuid.uuid4().hex[
                 :3
-            ]  # This is to be sure 2 distincts sceneario do no have the same name
+            ]  # This is to be sure 2 distinct scenarios do no have the same name
         )
 
         self.short_scenario_name = (
@@ -151,7 +157,7 @@ class Scenario:
 
         if "is_quick_demo" in params and params["is_quick_demo"]:
 
-            # Use less data and less epochs to speed up the computaions
+            # Use less data and less epochs to speed up the computations
             logger.info("Quick demo: limit number of data and number of epochs.")
             self.x_train = self.x_train[:1000]
             self.y_train = self.y_train[:1000]
@@ -169,7 +175,6 @@ class Scenario:
         """Populates the nodes with their train and test data (not pre-processed)"""
 
         # Fetch parameters of scenario
-
         x_train = self.x_train
         y_train = self.y_train
         x_test = self.x_test
@@ -195,7 +200,7 @@ class Scenario:
         assert np.sum(self.amounts_per_node) == 1
 
         # Then we parameterize this via the splitting_indices to be passed to np.split
-        # This is to transform the % from my_scenario into indices where to split the data
+        # This is to transform the percentages from the scenario configuration into indices where to split the data
         splitting_indices = np.empty((self.nodes_count - 1,))
         splitting_indices[0] = self.amounts_per_node[0]
         for i in range(self.nodes_count - 2):
@@ -214,7 +219,6 @@ class Scenario:
 
         # In the 'Stratified' scenario we sort MNIST by labels
         if self.samples_split_option == "Stratified":
-
             # Sort MNIST by labels
             y_sorted_idx = y_train.argsort()
             y_train = y_train[y_sorted_idx]
