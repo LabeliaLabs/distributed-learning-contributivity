@@ -36,6 +36,9 @@ def compute_contributivity(method_to_compute,
             current_scenario.x_test,
             current_scenario.y_test,
             current_scenario.aggregation_weighting,
+            current_scenario.minibatch_count,
+            current_scenario.is_early_stopping
+            current_scenario.single_partner_test_mode
         )
         score_dict = {"Shapley values": (contributivity_scores, scores_var)}
     elif method_to_compute == "Independant scores":
@@ -97,7 +100,7 @@ def compute_independent_scores(
 #%% Generalization of Shapley Value computation
 
 
-def compute_SV(node_list, epoch_count, x_val_global, y_val_global, x_test, y_test, aggregation_weighting, minibatch_count):
+def compute_SV(node_list, epoch_count, x_val_global, y_val_global, x_test, y_test, aggregation_weighting, minibatch_count,is_early_stopping,single_partner_test_mode):
 
     print("\n# Launching computation of Shapley Value of all nodes")
 
@@ -121,7 +124,14 @@ def compute_SV(node_list, epoch_count, x_val_global, y_val_global, x_test, y_tes
         # print('\nComputing characteristic function on coalition ', coalition) # VERBOSE
         characteristic_function.append(
             fl_training.compute_test_score(
-                coalition_nodes, epoch_count, x_val_global, y_val_global, x_test, y_test, aggregation_weighting, minibatch_count
+                coalition_nodes, epoch_count,
+                x_val_global,
+                y_val_global,
+                x_test, y_test,
+                aggregation_weighting,
+                minibatch_count,
+                is_early_stopping,
+                single_partner_test_mode
             )
         )
     # print('\nValue of characteristic function for all coalitions: ', characteristic_function) # VERBOSE
@@ -165,6 +175,7 @@ def truncated_MC(scenario, sv_accuracy=0.01, alpha=0.9, contrib_accuracy=0.05):
                 scenario.aggregation_weighting,
                 scenario.minibatch_count,
                 scenario.is_early_stopping,
+                scenario.single_partner_test_mode,
                 save_folder=scenario.save_folder,
             )
 
