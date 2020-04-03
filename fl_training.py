@@ -258,7 +258,8 @@ def compute_test_score(
 
             # Starting model for each node is the aggregated model from the previous mini-batch iteration
             agg_model_for_iteration = [None] * nodes_count
-            aggregation_weights = prepare_aggregation_weights(aggregation_weighting, nodes_count, node_list, local_score_list)
+            if not is_first_epoch or not is_first_minibatch:
+                aggregation_weights = prepare_aggregation_weights(aggregation_weighting, nodes_count, node_list, local_score_list)
             for node_index, node in enumerate(node_list):
                 if is_first_epoch and is_first_minibatch:
                     agg_model_for_iteration[node_index] = utils.generate_new_cnn_model()
