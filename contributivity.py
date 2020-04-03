@@ -942,6 +942,8 @@ class Contributivity:
                     # select the strata to add an increment
                     if np.any(continuer[k]):
                         p = np.array(continuer[k])/np.sum(continuer[k])  # alocate uniformly among strata that are not fully explored
+                    elif np.sum(sigma2[k])==0:
+                        continue
                     else:
                         p = sigma2[k] / np.sum(sigma2[k])
                     strata = np.random.choice(np.arange(N), 1, p=p)[0]

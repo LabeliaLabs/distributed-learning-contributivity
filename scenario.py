@@ -91,8 +91,7 @@ class Scenario:
             self.minibatch_count = 20
 
         methods_list = ["Shapley values",
-                        "Independant scores raws",
-                        "Independant scores additive",
+                        "Independant scores raws", 
                         "TMCS",
                         "ITMCS",
                         "IS_lin_S",
@@ -105,7 +104,7 @@ class Scenario:
         # Contributivity methods
         methods_default = [
             "Shapley values",
-            "Independant scores",
+            "Independant scores raws",
             "TMCS values"
         ]
         

@@ -9,7 +9,7 @@ scenario_params_list:
    minibatch_count: 5
    methods:
     - "Shapley values"
-    - "Independant scores" 
+    - "Independant scores raws" 
     - "TMCS"
     # - "ITMCS"
     # - "IS_lin_S"
