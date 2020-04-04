@@ -6,7 +6,6 @@ This enables to parameterize a desired scenario to mock a multi-partner ML proje
 from keras.datasets import mnist
 from sklearn.model_selection import train_test_split
 import os
-import sys
 import datetime
 import numpy as np
 from pathlib import Path
@@ -91,31 +90,31 @@ class Scenario:
             self.minibatch_count = 20
             
         # Contributivity methods
-        known_methods_list = [
+        ALL_METHODS_LIST = [
             "Shapley values",
             "Independant scores", 
             "TMCS",
             ]
         
         # List of Contributivity methods runned by default if no method was given in the config file 
-        methods_default = [
+        DEFAULT_METHODS_LIST = [
             "Shapley values",
             "Independant scores",
-            "TMCS values"
+            "TMCS"
             ]
         
         self.methods = []
-        if not 'methods' in params:
-            self.methods = methods_default
-        else:
+        if 'methods' in params:
             if params['methods']:
                 for el in params['methods']:
-                    if el in known_methods_list:
+                    if el in ALL_METHODS_LIST:
                         self.methods.append(el)
                     else:
                         raise Exception('method ' + el + ' is not in methods list.')
             else:
-                raise Exception("No contributivity method given in config file")      
+                raise Exception("No contributivity method given in the config file ")
+        else:
+            self.methods = DEFAULT_METHODS_LIST     
                 
                 
                 

@@ -53,13 +53,13 @@ def compute_contributivity(method_to_compute,
         )
         score_dict = {"Independant scores raw": (scores[0], np.repeat(0.0, len(scores[0]))),
                       "Independant scores additive": (scores[1], np.repeat(0.0, len(scores[1])))}
-    elif method_to_compute == "TMCS values":
+    elif method_to_compute == "TMCS":
         # Contributivity 3: Truncated Monte Carlo Shapley
         tmcs_results = truncated_MC(
                         current_scenario, sv_accuracy, 
                         alpha, contrib_accuracy
                         )
-        score_dict = {"TMCS values": (tmcs_results["sv"], 
+        score_dict = {"TMCS": (tmcs_results["sv"], 
                                       tmcs_results["std_sv"])}
     
     return score_dict
