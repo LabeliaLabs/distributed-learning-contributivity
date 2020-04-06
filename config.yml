@@ -7,11 +7,11 @@ scenario_params_list:
    aggregation_weighting: 'data_volume'
    single_partner_test_mode: 'global'
    epoch_count: 38
-   minibatch_count: 20
    methods:
     - "Shapley values"
     - "Independant scores"
-    - "TMCS values"
+    - "TMCS"
+   minibatch_count: 20
  - nodes_counts: 3
    amounts_per_node: [0.9, 0.05, 0.05] 
    samples_split_option: 'Random'
@@ -22,7 +22,7 @@ scenario_params_list:
    methods:
     - "Shapley values"
     - "Independant scores"
-    - "TMCS values"
+    - "TMCS"
  - nodes_counts: 2
    amounts_per_node: [0.9, 0.1] 
    samples_split_option: 'Random'
@@ -30,8 +30,4 @@ scenario_params_list:
    single_partner_test_mode: 'global'
    epoch_count: 38
    minibatch_count: 20
-   methods:
-    - "Shapley values"
-    - "Independant scores"
-    - "TMCS values"
    

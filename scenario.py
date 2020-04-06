@@ -5,10 +5,8 @@ This enables to parameterize a desired scenario to mock a multi-partner ML proje
 
 from keras.datasets import mnist
 from sklearn.model_selection import train_test_split
-import os
 import datetime
 import numpy as np
-from pathlib import Path
 import matplotlib.pyplot as plt
 import uuid
 import pandas as pd
@@ -79,7 +77,7 @@ class Scenario:
         # Number of epochs and mini-batches in ML training
         if 'epoch_count' in params:
             self.epoch_count = params['epoch_count']
-            assert(self.epoch_count > 0)
+            assert self.epoch_count > 0 
         else:
             self.epoch_count = 40
         
@@ -94,6 +92,12 @@ class Scenario:
             "Shapley values",
             "Independant scores", 
             "TMCS",
+            "ITMCS",
+            "IS_lin_S",
+            "IS_reg_S",
+            "AIS_Kriging_S",
+            "SMCS",
+            "WR_SMC"
             ]
         
         # List of Contributivity methods runned by default if no method was given in the config file 
@@ -190,6 +194,7 @@ class Scenario:
         # Configure the desired splitting scenario - Datasets sizes
         # Should the nodes receive an equivalent amount of samples each...
         # ... or receive different amounts?
+
         # Check the percentages of samples per node and control its coherence
         assert len(self.amounts_per_node) == self.nodes_count
         assert np.sum(self.amounts_per_node) == 1
@@ -372,7 +377,7 @@ class Scenario:
                 dict_results["contributivity_scores"] = contrib.contributivity_scores
                 dict_results["contributivity_stds"] = contrib.scores_std
                 dict_results["computation_time"] = contrib.computation_time
-
+                dict_results["first_characteristic_calls_count"] = contrib.first_charac_fct_calls_count
                 # Node data
                 dict_results["node_id"] = i
                 dict_results["amount_per_node"] = self.amounts_per_node[i]

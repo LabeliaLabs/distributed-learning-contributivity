@@ -15,7 +15,6 @@ from __future__ import print_function
 # config.gpu_options.allow_growth = True
 # session = InteractiveSession(config=config)
 from timeit import default_timer as timer
-import tensorflow as tf
 import matplotlib.pyplot as plt
 import numpy as np
 import utils
@@ -23,7 +22,6 @@ from loguru import logger
 
 
 import contributivity
-import contributivity_measures
 import fl_training
 import scenario
 
@@ -52,7 +50,7 @@ def main():
     scenario_params_list = config["scenario_params_list"]
     n_repeats = config["n_repeats"]
 
-    # # GPU config
+    # GPU config
     # gpus = tf.config.experimental.list_physical_devices("GPU")
     # tf.config.experimental.set_memory_growth(gpus[0], True)
 
@@ -90,7 +88,8 @@ def main():
 
 def run_scenario(current_scenario):
 
-    # Split data according to scenario and then pre-process successively train data, early stopping validation data, test data
+    # Split data according to scenario and then pre-process successively...
+    # ... train data, early stopping validation data, test data
     current_scenario.split_data()
     current_scenario.plot_data_distribution()
     current_scenario = fl_training.preprocess_scenarios_data(current_scenario)
@@ -106,23 +105,13 @@ def run_scenario(current_scenario):
 
     for method in current_scenario.methods:
         print(method)
-        start = timer()
-        score_dict = contributivity_measures.compute_contributivity(method, 
-                                                                    current_scenario)
-        end = timer()
-        
-        for score_method in score_dict:
-            score = score_dict[score_method]
-            contrib = contributivity.Contributivity(
-                score_method, score[0], score[1], np.round(end - start)
-                )
-    
-            current_scenario.append_contributivity(contrib)
-            print("\n## Evaluating contributivity with " + method + ":")
-            print(contrib)
- 
-    # Save results to file
+        contrib = contributivity.Contributivity(scenario=current_scenario)
+        contrib.compute_contributivity(method, current_scenario)
+        current_scenario.append_contributivity(contrib)
+        print("\n## Evaluating contributivity with " + method + ":")
+        print(contrib)
 
+    # Save results to file
     current_scenario.to_file()
 
     return 0
