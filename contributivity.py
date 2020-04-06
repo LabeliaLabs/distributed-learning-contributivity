@@ -70,7 +70,7 @@ class Contributivity:
         self.scores_std = np.zeros(n)
         self.normalized_scores = np.zeros(n)
         self.computation_time = 0.0
-        self.charac_fct_calls_count = 0
+        self.first_charac_fct_calls_count = 0
         self.charac_fct_values = {(): 0}
         self.increments_values = []
         for i in range(n):
@@ -82,7 +82,7 @@ class Contributivity:
         output += "Computation time: " + computation_time + "\n"
         output += (
             "Number of characteristic function computed: "
-            + str(self.charac_fct_calls_count)
+            + str(self.first_charac_fct_calls_count)
             + "\n"
         )
         # TODO print only 3 digits
@@ -101,7 +101,7 @@ class Contributivity:
         if (
             tuple(subset) not in self.charac_fct_values
         ):  # Characteristic_func(permut) has not been computed yet, so we compute, store, and return characteristic_func(permut)
-            self.charac_fct_calls_count += 1
+            self.first_charac_fct_calls_count += 1
             small_node_list = np.array([the_scenario.node_list[i] for i in subset])
             self.charac_fct_values[tuple(subset)] = fl_training.compute_test_score(
                 small_node_list,

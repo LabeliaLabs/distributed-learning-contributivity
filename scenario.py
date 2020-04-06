@@ -379,7 +379,7 @@ class Scenario:
                 dict_results["contributivity_scores"] = contrib.contributivity_scores
                 dict_results["contributivity_stds"] = contrib.scores_std
                 dict_results["computation_time"] = contrib.computation_time
-
+                dict_results["first_characteristic_calls_count"] = contrib.first_charac_fct_calls_count
                 # Node data
                 dict_results["node_id"] = i
                 dict_results["amount_per_node"] = self.amounts_per_node[i]
