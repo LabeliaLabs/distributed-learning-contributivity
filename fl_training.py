@@ -158,7 +158,7 @@ def split_in_minibatches(minibatch_count, x_train, y_train):
 
     return minibatched_x_train, minibatched_y_train
 
-def prepare_aggregation_weights(aggregation_weighting, nodes_count, node_list):
+def prepare_aggregation_weights(aggregation_weighting, nodes_count, node_list, input_weights):
     """Returns a list of weights for the weighted average aggregation of model weights"""
 
     aggregation_weights = []
@@ -167,6 +167,8 @@ def prepare_aggregation_weights(aggregation_weighting, nodes_count, node_list):
     elif aggregation_weighting == "data_volume":
         node_sizes = [len(node.x_train) for node in node_list]
         aggregation_weights = node_sizes / np.sum(node_sizes)
+    elif aggregation_weighting == "local_score":
+        aggregation_weights = input_weights / np.sum(input_weights)
     else:
         raise NameError(
             "This aggregation_weighting scenario ["
@@ -230,18 +232,17 @@ def compute_test_score(
     print("\n## Training and evaluating model on multiple nodes: " + str(node_list))
 
     # Initialize variables
-    model_list = [None] * nodes_count
+    model_list, local_score_list = [None] * nodes_count, [None] * nodes_count
     score_matrix = np.zeros(shape=(epoch_count, nodes_count))
-    global_val_acc = []
-    global_val_loss = []
-    aggregation_weights = prepare_aggregation_weights(aggregation_weighting, nodes_count, node_list)
+    score_matrix_extended = np.zeros(shape=(epoch_count, minibatch_count, nodes_count))
+    global_val_acc, global_val_loss = [], []
 
     # Train model (iterate for each epoch and mini-batch)
     print("\n### Training model:")
-    for epoch in range(epoch_count):
+    for epoch_index in range(epoch_count):
 
-        print("\n   Epoch " + str(epoch) + " out of " + str(epoch_count-1) + " total epochs")
-        is_first_epoch = epoch == 0
+        print("\n   Epoch " + str(epoch_index) + " out of " + str(epoch_count-1) + " total epochs")
+        is_first_epoch = epoch_index == 0
         clear_session()
 
         # Split the train dataset in mini-batches
@@ -257,6 +258,8 @@ def compute_test_score(
 
             # Starting model for each node is the aggregated model from the previous mini-batch iteration
             agg_model_for_iteration = [None] * nodes_count
+            if not is_first_epoch or not is_first_minibatch:
+                aggregation_weights = prepare_aggregation_weights(aggregation_weighting, nodes_count, node_list, local_score_list)
             for node_index, node in enumerate(node_list):
                 if is_first_epoch and is_first_minibatch:
                     agg_model_for_iteration[node_index] = utils.generate_new_cnn_model()
@@ -282,12 +285,17 @@ def compute_test_score(
 
                 # Update the node's model in the models' list
                 model_list[node_index] = node_model
+                local_score_list[node_index] = history.history["val_accuracy"][0]
+
+                # At the end of each mini-batch, for each node, populate the extended score matrix
+                score_matrix_extended[epoch_index, minibatch_index, node_index] = history.history["val_accuracy"][0]
 
                 # At the end of each epoch (on the last mini-batch), for each node, populate the score matrix
                 if minibatch_index == (minibatch_count - 1):
-                    score_matrix[epoch, node_index] = history.history["val_accuracy"][0]
+                    score_matrix[epoch_index, node_index] = history.history["val_accuracy"][0]
 
         # At the end of each epoch, evaluate the aggregated model for early stopping on a global validation set
+        aggregation_weights = prepare_aggregation_weights(aggregation_weighting, nodes_count, node_list, local_score_list)
         aggregated_model = build_aggregated_model(aggregate_model_weights(model_list, aggregation_weights))
         model_evaluation = aggregated_model.evaluate(
             x_val_global,
@@ -304,7 +312,7 @@ def compute_test_score(
         if is_early_stopping:
             # Early stopping parameters
             if (
-                epoch >= constants.PATIENCE
+                epoch_index >= constants.PATIENCE
                 and current_val_loss > global_val_loss[-constants.PATIENCE]
             ):
                 print("         -> Early stopping critera are met, stopping here.")
@@ -315,7 +323,10 @@ def compute_test_score(
     # After last epoch or if early stopping was triggered, evaluate model on the global testset
     print("\n### Evaluating model on test data:")
     model_evaluation = aggregated_model.evaluate(
-        x_test, y_test, batch_size=constants.BATCH_SIZE, verbose=0
+        x_test,
+        y_test,
+        batch_size=constants.BATCH_SIZE,
+        verbose=0,
     )
     print("   Model metrics names: ", aggregated_model.metrics_names)
     print("   Model metrics values: ", ["%.3f" % elem for elem in model_evaluation])
@@ -328,6 +339,7 @@ def compute_test_score(
         np.save(save_folder / "score_matrix", score_matrix)
         np.save(save_folder / "global_val_acc", global_val_acc)
         np.save(save_folder / "global_val_loss", global_val_loss)
+        np.save(save_folder / "score_matrix_extended", score_matrix_extended)
 
         plt.figure()
         plt.plot(global_val_loss)
@@ -345,7 +357,7 @@ def compute_test_score(
 
         plt.figure()
         plt.plot(
-            score_matrix[: epoch + 1,]
+            score_matrix[: epoch_index + 1,]
         )  # Cut the matrix
         plt.title("Model accuracy")
         plt.ylabel("Accuracy")

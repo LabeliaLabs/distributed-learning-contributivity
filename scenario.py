@@ -365,7 +365,8 @@ class Scenario:
                 dict_results["scenario_name"] = self.scenario_name
                 dict_results["short_scenario_name"] = self.short_scenario_name
                 dict_results["minibatch_count"] = self.minibatch_count
-
+                dict_results["aggregation_weighting"] = self.aggregation_weighting
+                
                 # Contributivity data
                 dict_results["contributivity_method"] = contrib.name
                 dict_results["contributivity_scores"] = contrib.contributivity_scores
