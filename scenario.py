@@ -95,6 +95,12 @@ class Scenario:
             "Shapley values",
             "Independant scores", 
             "TMCS",
+            "ITMCS",
+            "IS_lin_S",
+            "IS_reg_S",
+            "AIS_Kriging_S",
+            "SMCS",
+            "WR_SMC"
             ]
         
         # List of Contributivity methods runned by default if no method was given in the config file 
