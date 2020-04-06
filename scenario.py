@@ -5,11 +5,8 @@ This enables to parameterize a desired scenario to mock a multi-partner ML proje
 
 from keras.datasets import mnist
 from sklearn.model_selection import train_test_split
-import os
-import sys
 import datetime
 import numpy as np
-from pathlib import Path
 import matplotlib.pyplot as plt
 import uuid
 import pandas as pd

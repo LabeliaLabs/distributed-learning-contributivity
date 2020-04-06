@@ -12,7 +12,6 @@ from scipy.stats import norm
 from itertools import combinations
 from math import factorial
 from sklearn.linear_model import LinearRegression
-from scipy.special import softmax
 
 import fl_training
 import shapley_value.shapley as sv

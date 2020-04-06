@@ -15,7 +15,6 @@ from __future__ import print_function
 # config.gpu_options.allow_growth = True
 # session = InteractiveSession(config=config)
 from timeit import default_timer as timer
-import tensorflow as tf
 import matplotlib.pyplot as plt
 import numpy as np
 import utils
