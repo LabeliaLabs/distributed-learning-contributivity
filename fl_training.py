@@ -81,7 +81,7 @@ def compute_test_score_for_single_node(
     model = utils.generate_new_cnn_model()
 
     # Train model
-    print("\n### Training model on one single node: " + str(node))
+    print("\n### Training model on one single node: " + str(node.node_id))
     history = model.fit(
         node.x_train,
         node.y_train,
@@ -269,7 +269,7 @@ def compute_test_score(
                 node_model = agg_model_for_iteration[node_index]
 
                 # Train on node local data set
-                print("         Training on node " + str(node_index) + " - " + str(node))
+                print("         Training on node " + str(node_index) + " - " + str(node.node_id))
                 history = node_model.fit(
                     minibatched_x_train[node_index][minibatch_index],
                     minibatched_y_train[node_index][minibatch_index],

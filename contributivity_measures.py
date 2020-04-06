@@ -18,6 +18,52 @@ import shapley_value.shapley as sv
 
 #%% Compute independent performance scores of models trained independently on each node
 
+def compute_contributivity(method_to_compute, 
+                           current_scenario,
+                           sv_accuracy=0.01, 
+                           alpha=0.9, 
+                           contrib_accuracy=0.05):
+    
+    score_dict = {}
+    
+    if method_to_compute == "Shapley values":
+        # Contributivity 1: Baseline contributivity measurement (Shapley Value)
+        (contributivity_scores, scores_var) = compute_SV(
+            current_scenario.node_list,
+            current_scenario.epoch_count,
+            current_scenario.x_val,
+            current_scenario.y_val,
+            current_scenario.x_test,
+            current_scenario.y_test,
+            current_scenario.aggregation_weighting,
+            current_scenario.minibatch_count,
+            current_scenario.is_early_stopping,
+            current_scenario.single_partner_test_mode
+        )
+        score_dict = {"Shapley values": (contributivity_scores, scores_var)}
+    elif method_to_compute == "Independant scores":
+        # Contributivity 2: Performance scores of models trained independently on each node
+        scores = compute_independent_scores(
+            current_scenario.node_list,
+            current_scenario.epoch_count,
+            current_scenario.federated_test_score,
+            current_scenario.single_partner_test_mode,
+            current_scenario.x_test,
+            current_scenario.y_test,
+        )
+        score_dict = {"Independant scores raw": (scores[0], np.repeat(0.0, len(scores[0]))),
+                      "Independant scores additive": (scores[1], np.repeat(0.0, len(scores[1])))}
+    elif method_to_compute == "TMCS":
+        # Contributivity 3: Truncated Monte Carlo Shapley
+        tmcs_results = truncated_MC(
+                        current_scenario, sv_accuracy, 
+                        alpha, contrib_accuracy
+                        )
+        score_dict = {"TMCS": (tmcs_results["sv"], 
+                                      tmcs_results["std_sv"])}
+    
+    return score_dict
+
 
 def compute_independent_scores(
     node_list,
@@ -54,7 +100,7 @@ def compute_independent_scores(
 #%% Generalization of Shapley Value computation
 
 
-def compute_SV(node_list, epoch_count, x_val_global, y_val_global, x_test, y_test, aggregation_weighting, minibatch_count):
+def compute_SV(node_list, epoch_count, x_val_global, y_val_global, x_test, y_test, aggregation_weighting, minibatch_count,is_early_stopping,single_partner_test_mode):
 
     print("\n# Launching computation of Shapley Value of all nodes")
 
@@ -78,7 +124,14 @@ def compute_SV(node_list, epoch_count, x_val_global, y_val_global, x_test, y_tes
         # print('\nComputing characteristic function on coalition ', coalition) # VERBOSE
         characteristic_function.append(
             fl_training.compute_test_score(
-                coalition_nodes, epoch_count, x_val_global, y_val_global, x_test, y_test, aggregation_weighting, minibatch_count
+                coalition_nodes, epoch_count,
+                x_val_global,
+                y_val_global,
+                x_test, y_test,
+                aggregation_weighting,
+                minibatch_count,
+                is_early_stopping,
+                single_partner_test_mode
             )
         )
     # print('\nValue of characteristic function for all coalitions: ', characteristic_function) # VERBOSE
@@ -122,6 +175,7 @@ def truncated_MC(scenario, sv_accuracy=0.01, alpha=0.9, contrib_accuracy=0.05):
                 scenario.aggregation_weighting,
                 scenario.minibatch_count,
                 scenario.is_early_stopping,
+                scenario.single_partner_test_mode,
                 save_folder=scenario.save_folder,
             )
 

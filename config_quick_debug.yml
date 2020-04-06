@@ -8,3 +8,7 @@ scenario_params_list:
    single_partner_test_mode: 'global'
    minibatch_count: 5
    is_quick_demo: True
+   methods:
+    - "Shapley values"
+    - "Independant scores"
+    - "TMCS"

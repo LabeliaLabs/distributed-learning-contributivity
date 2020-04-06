@@ -77,24 +77,47 @@ class Scenario:
         self.contributivity_list = []
 
         # Number of epochs and mini-batches in ML training
-        if 'epoch_count' in params.keys():
+        if 'epoch_count' in params:
             self.epoch_count = params['epoch_count']
             assert(self.epoch_count > 0)
         else:
             self.epoch_count = 40
         
-        if 'minibatch_count' in params.keys():
-            self.minibatch_count = params['minibatch_count']
-            assert(self.minibatch_count > 0)
-        else:
-            self.minibatch_count = 20
-
-        if 'minibatch_count' in params.keys():
+        if 'minibatch_count' in params:
             self.minibatch_count = params['minibatch_count']
             assert self.minibatch_count > 0
         else:
             self.minibatch_count = 20
-
+            
+        # Contributivity methods
+        ALL_METHODS_LIST = [
+            "Shapley values",
+            "Independant scores", 
+            "TMCS",
+            ]
+        
+        # List of Contributivity methods runned by default if no method was given in the config file 
+        DEFAULT_METHODS_LIST = [
+            "Shapley values",
+            "Independant scores",
+            "TMCS"
+            ]
+        
+        self.methods = []
+        if 'methods' in params:
+            if params['methods']:
+                for el in params['methods']:
+                    if el in ALL_METHODS_LIST:
+                        self.methods.append(el)
+                    else:
+                        raise Exception('method ' + el + ' is not in methods list.')
+            else:
+                raise Exception("No contributivity method given in the config file ")
+        else:
+            self.methods = DEFAULT_METHODS_LIST     
+                
+                
+                
         # Early stopping stops ML training when performance increase is not significant anymore
         # It is used to optimize the number of epochs and the execution time
         self.is_early_stopping = True # Toggle between True and False
