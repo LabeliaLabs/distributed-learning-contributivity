@@ -18,3 +18,7 @@ scenario_params_list:
     # - "SMCS"
     # - "WR_SMC"
    is_quick_demo: True
+   methods:
+    - "Shapley values"
+    - "Independant scores"
+    - "TMCS"

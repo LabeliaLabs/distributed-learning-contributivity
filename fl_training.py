@@ -269,7 +269,7 @@ def compute_test_score(
                 node_model = agg_model_for_iteration[node_index]
 
                 # Train on node local data set
-                print("         Training on node " + str(node_index) + " - " + str(node))
+                print("         Training on node " + str(node_index) + " - " + str(node.node_id))
                 history = node_model.fit(
                     minibatched_x_train[node_index][minibatch_index],
                     minibatched_y_train[node_index][minibatch_index],

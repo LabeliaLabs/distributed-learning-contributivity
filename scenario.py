@@ -86,41 +86,39 @@ class Scenario:
         
         if 'minibatch_count' in params:
             self.minibatch_count = params['minibatch_count']
-            assert self.minibatch_count > 0 
+            assert self.minibatch_count > 0
         else:
             self.minibatch_count = 20
-
-        methods_list = ["Shapley values",
-                        "Independant scores raws", 
-                        "TMCS",
-                        "ITMCS",
-                        "IS_lin_S",
-                        "IS_reg_S",
-                        "AIS_Kriging_S",
-                        "SMCS",
-                        "WR_SMC"
-                        ]
-        
+            
         # Contributivity methods
-        methods_default = [
+        ALL_METHODS_LIST = [
             "Shapley values",
-            "Independant scores raws",
-            "TMCS values"
-        ]
+            "Independant scores", 
+            "TMCS",
+            ]
+        
+        # List of Contributivity methods runned by default if no method was given in the config file 
+        DEFAULT_METHODS_LIST = [
+            "Shapley values",
+            "Independant scores",
+            "TMCS"
+            ]
         
         self.methods = []
-        if not 'methods' in params:
-            self.methods = methods_default
-        else:
+        if 'methods' in params:
             if params['methods']:
                 for el in params['methods']:
-                    if el in methods_list:
+                    if el in ALL_METHODS_LIST:
                         self.methods.append(el)
                     else:
                         raise Exception('method ' + el + ' is not in methods list.')
             else:
-                raise Exception("No contributivity method given in config file")
-        
+                raise Exception("No contributivity method given in the config file ")
+        else:
+            self.methods = DEFAULT_METHODS_LIST     
+                
+                
+                
         # Early stopping stops ML training when performance increase is not significant anymore
         # It is used to optimize the number of epochs and the execution time
         self.is_early_stopping = True # Toggle between True and False
