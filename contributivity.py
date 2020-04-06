@@ -1012,7 +1012,7 @@ class Contributivity:
         if method_to_compute == "Shapley values":
             # Contributivity 1: Baseline contributivity measurement (Shapley Value)
             self.compute_SV(current_scenario) 
-        elif method_to_compute == "Independant scores raws":
+        elif method_to_compute == "Independant scores":
             # Contributivity 2: Performance scores of models trained independently on each node 
             self.compute_independent_scores(current_scenario) 
         elif method_to_compute == "TMCS":
