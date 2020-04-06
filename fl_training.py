@@ -339,6 +339,7 @@ def compute_test_score(
         np.save(save_folder / "score_matrix", score_matrix)
         np.save(save_folder / "global_val_acc", global_val_acc)
         np.save(save_folder / "global_val_loss", global_val_loss)
+        np.save(save_folder / "score_matrix_extended", score_matrix_extended)
 
         plt.figure()
         plt.plot(global_val_loss)
