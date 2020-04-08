@@ -24,18 +24,17 @@ The objective is to compare the contributivity figures obtained with the differe
 
 We want to start experimenting contributivity evaluations in collaborative data science / distributed learning scenarios. At this stage this cannot be a thorough and complete experimentation though, as our exploration of the topic is in progress. To make the most out of it, it is key to capitalize on this effort and develop it as a reproducible pipeline that we will be able to improve, enrich, complement over time.
 
-
-- Public dataset of choice: MNIST
-- Collaborative data science scenarios - Parameters:
-  - Overlap of respective datasets: distinct (by stratifying MNIST figures) vs. overlapping (with a randomized split)
-  - Size of respective datasets: equivalent vs. different
-  - Number of data partners: 3 databases A, B, C is our default scenario, but this is to be parameterized
-- ML algorithm: CNN adapted to MNIST, not too deep so it can run on CPU
-- Distributed learning approach: federated learning (other approaches to be tested in future improvements of this experiment)
-- Contributivity evaluation approach:
-    - [done] Performance scores of models trained independently on each node
-    - [futur prospect] Data Valuation by Reinforcment Learning (DVRL) 
-    - [done] Shapley values :
+* Public dataset of choice: MNIST
+* Collaborative data science scenarios - Parameters:
+    * Overlap of respective datasets: distinct (by stratifying MNIST figures) vs. overlapping (with a randomized split)
+    * Size of respective datasets: equivalent vs. different
+    * Number of data partners: 3 databases A, B, C is our default scenario, but this is to be parameterized
+* ML algorithm: CNN adapted to MNIST, not too deep so it can run on CPU
+* Distributed learning approach: federated learning (other approaches to be tested in future improvements of this experiment)
+* Contributivity evaluation approach:
+    * [done] Performance scores of models trained independently on each node
+    * [futur prospect] Data Valuation by Reinforcment Learning (DVRL) 
+    * [done] Shapley values :
      These indicators seem to be a very good candidate to measure the contributivity of each data providers, because they are usually used in game theory to fairly attributes the gain of a coalitional game amongst its players which exactly want we are looking for here.  
 
 
@@ -46,35 +45,28 @@ To attributes a part of the global score to each player/data providers, we can u
 
 
 The computation of the Shapley Values quickly becomes intensive when the number of players increases. Indeed to compute the increment we need to fit two federated model, and we need to do this for every possible coalitions. If *N* is the number of players we have to do *2^N* fits to compute the shapley values of each players. As this is too costly, we are considering estimating the shapley values rather then computing it exactly. The estimation metohds considered are :
-
-      - [done] The exact Shapley Values computation
+        * [done] The exact Shapley Values computation
 Given the limited number of data partners we consider at that stage it is possible to actually compute the Shapley Values with a reasonable amount of resources. 
-
-      - [done] Monte-Carlo Shapley approximation
+        * [done] Monte-Carlo Shapley approximation
 As the sahpley value is an average we can estimate it using the Monte-Carlo method. Here it consists in sampling a raesonnble number of increments (says a hundred per player) and to take the  average of the sampled increments of a player as the estimation of the Shapley value of that player.
-
-      - [done] Truncated Monte-Carlo Shapley approximation  
+        * [done] Truncated Monte-Carlo Shapley approximation  
 The idea of Truncated Monte-Carlo is that for big coalition the increments of a player are usually small, therefore we can consider their value is null instead of spending computional power to compute it. This reduce the number of times we have to fit a model, but adds a small bias the estimation
-
-        - [done] Interpolated truncated Monte-Carlo
+        * [done] Interpolated truncated Monte-Carlo
 This method is an attempt to reduce the bias of the Truncated monte-Carlo method. Here we do not consider the value of an increment of a big coalition is null, but we do a linear interpolation to better approximate its value.
-
-        - [done] Importance sampling methods
+        * [done] Importance sampling methods
 Importance sampling is a method to reduce the number of sampled increments in the Monte-Carlo method while keeping the same accuracy. It consists in sampling the increments according to unbalance distribution, giving more chance for big increment  than for small increment to be sampled. The  bias induced by altering the sampling distribution is canceled by properly weighting each sample: If an increment is sample  with *X* times more chance we weight it by *1/X*. Note that this require to know the value of increment before computing them, so in practice we try to guess the value of the increment. We inflate, resp. deflate, the probability of sampling anincrement if we guess its value is big, resp. small.
      We designed three ways to guess the value of increments, which lead to three different importance sampling methods: 
-     
-             - [done] Linear importance sampling
-             - [done] Regression importance sampling
-             - [done] Adaptative kriging importance sampling
-             
-        - [done] Stratified Monte Carlo Shapley  
+            * [done] Linear importance sampling
+            * [done] Regression importance sampling
+            * [done] Adaptative kriging importance sampling   
+         * [done] Stratified Monte Carlo Shapley  
 "Stratification and with proper allocation" is an other method to reduce the number of sampled increments in the Monte-Carlo method while keeping the same accuracy. There are two ideas behind this method: 1) the Sapley value is a mean of means taken on strata of increments. A strata of increments corresponds the all the increments of coalition with the same number of players. We can estimate the  means on each stata independently rather than the whole mean, this improve the accuracy and reduces the number of increments to sample.  2) We can allocate a different amount of sampled increment to each mean of a strata. If we allocate more sample to the stratas where the increments value varies more, we can reduce the accuracy even more.
     As we can estimate the mean of a strata by sampling with replacment of witout replacment, it gives two approximation methods:
-             - [done] Stratified Monte Carlo Shapley  with replacment
-             - [done] Stratified Monte Carlo Shapley  without replacment 
-  - Comparison variables (baseline: Shapley value)
-    - Contributivity relative values
-    - Computation time
+            * [done] Stratified Monte Carlo Shapley  with replacment
+            * [done] Stratified Monte Carlo Shapley  without replacment 
+    * Comparison variables (baseline: Shapley value)
+        * Contributivity relative values
+        * Computation time
   
 ### Using the code files
 
