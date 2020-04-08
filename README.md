@@ -24,6 +24,7 @@ The objective is to compare the contributivity figures obtained with the differe
 
 We want to start experimenting contributivity evaluations in collaborative data science / distributed learning scenarios. At this stage this cannot be a thorough and complete experimentation though, as our exploration of the topic is in progress. To make the most out of it, it is key to capitalize on this effort and develop it as a reproducible pipeline that we will be able to improve, enrich, complement over time.
 
+
 - Public dataset of choice: MNIST
 - Collaborative data science scenarios - Parameters:
   - Overlap of respective datasets: distinct (by stratifying MNIST figures) vs. overlapping (with a randomized split)
@@ -35,12 +36,15 @@ We want to start experimenting contributivity evaluations in collaborative data 
     - [done] Performance scores of models trained independently on each node
     - [futur prospect] Data Valuation by Reinforcment Learning (DVRL) 
     - [done] Shapley values :
- These indicators seem to be a very good candidate to measure the contributivity of each data providers, because they are usually used in game theory to fairly attributes the gain of a coalitional game amongst its players which exactly want we are looking for here.
-    
-A coalition game is a game where players forms coalitions and each coalitions gets a score according to some rules. The winners are the players who manage to be in the coalition with the best score. Here we can consider each data provider is a player, and that forming a coalition is building a federated model using the  dataset of each player within the coalition. The score of a coalition is then the performance on a test set of the federated model built by the coalition.
-    
-To attributes a part of the global score to each player/data providers, we can use the Shapley values. todefine the shapley value we first have to define the "increment" in performance of a player in a coalition. Such "increment"  is the performance of the coalition minus the performance of the coalition without this player. The Shapley value of a player is a properly weighted average of its "increments" in every possible coalition.
-    
+     These indicators seem to be a very good candidate to measure the contributivity of each data providers, because they are usually used in game theory to fairly attributes the gain of a coalitional game amongst its players which exactly want we are looking for here.  
+
+
+A coalition game is a game where players forms coalitions and each coalitions gets a score according to some rules. The winners are the players who manage to be in the coalition with the best score. Here we can consider each data provider is a player, and that forming a coalition is building a federated model using the  dataset of each player within the coalition. The score of a coalition is then the performance on a test set of the federated model built by the coalition.    
+
+
+To attributes a part of the global score to each player/data providers, we can use the Shapley values. to define the Shapley value we first have to define the "increment" in performance of a player in a coalition. Such "increment"  is the performance of the coalition minus the performance of the coalition without this player. The Shapley value of a player is a properly weighted average of its "increments" in every possible coalition.    
+
+
 The computation of the Shapley Values quickly becomes intensive when the number of players increases. Indeed to compute the increment we need to fit two federated model, and we need to do this for every possible coalitions. If *N* is the number of players we have to do *2^N* fits to compute the shapley values of each players. As this is too costly, we are considering estimating the shapley values rather then computing it exactly. The estimation metohds considered are :
         - [done] The exact Shapley Values computation
 Given the limited number of data partners we consider at that stage it is possible to actually compute the Shapley Values with a reasonable amount of resources. 
