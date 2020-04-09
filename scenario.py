@@ -379,9 +379,7 @@ class Scenario:
                 dict_results["epoch_count"] = self.epoch_count
                 dict_results["is_early_stopping"] = self.is_early_stopping
                 dict_results["federated_test_score"] = self.federated_test_score
-                dict_results[
-                    "federated_computation_time"
-                ] = self.federated_computation_time
+                dict_results["federated_computation_time_sec"] = self.federated_computation_time_sec
                 dict_results["scenario_name"] = self.scenario_name
                 dict_results["short_scenario_name"] = self.short_scenario_name
                 dict_results["minibatch_count"] = self.minibatch_count
@@ -391,10 +389,8 @@ class Scenario:
                 dict_results["contributivity_method"] = contrib.name
                 dict_results["contributivity_scores"] = contrib.contributivity_scores
                 dict_results["contributivity_stds"] = contrib.scores_std
-                dict_results["computation_time"] = contrib.computation_time
-                dict_results[
-                    "first_characteristic_calls_count"
-                ] = contrib.first_charac_fct_calls_count
+                dict_results["computation_time_sec"] = contrib.computation_time_sec
+                dict_results["first_characteristic_calls_count"] = contrib.first_charac_fct_calls_count
                 # Node data
                 dict_results["node_id"] = i
                 dict_results["amount_per_node"] = self.amounts_per_node[i]

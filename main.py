@@ -95,7 +95,7 @@ def run_scenario(current_scenario):
         current_scenario, is_save_fig
     )
     end = timer()
-    current_scenario.federated_computation_time_sec = np.round(end - start)
+    current_scenario.federated_computation_time_sec = end - start
 
     for method in current_scenario.methods:
         print(method)
