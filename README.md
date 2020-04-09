@@ -51,14 +51,14 @@ We want to start experimenting contributivity evaluations in collaborative data 
     scenario_params_list:
      - nodes_counts: 3
        amounts_per_node: [0.4, 0.3, 0.3] 
-       samples_split_option: 'Random'
+       samples_split_option: 'random'
        aggregation_weighting: 'data-volume'
        single_partner_test_mode: 'global'
        epoch_count: 38
        minibatch_count: 20
      - nodes_counts: 4
        amounts_per_node: [0.3, 0.3, 0.1, 0.3] 
-       samples_split_option: 'Stratified'
+       samples_split_option: 'stratified'
        aggregation_weighting: 'data-volume'
        single_partner_test_mode: 'global'
        epoch_count: 38

@@ -3,7 +3,7 @@ n_repeats: 1
 scenario_params_list:
  - nodes_counts: 2
    amounts_per_node: [0.5, 0.5]
-   samples_split_option: 'Random'
+   samples_split_option: 'random'
    aggregation_weighting: 'local_score'
    single_partner_test_mode: 'global'
    minibatch_count: 5

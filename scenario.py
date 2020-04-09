@@ -43,7 +43,7 @@ class Scenario:
         # ... so that they cover distinct areas of the samples space
         self.samples_split_option = params[
             "samples_split_option"
-        ]  # Toggle between 'Random' and 'Stratified'
+        ]  # Toggle between 'random' and 'stratified'
 
         # For configuring if the data of the nodes are corrupted or not (useful for testing contributivity measures)
         if "corrupted_nodes" in params:
@@ -217,19 +217,19 @@ class Scenario:
         train_idx = np.arange(len(y_train))
         test_idx = np.arange(len(y_test))
 
-        # In the 'Stratified' scenario we sort MNIST by labels
-        if self.samples_split_option == "Stratified":
+        # In the 'stratified' scenario we sort MNIST by labels
+        if self.samples_split_option == "stratified":
             # Sort MNIST by labels
             y_sorted_idx = y_train.argsort()
             y_train = y_train[y_sorted_idx]
             x_train = x_train[y_sorted_idx]
 
-        # In the 'Random' scenario we shuffle randomly the indexes
-        elif self.samples_split_option == "Random":
+        # In the 'random' scenario we shuffle randomly the indexes
+        elif self.samples_split_option == "random":
             np.random.seed(42)
             np.random.shuffle(train_idx)
 
-        # If neither 'Stratified' nor 'Random', we raise an exception
+        # If neither 'stratified' nor 'random', we raise an exception
         else:
             raise NameError(
                 "This samples_split_option scenario ["
@@ -318,7 +318,7 @@ class Scenario:
             "Percentages of data samples per node: " + str(self.amounts_per_node) + "\n"
         )
         out += (
-            "Random or stratified split of data samples: "
+            "random or stratified split of data samples: "
             + self.samples_split_option
             + "\n"
         )
