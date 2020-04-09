@@ -856,7 +856,7 @@ class Contributivity:
                     # computes the var and means of each strata
                     sigma2[k, strata] = np.var(contributions[k][strata])
                     mu[k, strata] = np.mean(contributions[k][strata])
-                shap = np.mean(mu, axis=0)
+                shap = np.mean(mu, axis=1)
                 var = np.zeros(N)  # variance of the estimator
                 for k in range(N):
                     for strata in range(N):
@@ -973,7 +973,7 @@ class Contributivity:
                         sigma2[k, strata]=0
                     sigma2[k, strata]*= (1/length-   factorial(N - 1 - strata) * factorial(strata)  / factorial(N-1) )
                     print("t : ",t,",k :",k ,", strata :",strata, ", sigma2 :",sigma2[k])
-                shap = np.mean(mu, axis=0)
+                shap = np.mean(mu, axis=1)
                 var = np.zeros(N)  # variance of the estimator
                 for k in range(N):
                     for strata in range(N): 
