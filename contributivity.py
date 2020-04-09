@@ -474,35 +474,8 @@ class Contributivity:
         n = len(the_scenario.node_list)
 
         if n < 4:
-            # Initialize list of all players (nodes) indexes
-            nodes_count = len(the_scenario.node_list)
-            nodes_idx = np.arange(nodes_count)
-
-            # Define all possible coalitions of players
-            coalitions = [
-                list(j)
-                for i in range(len(nodes_idx))
-                for j in combinations(nodes_idx, i + 1)
-            ]
-
-            # For each coalition, obtain value of characteristic function...
-            # ... i.e.: train and evaluate model on nodes part of the given coalition
-            characteristic_function = []
-
-            for coalition in coalitions:
-                characteristic_function.append(
-                    self.not_twice_characteristic(list(coalition), the_scenario)
-                )
-            # Compute exact Shapley Value for each node
-            shap = sv.main(the_scenario.nodes_count, characteristic_function)
+            self.compute_SV(the_scenario)
             self.name = "IS_reg Shapley values"
-            self.contributivity_scores = shap
-            self.scores_std = np.zeros(n)
-            self.normalized_scores = self.contributivity_scores / np.sum(
-                self.contributivity_scores
-            )
-            end = timer()
-            self.computation_time = end - start
         else:
 
             # definition of the original density
