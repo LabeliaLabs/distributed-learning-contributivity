@@ -159,6 +159,7 @@ class Scenario:
 
         self.save_folder.mkdir(parents=True, exist_ok=True)
 
+        # The quick demo parameters overwrites previously defined paramaters to make the scenario faster to compute
         if "is_quick_demo" in params and params["is_quick_demo"]:
 
             # Use less data and less epochs to speed up the computations
@@ -170,6 +171,7 @@ class Scenario:
             self.x_test = self.x_test[:500]
             self.y_test = self.y_test[:500]
             self.epoch_count = 3
+            self.minibatch_count = 2
 
     def append_contributivity(self, contributivity):
 
