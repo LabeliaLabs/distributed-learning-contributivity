@@ -52,9 +52,10 @@ class Scenario:
             self.corrupted_nodes = ["not_corrupted"] * self.nodes_count
 
         # When training on a single node, the test set can be either the local node test set or the global test set
-        self.single_partner_test_mode = params[
-            "single_partner_test_mode"
-        ]  # Toggle between 'local' and 'global'
+        if "single_partner_test_mode" in params:
+            self.single_partner_test_mode = params["single_partner_test_mode"] # Toggle between 'local' and 'global'
+        else:
+            self.single_partner_test_mode = "global"
 
         # Performance of the model trained in a distributed way on all nodes
         self.federated_test_score = int
