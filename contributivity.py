@@ -68,7 +68,7 @@ class Contributivity:
         self.contributivity_scores = np.zeros(n)
         self.scores_std = np.zeros(n)
         self.normalized_scores = np.zeros(n)
-        self.computation_time = 0.0
+        self.computation_time_sec = 0.0
         self.first_charac_fct_calls_count = 0
         self.charac_fct_values = {(): 0}
         self.increments_values = []
@@ -76,9 +76,9 @@ class Contributivity:
             self.increments_values.append(dict())
 
     def __str__(self):
-        computation_time = str(datetime.timedelta(seconds=self.computation_time))
+        computation_time_sec = str(datetime.timedelta(seconds=self.computation_time_sec))
         output = "\n" + self.name + "\n"
-        output += "Computation time: " + computation_time + "\n"
+        output += "Computation time: " + computation_time_sec + "\n"
         output += (
             "Number of characteristic function computed: "
             + str(self.first_charac_fct_calls_count)
@@ -179,7 +179,7 @@ class Contributivity:
         self.scores_std = np.zeros(len(list_shapley_value))
         self.normalized_scores = list_shapley_value / np.sum(list_shapley_value)
         end = timer()
-        self.computation_time = end - start
+        self.computation_time_sec = end - start
 
     # %% compute independent raw scores
     def compute_independent_scores(self, the_scenario):
@@ -202,7 +202,7 @@ class Contributivity:
         self.scores_std = np.zeros(len(performance_scores))
         self.normalized_scores = performance_scores / np.sum(performance_scores)
         end = timer()
-        self.computation_time = end - start
+        self.computation_time_sec = end - start
 
     # %% compute Shapley values with the truncated Monte-carlo metho
 
@@ -222,7 +222,7 @@ class Contributivity:
                 self.contributivity_scores
             )
             end = timer()
-            self.computation_time = end - start
+            self.computation_time_sec = end - start
         else:
             contributions = np.array([[]])
             permutation = np.zeros(n)  # Store the current permutation
@@ -264,7 +264,7 @@ class Contributivity:
                 self.contributivity_scores
             )
             end = timer()
-            self.computation_time = end - start
+            self.computation_time_sec = end - start
 
     # %% compute Shapley values with the truncated Monte-carlo method with a small bias correction
 
@@ -284,7 +284,7 @@ class Contributivity:
                 self.contributivity_scores
             )
             end = timer()
-            self.computation_time = end - start
+            self.computation_time_sec = end - start
         else:
             contributions = np.array([[]])
             permutation = np.zeros(n)  # Store the current permutation
@@ -337,7 +337,7 @@ class Contributivity:
                 self.contributivity_scores
             )
             end = timer()
-            self.computation_time = end - start
+            self.computation_time_sec = end - start
 
     # # %% compute Shapley values with the importance sampling method
 
@@ -358,7 +358,7 @@ class Contributivity:
                 self.contributivity_scores
             )
             end = timer()
-            self.computation_time = end - start
+            self.computation_time_sec = end - start
         else:
 
             # definition of the original density
@@ -459,7 +459,7 @@ class Contributivity:
                 self.contributivity_scores
             )
             end = timer()
-            self.computation_time = end - start
+            self.computation_time_sec = end - start
 
     # # %% compute Shapley values with the regression importance sampling method
 
@@ -497,7 +497,7 @@ class Contributivity:
                 self.contributivity_scores
             )
             end = timer()
-            self.computation_time = end - start
+            self.computation_time_sec = end - start
         else:
 
             # definition of the original density
@@ -613,7 +613,7 @@ class Contributivity:
                 self.contributivity_scores
             )
             end = timer()
-            self.computation_time = end - start
+            self.computation_time_sec = end - start
 
     # # %% compute Shapley values with the Kriging adaptive importance sampling method
 
@@ -766,7 +766,7 @@ class Contributivity:
                 self.contributivity_scores
             )
             end = timer()
-            self.computation_time = end - start
+            self.computation_time_sec = end - start
 
     # # %% compute Shapley values with the stratified sampling method
 
@@ -789,7 +789,7 @@ class Contributivity:
                 self.contributivity_scores
             )
             end = timer()
-            self.computation_time = end - start
+            self.computation_time_sec = end - start
         else:
             # initialization
             gamma = 0.2
@@ -873,7 +873,7 @@ class Contributivity:
                 self.contributivity_scores
             )
             end = timer()
-            self.computation_time = end - start
+            self.computation_time_sec = end - start
 
     # %% compute Shapley values with the without replacement stratified sampling method
 
@@ -896,7 +896,7 @@ class Contributivity:
                 self.contributivity_scores
             )
             end = timer()
-            self.computation_time = end - start
+            self.computation_time_sec = end - start
         else:
             # initialisation
             t = 0
@@ -1009,7 +1009,7 @@ class Contributivity:
                 self.contributivity_scores
             )
             end = timer()
-            self.computation_time = end - start
+            self.computation_time_sec = end - start
 
     def compute_contributivity(
         self,
