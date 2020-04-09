@@ -53,9 +53,7 @@ class Scenario:
 
         # When training on a single node, the test set can be either the local node test set or the global test set
         if "single_partner_test_mode" in params:
-            self.single_partner_test_mode = params[
-                "single_partner_test_mode"
-            ]  # Toggle between 'local' and 'global'
+            self.single_partner_test_mode = params["single_partner_test_mode"] # Toggle between 'local' and 'global'
         else:
             self.single_partner_test_mode = "global"
 
@@ -78,50 +76,56 @@ class Scenario:
         self.contributivity_list = []
 
         # Number of epochs and mini-batches in ML training
-        if "epoch_count" in params:
-            self.epoch_count = params["epoch_count"]
-            assert self.epoch_count > 0
+        if 'epoch_count' in params:
+            self.epoch_count = params['epoch_count']
+            assert self.epoch_count > 0 
         else:
             self.epoch_count = 40
-
-        if "minibatch_count" in params:
-            self.minibatch_count = params["minibatch_count"]
+        
+        if 'minibatch_count' in params:
+            self.minibatch_count = params['minibatch_count']
             assert self.minibatch_count > 0
         else:
             self.minibatch_count = 20
-
+            
         # Contributivity methods
         ALL_METHODS_LIST = [
             "Shapley values",
-            "Independant scores",
+            "Independant scores", 
             "TMCS",
             "ITMCS",
             "IS_lin_S",
             "IS_reg_S",
             "AIS_Kriging_S",
             "SMCS",
-            "WR_SMC",
-        ]
-
-        # List of Contributivity methods runned by default if no method was given in the config file
-        DEFAULT_METHODS_LIST = ["Shapley values", "Independant scores", "TMCS"]
-
+            "WR_SMC"
+            ]
+        
+        # List of Contributivity methods runned by default if no method was given in the config file 
+        DEFAULT_METHODS_LIST = [
+            "Shapley values",
+            "Independant scores",
+            "TMCS"
+            ]
+        
         self.methods = []
-        if "methods" in params:
-            if params["methods"]:
-                for el in params["methods"]:
+        if 'methods' in params:
+            if params['methods']:
+                for el in params['methods']:
                     if el in ALL_METHODS_LIST:
                         self.methods.append(el)
                     else:
-                        raise Exception("method " + el + " is not in methods list.")
+                        raise Exception('method ' + el + ' is not in methods list.')
             else:
                 raise Exception("No contributivity method given in the config file ")
         else:
-            self.methods = DEFAULT_METHODS_LIST
-
+            self.methods = DEFAULT_METHODS_LIST     
+                
+                
+                
         # Early stopping stops ML training when performance increase is not significant anymore
         # It is used to optimize the number of epochs and the execution time
-        self.is_early_stopping = True  # Toggle between True and False
+        self.is_early_stopping = True # Toggle between True and False
 
         now = datetime.datetime.now()
         now_str = now.strftime("%Y-%m-%d_%Hh%M")
@@ -186,13 +190,7 @@ class Scenario:
 
         # Describe data
         print("\n### Data loaded: ", self.dataset_name)
-        print(
-            "- "
-            + str(len(x_train))
-            + " train data with "
-            + str(len(y_train))
-            + " labels"
-        )
+        print("- " + str(len(x_train)) + " train data with " + str(len(y_train)) + " labels")
         print("- " + str(len(x_val)) + " val data with " + str(len(y_val)) + " labels")
         print("- " + str(len(x_test)) + " test data " + str(len(y_test)) + " labels")
 
@@ -278,17 +276,9 @@ class Scenario:
         print("\n### Description of data scenario configured:")
         print("- Number of nodes defined:", self.nodes_count)
         print("- Data distribution scenario chosen:", self.samples_split_option)
-        print(
-            "- Test data distribution scenario chosen:", self.single_partner_test_mode
-        )
+        print("- Test data distribution scenario chosen:", self.single_partner_test_mode)
         print("- Weighting option:", self.aggregation_weighting)
-        print(
-            "- Number of epochs and mini-batches: "
-            + str(self.epoch_count)
-            + " epochs and "
-            + str(self.minibatch_count)
-            + " mini-batches"
-        )
+        print("- Number of epochs and mini-batches: " + str(self.epoch_count) + " epochs and " + str(self.minibatch_count) + " mini-batches")
 
         # Print and plot for controlling
         print("\n### Splitting data among nodes:")
@@ -379,22 +369,18 @@ class Scenario:
                 dict_results["epoch_count"] = self.epoch_count
                 dict_results["is_early_stopping"] = self.is_early_stopping
                 dict_results["federated_test_score"] = self.federated_test_score
-                dict_results[
-                    "federated_computation_time_sec"
-                ] = self.federated_computation_time_sec
+                dict_results["federated_computation_time"] = self.federated_computation_time
                 dict_results["scenario_name"] = self.scenario_name
                 dict_results["short_scenario_name"] = self.short_scenario_name
                 dict_results["minibatch_count"] = self.minibatch_count
                 dict_results["aggregation_weighting"] = self.aggregation_weighting
-
+                
                 # Contributivity data
                 dict_results["contributivity_method"] = contrib.name
                 dict_results["contributivity_scores"] = contrib.contributivity_scores
                 dict_results["contributivity_stds"] = contrib.scores_std
-                dict_results["computation_time_sec"] = contrib.computation_time_sec
-                dict_results[
-                    "first_characteristic_calls_count"
-                ] = contrib.first_charac_fct_calls_count
+                dict_results["computation_time"] = contrib.computation_time
+                dict_results["first_characteristic_calls_count"] = contrib.first_charac_fct_calls_count
                 # Node data
                 dict_results["node_id"] = i
                 dict_results["amount_per_node"] = self.amounts_per_node[i]
