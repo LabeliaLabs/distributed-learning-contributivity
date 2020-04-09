@@ -57,9 +57,9 @@ The computation of the Shapley Values quickly becomes intensive when the number 
          "Stratification and with proper allocation" is another method to reduce the number of sampled increments in the Monte-Carlo method while keeping the same accuracy. There are two ideas behind this method:  1) the Sapley value is a mean of means taken on strata of increments. A strata of increments corresponds the all the increments of coalition with the same number of players. We can estimate the means on each stata independently rather than the whole mean, this improves the accuracy and reduces the number of increments to sample.  2) We can allocate a different amount of sampled increment to each mean of a strata. If we allocate more sample to the stratas where the increments value varies more, we can reduce the accuracy even more. As we can estimate the mean of a strata by sampling with replacement of without replacement, it gives two approximation methods:
             * [done] Stratified Monte Carlo Shapley with replacement
             * [done] Stratified Monte Carlo Shapley without replacement 
-    * Comparison variables (baseline: Shapley value)
-        * Contributivity relative values
-        * Computation time
+* Comparison variables (baseline: Shapley value)
+    * Contributivity relative values
+    * Computation time
   
 ### Using the code files
 
