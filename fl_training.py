@@ -142,6 +142,7 @@ def compute_test_score_with_scenario(scenario, is_save_fig=False):
 
 #%% Distributed learning training
 
+
 def split_in_minibatches(minibatch_count, x_train, y_train):
     """Returns the list of mini-batches into which the dataset has been split"""
 
@@ -153,17 +154,24 @@ def split_in_minibatches(minibatch_count, x_train, y_train):
     split_indices = np.arange(1, minibatch_count + 1) / minibatch_count
 
     # Split the samples and labels
-    minibatched_x_train = np.split(x_train, (split_indices[:-1] * len(x_train)).astype(int))
-    minibatched_y_train = np.split(y_train, (split_indices[:-1] * len(y_train)).astype(int))
+    minibatched_x_train = np.split(
+        x_train, (split_indices[:-1] * len(x_train)).astype(int)
+    )
+    minibatched_y_train = np.split(
+        y_train, (split_indices[:-1] * len(y_train)).astype(int)
+    )
 
     return minibatched_x_train, minibatched_y_train
 
-def prepare_aggregation_weights(aggregation_weighting, nodes_count, node_list, input_weights):
+
+def prepare_aggregation_weights(
+    aggregation_weighting, nodes_count, node_list, input_weights
+):
     """Returns a list of weights for the weighted average aggregation of model weights"""
 
     aggregation_weights = []
     if aggregation_weighting == "uniform":
-        aggregation_weights = [1/nodes_count] * nodes_count
+        aggregation_weights = [1 / nodes_count] * nodes_count
     elif aggregation_weighting == "data_volume":
         node_sizes = [len(node.x_train) for node in node_list]
         aggregation_weights = node_sizes / np.sum(node_sizes)
@@ -178,6 +186,7 @@ def prepare_aggregation_weights(aggregation_weighting, nodes_count, node_list, i
 
     return aggregation_weights
 
+
 def aggregate_model_weights(model_list, aggregation_weights):
     """Aggregate model weights from a list of models, with a weighted average"""
 
@@ -186,10 +195,13 @@ def aggregate_model_weights(model_list, aggregation_weights):
     new_weights = list()
 
     for weights_for_layer in weights_per_layer:
-        avg_weights_for_layer = np.average(np.array(weights_for_layer), axis=0, weights=aggregation_weights)
+        avg_weights_for_layer = np.average(
+            np.array(weights_for_layer), axis=0, weights=aggregation_weights
+        )
         new_weights.append(list(avg_weights_for_layer))
 
     return new_weights
+
 
 def build_aggregated_model(new_weights):
     """Generate a new model initialized with weights passed as arguments"""
@@ -241,30 +253,52 @@ def compute_test_score(
     print("\n### Training model:")
     for epoch_index in range(epoch_count):
 
-        print("\n   Epoch " + str(epoch_index) + " out of " + str(epoch_count-1) + " total epochs")
+        print(
+            "\n   Epoch "
+            + str(epoch_index)
+            + " out of "
+            + str(epoch_count - 1)
+            + " total epochs"
+        )
         is_first_epoch = epoch_index == 0
         clear_session()
 
         # Split the train dataset in mini-batches
-        minibatched_x_train, minibatched_y_train = [None] * nodes_count, [None] * nodes_count
+        minibatched_x_train, minibatched_y_train = (
+            [None] * nodes_count,
+            [None] * nodes_count,
+        )
         for node_index, node in enumerate(node_list):
-            minibatched_x_train[node_index], minibatched_y_train[node_index] = split_in_minibatches(minibatch_count, node.x_train, node.y_train)
+            (
+                minibatched_x_train[node_index],
+                minibatched_y_train[node_index],
+            ) = split_in_minibatches(minibatch_count, node.x_train, node.y_train)
 
         # Iterate over mini-batches for training, starting each new iteration with an aggregation of the previous one
         for minibatch_index in range(minibatch_count):
 
-            print("\n      Mini-batch " + str(minibatch_index) + " out of " + str(minibatch_count-1) + " total mini-batches")
+            print(
+                "\n      Mini-batch "
+                + str(minibatch_index)
+                + " out of "
+                + str(minibatch_count - 1)
+                + " total mini-batches"
+            )
             is_first_minibatch = minibatch_index == 0
 
             # Starting model for each node is the aggregated model from the previous mini-batch iteration
             agg_model_for_iteration = [None] * nodes_count
             if not is_first_epoch or not is_first_minibatch:
-                aggregation_weights = prepare_aggregation_weights(aggregation_weighting, nodes_count, node_list, local_score_list)
+                aggregation_weights = prepare_aggregation_weights(
+                    aggregation_weighting, nodes_count, node_list, local_score_list
+                )
             for node_index, node in enumerate(node_list):
                 if is_first_epoch and is_first_minibatch:
                     agg_model_for_iteration[node_index] = utils.generate_new_cnn_model()
                 else:
-                    agg_model_for_iteration[node_index] = build_aggregated_model(aggregate_model_weights(model_list, aggregation_weights))
+                    agg_model_for_iteration[node_index] = build_aggregated_model(
+                        aggregate_model_weights(model_list, aggregation_weights)
+                    )
 
             # Iterate over nodes for training each individual model
             for node_index, node in enumerate(node_list):
@@ -272,7 +306,12 @@ def compute_test_score(
                 node_model = agg_model_for_iteration[node_index]
 
                 # Train on node local data set
-                print("         Training on node " + str(node_index) + " - " + str(node.node_id))
+                print(
+                    "         Training on node "
+                    + str(node_index)
+                    + " - "
+                    + str(node.node_id)
+                )
                 history = node_model.fit(
                     minibatched_x_train[node_index][minibatch_index],
                     minibatched_y_train[node_index][minibatch_index],
@@ -281,32 +320,43 @@ def compute_test_score(
                     verbose=0,
                     validation_data=(x_val_global, y_val_global),
                 )
-                print("            val_accuracy: " + str(history.history["val_accuracy"][0])) # DEBUG
+                print(
+                    "            val_accuracy: "
+                    + str(history.history["val_accuracy"][0])
+                )  # DEBUG
 
                 # Update the node's model in the models' list
                 model_list[node_index] = node_model
                 local_score_list[node_index] = history.history["val_accuracy"][0]
 
                 # At the end of each mini-batch, for each node, populate the extended score matrix
-                score_matrix_extended[epoch_index, minibatch_index, node_index] = history.history["val_accuracy"][0]
+                score_matrix_extended[
+                    epoch_index, minibatch_index, node_index
+                ] = history.history["val_accuracy"][0]
 
                 # At the end of each epoch (on the last mini-batch), for each node, populate the score matrix
                 if minibatch_index == (minibatch_count - 1):
-                    score_matrix[epoch_index, node_index] = history.history["val_accuracy"][0]
+                    score_matrix[epoch_index, node_index] = history.history[
+                        "val_accuracy"
+                    ][0]
 
         # At the end of each epoch, evaluate the aggregated model for early stopping on a global validation set
-        aggregation_weights = prepare_aggregation_weights(aggregation_weighting, nodes_count, node_list, local_score_list)
-        aggregated_model = build_aggregated_model(aggregate_model_weights(model_list, aggregation_weights))
+        aggregation_weights = prepare_aggregation_weights(
+            aggregation_weighting, nodes_count, node_list, local_score_list
+        )
+        aggregated_model = build_aggregated_model(
+            aggregate_model_weights(model_list, aggregation_weights)
+        )
         model_evaluation = aggregated_model.evaluate(
-            x_val_global,
-            y_val_global,
-            batch_size=constants.BATCH_SIZE,
-            verbose=0,
+            x_val_global, y_val_global, batch_size=constants.BATCH_SIZE, verbose=0,
         )
         current_val_loss = model_evaluation[0]
         global_val_acc.append(model_evaluation[1])
         global_val_loss.append(current_val_loss)
-        print("\n   Aggregated model evaluation at the end of the epoch:", model_evaluation)
+        print(
+            "\n   Aggregated model evaluation at the end of the epoch:",
+            model_evaluation,
+        )
 
         print("      Checking if early stopping critera are met:")
         if is_early_stopping:
@@ -318,19 +368,18 @@ def compute_test_score(
                 print("         -> Early stopping critera are met, stopping here.")
                 break
             else:
-                print("         -> Early stopping critera are not met, continuing with training.")
+                print(
+                    "         -> Early stopping critera are not met, continuing with training."
+                )
 
     # After last epoch or if early stopping was triggered, evaluate model on the global testset
     print("\n### Evaluating model on test data:")
     model_evaluation = aggregated_model.evaluate(
-        x_test,
-        y_test,
-        batch_size=constants.BATCH_SIZE,
-        verbose=0,
+        x_test, y_test, batch_size=constants.BATCH_SIZE, verbose=0,
     )
     print("   Model metrics names: ", aggregated_model.metrics_names)
     print("   Model metrics values: ", ["%.3f" % elem for elem in model_evaluation])
-    test_score = model_evaluation[1] # 0 is for the loss
+    test_score = model_evaluation[1]  # 0 is for the loss
 
     # Plot training history
     if is_save_fig:
