@@ -64,7 +64,7 @@ We want to start experimenting contributivity evaluations in collaborative data 
        epoch_count: 38
        minibatch_count: 20
     ```
-- Then execute `simulation_run.py -f config.yml`
+- Then execute `main.py -f config.yml`
 - A `results.csv` file will be generated in a new folder for your experiment under `/experiments`. You can read this raw `results.csv` file or use the `analyse_results.ipynb` notebook to quickly generate figures.
 
 ## Contacts
