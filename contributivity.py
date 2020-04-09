@@ -317,13 +317,12 @@ class Contributivity:
                             size_of_rest = 0
                             for i in range(j, n):
                                 size_of_rest += len(the_scenario.node_list[i].y_train)
+                            a=(characteristic_all_node - char_nodelists[j])/size_of_rest
                             first = False
+                            
                         size_of_S = len(the_scenario.node_list[j].y_train)
-                        char_nodelists[j + 1] = (
-                            char_nodelists[j]
-                            + size_of_S / size_of_rest * characteristic_all_node
-                        )
-
+                        char_nodelists[j + 1] = char_nodelists[j] + a*size_of_S
+                        
                     else:
                         char_nodelists[j + 1] = self.not_twice_characteristic(
                             permutation[: j + 1], the_scenario
