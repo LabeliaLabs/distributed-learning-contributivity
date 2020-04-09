@@ -174,7 +174,7 @@ class Contributivity:
         list_shapley_value = sv.main(nodes_count, characteristic_function)
 
         # Return SV of each node
-        self.name = "Shapley values"
+        self.name = "Shapley"
         self.contributivity_scores = np.array(list_shapley_value)
         self.scores_std = np.zeros(len(list_shapley_value))
         self.normalized_scores = list_shapley_value / np.sum(list_shapley_value)
@@ -216,7 +216,7 @@ class Contributivity:
             np.arange(n), the_scenario
         )  # Characteristic function on all nodes
         if n == 1:
-            self.name = "TMC Shapley values"
+            self.name = "TMC Shapley"
             self.contributivity_scores = np.array([characteristic_all_node])
             self.scores_std = np.array([0])
             self.normalized_scores = self.contributivity_scores / np.sum(
@@ -258,7 +258,7 @@ class Contributivity:
                     )
                 v_max = np.max(np.var(contributions, axis=0))
             sv = np.mean(contributions, axis=0)
-            self.name = "TMC Shapley values"
+            self.name = "TMC Shapley"
             self.contributivity_scores = sv
             self.scores_std = np.std(contributions, axis=0) / np.sqrt(t - 1)
             self.normalized_scores = self.contributivity_scores / np.sum(
@@ -280,7 +280,7 @@ class Contributivity:
             np.arange(n), the_scenario
         )
         if n == 1:
-            self.name = "ITMCS values"
+            self.name = "ITMCS"
             self.contributivity_scores = np.array([characteristic_all_node])
             self.scores_std = np.array([0])
             self.normalized_scores = self.contributivity_scores / np.sum(
@@ -333,7 +333,7 @@ class Contributivity:
                     )
                 v_max = np.max(np.var(contributions, axis=0))
             sv = np.mean(contributions, axis=0)
-            self.name = "ITMCS values"
+            self.name = "ITMCS"
             self.contributivity_scores = sv
             self.scores_std = np.std(contributions, axis=0) / np.sqrt(t - 1)
             self.normalized_scores = self.contributivity_scores / np.sum(
@@ -354,7 +354,7 @@ class Contributivity:
             np.arange(n), the_scenario
         )
         if n == 1:
-            self.name = "IS_lin Shapley values"
+            self.name = "IS_lin Shapley"
             self.contributivity_scores = np.array([characteristic_all_node])
             self.scores_std = np.array([0])
             self.normalized_scores = self.contributivity_scores / np.sum(
@@ -457,7 +457,7 @@ class Contributivity:
                     )
                 v_max = np.max(np.var(contributions, axis=0))
             shap = np.mean(contributions, axis=0)
-            self.name = "IS_lin Shapley values"
+            self.name = "IS_lin Shapley"
             self.contributivity_scores = shap
             self.scores_std = np.std(contributions, axis=0) / np.sqrt(t - 1)
             self.normalized_scores = self.contributivity_scores / np.sum(
@@ -495,7 +495,7 @@ class Contributivity:
                 )
             # Compute exact Shapley Value for each node
             shap = sv.main(the_scenario.nodes_count, characteristic_function)
-            self.name = "IS_reg Shapley values"
+            self.name = "IS_reg Shapley"
             self.contributivity_scores = shap
             self.scores_std = np.zeros(n)
             self.normalized_scores = self.contributivity_scores / np.sum(
@@ -611,7 +611,7 @@ class Contributivity:
                     )
                 v_max = np.max(np.var(contributions, axis=0))
             shap = np.mean(contributions, axis=0)
-            self.name = "IS_reg Shapley values"
+            self.name = "IS_reg Shapley"
             self.contributivity_scores = shap
             self.scores_std = np.std(contributions, axis=0) / np.sqrt(t - 1)
             self.normalized_scores = self.contributivity_scores / np.sum(
@@ -764,7 +764,7 @@ class Contributivity:
             v_max = np.max(np.var(contributions, axis=0))
             t += 1
             shap = np.mean(contributions, axis=0)
-            self.name = "AIS Shapley values"
+            self.name = "AIS Shapley"
             self.contributivity_scores = shap
             self.scores_std = np.std(contributions, axis=0) / np.sqrt(t - 1)
             self.normalized_scores = self.contributivity_scores / np.sum(
@@ -787,7 +787,7 @@ class Contributivity:
         )  # Characteristic function on all nodes
 
         if N == 1:
-            self.name = "Stratified MC Shapley values"
+            self.name = "Stratified MC Shapley"
             self.contributivity_scores = np.array([characteristic_all_node])
             self.scores_std = np.array([0])
             self.normalized_scores = self.contributivity_scores / np.sum(
@@ -869,7 +869,7 @@ class Contributivity:
                             continuer[k][strata] = False
                     var[k] /= N ** 2
                 v_max = np.max(var)
-            self.name = "Stratified MC Shapley values"
+            self.name = "Stratified MC Shapley"
             self.contributivity_scores = shap
             self.scores_std = np.sqrt(var)
             self.normalized_scores = self.contributivity_scores / np.sum(
@@ -896,7 +896,7 @@ class Contributivity:
         )  
 
         if N == 1:
-            self.name = "WR_SMC Shapley values"
+            self.name = "WR_SMC Shapley"
             self.contributivity_scores = np.array([characteristic_all_node])
             self.scores_std = np.array([0])
             self.normalized_scores = self.contributivity_scores / np.sum(
@@ -992,7 +992,7 @@ class Contributivity:
                             continuer[k][strata] = False 
                     var[k] /= N ** 2 #correct the variance of the estimator
                 v_max = np.max(var)
-            self.name = "WR_SMC Shapley values"
+            self.name = "WR_SMC Shapley"
             self.contributivity_scores = shap
             self.scores_std = np.sqrt(var)
             self.normalized_scores = self.contributivity_scores / np.sum(
