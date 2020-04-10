@@ -95,7 +95,7 @@ def init_result_folder(yaml_filepath, cfg):
     experiment_path = Path.cwd() / "experiments" / full_experiment_name
 
     # Check if experiment folder already exists
-    if experiment_path.exists():
+    while experiment_path.exists():
         logger.warning(f"Experiment folder, {experiment_path} already exists")
         new_experiment_name = Path(str(experiment_path) + "_bis")
         experiment_path = Path.cwd() / "experiments" / new_experiment_name

@@ -3,18 +3,5 @@ n_repeats: 1
 scenario_params_list:
  - nodes_counts: 2
    amounts_per_node: [0.5, 0.5]
-   samples_split_option: 'Random'
-   aggregation_weighting: 'local_score'
-   single_partner_test_mode: 'global'
-   minibatch_count: 5
-   methods:
-    - "Shapley values"
-    - "Independant scores" 
-    - "TMCS"
-    # - "ITMCS"
-    # - "IS_lin_S"
-    # - "IS_reg_S"
-    # - "AIS_Kriging_S"
-    # - "SMCS"
-    # - "WR_SMC"
+   samples_split_option: 'random'
    is_quick_demo: True 

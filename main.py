@@ -6,19 +6,12 @@ A script for:
     - measuring the respective contributions of each node to the model performance (termed "contributivity")
 """
 
-from __future__ import print_function
-
-# GPU config
-# from tensorflow.compat.v1 import ConfigProto
-# from tensorflow.compat.v1 import InteractiveSession
-# config = ConfigProto()
-# config.gpu_options.allow_growth = True
-# session = InteractiveSession(config=config)
 from timeit import default_timer as timer
 import matplotlib.pyplot as plt
 import numpy as np
 import utils
 from loguru import logger
+import tensorflow as tf
 
 
 import contributivity
@@ -51,8 +44,9 @@ def main():
     n_repeats = config["n_repeats"]
 
     # GPU config
-    # gpus = tf.config.experimental.list_physical_devices("GPU")
-    # tf.config.experimental.set_memory_growth(gpus[0], True)
+    gpus = tf.config.experimental.list_physical_devices("GPU")
+    if gpus:
+        tf.config.experimental.set_memory_growth(gpus[0], True)
 
     # Close open figures
     plt.close("all")
@@ -101,7 +95,7 @@ def run_scenario(current_scenario):
         current_scenario, is_save_fig
     )
     end = timer()
-    current_scenario.federated_computation_time = np.round(end - start)
+    current_scenario.federated_computation_time_sec = end - start
 
     for method in current_scenario.methods:
         print(method)

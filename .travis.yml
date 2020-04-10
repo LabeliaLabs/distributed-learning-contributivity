@@ -11,4 +11,4 @@ install:
 
 # command to run tests
 script:
-  - python simulation_run.py -f config_quick_debug.yml
+  - python main.py -f config_quick_debug.yml
