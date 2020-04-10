@@ -33,9 +33,9 @@ We want to start experimenting contributivity evaluations in collaborative data 
 * Distributed learning approach: federated learning (other approaches to be tested in future improvements of this experiment)
 * Contributivity evaluation approach:
     * [done] **Performance scores** of models trained independently on each node
-    * [futur prospect] [**Data Valuation by Reinforcement Learning**](https://arxiv.org/pdf/1909.11671.pdf) (DVRL)
+    * [futur prospect] [**Data Valuation by Reinforcement Learning**](https://arxiv.org/pdf/1909.11671.pdf) (DVRL)<br/>
      With DVRL, we modifidy the learning process of the main model so it includes a data valuation part. Namely we use a small neural network to assign weight to each data, and at each learning step these weights are used to sample the learning batch.  These weight are updated at each learning iteration of the main model using the REINFORCE method.   
-    * [done] [**Shapley values**](https://arxiv.org/pdf/1902.10275.pdf) :
+    * [done] [**Shapley values**](https://arxiv.org/pdf/1902.10275.pdf) :<br/>
      These indicators seem to be very good candidates to measure the contributivity of each data providers, because they are usually used in game theory to fairly attributes the gain of a coalitional game amongst its players, which is exactly want we are looking for here.<br/><br/>
 A coalition game is a game where players form coalitions and each coalitions gets a score according to some rules. The winners are the players who manage to be in the coalition with the best score. Here we can consider each data provider is a player, and that forming a coalition is building a federated model using the dataset of each player within the coalition. The score of a coalition is then the performance on a test set of the federated model built by the coalition.<br/><br/>
 To attributes a part of the global score to each player/data providers, we can use the Shapley values. To define the Shapley value we first have to define the "increment" in performance of a player in a coalition. Such "increment" is the performance of the coalition minus the performance of the coalition without this player. The Shapley value of a player is a properly weighted average of its "increments" in every possible coalition. <br/><br/> 
