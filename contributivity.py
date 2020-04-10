@@ -313,13 +313,12 @@ class Contributivity:
                             size_of_rest = 0
                             for i in range(j, n):
                                 size_of_rest += len(the_scenario.node_list[i].y_train)
+                            a=(characteristic_all_node - char_nodelists[j])/size_of_rest
                             first = False
+                            
                         size_of_S = len(the_scenario.node_list[j].y_train)
-                        char_nodelists[j + 1] = (
-                            char_nodelists[j]
-                            + size_of_S / size_of_rest * characteristic_all_node
-                        )
-
+                        char_nodelists[j + 1] = char_nodelists[j] + a*size_of_S
+                        
                     else:
                         char_nodelists[j + 1] = self.not_twice_characteristic(
                             permutation[: j + 1], the_scenario
@@ -468,35 +467,10 @@ class Contributivity:
         n = len(the_scenario.node_list)
 
         if n < 4:
-            # Initialize list of all players (nodes) indexes
-            nodes_count = len(the_scenario.node_list)
-            nodes_idx = np.arange(nodes_count)
-
-            # Define all possible coalitions of players
-            coalitions = [
-                list(j)
-                for i in range(len(nodes_idx))
-                for j in combinations(nodes_idx, i + 1)
-            ]
-
-            # For each coalition, obtain value of characteristic function...
-            # ... i.e.: train and evaluate model on nodes part of the given coalition
-            characteristic_function = []
-
-            for coalition in coalitions:
-                characteristic_function.append(
-                    self.not_twice_characteristic(list(coalition), the_scenario)
-                )
-            # Compute exact Shapley Value for each node
-            shap = sv.main(the_scenario.nodes_count, characteristic_function)
-            self.name = "IS_reg Shapley"
-            self.contributivity_scores = shap
-            self.scores_std = np.zeros(n)
-            self.normalized_scores = self.contributivity_scores / np.sum(
-                self.contributivity_scores
-            )
-            end = timer()
-            self.computation_time_sec = end - start
+          
+            self.compute_SV(the_scenario)
+            self.name = "IS_reg Shapley values"
+            
         else:
 
             # definition of the original density
@@ -850,7 +824,7 @@ class Contributivity:
                     # computes the var and means of each strata
                     sigma2[k, strata] = np.var(contributions[k][strata])
                     mu[k, strata] = np.mean(contributions[k][strata])
-                shap = np.mean(mu, axis=0)
+                shap = np.mean(mu, axis=1)
                 var = np.zeros(N)  # variance of the estimator
                 for k in range(N):
                     for strata in range(N):
@@ -964,8 +938,9 @@ class Contributivity:
                     else: #avoid creating a Nan value  when length = 1 
                         sigma2[k, strata]=0
                     sigma2[k, strata]*= (1/length-   factorial(N - 1 - strata) * factorial(strata)  / factorial(N-1) )
-                    print("t: ",t,",k:",k ,", strata:",strata, ", sigma2:",sigma2[k])
-                shap = np.mean(mu, axis=0)
+                    print("t: ", t, ",k: ", k, ", strata: ",strata, ",sigma2: ",sigma2[k])
+                
+                shap = np.mean(mu, axis=1)
                 var = np.zeros(N)  # variance of the estimator
                 for k in range(N):
                     for strata in range(N):
