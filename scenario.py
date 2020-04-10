@@ -107,15 +107,14 @@ class Scenario:
         DEFAULT_METHODS_LIST = ["Shapley values", "Independant scores", "TMCS"]
 
         self.methods = []
-        if "methods" in params:
-            if params["methods"]:
-                for el in params["methods"]:
-                    if el in ALL_METHODS_LIST:
-                        self.methods.append(el)
-                    else:
-                        raise Exception("method " + el + " is not in methods list.")
-            else:
-                raise Exception("No contributivity method given in the config file ")
+        if "methods" in params and params["methods"]:
+
+            for method in params["methods"]:
+                if method in ALL_METHODS_LIST:
+                    self.methods.append(method)
+                else:
+                    raise Exception("Method [" + method + "] is not in methods list.")
+
         else:
             self.methods = DEFAULT_METHODS_LIST
 
