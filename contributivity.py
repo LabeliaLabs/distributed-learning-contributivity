@@ -966,7 +966,7 @@ class Contributivity:
                 self.contributivity_scores
             )
             end = timer()
-            self.computation_time = end - start
+            self.computation_time_sec = end - start
 
     def compute_contributivity(
         self,
