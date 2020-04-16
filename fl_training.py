@@ -8,6 +8,7 @@ from __future__ import print_function
 
 import keras
 from keras.backend.tensorflow_backend import clear_session
+from keras.callbacks import EarlyStopping
 from sklearn.model_selection import train_test_split
 import numpy as np
 import matplotlib.pyplot as plt
@@ -71,8 +72,8 @@ def preprocess_scenarios_data(scenario):
 
 
 def compute_test_score_for_single_node(
-    node, epoch_count, single_partner_test_mode, global_x_test, global_y_test
-):
+    node, epoch_count, single_partner_test_mode, global_x_test, global_y_test,is_early_stopping
+    ):
     """Return the score on test data of a model trained on a single node"""
 
     print("\n## Training and evaluating model on one single node.")
@@ -82,14 +83,27 @@ def compute_test_score_for_single_node(
 
     # Train model
     print("\n### Training model on one single node: " + str(node.node_id))
-    history = model.fit(
-        node.x_train,
-        node.y_train,
-        batch_size=constants.BATCH_SIZE,
-        epochs=epoch_count,
-        verbose=0,
-        validation_data=(node.x_val, node.y_val),
-    )
+    if is_early_stopping :
+        es = EarlyStopping(monitor='val_loss', mode='min', verbose=0, patience=constants.PATIENCE)
+        history = model.fit(
+            node.x_train,
+            node.y_train,
+            batch_size=constants.BATCH_SIZE,
+            epochs=epoch_count,
+            verbose=0,
+            validation_data=(node.x_val, node.y_val),
+            callbacks=[es,]
+        )   
+    else:
+        history = model.fit(
+            node.x_train,
+            node.y_train,
+            batch_size=constants.BATCH_SIZE,
+            epochs=epoch_count,
+            verbose=0,
+            validation_data=(node.x_val, node.y_val),
+        )
+
 
     # Reference a testset according to the scenario configuration
     if single_partner_test_mode == "global":
@@ -104,7 +118,6 @@ def compute_test_score_for_single_node(
             + single_partner_test_mode
             + "] is not recognized."
         )
-
     # Evaluate trained model
     print("\n### Evaluating model on test data of the node:")
     model_evaluation = model.evaluate(
@@ -232,7 +245,7 @@ def compute_test_score(
     nodes_count = len(node_list)
     if nodes_count == 1:
         return compute_test_score_for_single_node(
-            node_list[0], epoch_count, single_partner_test_mode, x_test, y_test
+            node_list[0], epoch_count, single_partner_test_mode, x_test, y_test, is_early_stopping
         )
 
     # Else, continue onto a federated learning procedure
