@@ -81,28 +81,24 @@ def compute_test_score_for_single_node(
     # Initialize model
     model = utils.generate_new_cnn_model()
 
-    # Train model
-    print("\n### Training model on one single node: " + str(node.node_id))
+
+   # set earlystopping if needed
+    cb=[]
     if is_early_stopping :
         es = EarlyStopping(monitor='val_loss', mode='min', verbose=0, patience=constants.PATIENCE)
-        history = model.fit(
-            node.x_train,
-            node.y_train,
-            batch_size=constants.BATCH_SIZE,
-            epochs=epoch_count,
-            verbose=0,
-            validation_data=(node.x_val, node.y_val),
-            callbacks=[es,]
-        )   
-    else:
-        history = model.fit(
-            node.x_train,
-            node.y_train,
-            batch_size=constants.BATCH_SIZE,
-            epochs=epoch_count,
-            verbose=0,
-            validation_data=(node.x_val, node.y_val),
-        )
+        cb.append(es)
+        
+    # Train model  
+    print("\n### Training model on one single node: " + str(node.node_id))
+    history = model.fit(
+        node.x_train,
+        node.y_train,
+        batch_size=constants.BATCH_SIZE,
+        epochs=epoch_count,
+        verbose=0,
+        validation_data=(node.x_val, node.y_val),
+        callbacks=cb
+    )   
 
 
     # Reference a testset according to the scenario configuration
