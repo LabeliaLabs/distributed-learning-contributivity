@@ -8,6 +8,7 @@ from __future__ import print_function
 
 import keras
 from keras.backend.tensorflow_backend import clear_session
+from keras.callbacks import EarlyStopping
 from sklearn.model_selection import train_test_split
 import numpy as np
 import matplotlib.pyplot as plt
@@ -71,7 +72,7 @@ def preprocess_scenarios_data(scenario):
 
 
 def compute_test_score_for_single_partner(
-    partner, epoch_count, single_partner_test_mode, global_x_test, global_y_test
+    partner, epoch_count, single_partner_test_mode, global_x_test, global_y_test, is_early_stopping
 ):
     """Return the score on test data of a model trained on a single partner"""
 
@@ -80,7 +81,13 @@ def compute_test_score_for_single_partner(
     # Initialize model
     model = utils.generate_new_cnn_model()
 
-    # Train model
+    # Set earlystopping if needed
+    cb=[]
+    if is_early_stopping :
+        es = EarlyStopping(monitor='val_loss', mode='min', verbose=0, patience=constants.PATIENCE)
+        cb.append(es)
+        
+    # Train model  
     print("\n### Training model on one single partner: " + str(partner.partner_id))
     history = model.fit(
         partner.x_train,
@@ -89,7 +96,8 @@ def compute_test_score_for_single_partner(
         epochs=epoch_count,
         verbose=0,
         validation_data=(partner.x_val, partner.y_val),
-    )
+        callbacks=cb,
+    )   
 
     # Reference a testset according to the scenario configuration
     if single_partner_test_mode == "global":
@@ -104,7 +112,6 @@ def compute_test_score_for_single_partner(
             + single_partner_test_mode
             + "] is not recognized."
         )
-
     # Evaluate trained model
     print("\n### Evaluating model on test data of the partner:")
     model_evaluation = model.evaluate(
@@ -230,7 +237,7 @@ def compute_test_score(
     partners_count = len(partners_list)
     if partners_count == 1:
         return compute_test_score_for_single_partner(
-            partners_list[0], epoch_count, single_partner_test_mode, x_test, y_test
+            partners_list[0], epoch_count, single_partner_test_mode, x_test, y_test, is_early_stopping
         )
 
     # Else, continue onto a federated learning procedure
