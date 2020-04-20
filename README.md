@@ -157,11 +157,11 @@ After a training iteration over a given mini-batch, how individual models of eac
 `single_partner_test_mode`: `global` (default) or `local`  
 When training a model on a single partner (this is needed in certain contributivity measurement approaches), defines if the final performance is tested on the central testset or on the partner's local testset. Note: a train-test split is performed on the original dataset, forming a central testset; this testset is also split over each partner (randomly) forming local testsets.  
 
-`epoch_count`: `int`  
+`epoch_count`: `int` (default: `40`)  
 Number of epochs passed as argument in the `.fit()` function. Superseded when `is_early_stopping` is set to `true`.  
 Example: `epoch_count: 30`
 
-`minibatch_count`: `int`
+`minibatch_count`: `int` (default: `20`)  
 Number of mini batches into which each partner's dataset is split, and over which are performed the iterations of parallel local training plus aggregation.  
 Example: `minibatch_count: 20`
 

@@ -29,6 +29,53 @@ class Scenario:
         self.x_test = x_test
         self.y_test = y_test
 
+        # Performance of the model trained in a distributed way on all nodes
+        self.federated_test_score = int
+        self.federated_computation_time_sec = int
+
+        # List of all nodes defined in the scenario
+        self.node_list = []
+
+        # List of contributivity measures selected and computed in the scenario
+        self.contributivity_list = []
+
+        # Outputs
+        now = datetime.datetime.now()
+        now_str = now.strftime("%Y-%m-%d_%Hh%M")
+        self.scenario_name = (
+                self.samples_split_option
+                + "_"
+                + str(self.nodes_count)
+                + "_"
+                + str(self.amounts_per_node)
+                + "_"
+                + str(self.corrupted_nodes)
+                + "_"
+                + str(self.single_partner_test_mode)
+                + "_"
+                + now_str
+                + "_"
+                + uuid.uuid4().hex[
+                  :3
+                  ]  # This is to be sure 2 distinct scenarios do no have the same name
+        )
+
+        self.short_scenario_name = (
+                self.samples_split_option
+                + " "
+                + str(self.nodes_count)
+                + " "
+                + str(self.amounts_per_node)
+        )
+
+        self.save_folder = experiment_path / self.scenario_name
+
+        self.save_folder.mkdir(parents=True, exist_ok=True)
+
+        # -------------------------------------
+        # Definition of collaborative scenarios
+        # -------------------------------------
+
         # Nodes mock different partners in a collaborative data science project
         # For defining the number of nodes
         self.nodes_count = params["nodes_counts"]
@@ -51,6 +98,10 @@ class Scenario:
         else:
             self.corrupted_nodes = ["not_corrupted"] * self.nodes_count
 
+        # ---------------------------------------------------
+        #  Configuration of the distributed learning approach
+        # ---------------------------------------------------
+
         # When training on a single node, the test set can be either the local node test set or the global test set
         if "single_partner_test_mode" in params:
             self.single_partner_test_mode = params[
@@ -59,23 +110,12 @@ class Scenario:
         else:
             self.single_partner_test_mode = "global"
 
-        # Performance of the model trained in a distributed way on all nodes
-        self.federated_test_score = int
-
-        self.federated_computation_time_sec = int
-
         # Define how federated learning aggregation steps are weighted. Toggle between 'uniform' and 'data_volume'
         # Default is 'uniform'
         if "aggregation_weighting" in params:
             self.aggregation_weighting = params["aggregation_weighting"]
         else:
             self.aggregation_weighting = "uniform"
-
-        # List of all nodes defined in the scenario
-        self.node_list = []
-
-        # List of contributivity measures selected and computed in the scenario
-        self.contributivity_list = []
 
         # Number of epochs and mini-batches in ML training
         if "epoch_count" in params:
@@ -89,6 +129,17 @@ class Scenario:
             assert self.minibatch_count > 0
         else:
             self.minibatch_count = 20
+
+        # Early stopping stops ML training when performance increase is not significant anymore
+        # It is used to optimize the number of epochs and the execution time
+        if "is_early_stopping" in params:
+            self.is_early_stopping = params["is_early_stopping"]
+        else:
+            self.is_early_stopping = True
+
+        # -----------------------------------------------------------------
+        #  Configuration of contributivity measurement methods to be tested
+        # -----------------------------------------------------------------
 
         # Contributivity methods
         ALL_METHODS_LIST = [
@@ -118,45 +169,12 @@ class Scenario:
         else:
             self.methods = DEFAULT_METHODS_LIST
 
-        # Early stopping stops ML training when performance increase is not significant anymore
-        # It is used to optimize the number of epochs and the execution time
-        self.is_early_stopping = True  # Toggle between True and False
-
-        now = datetime.datetime.now()
-        now_str = now.strftime("%Y-%m-%d_%Hh%M")
-        self.scenario_name = (
-            self.samples_split_option
-            + "_"
-            + str(self.nodes_count)
-            + "_"
-            + str(self.amounts_per_node)
-            + "_"
-            + str(self.corrupted_nodes)
-            + "_"
-            + str(self.single_partner_test_mode)
-            + "_"
-            + now_str
-            + "_"
-            + uuid.uuid4().hex[
-                :3
-            ]  # This is to be sure 2 distinct scenarios do no have the same name
-        )
-
-        self.short_scenario_name = (
-            self.samples_split_option
-            + " "
-            + str(self.nodes_count)
-            + " "
-            + str(self.amounts_per_node)
-        )
-
-        self.save_folder = experiment_path / self.scenario_name
-
-        self.save_folder.mkdir(parents=True, exist_ok=True)
+        # -------------
+        # Miscellaneous
+        # -------------
 
         # The quick demo parameters overwrites previously defined paramaters to make the scenario faster to compute
         if "is_quick_demo" in params and params["is_quick_demo"]:
-
             # Use less data and less epochs to speed up the computations
             logger.info("Quick demo: limit number of data and number of epochs.")
             self.x_train = self.x_train[:1000]

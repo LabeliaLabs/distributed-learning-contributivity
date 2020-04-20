@@ -47,7 +47,7 @@ def preprocess_scenarios_data(scenario):
             print("corruption of node " + str(node_index) + "\n")
             node.corrupt_labels()
         elif scenario.corrupted_nodes[node_index] == "shuffled":
-            print("shuffleling of node " + str(node_index) + "\n")
+            print("shuffling of node " + str(node_index) + "\n")
             node.shuffle_labels()
         elif scenario.corrupted_nodes[node_index] == "not_corrupted":
             pass
@@ -138,8 +138,6 @@ def compute_test_score_with_scenario(scenario, is_save_fig=False):
         is_save_fig,
         save_folder=scenario.save_folder,
     )
-
-
 
 
 def split_in_minibatches(minibatch_count, x_train, y_train):
