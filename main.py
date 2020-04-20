@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 """
 A script for:
-    - mocking a multi-partner ML project by splitting data among different nodes
-    - training a model across multiple nodes in a distributed approach
-    - measuring the respective contributions of each node to the model performance (termed "contributivity")
+    - mocking a multi-partner ML project by splitting data among different partners
+    - training a model across multiple partners in a distributed approach
+    - measuring the respective contributions of each partner to the model performance (termed "contributivity")
 """
 
 from timeit import default_timer as timer
@@ -61,7 +61,7 @@ def main():
             logger.info("Current params:")
             logger.info(scenario_params)
 
-            print(type(scenario_params["amounts_per_node"]))
+            print(type(scenario_params["amounts_per_partner"]))
 
             current_scenario = scenario.Scenario(scenario_params, experiment_path)
             print(current_scenario.to_dataframe())
@@ -88,7 +88,7 @@ def run_scenario(current_scenario):
     current_scenario.plot_data_distribution()
     current_scenario = fl_training.preprocess_scenarios_data(current_scenario)
 
-    # Train and eval on all nodes according to scenario
+    # Train and eval on all partners according to scenario
     is_save_fig = True
     start = timer()
     current_scenario.federated_test_score = fl_training.compute_test_score_with_scenario(

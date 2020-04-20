@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-This enables to parameterize the nodes that participate to the simulated federated learning scenario.
+This enables to parameterize the partners that participate to the simulated federated learning scenario.
 """
 
 import keras
@@ -11,8 +11,8 @@ import utils
 import constants
 
 
-class Node:
-    def __init__(self, x_train, x_test, y_train, y_test, node_id):
+class Partner:
+    def __init__(self, x_train, x_test, y_train, y_test, partner_id):
         self.x_train = x_train
         self.x_val = []
         self.x_test = x_test
@@ -21,7 +21,7 @@ class Node:
         self.y_val = []
         self.y_test = y_test
 
-        self.node_id = node_id
+        self.partner_id = partner_id
 
     def get_x_train_len(self):
         return len(self.x_train)

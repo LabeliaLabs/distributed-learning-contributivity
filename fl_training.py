@@ -23,38 +23,38 @@ import constants
 
 
 def preprocess_scenarios_data(scenario):
-    """Return scenario with central datasets (val, test) and distributed datasets (nodes) pre-processed"""
+    """Return scenario with central datasets (val, test) and distributed datasets (partners) pre-processed"""
 
     print("\n## Pre-processing datasets of the scenario for keras CNN:")
 
-    # First, datasets of each node
-    for node_index, node in enumerate(scenario.node_list):
+    # First, datasets of each partner
+    for partner_index, partner in enumerate(scenario.partners_list):
 
         # Preprocess inputs (x) data
-        node.x_train = utils.preprocess_input(node.x_train)
-        node.x_test = utils.preprocess_input(node.x_test)
+        partner.x_train = utils.preprocess_input(partner.x_train)
+        partner.x_test = utils.preprocess_input(partner.x_test)
 
         # Preprocess labels (y) data
-        node.y_train = keras.utils.to_categorical(node.y_train, constants.NUM_CLASSES)
-        node.y_test = keras.utils.to_categorical(node.y_test, constants.NUM_CLASSES)
+        partner.y_train = keras.utils.to_categorical(partner.y_train, constants.NUM_CLASSES)
+        partner.y_test = keras.utils.to_categorical(partner.y_test, constants.NUM_CLASSES)
 
         # Create validation dataset
-        node.x_train, node.x_val, node.y_train, node.y_val = train_test_split(
-            node.x_train, node.y_train, test_size=0.1, random_state=42
+        partner.x_train, partner.x_val, partner.y_train, partner.y_val = train_test_split(
+            partner.x_train, partner.y_train, test_size=0.1, random_state=42
         )
 
-        if scenario.corrupted_nodes[node_index] == "corrupted":
-            print("corruption of node " + str(node_index) + "\n")
-            node.corrupt_labels()
-        elif scenario.corrupted_nodes[node_index] == "shuffled":
-            print("shuffling of node " + str(node_index) + "\n")
-            node.shuffle_labels()
-        elif scenario.corrupted_nodes[node_index] == "not_corrupted":
+        if scenario.corrupted_partners[partner_index] == "corrupted":
+            print("   ... Corrupting data (offsetting labels) of partner " + str(partner_index))
+            partner.corrupt_labels()
+        elif scenario.corrupted_partners[partner_index] == "shuffled":
+            print("   ... Corrupting data (shuffling labels) of partner " + str(partner_index))
+            partner.shuffle_labels()
+        elif scenario.corrupted_partners[partner_index] == "not_corrupted":
             pass
         else:
-            print("Unexpected label of corruption")
+            print("Unexpected label of corruption, not corruption performed!")
 
-        print("   Node #" + str(node_index) + ": done.")
+        print("   Partner #" + str(partner_index) + ": done.")
 
     # Then the scenario central dataset of the scenario
     scenario.x_val = utils.preprocess_input(scenario.x_val)
@@ -70,25 +70,25 @@ def preprocess_scenarios_data(scenario):
 #%% Single partner training
 
 
-def compute_test_score_for_single_node(
-    node, epoch_count, single_partner_test_mode, global_x_test, global_y_test
+def compute_test_score_for_single_partner(
+    partner, epoch_count, single_partner_test_mode, global_x_test, global_y_test
 ):
-    """Return the score on test data of a model trained on a single node"""
+    """Return the score on test data of a model trained on a single partner"""
 
-    print("\n## Training and evaluating model on one single node.")
+    print("\n## Training and evaluating model on one single partner.")
 
     # Initialize model
     model = utils.generate_new_cnn_model()
 
     # Train model
-    print("\n### Training model on one single node: " + str(node.node_id))
+    print("\n### Training model on one single partner: " + str(partner.partner_id))
     history = model.fit(
-        node.x_train,
-        node.y_train,
+        partner.x_train,
+        partner.y_train,
         batch_size=constants.BATCH_SIZE,
         epochs=epoch_count,
         verbose=0,
-        validation_data=(node.x_val, node.y_val),
+        validation_data=(partner.x_val, partner.y_val),
     )
 
     # Reference a testset according to the scenario configuration
@@ -96,8 +96,8 @@ def compute_test_score_for_single_node(
         x_test = global_x_test
         y_test = global_y_test
     elif single_partner_test_mode == "local":
-        x_test = node.x_test
-        y_test = node.y_test
+        x_test = partner.x_test
+        y_test = partner.y_test
     else:
         raise NameError(
             "This single_partner_test_mode option ["
@@ -106,7 +106,7 @@ def compute_test_score_for_single_node(
         )
 
     # Evaluate trained model
-    print("\n### Evaluating model on test data of the node:")
+    print("\n### Evaluating model on test data of the partner:")
     model_evaluation = model.evaluate(
         x_test, y_test, batch_size=constants.BATCH_SIZE, verbose=0
     )
@@ -116,7 +116,7 @@ def compute_test_score_for_single_node(
     model_eval_score = model_evaluation[1]  # 0 is for the loss
 
     # Return model score on test data
-    print("\nTraining and evaluation on one single node: done.")
+    print("\nTraining and evaluation on one single partner: done.")
     return model_eval_score
 
 
@@ -125,7 +125,7 @@ def compute_test_score_for_single_node(
 
 def compute_test_score_with_scenario(scenario, is_save_fig=False):
     return compute_test_score(
-        scenario.node_list,
+        scenario.partners_list,
         scenario.epoch_count,
         scenario.x_val,
         scenario.y_val,
@@ -158,16 +158,16 @@ def split_in_minibatches(minibatch_count, x_train, y_train):
 
 
 def prepare_aggregation_weights(
-    aggregation_weighting, nodes_count, node_list, input_weights
+    aggregation_weighting, partners_count, partners_list, input_weights
 ):
     """Returns a list of weights for the weighted average aggregation of model weights"""
 
     aggregation_weights = []
     if aggregation_weighting == "uniform":
-        aggregation_weights = [1 / nodes_count] * nodes_count
+        aggregation_weights = [1 / partners_count] * partners_count
     elif aggregation_weighting == "data_volume":
-        node_sizes = [len(node.x_train) for node in node_list]
-        aggregation_weights = node_sizes / np.sum(node_sizes)
+        partners_sizes = [len(partner.x_train) for partner in partners_list]
+        aggregation_weights = partners_sizes / np.sum(partners_sizes)
     elif aggregation_weighting == "local_score":
         aggregation_weights = input_weights / np.sum(input_weights)
     else:
@@ -211,7 +211,7 @@ def build_aggregated_model(new_weights):
 
 
 def compute_test_score(
-    node_list,
+    partners_list,
     epoch_count,
     x_val_global,
     y_val_global,
@@ -224,22 +224,22 @@ def compute_test_score(
     is_save_fig=False,
     save_folder="",
 ):
-    """Return the score on test data of a final aggregated model trained in a federated way on each node"""
+    """Return the score on test data of a final aggregated model trained in a federated way on each partner"""
 
-    # First, if only one node, fall back to dedicated single node function
-    nodes_count = len(node_list)
-    if nodes_count == 1:
-        return compute_test_score_for_single_node(
-            node_list[0], epoch_count, single_partner_test_mode, x_test, y_test
+    # First, if only one partner, fall back to dedicated single partner function
+    partners_count = len(partners_list)
+    if partners_count == 1:
+        return compute_test_score_for_single_partner(
+            partners_list[0], epoch_count, single_partner_test_mode, x_test, y_test
         )
 
     # Else, continue onto a federated learning procedure
-    print("\n## Training and evaluating model on multiple nodes: " + str(node_list))
+    print("\n## Training and evaluating model on multiple partners: " + str(partners_list))
 
     # Initialize variables
-    model_list, local_score_list = [None] * nodes_count, [None] * nodes_count
-    score_matrix = np.zeros(shape=(epoch_count, nodes_count))
-    score_matrix_extended = np.zeros(shape=(epoch_count, minibatch_count, nodes_count))
+    model_list, local_score_list = [None] * partners_count, [None] * partners_count
+    score_matrix = np.zeros(shape=(epoch_count, partners_count))
+    score_matrix_extended = np.zeros(shape=(epoch_count, minibatch_count, partners_count))
     global_val_acc, global_val_loss = [], []
 
     # Train model (iterate for each epoch and mini-batch)
@@ -251,12 +251,12 @@ def compute_test_score(
         clear_session()
 
         # Split the train dataset in mini-batches
-        minibatched_x_train, minibatched_y_train = [None] * nodes_count, [None] * nodes_count
-        for node_index, node in enumerate(node_list):
+        minibatched_x_train, minibatched_y_train = [None] * partners_count, [None] * partners_count
+        for partner_index, partner in enumerate(partners_list):
             (
-                minibatched_x_train[node_index],
-                minibatched_y_train[node_index],
-            ) = split_in_minibatches(minibatch_count, node.x_train, node.y_train)
+                minibatched_x_train[partner_index],
+                minibatched_y_train[partner_index],
+            ) = split_in_minibatches(minibatch_count, partner.x_train, partner.y_train)
 
         # Iterate over mini-batches for training, starting each new iteration with an aggregation of the previous one
         for minibatch_index in range(minibatch_count):
@@ -270,35 +270,36 @@ def compute_test_score(
             )
             is_first_minibatch = minibatch_index == 0
 
-            # Starting model for each node is the aggregated model from the previous mini-batch iteration
-            agg_model_for_iteration = [None] * nodes_count
+            # Starting model for each partner is the aggregated model from the previous mini-batch iteration
+            agg_model_for_iteration = [None] * partners_count
             if not is_first_epoch or not is_first_minibatch:
                 aggregation_weights = prepare_aggregation_weights(
-                    aggregation_weighting, nodes_count, node_list, local_score_list
+                    aggregation_weighting, partners_count, partners_list, local_score_list
                 )
-            for node_index, node in enumerate(node_list):
+            for partner_index, partner in enumerate(partners_list):
                 if is_first_epoch and is_first_minibatch:
-                    agg_model_for_iteration[node_index] = utils.generate_new_cnn_model()
+                    agg_model_for_iteration[partner_index] = utils.generate_new_cnn_model()
                 else:
-                    agg_model_for_iteration[node_index] = build_aggregated_model(
+                    agg_model_for_iteration[partner_index] = build_aggregated_model(
                         aggregate_model_weights(model_list, aggregation_weights)
                     )
 
-            # Iterate over nodes for training each individual model
-            for node_index, node in enumerate(node_list):
+            # Iterate over partners for training each individual model
+            for partner_index, partner in enumerate(partners_list):
 
-                node_model = agg_model_for_iteration[node_index]
+                partner_model = agg_model_for_iteration[partner_index]
 
-                # Train on node local data set
+                # Train on partner local data set
                 print(
-                    "         Training on node "
-                    + str(node_index)
-                    + " - "
-                    + str(node.node_id)
+                    "         Training on partner "
+                    + str(partner_index)
+                    + " out of "
+                    + str(partners_count)
+                    + " total partners"
                 )
-                history = node_model.fit(
-                    minibatched_x_train[node_index][minibatch_index],
-                    minibatched_y_train[node_index][minibatch_index],
+                history = partner_model.fit(
+                    minibatched_x_train[partner_index][minibatch_index],
+                    minibatched_y_train[partner_index][minibatch_index],
                     batch_size=constants.BATCH_SIZE,
                     epochs=1,
                     verbose=0,
@@ -309,24 +310,24 @@ def compute_test_score(
                     + str(history.history["val_accuracy"][0])
                 )  # DEBUG
 
-                # Update the node's model in the models' list
-                model_list[node_index] = node_model
-                local_score_list[node_index] = history.history["val_accuracy"][0]
+                # Update the partner's model in the models' list
+                model_list[partner_index] = partner_model
+                local_score_list[partner_index] = history.history["val_accuracy"][0]
 
-                # At the end of each mini-batch, for each node, populate the extended score matrix
+                # At the end of each mini-batch, for each partner, populate the extended score matrix
                 score_matrix_extended[
-                    epoch_index, minibatch_index, node_index
+                    epoch_index, minibatch_index, partner_index
                 ] = history.history["val_accuracy"][0]
 
-                # At the end of each epoch (on the last mini-batch), for each node, populate the score matrix
+                # At the end of each epoch (on the last mini-batch), for each partner, populate the score matrix
                 if minibatch_index == (minibatch_count - 1):
-                    score_matrix[epoch_index, node_index] = history.history[
+                    score_matrix[epoch_index, partner_index] = history.history[
                         "val_accuracy"
                     ][0]
 
         # At the end of each epoch, evaluate the aggregated model for early stopping on a global validation set
         aggregation_weights = prepare_aggregation_weights(
-            aggregation_weighting, nodes_count, node_list, local_score_list
+            aggregation_weighting, partners_count, partners_list, local_score_list
         )
         aggregated_model = build_aggregated_model(
             aggregate_model_weights(model_list, aggregation_weights)
@@ -393,10 +394,10 @@ def compute_test_score(
         plt.title("Model accuracy")
         plt.ylabel("Accuracy")
         plt.xlabel("Epoch")
-        plt.legend(["Node " + str(i) for i in range(nodes_count)])
+        plt.legend(["partner " + str(i) for i in range(partners_count)])
         # plt.yscale('log')
         plt.ylim([0, 1])
-        plt.savefig(save_folder / "all_nodes.png")
+        plt.savefig(save_folder / "all_partners.png")
 
-    print("\nTraining and evaluation on multiple nodes: done.")
+    print("\nTraining and evaluation on multiple partners: done.")
     return test_score

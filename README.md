@@ -31,7 +31,7 @@ For a start we made the following choices:
 
 ### Contributivity measurement approaches studied and implemented
 
-- [done] **Performance scores** of models trained independently on each node
+- [done] **Performance scores** of models trained independently on each partner
 
 - [done] [**Shapley values**](https://arxiv.org/pdf/1902.10275.pdf):  
 
@@ -86,15 +86,15 @@ For a start we made the following choices:
     experiment_name: my_custom_experiment
     n_repeats: 10
     scenario_params_list:
-     - nodes_counts: 3
-       amounts_per_node: [0.4, 0.3, 0.3] 
+     - partners_count: 3
+       amounts_per_partner: [0.4, 0.3, 0.3] 
        samples_split_option: 'random'
        aggregation_weighting: 'data_volume'
        single_partner_test_mode: 'global'
        epoch_count: 38
        minibatch_count: 20
-     - nodes_counts: 4
-       amounts_per_node: [0.3, 0.3, 0.1, 0.3] 
+     - partners_count: 4
+       amounts_per_partner: [0.3, 0.3, 0.1, 0.3] 
        samples_split_option: 'stratified'
        aggregation_weighting: 'data_volume'
        single_partner_test_mode: 'global'
@@ -122,13 +122,13 @@ Example: `n_repeats: 2`
 
 ##### Definition of collaborative scenarios
 
-`nodes_count`: `int`  
+`partners_count`: `int`  
 Number of partners in the mocked collaborative ML scenario.  
-Example: `nodes_count: 4`
+Example: `partners_count: 4`
 
-`amounts_per_node`: `[float]`  
+`amounts_per_partner`: `[float]`  
 Percentages of the original dataset each partner receives to mock a collaborative ML scenario where each partner provides data for the ML training.  
-Example: `amounts_per_node: [0.3, 0.3, 0.1, 0.3]`
+Example: `amounts_per_partner: [0.3, 0.3, 0.1, 0.3]`
 
 `samples_split_option`: `random` or `stratified`  
 How the original dataset data samples are split among partners:
@@ -136,7 +136,7 @@ How the original dataset data samples are split among partners:
 - `random`: the dataset is shuffled and the split is done randomly, ensuring a homogeneous data distribution among partners
 - `stratified`: the dataset is stratified per labels, so that partners have datasets covering different regions of space
 
-`corrupted_nodes`: `[not_corrupted (default), shuffled or corrupted]`  
+`corrupted_partners`: `[not_corrupted (default), shuffled or corrupted]`  
 Enables to artificially corrupt the data of one or several partners:
 
 - `not_corrupted`: data are not corrupted

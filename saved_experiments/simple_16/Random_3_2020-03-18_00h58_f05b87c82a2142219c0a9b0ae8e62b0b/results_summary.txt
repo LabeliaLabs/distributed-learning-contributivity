@@ -1,8 +1,8 @@
 Dataset name: MNIST
 Number of data samples - train: 48000
 Number of data samples - test: 10000
-Nodes count: 3
-Percentages of data samples per node: [0.9, 0.05, 0.05]
+partners count: 3
+Percentages of data samples per partner: [0.9, 0.05, 0.05]
 Random or stratified split of data samples: Random
 Global or local testset: global
 Number of epochs: 40

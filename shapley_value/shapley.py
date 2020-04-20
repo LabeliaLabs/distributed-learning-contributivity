@@ -13,9 +13,9 @@ def power_set(List):
     return PS
 
 
-def main(nodes_count, char_func_list):
+def main(partners_count, char_func_list):
 
-    n = nodes_count  # Added by @bowni
+    n = partners_count  # Added by @bowni
     characteristic_function = char_func_list  # Updated by @bowni
 
     if n == 0:

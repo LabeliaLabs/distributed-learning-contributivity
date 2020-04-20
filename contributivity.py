@@ -64,7 +64,7 @@ class krigingModel:
 class Contributivity:
     def __init__(self, name="", scenario=None):
         self.name = name
-        n = len(scenario.node_list)
+        n = len(scenario.partners_list)
         self.contributivity_scores = np.zeros(n)
         self.scores_std = np.zeros(n)
         self.normalized_scores = np.zeros(n)
@@ -101,9 +101,9 @@ class Contributivity:
             tuple(subset) not in self.charac_fct_values
         ):  # Characteristic_func(permut) has not been computed yet, so we compute, store, and return characteristic_func(permut)
             self.first_charac_fct_calls_count += 1
-            small_node_list = np.array([the_scenario.node_list[i] for i in subset])
+            small_partners_list = np.array([the_scenario.partners_list[i] for i in subset])
             self.charac_fct_values[tuple(subset)] = fl_training.compute_test_score(
-                small_node_list,
+                small_partners_list,
                 the_scenario.epoch_count,
                 the_scenario.x_val,
                 the_scenario.y_val,
@@ -116,7 +116,7 @@ class Contributivity:
                 save_folder=the_scenario.save_folder,
             )
             # we add the new increments
-            for i in range(len(the_scenario.node_list)):
+            for i in range(len(the_scenario.partners_list)):
                 if i in subset:
                     subset_without_i = np.delete(subset, np.argwhere(subset == i))
                     if (
@@ -142,23 +142,23 @@ class Contributivity:
 
     def compute_SV(self, the_scenario):
         start = timer()
-        print("\n# Launching computation of Shapley Value of all nodes")
+        print("\n# Launching computation of Shapley Value of all partners")
 
-        # Initialize list of all players (nodes) indexes
-        nodes_count = len(the_scenario.node_list)
-        nodes_idx = np.arange(nodes_count)
-        # print('All players (nodes) indexes: ', nodes_idx) # VERBOSE
+        # Initialize list of all players (partners) indexes
+        partners_count = len(the_scenario.partners_list)
+        partners_idx = np.arange(partners_count)
+        # print('All players (partners) indexes: ', partners_idx) # VERBOSE
 
         # Define all possible coalitions of players
         coalitions = [
             list(j)
-            for i in range(len(nodes_idx))
-            for j in combinations(nodes_idx, i + 1)
+            for i in range(len(partners_idx))
+            for j in combinations(partners_idx, i + 1)
         ]
-        # print('All possible coalitions of players (nodes): ', coalitions) # VERBOSE
+        # print('All possible coalitions of players (partners): ', coalitions) # VERBOSE
 
         # For each coalition, obtain value of characteristic function...
-        # ... i.e.: train and evaluate model on nodes part of the given coalition
+        # ... i.e.: train and evaluate model on partners part of the given coalition
         characteristic_function = []
 
         for coalition in coalitions:
@@ -168,12 +168,12 @@ class Contributivity:
             )
         # print('\nValue of characteristic function for all coalitions: ', characteristic_function) # VERBOSE
 
-        # Compute Shapley Value for each node
+        # Compute Shapley Value for each partner
         # We are using this python implementation: https://github.com/susobhang70/shapley_value
         # It requires coalitions to be ordered - see README of https://github.com/susobhang70/shapley_value
-        list_shapley_value = sv.main(nodes_count, characteristic_function)
+        list_shapley_value = sv.main(partners_count, characteristic_function)
 
-        # Return SV of each node
+        # Return SV of each partner
         self.name = "Shapley"
         self.contributivity_scores = np.array(list_shapley_value)
         self.scores_std = np.zeros(len(list_shapley_value))
@@ -186,14 +186,14 @@ class Contributivity:
         start = timer()
 
         print(
-            "\n# Launching computation of perf. scores of models trained independently on each node"
+            "\n# Launching computation of perf. scores of models trained independently on each partner"
         )
 
         # Initialize a list of performance scores
         performance_scores = []
 
-        # Train models independently on each node and append perf. score to list of perf. scores
-        for i in range(len(the_scenario.node_list)):
+        # Train models independently on each partner and append perf. score to list of perf. scores
+        for i in range(len(the_scenario.partners_list)):
             performance_scores.append(
                 self.not_twice_characteristic(np.array([i]), the_scenario)
             )
@@ -206,16 +206,16 @@ class Contributivity:
 
     # %% compute Shapley values with the truncated Monte-carlo metho
     def truncated_MC(self, the_scenario, sv_accuracy=0.01, alpha=0.9, truncation=0.05):
-        """Return the vector of approximated Shapley value corresponding to a list of node and a characteristic function using the truncated monte-carlo method."""
+        """Return the vector of approximated Shapley value corresponding to a list of partner and a characteristic function using the truncated monte-carlo method."""
         start = timer()
-        n = len(the_scenario.node_list)
+        n = len(the_scenario.partners_list)
 
-        characteristic_all_node = self.not_twice_characteristic(
+        characteristic_all_partners = self.not_twice_characteristic(
             np.arange(n), the_scenario
-        )  # Characteristic function on all nodes
+        )  # Characteristic function on all partners
         if n == 1:
             self.name = "TMC Shapley"
-            self.contributivity_scores = np.array([characteristic_all_node])
+            self.contributivity_scores = np.array([characteristic_all_partners])
             self.scores_std = np.array([0])
             self.normalized_scores = self.contributivity_scores / np.sum(
                 self.contributivity_scores
@@ -230,7 +230,7 @@ class Contributivity:
             v_max = 0
             while (
                 t < 100 or t < q ** 2 * v_max / (sv_accuracy) ** 2
-            ):  # Check if the length of the confidence interval  is below the value of sv_accuracy*characteristic_all_node
+            ):  # Check if the length of the confidence interval  is below the value of sv_accuracy*characteristic_all_partners
                 t += 1
 
                 if t == 1:
@@ -239,20 +239,20 @@ class Contributivity:
                     contributions = np.vstack((contributions, np.zeros(n)))
 
                 permutation = np.random.permutation(n)  # Store the current permutation
-                char_nodelists = np.zeros(
+                char_partnerlists = np.zeros(
                     n + 1
                 )  # Store the characteristic function on each ensemble built with the first elements of the permutation
-                char_nodelists[-1] = characteristic_all_node
+                char_partnerlists[-1] = characteristic_all_partners
                 for j in range(n):
                     # here we suppose the characteristic function is 0 for the empty set
-                    if abs(characteristic_all_node - char_nodelists[j]) < truncation:
-                        char_nodelists[j + 1] = char_nodelists[j]
+                    if abs(characteristic_all_partners - char_partnerlists[j]) < truncation:
+                        char_partnerlists[j + 1] = char_partnerlists[j]
                     else:
-                        char_nodelists[j + 1] = self.not_twice_characteristic(
+                        char_partnerlists[j + 1] = self.not_twice_characteristic(
                             permutation[: j + 1], the_scenario
                         )
                     contributions[-1][permutation[j]] = (
-                        char_nodelists[j + 1] - char_nodelists[j]
+                        char_partnerlists[j + 1] - char_partnerlists[j]
                     )
                 v_max = np.max(np.var(contributions, axis=0))
             sv = np.mean(contributions, axis=0)
@@ -268,16 +268,16 @@ class Contributivity:
     # %% compute Shapley values with the truncated Monte-carlo method with a small bias correction
 
     def interpol_TMC(self, the_scenario, sv_accuracy=0.01, alpha=0.9, truncation=0.05):
-        """Return the vector of approximated Shapley value corresponding to a list of node and a characteristic function using the interpolated truncated monte-carlo method."""
+        """Return the vector of approximated Shapley value corresponding to a list of partner and a characteristic function using the interpolated truncated monte-carlo method."""
         start = timer()
-        n = len(the_scenario.node_list)
-        # Characteristic function on all nodes
-        characteristic_all_node = self.not_twice_characteristic(
+        n = len(the_scenario.partners_list)
+        # Characteristic function on all partners
+        characteristic_all_partners = self.not_twice_characteristic(
             np.arange(n), the_scenario
         )
         if n == 1:
             self.name = "ITMCS"
-            self.contributivity_scores = np.array([characteristic_all_node])
+            self.contributivity_scores = np.array([characteristic_all_partners])
             self.scores_std = np.array([0])
             self.normalized_scores = self.contributivity_scores / np.sum(
                 self.contributivity_scores
@@ -292,7 +292,7 @@ class Contributivity:
             v_max = 0
             while (
                 t < 100 or t < q ** 2 * v_max / (sv_accuracy) ** 2
-            ):  # Check if the length of the confidence interval  is below the value of sv_accuracy*characteristic_all_node
+            ):  # Check if the length of the confidence interval  is below the value of sv_accuracy*characteristic_all_partners
                 t += 1
 
                 if t == 1:
@@ -301,30 +301,30 @@ class Contributivity:
                     contributions = np.vstack((contributions, np.zeros(n)))
 
                 permutation = np.random.permutation(n)  # Store the current permutation
-                char_nodelists = np.zeros(
+                char_partnerlists = np.zeros(
                     n + 1
                 )  # Store the characteristic function on each ensemble built with the first elements of the permutation
-                char_nodelists[-1] = characteristic_all_node
+                char_partnerlists[-1] = characteristic_all_partners
                 first = True
                 for j in range(n):
                     # here we suppose the characteristic function is 0 for the empty set
-                    if abs(characteristic_all_node - char_nodelists[j]) < truncation:
+                    if abs(characteristic_all_partners - char_partnerlists[j]) < truncation:
                         if first:
                             size_of_rest = 0
                             for i in range(j, n):
-                                size_of_rest += len(the_scenario.node_list[i].y_train)
-                            a=(characteristic_all_node - char_nodelists[j])/size_of_rest
+                                size_of_rest += len(the_scenario.partners_list[i].y_train)
+                            a=(characteristic_all_partners - char_partnerlists[j])/size_of_rest
                             first = False
                             
-                        size_of_S = len(the_scenario.node_list[j].y_train)
-                        char_nodelists[j + 1] = char_nodelists[j] + a*size_of_S
+                        size_of_S = len(the_scenario.partners_list[j].y_train)
+                        char_partnerlists[j + 1] = char_partnerlists[j] + a*size_of_S
                         
                     else:
-                        char_nodelists[j + 1] = self.not_twice_characteristic(
+                        char_partnerlists[j + 1] = self.not_twice_characteristic(
                             permutation[: j + 1], the_scenario
                         )
                     contributions[-1][permutation[j]] = (
-                        char_nodelists[j + 1] - char_nodelists[j]
+                        char_partnerlists[j + 1] - char_partnerlists[j]
                     )
                 v_max = np.max(np.var(contributions, axis=0))
             sv = np.mean(contributions, axis=0)
@@ -340,17 +340,17 @@ class Contributivity:
     # # %% compute Shapley values with the importance sampling method
 
     def IS_lin(self, the_scenario, sv_accuracy=0.01, alpha=0.95):
-        """Return the vector of approximated Shapley value corresponding to a list of node and a characteristic function using the importance sampling method and a linear interpolation model."""
+        """Return the vector of approximated Shapley value corresponding to a list of partner and a characteristic function using the importance sampling method and a linear interpolation model."""
 
         start = timer()
-        n = len(the_scenario.node_list)
-        # Characteristic function on all nodes
-        characteristic_all_node = self.not_twice_characteristic(
+        n = len(the_scenario.partners_list)
+        # Characteristic function on all partners
+        characteristic_all_partners = self.not_twice_characteristic(
             np.arange(n), the_scenario
         )
         if n == 1:
             self.name = "IS_lin Shapley"
-            self.contributivity_scores = np.array([characteristic_all_node])
+            self.contributivity_scores = np.array([characteristic_all_partners])
             self.scores_std = np.array([0])
             self.normalized_scores = self.contributivity_scores / np.sum(
                 self.contributivity_scores
@@ -366,33 +366,33 @@ class Contributivity:
 
             # definition of the approximation of the increment
             # ## compute the last and the first increments in performance (they are needed to compute the approximated increments)
-            characteristic_no_nodes = 0
+            characteristic_no_partner = 0
             last_increments = []
             first_increments = []
             for k in range(n):
                 last_increments.append(
-                    characteristic_all_node
+                    characteristic_all_partners
                     - self.not_twice_characteristic(
                         np.delete(np.arange(n), k), the_scenario
                     )
                 )
                 first_increments.append(
                     self.not_twice_characteristic(np.array([k]), the_scenario)
-                    - characteristic_no_nodes
+                    - characteristic_no_partner
                 )
 
             # ## definition of the number of data in all datasets
             size_of_I = 0
-            for node in the_scenario.node_list:
-                size_of_I += len(node.y_train)
+            for partner in the_scenario.partners_list:
+                size_of_I += len(partner.y_train)
 
             def approx_increment(subset, k):
                 assert k not in subset, "" + str(k) + "is not in " + str(subset) + ""
-                small_node_list = np.array([the_scenario.node_list[i] for i in subset])
+                small_partners_list = np.array([the_scenario.partners_list[i] for i in subset])
                 # compute the size of subset : ||subset||
                 size_of_S = 0
-                for node in small_node_list:
-                    size_of_S += len(node.y_train)
+                for partner in small_partners_list:
+                    size_of_S += len(partner.y_train)
                 beta = size_of_S / size_of_I
                 return (1 - beta) * first_increments[k] + beta * last_increments[k]
 
@@ -416,7 +416,7 @@ class Contributivity:
             v_max = 0
             while (
                 t < 100 or t < 4 * q ** 2 * v_max / (sv_accuracy) ** 2
-            ):  # Check if the length of the confidence interval  is below the value of sv_accuracy*characteristic_all_node
+            ):  # Check if the length of the confidence interval  is below the value of sv_accuracy*characteristic_all_partners
                 t += 1
                 if t == 1:
                     contributions = np.array([np.zeros(n)])
@@ -462,9 +462,9 @@ class Contributivity:
     # # %% compute Shapley values with the regression importance sampling method
 
     def IS_reg(self, the_scenario, sv_accuracy=0.01, alpha=0.95):
-        """Return the vector of approximated Shapley value corresponding to a list of node and a characteristic function using the importance sampling method and a regression model."""
+        """Return the vector of approximated Shapley value corresponding to a list of partner and a characteristic function using the importance sampling method and a regression model."""
         start = timer()
-        n = len(the_scenario.node_list)
+        n = len(the_scenario.partners_list)
 
         if n < 4:
           
@@ -496,10 +496,10 @@ class Contributivity:
             ###### make the datasets
             def makedata(subset):
                 # compute the size of subset : ||subset||
-                small_node_list = np.array([the_scenario.node_list[i] for i in subset])
+                small_partners_list = np.array([the_scenario.partners_list[i] for i in subset])
                 size_of_S = 0
-                for node in small_node_list:
-                    size_of_S += len(node.y_train)
+                for partner in small_partners_list:
+                    size_of_S += len(partner.y_train)
                 data = [size_of_S, size_of_S ** 2]
                 return data
 
@@ -546,7 +546,7 @@ class Contributivity:
             v_max = 0
             while (
                 t < 100 or t < 4 * q ** 2 * v_max / (sv_accuracy) ** 2
-            ):  # Check if the length of the confidence interval  is below the value of sv_accuracy*characteristic_all_node
+            ):  # Check if the length of the confidence interval  is below the value of sv_accuracy*characteristic_all_partners
                 t += 1
                 if t == 1:
                     contributions = np.array([np.zeros(n)])
@@ -591,10 +591,10 @@ class Contributivity:
     # # %% compute Shapley values with the Kriging adaptive importance sampling method
 
     def AIS_Kriging(self, the_scenario, sv_accuracy=0.01, alpha=0.95, update=50):
-        """Return the vector of approximated Shapley value corresponding to a list of node and a characteristic function using the importance sampling method and a Kriging model."""
+        """Return the vector of approximated Shapley value corresponding to a list of partner and a characteristic function using the importance sampling method and a Kriging model."""
         start = timer()
 
-        n = len(the_scenario.node_list)
+        n = len(the_scenario.partners_list)
 
         # definition of the original density
         def prob(subset):
@@ -623,9 +623,9 @@ class Contributivity:
             assert k not in subset
             # compute the size of subset : ||subset||
             coordinate = np.zeros(n)
-            small_node_list = np.array([the_scenario.node_list[i] for i in subset])
-            for node, i in zip(small_node_list, subset):
-                coordinate[i] = len(node.y_train)
+            small_partners_list = np.array([the_scenario.partners_list[i] for i in subset])
+            for partner, i in zip(small_partners_list, subset):
+                coordinate[i] = len(partner.y_train)
             coordinate = np.delete(coordinate, k)
             return coordinate
 
@@ -677,7 +677,7 @@ class Contributivity:
         Subsets = []  # created like this to avoid pointer issue
         while (
             t < 100 or t < 4 * q ** 2 * v_max / (sv_accuracy) ** 2
-        ):  # Check if the length of the confidence interval  is below the value of sv_accuracy*characteristic_all_node
+        ):  # Check if the length of the confidence interval  is below the value of sv_accuracy*characteristic_all_partners
             if t == 0:
                 contributions = np.array([np.zeros(n)])
             else:
@@ -748,15 +748,15 @@ class Contributivity:
 
         start = timer()
 
-        N = len(the_scenario.node_list)
+        N = len(the_scenario.partners_list)
 
-        characteristic_all_node = self.not_twice_characteristic(
+        characteristic_all_partners = self.not_twice_characteristic(
             np.arange(N), the_scenario
-        )  # Characteristic function on all nodes
+        )  # Characteristic function on all partners
 
         if N == 1:
             self.name = "Stratified MC Shapley"
-            self.contributivity_scores = np.array([characteristic_all_node])
+            self.contributivity_scores = np.array([characteristic_all_partners])
             self.scores_std = np.array([0])
             self.normalized_scores = self.contributivity_scores / np.sum(
                 self.contributivity_scores
@@ -853,15 +853,15 @@ class Contributivity:
 
         start = timer()
 
-        N = len(the_scenario.node_list)
-        # Characteristic function on all nodes
-        characteristic_all_node = self.not_twice_characteristic(
+        N = len(the_scenario.partners_list)
+        # Characteristic function on all partners
+        characteristic_all_partners = self.not_twice_characteristic(
             np.arange(N), the_scenario
         )
 
         if N == 1:
             self.name = "WR_SMC Shapley"
-            self.contributivity_scores = np.array([characteristic_all_node])
+            self.contributivity_scores = np.array([characteristic_all_partners])
             self.scores_std = np.array([0])
             self.normalized_scores = self.contributivity_scores / np.sum(
                 self.contributivity_scores
@@ -982,7 +982,7 @@ class Contributivity:
             # Contributivity 1: Baseline contributivity measurement (Shapley Value)
             self.compute_SV(current_scenario)
         elif method_to_compute == "Independant scores":
-            # Contributivity 2: Performance scores of models trained independently on each node
+            # Contributivity 2: Performance scores of models trained independently on each partner
             self.compute_independent_scores(current_scenario)
         elif method_to_compute == "TMCS":
             # Contributivity 3: Truncated Monte Carlo Shapley
@@ -1020,4 +1020,4 @@ class Contributivity:
                 current_scenario, sv_accuracy=sv_accuracy, alpha=alpha
             )
         else:
-            print("Unrecognized name of method, statment ignored !!! ")
+            print("Unrecognized name of method, statement ignored!")
