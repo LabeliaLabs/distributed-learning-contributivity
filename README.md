@@ -130,11 +130,13 @@ Example: `partners_count: 4`
 Percentages of the original dataset each partner receives to mock a collaborative ML scenario where each partner provides data for the ML training.  
 Example: `amounts_per_partner: [0.3, 0.3, 0.1, 0.3]`
 
-`samples_split_option`: `random` or `stratified`  
-How the original dataset data samples are split among partners:
+`samples_split_option`: `[random (default) or stratified]`  
+How the original dataset data samples are split among partners. Each partner receives data depending on the split option configured for him:
 
-- `random`: the dataset is shuffled and the split is done randomly, ensuring a homogeneous data distribution among partners
-- `stratified`: the dataset is stratified per labels, so that partners have datasets covering different regions of space
+- `random`: the dataset is shuffled and the partner receives data samples selected randomly
+- `stratified`: the dataset is stratified per labels and the partner receives certain classes only
+
+Example: `[random, stratified, stratified, random]`
 
 `corrupted_partners`: `[not_corrupted (default), shuffled or corrupted]`  
 Enables to artificially corrupt the data of one or several partners:

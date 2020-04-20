@@ -1,11 +1,12 @@
 experiment_name: debug_config
 n_repeats: 1
 scenario_params_list:
- - partners_count: 3
-   amounts_per_partner: [0.45, 0.45, 0.1]
+ - partners_count: 4
+   amounts_per_partner: [0.4, 0.4, 0.1, 0.1]
    samples_split_option: 'stratified'
+   advanced_split: [[7, 'shared'], [6, 'shared'], [2, 'specific'], [1, 'specific']]
    aggregation_weighting: 'local_score'
-   corrupted_partners: [not_corrupted, not_corrupted, corrupted]
+   corrupted_partners: [not_corrupted, corrupted, not_corrupted, not_corrupted]
    is_quick_demo: True
    methods:
      - "Independant scores"

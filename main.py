@@ -84,7 +84,10 @@ def run_scenario(current_scenario):
 
     # Split data according to scenario and then pre-process successively...
     # ... train data, early stopping validation data, test data
-    current_scenario.split_data()
+    if current_scenario.is_advanced_split:
+        current_scenario.split_data_advanced()
+    else:
+        current_scenario.split_data()
     current_scenario.plot_data_distribution()
     current_scenario = fl_training.preprocess_scenarios_data(current_scenario)
 
