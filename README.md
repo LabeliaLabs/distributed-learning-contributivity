@@ -4,15 +4,11 @@
 
 ## Introduction
 
-In data science projects involving multiple data providers, each one contributing data for the training of the same model, the partners might have to agree on how to share the reward of the ML challenge or the future revenues derived from the predictive model. We explore this question and the opportunity to implement some mechanisms helping partners to easily agree on a value sharing model.
+In collaborative data science projects partners sometimes need to train a model on multiple datasets, contributed by different data providing partners. In such cases the partners might have to measure how much each dataset involved contributed to the performance of the model. This is useful for example as a basis to agree on how to share the reward of the ML challenge or the future revenues derived from the predictive model, or to detect possible corrupted datasets or partners not playing by the rules. We explore this question and the opportunity to implement some mechanisms helping partners in such scenarios to measure each dataset's _contributivity_ (as _contribution to the performance of the model_).
 
 ## Context of this work
 
 This work is being carried out in the context of the [HealthChain research consortium](https://www.substra.ai/en/healthchain-project). It is work in progress, early stage. We would like to share it with various interested parties and business partners to get their feedback and potential contributions. This is why it is shared as open source content on Substra Foundation’s repositories.
-
-## Exploratory document
-
-An exploratory document provides a deeper context description and details certain contributivity measurement approaches. This document can be found [here](https://docs.google.com/document/d/1dILvplN7h3-KB6OcHFNx9lSpAKyaBrwNaIRQ9j6XDT8/edit?usp=sharing). It is an ongoing effort, eager to welcome collaborations, feedbacks and questions.
 
 ## About this repository
 
@@ -22,44 +18,66 @@ The objective is to compare the contributivity figures obtained with the differe
 
 ### Experimental approach
 
-We want to start experimenting contributivity evaluations in collaborative data science / distributed learning scenarios. At this stage this cannot be a thorough and complete experimentation though, as our exploration of the topic is in progress. To make the most out of it, it is key to capitalize on this effort and develop it as a reproducible pipeline that we will be able to improve, enrich, complement over time.
+We want to start experimenting contributivity evaluations in collaborative data science and distributed learning scenarios. Our exploration of this topic is in progress, as is this library and associated experimentations. To make the most out of it, it is key to capitalize on this effort and develop it as a reproducible pipeline that can be improved, enriched, complemented over time.
 
-* Public dataset of choice: MNIST
-* Collaborative data science scenarios - Parameters:
-    * Overlap of respective datasets: distinct (by stratifying MNIST figures) vs. overlapping (with a randomized split)
-    * Size of respective datasets: equivalent vs. different
-    * Number of data partners: 3 databases A, B, C is our default scenario, but this is to be parameterized
-* ML algorithm: CNN adapted to MNIST, not too deep so it can run on CPU
-* Distributed learning approach: federated learning (other approaches to be tested in future improvements of this experiment)
-* Contributivity evaluation approach:
-    * [done] **Performance scores** of models trained independently on each node
-    * [futur prospect] [**Data Valuation by Reinforcement Learning**](https://arxiv.org/pdf/1909.11671.pdf) (DVRL)<br/>
-     With DVRL, we modifidy the learning process of the main model so it includes a data valuation part. Namely we use a small neural network to assign weight to each data, and at each learning step these weights are used to sample the learning batch.  These weight are updated at each learning iteration of the main model using the REINFORCE method.   
-    * [done] [**Shapley values**](https://arxiv.org/pdf/1902.10275.pdf) :<br/>
-     These indicators seem to be very good candidates to measure the contributivity of each data providers, because they are usually used in game theory to fairly attributes the gain of a coalitional game amongst its players, which is exactly want we are looking for here.<br/><br/>
-A coalition game is a game where players form coalitions and each coalitions gets a score according to some rules. The winners are the players who manage to be in the coalition with the best score. Here we can consider each data provider is a player, and that forming a coalition is building a federated model using the dataset of each player within the coalition. The score of a coalition is then the performance on a test set of the federated model built by the coalition.<br/><br/>
-To attributes a part of the global score to each player/data providers, we can use the Shapley values. To define the Shapley value we first have to define the "increment" in performance of a player in a coalition. Such "increment" is the performance of the coalition minus the performance of the coalition without this player. The Shapley value of a player is a properly weighted average of its "increments" in every possible coalition. <br/><br/> 
-The computation of the Shapley Values quickly becomes intensive when the number of players increases. Indeed to compute the increment of a coalition, we need to fit two federated model, and we need to do this for every possible coalitions. If *N* is the number of players we have to do *2^N* fits to compute the Shapley values of each players. As this is quickly too costly, we are considering estimating the Shapley values rather then computing it exactly. The estimation methods considered are:
-        * [done] **The exact Shapley Values computation**<br/>
-        Given the limited number of data partners we consider at that stage it is possible to actually compute the Shapley Values with a reasonable amount of resources. 
-        * [done] **[Monte-Carlo Shapley](https://arxiv.org/pdf/1902.10275.pdf) approximation** (also called permutation sampling)<br/>
-        As the sahpley value is an average we can estimate it using the Monte-Carlo method. Here it consists in sampling a reasonable number of increments (says a hundred per player) and to take the average of the sampled increments of a player as the estimation of the Shapley value of that player.
-        * [done] **[Truncated Monte-Carlo Shapley](https://arxiv.org/pdf/1904.02868.pdf) approximation**<br/>
-        The idea of Truncated Monte-Carlo is that, for big coalition, the increments of a player are usually small, therefore we can consider their value is null instead of spending computional power to compute it. This reduce the number of times we have to fit a model, but adds a small bias the estimation.
-        * [done] **Interpolated truncated Monte-Carlo**<br/>
-        This method is an attempt to reduce the bias of the Truncated monte-Carlo method. Here we do not consider the value of an increment of a big coalition is null, but we do a linear interpolation to better approximate its value.
-        * [done] **Importance sampling methods**<br/>
-        Importance sampling is a method to reduce the number of sampled increments in the Monte-Carlo method while keeping the same accuracy. It consists in sampling the increments according to non-uniform distribution, giving more chance for big increment than for small increment to be sampled. The bias induced by altering the sampling distribution is canceled by properly weighting each sample: If an increment is sampled with *X* times more chances, then we weight it by *1/X*. Note that this require to know the value of increment before computing them, so in practice we try to guess the value of the increment. We inflate, resp. deflate, the probability of sampling an increment if we guess its value is big, resp. small. We designed three ways to guess the value of increments, which lead to three different importance sampling methods: 
-            * [done] **Linear importance sampling**
-            * [done] **Regression importance sampling**
-            * [done] **Adaptative kriging importance sampling**
-         * [done] **[Stratified Monte Carlo Shapley](https://arxiv.org/pdf/1904.02868.pdf)**<br/>
-         "Stratification and with proper allocation" is another method to reduce the number of sampled increments in the Monte-Carlo method while keeping the same accuracy. There are two ideas behind this method:  1) the Sapley value is a mean of means taken on strata of increments. A strata of increments corresponds the all the increments of coalition with the same number of players. We can estimate the means on each stata independently rather than the whole mean, this improves the accuracy and reduces the number of increments to sample.  2) We can allocate a different amount of sampled increment to each mean of a strata. If we allocate more sample to the stratas where the increments value varies more, we can reduce the accuracy even more. As we can estimate the mean of a strata by sampling with replacement of without replacement, it gives two approximation methods:
-            * [done] **Stratified Monte Carlo Shapley with replacement**
-            * [done] **Stratified Monte Carlo Shapley without replacement**
-* Comparison variables (baseline: Shapley value)
-    * Contributivity relative values
-    * Computation time
+For a start we made the following choices:
+
+- What we want to compare (with the Shapley values being the baseline, see section below):
+  - Contributivity relative values
+  - Computation time
+- Public dataset for experimentations: MNIST
+- ML algorithm: CNN adapted to MNIST, not too deep so it can run on CPU
+- Distributed learning approach: federated learning (variants of basic federated learning are being implemented too)
+
+### Contributivity measurement approaches studied and implemented
+
+- [done] **Performance scores** of models trained independently on each node
+
+- [done] [**Shapley values**](https://arxiv.org/pdf/1902.10275.pdf):  
+
+  These indicators seem to be very good candidates to measure the contributivity of each data providers, because they are usually used in game theory to fairly attributes the gain of a coalitional game amongst its players, which is exactly want we are looking for here.
+  
+  A coalition game is a game where players form coalitions and each coalitions gets a score according to some rules. The winners are the players who manage to be in the coalition with the best score. Here we can consider each data provider is a player, and that forming a coalition is building a federated model using the dataset of each player within the coalition. The score of a coalition is then the performance on a test set of the federated model built by the coalition.
+
+  To attributes a part of the global score to each player/data providers, we can use the Shapley values. To define the Shapley value we first have to define the "increment" in performance of a player in a coalition. Such "increment" is the performance of the coalition minus the performance of the coalition without this player. The Shapley value of a player is a properly weighted average of its "increments" in every possible coalition.
+  
+  The computation of the Shapley Values quickly becomes intensive when the number of players increases. Indeed to compute the increment of a coalition, we need to fit two federated model, and we need to do this for every possible coalitions. If *N* is the number of players we have to do *2^N* fits to compute the Shapley values of each players. As this is quickly too costly, we are considering estimating the Shapley values rather then computing it exactly. The estimation methods considered are:
+
+  - [done] **The exact Shapley Values computation**:  
+  Given the limited number of data partners we consider at that stage it is possible to actually compute the Shapley Values with a reasonable amount of resources.
+    
+  - [done] **[Monte-Carlo Shapley](https://arxiv.org/pdf/1902.10275.pdf) approximation** (also called permutation sampling):  
+  As the Shapley value is an average we can estimate it using the Monte-Carlo method. Here it consists in sampling a reasonable number of increments (says a hundred per player) and to take the average of the sampled increments of a player as the estimation of the Shapley value of that player.
+    
+  - [done] **[Truncated Monte-Carlo Shapley](https://arxiv.org/pdf/1904.02868.pdf) approximation**:  
+  The idea of Truncated Monte-Carlo is that, for big coalition, the increments of a player are usually small, therefore we can consider their value is null instead of spending computional power to compute it. This reduce the number of times we have to fit a model, but adds a small bias the estimation.
+    
+  - [done] **Interpolated truncated Monte-Carlo**:  
+  This method is an attempt to reduce the bias of the Truncated monte-Carlo method. Here we do not consider the value of an increment of a big coalition is null, but we do a linear interpolation to better approximate its value.
+    
+- [done] **Importance sampling methods**:
+
+  Importance sampling is a method to reduce the number of sampled increments in the Monte-Carlo method while keeping the same accuracy. It consists in sampling the increments according to non-uniform distribution, giving more chance for big increment than for small increment to be sampled. The bias induced by altering the sampling distribution is canceled by properly weighting each sample: If an increment is sampled with *X* times more chances, then we weight it by *1/X*. Note that this require to know the value of increment before computing them, so in practice we try to guess the value of the increment. We inflate, resp. deflate, the probability of sampling an increment if we guess its value is big, resp. small. We designed three ways to guess the value of increments, which lead to three different importance sampling methods:
+  
+  - [done] **Linear importance sampling**
+  - [done] **Regression importance sampling**
+  - [done] **Adaptative kriging importance sampling**
+
+- [done] **[Stratified Monte Carlo Shapley](https://arxiv.org/pdf/1904.02868.pdf)**:
+
+  "Stratification and with proper allocation" is another method to reduce the number of sampled increments in the Monte-Carlo method while keeping the same accuracy. There are two ideas behind this method:
+
+  1. The Shapley value is a mean of means taken on strata of increments. A strata of increments corresponds the all the increments of coalition with the same number of players. We can estimate the means on each stata independently rather than the whole mean, this improves the accuracy and reduces the number of increments to sample.
+  1. We can allocate a different amount of sampled increment to each mean of a strata. If we allocate more sample to the stratas where the increments value varies more, we can reduce the accuracy even more.
+   
+  As we can estimate the mean of a strata by sampling with replacement of without replacement, it gives two approximation methods:
+  
+  - [done] **Stratified Monte Carlo Shapley with replacement**
+  - [done] **Stratified Monte Carlo Shapley without replacement**
+    
+- [future prospect] [**Data Valuation by Reinforcement Learning**](https://arxiv.org/pdf/1909.11671.pdf) (DVRL):
+
+  With DVRL, we modify the learning process of the main model so it includes a data valuation part. Namely we use a small neural network to assign weight to each data, and at each learning step these weights are used to sample the learning batch. These weight are updated at each learning iteration of the main model using the REINFORCE method.
   
 ### Using the code files
 
@@ -71,20 +89,114 @@ The computation of the Shapley Values quickly becomes intensive when the number 
      - nodes_counts: 3
        amounts_per_node: [0.4, 0.3, 0.3] 
        samples_split_option: 'random'
-       aggregation_weighting: 'data-volume'
+       aggregation_weighting: 'data_volume'
        single_partner_test_mode: 'global'
        epoch_count: 38
        minibatch_count: 20
      - nodes_counts: 4
        amounts_per_node: [0.3, 0.3, 0.1, 0.3] 
        samples_split_option: 'stratified'
-       aggregation_weighting: 'data-volume'
+       aggregation_weighting: 'data_volume'
        single_partner_test_mode: 'global'
        epoch_count: 38
        minibatch_count: 20
     ```
 - Then execute `main.py -f config.yml`
 - A `results.csv` file will be generated in a new folder for your experiment under `/experiments`. You can read this raw `results.csv` file or use the `analyse_results.ipynb` notebook to quickly generate figures.
+
+### Config file parameters
+
+#### Experiment-level parameters
+
+An experiment regroups one or several scenarios to be run.
+
+`experiment_name`: `str`  
+How the experiment will be named in output files.  
+Example: `experiment_name: my_first_experiment`
+  
+`n_repeats`: `int`  
+How many times the experiment is run.  
+Example: `n_repeats: 2`
+
+#### Scenario-level parameters
+
+##### Definition of collaborative scenarios
+
+`nodes_count`: `int`  
+Number of partners in the mocked collaborative ML scenario.  
+Example: `nodes_count: 4`
+
+`amounts_per_node`: `[float]`  
+Percentages of the original dataset each partner receives to mock a collaborative ML scenario where each partner provides data for the ML training.  
+Example: `amounts_per_node: [0.3, 0.3, 0.1, 0.3]`
+
+`samples_split_option`: `random` or `stratified`  
+How the original dataset data samples are split among partners:
+
+- `random`: the dataset is shuffled and the split is done randomly, ensuring a homogeneous data distribution among partners
+- `stratified`: the dataset is stratified per labels, so that partners have datasets covering different regions of space
+
+`corrupted_nodes`: `[not_corrupted (default), shuffled or corrupted]`  
+Enables to artificially corrupt the data of one or several partners:
+
+- `not_corrupted`: data are not corrupted
+- `shuffled`: labels are shuffled randomly, not corresponding anymore with inputs
+- `corrupted`: labels are all offseted of `1` class
+  
+Example: `[not_corrupted, not_corrupted, not_corrupted, shuffled]`
+
+##### Configuration of the distributed learning approach
+
+`aggregation_weighting`: `uniform` (default), `data_volume` or `local_score`  
+After a training iteration over a given mini-batch, how individual models of each partner are aggregated:
+
+- `uniform`: simple average (non-weighted)
+- `data_volume`: average weighted with the relative amounts of data (in number of data samples)
+- `local_score`: average weighted with the performance (on a central validation set) of the individual models
+ 
+`single_partner_test_mode`: `global` (default) or `local`  
+When training a model on a single partner (this is needed in certain contributivity measurement approaches), defines if the final performance is tested on the central testset or on the partner's local testset. Note: a train-test split is performed on the original dataset, forming a central testset; this testset is also split over each partner (randomly) forming local testsets.  
+
+`epoch_count`: `int`  
+Number of epochs passed as argument in the `.fit()` function. Superseded when `is_early_stopping` is set to `true`.  
+Example: `epoch_count: 30`
+
+`minibatch_count`: `int`
+Number of mini batches into which each partner's dataset is split, and over which are performed the iterations of parallel local training plus aggregation.  
+Example: `minibatch_count: 20`
+
+`is_early_stopping`: `True` (default) or `False`  
+When set to `True`, the training phases (whether multi-partner of single-partner) are stopped when the performance reaches a plateau.
+
+##### Configuration of contributivity measurement methods to be tested
+
+`methods`:  
+A declarative list of the contributivity measurement methods to be executed. Default is:
+```yaml
+methods:
+    - "Shapley values"
+    - "Independant scores"
+    - "TMCS"
+``` 
+All methods available are:
+```yaml
+methods:
+    - "Shapley values"
+    - "Independant scores"
+    - "TMCS"
+    - "ITMCS"
+    - "IS_lin_S"
+    - "IS_reg_S"
+    - "AIS_Kriging_S"
+    - "SMCS"
+    - "WR_SMC"
+```
+See above section [Contributivity measurement approaches studied and implemented](#contributivity-measurement-approaches-studied-and-implemented) for explanation of the different methods.
+
+##### Miscellaneous
+
+`is_quick_demo`: `True` or `False` (default)  
+When set to `True`, the amount of data samples and the number of epochs and mini-batches are significantly reduced, to minimize the duration of the run.
 
 ## Contacts
 
