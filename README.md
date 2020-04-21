@@ -130,13 +130,22 @@ Example: `partners_count: 4`
 Percentages of the original dataset each partner receives to mock a collaborative ML scenario where each partner provides data for the ML training.  
 Example: `amounts_per_partner: [0.3, 0.3, 0.1, 0.3]`
 
-`samples_split_option`: `[random (default) or stratified]`  
-How the original dataset data samples are split among partners. Each partner receives data depending on the split option configured for him:
+`samples_split_option`: `random` (default) or `stratified`  
+How the original dataset data samples are split among partners:
 
-- `random`: the dataset is shuffled and the partner receives data samples selected randomly
-- `stratified`: the dataset is stratified per labels and the partner receives certain classes only
+- `random`: the dataset is shuffled and partners receive data samples selected randomly
+- `stratified`: the dataset is stratified per labels and each partner receives certain classes only
 
-Example: `[random, stratified, stratified, random]`
+`advanced_split`: `[[nb of clusters (int), 'shared' or 'specific']]`  
+In certain cases it might be interesting to split the dataset among partners in a more elaborate way. For that we consider the data samples from the initial dataset as split in clusters, defined by their label/class.
+It is possible to configure the `advanced_split` parameter by indicating, for each partner in sequence, the following 2 elements:
+
+- `nb of clusters (int)`: the given partner will receive data samples covering this number of different clusters (clusters of data samples per labels/classes) 
+- `'shared'` or `'specific'`:
+  - `'shared'`: all partners with option `'shared'` receive data samples picked from clusters they share data samples from
+  - `'specific'`: each partner with option `'specific'` receives data samples picked from cluster(s) it is the only one to receive from
+
+Example: `[[7, 'shared'], [6, 'shared'], [2, 'specific'], [1, 'specific']]`
 
 `corrupted_partners`: `[not_corrupted (default), shuffled or corrupted]`  
 Enables to artificially corrupt the data of one or several partners:
