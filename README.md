@@ -8,7 +8,7 @@ In collaborative data science projects partners sometimes need to train a model 
 
 ## Context of this work
 
-This work is being carried out in the context of the [HealthChain research consortium](https://www.substra.ai/en/healthchain-project). It is work in progress, early stage. We would like to share it with various interested parties and business partners to get their feedback and potential contributions. This is why it is shared as open source content on Substra Foundation’s repositories.
+This work is being carried out in the context of collaborative research projects. It is work in progress. We would like to share it with various interested parties, research and business partners to get their feedback and potential contributions. This is why it is shared as open source content on Substra Foundation’s repositories.
 
 ## About this repository
 
@@ -81,10 +81,10 @@ For a start we made the following choices:
   
 ### Using the code files
 
-- Define your mock scenario(s) in `config.yml` by changing the values of the suggested parameters of the custom scenario (you can browse more available parameters in `scenario.py`). For example:
+- Define your mock scenario(s) in `config.yml` by changing the values of the suggested parameters of the custom scenario (you can browse more available parameters in section [Config file parameters](#config-file-parameters) below). For example:
     ```yaml
     experiment_name: my_custom_experiment
-    n_repeats: 10
+    n_repeats: 5
     scenario_params_list:
      - partners_count: 3
        amounts_per_partner: [0.4, 0.3, 0.3] 
@@ -201,7 +201,7 @@ When set to `True`, the amount of data samples and the number of epochs and mini
 ## Contacts
 
 Should you be interested in this open effort and would like to share any question, suggestion or input, you can use the following channels:
-  - This Github repository (issues, PR...)
+  - This Github repository (issues or PRs)
   - Substra Foundation's [Slack workspace](https://substra-workspace.slack.com/join/shared_invite/zt-cpyedcab-FHYgpy08efKJ2FCadE2yCA)
   - Email: hello@substra.org
   - Come meet with us at La Paillasse (Paris, France), Le Palace (Nantes, France) or Studio Iconosquare (Limoges, France)
