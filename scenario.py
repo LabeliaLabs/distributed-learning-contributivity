@@ -326,14 +326,22 @@ class Scenario:
         # print("final_resize_factor: ", final_resize_factor)  # DEBUG
 
         # Size correctly each partner's subset. For each partner:
+        final_nb_samples = [None] * self.partners_count
         for x in specific:
-            dict_specific[x[0]]["final_nb_samples"] = int(amounts_per_partner[x[0]] * len(y_train) * final_resize_factor)
+            nb_samples = int(amounts_per_partner[x[0]] * len(y_train) * final_resize_factor)
+            dict_specific[x[0]]["final_nb_samples"] = nb_samples
+            final_nb_samples[x[0]] = nb_samples
         for x in shared:
-            dict_shared[x[0]]["final_nb_samples"] = int(amounts_per_partner[x[0]] * len(y_train) * final_resize_factor)
+            nb_samples = int(amounts_per_partner[x[0]] * len(y_train) * final_resize_factor)
+            dict_shared[x[0]]["final_nb_samples"] = nb_samples
+            final_nb_samples[x[0]] = nb_samples
             dict_shared[x[0]]["final_nb_samples_p_cluster"] = int(dict_shared[x[0]]["final_nb_samples"] / x[1])
-
+        total_nb_samples = sum(final_nb_samples)
+        final_relative_nb_samples = [round(x / total_nb_samples, 2) for x in final_nb_samples]
         # print(dict_specific)  # DEBUG
         # print(dict_shared)  # DEBUG
+        print(final_nb_samples)  # DEBUG
+        print(final_relative_nb_samples)  # DEBUG
 
         # Partners receive their subsets and Partner objects are instanciated
 
@@ -372,8 +380,14 @@ class Scenario:
         # Check coherence of number of mini-batches versus smaller partner
         assert self.minibatch_count <= min([len(p.x_train) for p in self.partners_list])
 
-        # Print and plot for controlling
+        # Print for controlling
         print("\n### Splitting data among partners:")
+        if self.is_advanced_split:
+            print("Advanced split performed.")
+            print("- Partners' relative nb of samples: " + str(final_relative_nb_samples))
+            print("  (versus initially configured: " + str(amounts_per_partner))
+        else:
+            print("Simple split performed.")
         for partner in self.partners_list:
             print("- Partner #" + str(partner.partner_id) + ":")
             print("  - Number of samples: " + str(len(partner.x_train)) + " train samples")

@@ -12,6 +12,7 @@ from keras.callbacks import EarlyStopping
 from sklearn.model_selection import train_test_split
 import numpy as np
 import matplotlib.pyplot as plt
+import operator
 
 import utils
 import constants
@@ -45,17 +46,17 @@ def preprocess_scenarios_data(scenario):
         )
 
         if scenario.corrupted_partners[partner_index] == "corrupted":
-            print("   ... Corrupting data (offsetting labels) of partner " + str(partner_index))
+            print("   ... Corrupting data (offsetting labels) of partner #" + str(partner.partner_id))
             partner.corrupt_labels()
         elif scenario.corrupted_partners[partner_index] == "shuffled":
-            print("   ... Corrupting data (shuffling labels) of partner " + str(partner_index))
+            print("   ... Corrupting data (shuffling labels) of partner #" + str(partner.partner_id))
             partner.shuffle_labels()
         elif scenario.corrupted_partners[partner_index] == "not_corrupted":
             pass
         else:
             print("Unexpected label of corruption, not corruption performed!")
 
-        print("   Partner #" + str(partner_index) + ": done.")
+        print("   Partner #" + str(partner.partner_id) + ": done.")
 
     # Then the scenario central dataset of the scenario
     scenario.x_val = utils.preprocess_input(scenario.x_val)
@@ -241,7 +242,8 @@ def compute_test_score(
         )
 
     # Else, continue onto a federated learning procedure
-    print("\n## Training and evaluating model on multiple partners: " + str(partners_list))
+    partners_list = sorted(partners_list, key=operator.attrgetter("partner_id"))
+    print("\n## Training and evaluating model on partners with ids: " + ", ".join(["#"+p.partner_id for p in partners_list]))
 
     # Initialize variables
     model_list, local_score_list = [None] * partners_count, [None] * partners_count
@@ -268,13 +270,7 @@ def compute_test_score(
         # Iterate over mini-batches for training, starting each new iteration with an aggregation of the previous one
         for minibatch_index in range(minibatch_count):
 
-            print(
-                "\n      Mini-batch "
-                + str(minibatch_index)
-                + " out of "
-                + str(minibatch_count - 1)
-                + " total mini-batches"
-            )
+            print("\n      Mini-batch " + str(minibatch_index) + " out of " + str(minibatch_count - 1) + " total mini-batches")
             is_first_minibatch = minibatch_index == 0
 
             # Starting model for each partner is the aggregated model from the previous mini-batch iteration
@@ -297,13 +293,8 @@ def compute_test_score(
                 partner_model = agg_model_for_iteration[partner_index]
 
                 # Train on partner local data set
-                print(
-                    "         Training on partner "
-                    + str(partner_index)
-                    + " out of "
-                    + str(partners_count)
-                    + " total partners"
-                )
+                print("         Training on partner #" + partner.partner_id + " (id) - "
+                      + str(partner_index) + " on " + str(partners_count) + " partners to train on")
                 history = partner_model.fit(
                     minibatched_x_train[partner_index][minibatch_index],
                     minibatched_y_train[partner_index][minibatch_index],
@@ -314,7 +305,7 @@ def compute_test_score(
                 )
                 print(
                     "            val_accuracy: "
-                    + str(history.history["val_accuracy"][0])
+                    + str(round(history.history["val_accuracy"][0], 2))
                 )  # DEBUG
 
                 # Update the partner's model in the models' list
@@ -347,7 +338,7 @@ def compute_test_score(
         global_val_loss.append(current_val_loss)
         print(
             "\n   Aggregated model evaluation at the end of the epoch:",
-            model_evaluation,
+            ["%.3f" % elem for elem in model_evaluation],
         )
 
         print("      Checking if early stopping critera are met:")
