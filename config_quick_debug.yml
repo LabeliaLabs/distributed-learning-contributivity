@@ -5,7 +5,7 @@ scenario_params_list:
    amounts_per_partner: [0.45, 0.45, 0.1]
    samples_split_option: 'stratified'
    aggregation_weighting: 'local_score'
-   corrupted_partners: [not_corrupted, not_corrupted, corrupted]
+   corrupted_datasets: [not_corrupted, not_corrupted, corrupted]
    is_quick_demo: True
    methods:
      - "Independant scores"

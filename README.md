@@ -127,7 +127,7 @@ Number of partners in the mocked collaborative ML scenario.
 Example: `partners_count: 4`
 
 `amounts_per_partner`: `[float]`  
-Percentages of the original dataset each partner receives to mock a collaborative ML scenario where each partner provides data for the ML training.  
+Fractions of the original dataset each partner receives to mock a collaborative ML scenario where each partner provides data for the ML training.  
 Example: `amounts_per_partner: [0.3, 0.3, 0.1, 0.3]`
 
 `samples_split_option`: `random` or `stratified`  
@@ -136,7 +136,7 @@ How the original dataset data samples are split among partners:
 - `random`: the dataset is shuffled and the split is done randomly, ensuring a homogeneous data distribution among partners
 - `stratified`: the dataset is stratified per labels, so that partners have datasets covering different regions of space
 
-`corrupted_partners`: `[not_corrupted (default), shuffled or corrupted]`  
+`corrupted_datasets`: `[not_corrupted (default), shuffled or corrupted]`  
 Enables to artificially corrupt the data of one or several partners:
 
 - `not_corrupted`: data are not corrupted
@@ -151,7 +151,7 @@ Example: `[not_corrupted, not_corrupted, not_corrupted, shuffled]`
 After a training iteration over a given mini-batch, how individual models of each partner are aggregated:
 
 - `uniform`: simple average (non-weighted)
-- `data_volume`: average weighted with the relative amounts of data (in number of data samples)
+- `data_volume`: average weighted with per the amounts of data of partners (number of data samples)
 - `local_score`: average weighted with the performance (on a central validation set) of the individual models
  
 `single_partner_test_mode`: `global` (default) or `local`  
@@ -162,11 +162,11 @@ Number of epochs passed as argument in the `.fit()` function. Superseded when `i
 Example: `epoch_count: 30`
 
 `minibatch_count`: `int` (default: `20`)  
-Number of mini batches into which each partner's dataset is split, and over which are performed the iterations of parallel local training plus aggregation.  
+The distributed learning approach implemented relies on a sequence of (i) training in parallel on each partner's dataset, and then (ii) aggregating the resulting models. This constitutes an individual iteration. These iterations are repeated for all _mini-batches_ into which the partner's datasets are split at the beginning of each epoch. This gives a total of `epoch_count* minibatch_count` iterations.  
 Example: `minibatch_count: 20`
 
 `is_early_stopping`: `True` (default) or `False`  
-When set to `True`, the training phases (whether multi-partner of single-partner) are stopped when the performance reaches a plateau.
+When set to `True`, the training phases (whether multi-partner of single-partner) are stopped when the performance on the validation set reaches a plateau.
 
 ##### Configuration of contributivity measurement methods to be tested
 

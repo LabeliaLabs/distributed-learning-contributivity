@@ -60,10 +60,10 @@ class Scenario:
         ]  # Toggle between 'random' and 'stratified'
 
         # For configuring if the data of the partners are corrupted or not (useful for testing contributivity measures)
-        if "corrupted_partners" in params:
-            self.corrupted_partners = params["corrupted_partners"]
+        if "corrupted_datasets" in params:
+            self.corrupted_datasets = params["corrupted_datasets"]
         else:
-            self.corrupted_partners = ["not_corrupted"] * self.partners_count
+            self.corrupted_datasets = ["not_corrupted"] * self.partners_count
 
         # ---------------------------------------------------
         #  Configuration of the distributed learning approach
@@ -166,7 +166,7 @@ class Scenario:
                 + "_"
                 + str(self.amounts_per_partner)
                 + "_"
-                + str(self.corrupted_partners)
+                + str(self.corrupted_datasets)
                 + "_"
                 + str(self.single_partner_test_mode)
                 + "_"
