@@ -120,7 +120,7 @@ class Scenario:
         # Contributivity methods
         ALL_METHODS_LIST = [
             "Shapley values",
-            "Independant scores",
+            "Independent scores",
             "TMCS",
             "ITMCS",
             "IS_lin_S",

@@ -9,7 +9,7 @@ scenario_params_list:
    epoch_count: 38
    methods:
     - "Shapley values"
-    - "Independant scores"
+    - "Independent scores"
     - "TMCS"
    minibatch_count: 20
  - partners_count: 3
@@ -21,7 +21,7 @@ scenario_params_list:
    minibatch_count: 20
    methods:
     - "Shapley values"
-    - "Independant scores"
+    - "Independent scores"
     - "TMCS"
  - partners_count: 2
    amounts_per_partner: [0.9, 0.1]

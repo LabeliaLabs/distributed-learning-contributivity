@@ -9,3 +9,4 @@ scenario_params_list:
    corrupted_datasets: [not_corrupted, corrupted, not_corrupted, not_corrupted]
    is_quick_demo: True
    methods:
+     - "Independent scores"

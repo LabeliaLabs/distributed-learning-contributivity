@@ -189,7 +189,7 @@ All methods available are:
 ```yaml
 methods:
     - "Shapley values"
-    - "Independant scores"
+    - "Independent scores"
     - "TMCS"
     - "ITMCS"
     - "IS_lin_S"
