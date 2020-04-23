@@ -29,40 +29,40 @@ os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
 
 #%% Fetch data splitting scenario
 
-nodes_count = my_scenario.NODES_COUNT
-node_list = data_splitting.process_data_splitting_scenario()
+partners_count = my_scenario.partners_count
+partners_list = data_splitting.process_data_splitting_scenario()
 
 
 #%% Pre-process data for ML training
 
-for node_index, node in enumerate(node_list):
+for partner_index, partner in enumerate(partners_list):
 
     # Preprocess input (x) data
-    node.preprocess_data()
+    partner.preprocess_data()
 
     # Crete validation dataset
-    x_node_train, x_node_val, y_node_train, y_node_val = train_test_split(
-        node.x_train, node.y_train, test_size=0.1, random_state=42
+    x_partner_train, x_partner_val, y_partner_train, y_partner_val = train_test_split(
+        partner.x_train, partner.y_train, test_size=0.1, random_state=42
     )
-    node.x_train = x_node_train
-    node.x_val = x_node_val
-    node.y_train = y_node_train
-    node.y_val = y_node_val
+    partner.x_train = x_partner_train
+    partner.x_val = x_partner_val
+    partner.y_train = y_partner_train
+    partner.y_val = y_partner_val
 
     # Align variable names
-    x_node_test = node.x_test
-    y_node_test = node.y_test
+    x_partner_test = partner.x_test
+    y_partner_test = partner.y_test
 
-    print(str(len(x_node_train)) + " train data for node " + str(node_index))
-    print(str(len(x_node_val)) + " val data for node " + str(node_index))
-    print(str(len(x_node_test)) + " test data for node " + str(node_index))
+    print(str(len(x_partner_train)) + " train data for partner " + str(partner_index))
+    print(str(len(x_partner_val)) + " val data for partner " + str(partner_index))
+    print(str(len(x_partner_test)) + " test data for partner " + str(partner_index))
 
 
 #%% Federated training
 
-model_list = [None] * nodes_count
+model_list = [None] * partners_count
 epochs = 2
-score_matrix = np.zeros(shape=(epochs, nodes_count))
+score_matrix = np.zeros(shape=(epochs, partners_count))
 val_acc_epoch = []
 acc_epoch = []
 
@@ -95,39 +95,39 @@ for epoch in range(epochs):
     # Training phase
     val_acc_list = []
     acc_list = []
-    for node_index, node in enumerate(node_list):
+    for partner_index, partner in enumerate(partners_list):
 
-        print("\nTraining on node " + str(node_index))
-        node_model = utils.generate_new_cnn_model()
+        print("\nTraining on partner " + str(partner_index))
+        partner_model = utils.generate_new_cnn_model()
 
         # Model weights are the averaged weights
         if not is_first_epoch:
-            node_model.set_weights(new_weights)
-            node_model.compile(
+            partner_model.set_weights(new_weights)
+            partner_model.compile(
                 loss=keras.losses.categorical_crossentropy,
                 optimizer="adam",
                 metrics=["accuracy"],
             )
 
-        # Train on whole node local data set
-        history = node_model.fit(
-            node.x_train,
-            node.y_train,
+        # Train on whole partner local data set
+        history = partner_model.fit(
+            partner.x_train,
+            partner.y_train,
             batch_size=constants.BATCH_SIZE,
             epochs=1,
             verbose=1,
-            validation_data=(node.x_val, node.y_val),
+            validation_data=(partner.x_val, partner.y_val),
         )
 
         val_acc_list.append(history.history["val_accuracy"])
         acc_list.append(history.history["accuracy"])
 
-        model_list[node_index] = node_model
+        model_list[partner_index] = partner_model
 
     val_acc_epoch.append(np.median(val_acc_list))
     acc_epoch.append(np.median(acc_list))
 
-    # TODO Evaluation phase: evaluate data on every node test set
+    # TODO Evaluation phase: evaluate data on every partner test set
 
 # TODO Compute contributivity score
 

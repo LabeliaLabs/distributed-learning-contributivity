@@ -23,7 +23,7 @@ import utils
 #%% Constants
 
 epochs = 10
-nodes_count = 10
+partners_count = 10
 
 
 #%% Load data
@@ -35,12 +35,12 @@ nodes_count = 10
 # Shuffle train data
 train_idx = np.arange(len(y_train))
 np.random.shuffle(train_idx)
-train_idx_idx_list = np.array_split(train_idx, nodes_count)
+train_idx_idx_list = np.array_split(train_idx, partners_count)
 
 # Shuffle test data
 test_idx = np.arange(len(y_test))
 np.random.shuffle(test_idx)
-test_idx_idx_list = np.array_split(test_idx, nodes_count)
+test_idx_idx_list = np.array_split(test_idx, partners_count)
 
 
 x_train = x_train[train_idx_idx_list[0], :]
