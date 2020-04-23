@@ -6,7 +6,6 @@ scenario_params_list:
    samples_split_option: 'stratified'
    advanced_split: [[7, 'shared'], [6, 'shared'], [2, 'specific'], [1, 'specific']]
    aggregation_weighting: 'local_score'
-   corrupted_partners: [not_corrupted, corrupted, not_corrupted, not_corrupted]
+   corrupted_datasets: [not_corrupted, corrupted, not_corrupted, not_corrupted]
    is_quick_demo: True
    methods:
-     - "Independant scores"
