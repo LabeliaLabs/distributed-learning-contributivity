@@ -179,16 +179,12 @@ Example: `minibatch_count: 20`
 `is_early_stopping`: `True` (default) or `False`  
 When set to `True`, the training phases (whether multi-partner of single-partner) are stopped when the performance on the validation set reaches a plateau.
 
+**Note:** to only launch the distributed learning on the scenarios (and no contributivity measurement methods), omit the `methods` parameter (see section [Configuration of contributivity measurement methods to be tested](#configuration-of-contributivity-measurement-methods-to-be-tested) below).
+
 ##### Configuration of contributivity measurement methods to be tested
 
 `methods`:  
-A declarative list of the contributivity measurement methods to be executed. Default is:
-```yaml
-methods:
-    - "Shapley values"
-    - "Independant scores"
-    - "TMCS"
-``` 
+A declarative list of the contributivity measurement methods to be executed.
 All methods available are:
 ```yaml
 methods:
@@ -202,7 +198,8 @@ methods:
     - "SMCS"
     - "WR_SMC"
 ```
-See above section [Contributivity measurement approaches studied and implemented](#contributivity-measurement-approaches-studied-and-implemented) for explanation of the different methods.
+See above section [Contributivity measurement approaches studied and implemented](#contributivity-measurement-approaches-studied-and-implemented) for explanation of the different methods.  
+**Note:** When `methods` is omitted in the config file only the distributed learning is run.
 
 ##### Miscellaneous
 
