@@ -251,7 +251,10 @@ class Scenario:
         # Check coherence of the split option:
         nb_diff_labels = len(labels)
         sum_specific_clusters = sum([p.cluster_count for p in partners_with_specific_clusters])
-        max_shared_clusters = max([p.cluster_count for p in partners_with_shared_clusters])
+        if not partners_with_shared_clusters:
+            max_shared_clusters = 0
+        else:
+            max_shared_clusters = max([p.cluster_count for p in partners_with_shared_clusters])
         assert sum_specific_clusters + max_shared_clusters  <= nb_diff_labels
 
         # Stratify the dataset per labels
@@ -393,8 +396,7 @@ class Scenario:
         for partner in self.partners_list:
             print("- Partner #" + str(partner.id) + ":")
             print("  - Number of samples: " + str(len(partner.x_train)) + " train samples")
-            print("  - y_train first 10 values: " + str(partner.y_train[:10]))
-            print("  - y_train last 10 values: " + str(partner.y_train[-10:]))
+            print("  - y_train unique values: " + str(set(partner.y_train)))
 
         return 0
 
