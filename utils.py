@@ -97,7 +97,9 @@ def get_scenario_params_list(config):
         
     scenario_params_list = []
     for el in product(*params_list):
-        scenario_params_list.append(dict(zip(params_name, el)))
+        scenario = dict(zip(params_name, el))
+        if (scenario['partners_count'] == len(scenario['amounts_per_partner'])):
+            scenario_params_list.append(scenario)
         
     return scenario_params_list
 
