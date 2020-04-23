@@ -344,6 +344,7 @@ class Scenario:
             nb_samples = int(amounts_per_partner[p.id] * len(y_train) * final_resize_factor)
             dict_specific[p.id]["final_nb_samples"] = nb_samples
             final_nb_samples[p.id] = nb_samples
+            dict_specific[p.id]["final_nb_samples_p_cluster"] = int(dict_specific[p.id]["final_nb_samples"] / p.cluster_count)
         for p in partners_with_shared_clusters:
             nb_samples = int(amounts_per_partner[p.id] * len(y_train) * final_resize_factor)
             dict_shared[p.id]["final_nb_samples"] = nb_samples
@@ -358,29 +359,27 @@ class Scenario:
 
         # Partners receive their subsets and Partner objects are instanciated
 
-        for partner in partners_with_specific_clusters:
+        for p in partners_with_specific_clusters:
             list_arrays_x, list_arrays_y = [], []
-            for cl in dict_specific[partner.id]["clusters_list"]:
-                list_arrays_x.append(x_train_for_cluster[cl])
-                list_arrays_y.append(y_train_for_cluster[cl])
-            concat_arrays_x = np.concatenate(list_arrays_x)
-            concat_arrays_y = np.concatenate(list_arrays_y)
-            partner.x_train = concat_arrays_x[:dict_specific[partner.id]["final_nb_samples"]]
-            partner.y_train = concat_arrays_y[:dict_specific[partner.id]["final_nb_samples"]]
-            partner.x_test = x_test
-            partner.y_test = y_test
-            # print(partner_y_train)  # DEBUG
+            for cl in dict_specific[p.id]["clusters_list"]:
+                list_arrays_x.append(x_train_for_cluster[cl][:dict_specific[p.id]["final_nb_samples_p_cluster"]])
+                list_arrays_y.append(y_train_for_cluster[cl][:dict_specific[p.id]["final_nb_samples_p_cluster"]])
+            p.x_train = np.concatenate(list_arrays_x)
+            p.y_train = np.concatenate(list_arrays_y)
+            p.x_test = x_test
+            p.y_test = y_test
+            # print(p_y_train)  # DEBUG
 
-        for partner in partners_with_shared_clusters:
+        for p in partners_with_shared_clusters:
             list_arrays_x, list_arrays_y = [], []
-            for cl in dict_shared[partner.id]["clusters_list"]:
-                list_arrays_x.append(x_train_for_cluster[cl][:dict_shared[partner.id]["final_nb_samples_p_cluster"]])
-                list_arrays_y.append(y_train_for_cluster[cl][:dict_shared[partner.id]["final_nb_samples_p_cluster"]])
-            partner.x_train = np.concatenate(list_arrays_x)
-            partner.y_train = np.concatenate(list_arrays_y)
-            partner.x_test = x_test
-            partner.y_test = y_test
-            # print(partner_y_train)  # DEBUG
+            for cl in dict_shared[p.id]["clusters_list"]:
+                list_arrays_x.append(x_train_for_cluster[cl][:dict_shared[p.id]["final_nb_samples_p_cluster"]])
+                list_arrays_y.append(y_train_for_cluster[cl][:dict_shared[p.id]["final_nb_samples_p_cluster"]])
+            p.x_train = np.concatenate(list_arrays_x)
+            p.y_train = np.concatenate(list_arrays_y)
+            p.x_test = x_test
+            p.y_test = y_test
+            # print(p_y_train)  # DEBUG
 
         # Check coherence of number of mini-batches versus partner with small dataset
         assert self.minibatch_count <= min([len(p.x_train) for p in self.partners_list])
@@ -520,7 +519,7 @@ class Scenario:
         )
         out += (
             "random or stratified split of data samples: "
-            + self.samples_split_option
+            + str(self.samples_split_option)
             + "\n"
         )
         out += (
