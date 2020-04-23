@@ -10,8 +10,8 @@ import os
 from pathlib import Path
 from loguru import logger
 from shutil import copyfile
+from itertools import product
 import datetime
-
 
 import keras
 from keras.models import Sequential
@@ -73,6 +73,33 @@ def load_cfg(yaml_filepath):
     logger.info(cfg)
 
     return cfg
+
+
+def get_scenario_params_list(config):
+    """
+    Create parameter list for each scenario from the config.
+    
+    Parameters
+    ----------
+    config : dict
+        Dictionary of parameters for experiement
+
+    Returns
+    -------
+    scenario_params_list : list
+        list of parameters for each scenario.
+
+    """
+
+    params_name = config['scenario_params_list'].keys()
+    
+    params_list = list(config['scenario_params_list'].values())
+        
+    scenario_params_list = []
+    for el in product(*params_list):
+        scenario_params_list.append(dict(zip(params_name, el)))
+        
+    return scenario_params_list
 
 
 def init_result_folder(yaml_filepath, cfg):
