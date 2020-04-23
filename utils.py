@@ -98,9 +98,15 @@ def get_scenario_params_list(config):
     scenario_params_list = []
     for el in product(*params_list):
         scenario = dict(zip(params_name, el))
-        # Add scenario parameters only if length of amounts_per_partner matches
-        # partners_count
-        if (scenario['partners_count'] == len(scenario['amounts_per_partner'])):
+        add_ok = True
+        if (scenario['partners_count'] != len(scenario['amounts_per_partner'])):
+            add_ok = False
+            raise Exception("Length of amounts_per_node does not match number of partners.")
+        if 'corrupted_datasets' in params_name:
+            if (scenario['partners_count'] != len(scenario['corrupted_datasets'])):
+                add_ok = False
+                raise Exception("Length of corrupted_datasets does not match number of partners.")
+        if add_ok:
             scenario_params_list.append(scenario)
         
     return scenario_params_list
