@@ -45,10 +45,10 @@ def preprocess_scenarios_data(scenario):
             partner.x_train, partner.y_train, test_size=0.1, random_state=42
         )
 
-        if scenario.corrupted_partners[partner_index] == "corrupted":
+        if scenario.corrupted_datasets[partner_index] == "corrupted":
             print("   ... Corrupting data (offsetting labels) of partner #" + str(partner.partner_id))
             partner.corrupt_labels()
-        elif scenario.corrupted_partners[partner_index] == "shuffled":
+        elif scenario.corrupted_datasets[partner_index] == "shuffled":
             print("   ... Corrupting data (shuffling labels) of partner #" + str(partner.partner_id))
             partner.shuffle_labels()
         elif scenario.corrupted_datasets[partner_index] == "not_corrupted":
