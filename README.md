@@ -134,7 +134,7 @@ Example: `amounts_per_partner: [0.3, 0.3, 0.1, 0.3]`
 How the original dataset data samples are split among partners:
 
 - `random`: the dataset is shuffled and partners receive data samples selected randomly
-- `stratified`: the dataset is stratified per labels and each partner receives certain classes only
+- `stratified`: the dataset is stratified per class and each partner receives certain classes only
 
 `advanced_split`: `[[nb of clusters (int), 'shared' or 'specific']]`  
 In certain cases it might be interesting to split the dataset among partners in a more elaborate way. For that we consider the data samples from the initial dataset as split in clusters, defined by their label/class.

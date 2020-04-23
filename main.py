@@ -82,9 +82,10 @@ def main():
 
 def run_scenario(current_scenario):
 
+    current_scenario.instantiate_scenario_partners()
     # Split data according to scenario and then pre-process successively...
     # ... train data, early stopping validation data, test data
-    if current_scenario.is_advanced_split:
+    if isinstance(current_scenario.samples_split_option, list):
         current_scenario.split_data_advanced()
     else:
         current_scenario.split_data()

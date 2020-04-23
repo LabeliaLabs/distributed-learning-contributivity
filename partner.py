@@ -12,16 +12,20 @@ import constants
 
 
 class Partner:
-    def __init__(self, x_train, x_test, y_train, y_test, partner_id):
-        self.x_train = x_train
-        self.x_val = []
-        self.x_test = x_test
+    def __init__(self, partner_id):
 
-        self.y_train = y_train
-        self.y_val = []
-        self.y_test = y_test
+        self.id = partner_id
 
-        self.partner_id = partner_id
+        self.cluster_count = int
+        self.cluster_split_option = str
+
+        self.x_train = None
+        self.x_val = None
+        self.x_test = None
+
+        self.y_train = None
+        self.y_val = None
+        self.y_test = None
 
     def get_x_train_len(self):
         return len(self.x_train)
