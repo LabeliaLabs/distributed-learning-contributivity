@@ -91,9 +91,9 @@ def get_scenario_params_list(config):
 
     """
 
-    params_name = config['scenario_params_list'].keys()
+    params_name = config.keys()
     
-    params_list = list(config['scenario_params_list'].values())
+    params_list = list(config.values())
         
     scenario_params_list = []
     for el in product(*params_list):
