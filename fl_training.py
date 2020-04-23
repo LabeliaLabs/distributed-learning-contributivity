@@ -21,9 +21,6 @@ import constants
 # os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
 
 
-#%% Pre-process data for ML training
-
-
 def preprocess_scenarios_data(scenario):
     """Return scenario with central datasets (val, test) and distributed datasets (partners) pre-processed"""
 
@@ -66,10 +63,25 @@ def preprocess_scenarios_data(scenario):
     scenario.y_test = keras.utils.to_categorical(scenario.y_test, constants.NUM_CLASSES)
     print("   Central testset: done.")
 
+    # Compute and update the batch size
+    scenario.batch_size = compute_batch_size(scenario)
+
     return scenario
 
 
-#%% Single partner training
+def compute_batch_size(scenario):
+
+    batch_size, bigger_dataset, bigger_minibatch = 0, 0, 0
+
+    # First we identify the partner with the bigger dataset, and the size of a mini-batch of it
+    for p in scenario.partners_list:
+        bigger_dataset = max(bigger_dataset, len(p.x_train))
+    bigger_minibatch = bigger_dataset / scenario.minibatch_count
+
+    # Then we set batch_size so that the bigger mini-batch will be the right number of fit batches
+    batch_size = int(bigger_minibatch / scenario.fit_batches_count)
+
+    return max(batch_size, 1)
 
 
 def compute_test_score_for_single_partner(
@@ -266,9 +278,10 @@ def compute_test_score(
             ) = split_in_minibatches(minibatch_count, partner.x_train, partner.y_train)
 
         # Iterate over mini-batches for training, starting each new iteration with an aggregation of the previous one
+        print("\n      Training on " + str(minibatch_count) + " mini-batches - val_accuracy per partner id:", end ="")
         for minibatch_index in range(minibatch_count):
 
-            print("\n      Mini-batch " + str(minibatch_index) + "/" + str(minibatch_count - 1))
+            print("\n      Mini-batch " + str(minibatch_index).zfill(2) + "/" + str(minibatch_count - 1), end =":   ", flush=True)
             is_first_minibatch = minibatch_index == 0
 
             # Starting model for each partner is the aggregated model from the previous mini-batch iteration
@@ -291,7 +304,7 @@ def compute_test_score(
                 partner_model = agg_model_for_iteration[partner_index]
 
                 # Train on partner local data set
-                print("         Training on partner id #" + partner.partner_id, end =" - ")
+                print("#" + partner.partner_id, end =" ", flush=True)
                 history = partner_model.fit(
                     minibatched_x_train[partner_index][minibatch_index],
                     minibatched_y_train[partner_index][minibatch_index],
@@ -300,7 +313,7 @@ def compute_test_score(
                     verbose=0,
                     validation_data=(x_val_global, y_val_global),
                 )
-                print("val_accuracy " + str(round(history.history["val_accuracy"][0], 2)))  # DEBUG
+                print("%.2f" % history.history["val_accuracy"][0], end ="   ", flush=True)  # DEBUG
 
                 # Update the partner's model in the models' list
                 model_list[partner_index] = partner_model

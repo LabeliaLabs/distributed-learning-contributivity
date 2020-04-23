@@ -14,6 +14,7 @@ from loguru import logger
 from operator import itemgetter
 import random
 
+import constants
 from partner import Partner
 
 
@@ -93,7 +94,7 @@ class Scenario:
         else:
             self.aggregation_weighting = "uniform"
 
-        # Number of epochs and mini-batches in ML training
+        # Number of epochs, mini-batches and fit_batches in ML training
         if "epoch_count" in params:
             self.epoch_count = params["epoch_count"]
             assert self.epoch_count > 0
@@ -105,6 +106,13 @@ class Scenario:
             assert self.minibatch_count > 0
         else:
             self.minibatch_count = 20
+
+        if "fit_batches_count" in params:
+            self.fit_batches_count = params["fit_batches_count"]
+            assert self.fit_batches_count > 0
+        else:
+            self.fit_batches_count = constants.DEFAULT_FIT_BATCHES_COUNT_FOR_BIGGER_DATASET
+        self.batch_size = constants.DEFAULT_BATCH_SIZE
 
         # Early stopping stops ML training when performance increase is not significant anymore
         # It is used to optimize the number of epochs and the execution time
@@ -204,7 +212,7 @@ class Scenario:
         print("- Test data distribution scenario chosen:", self.single_partner_test_mode)
         print("- Weighting option:", self.aggregation_weighting)
         print(
-            "- Number of epochs and mini-batches: "
+            "- "
             + str(self.epoch_count)
             + " epochs and "
             + str(self.minibatch_count)
