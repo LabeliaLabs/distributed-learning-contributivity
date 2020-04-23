@@ -86,22 +86,27 @@ For a start we made the following choices:
     experiment_name: my_custom_experiment
     n_repeats: 5
     scenario_params_list:
-     - partners_count: 3
-       amounts_per_partner: [0.4, 0.3, 0.3] 
-       samples_split_option: 'random'
-       aggregation_weighting: 'data_volume'
-       single_partner_test_mode: 'global'
-       epoch_count: 38
-       minibatch_count: 20
-     - partners_count: 4
-       amounts_per_partner: [0.3, 0.3, 0.1, 0.3] 
-       samples_split_option: 'stratified'
-       aggregation_weighting: 'data_volume'
-       single_partner_test_mode: 'global'
-       epoch_count: 38
-       minibatch_count: 20
+         partners_count: 
+              - 3
+              - 2
+         amounts_per_partner: 
+              - [0.4, 0.3, 0.3] 
+              - [0.5, 0.5]
+         samples_split_option: 
+             - 'random'
+             - 'stratified'
+         aggregation_weighting: 
+             - 'data_volume' 
+             - 'uniform'
+         epoch_count: 
+             - 38
+         methods:
+             - ["Shapley values", "Independant scores", "TMCS"]
+         minibatch_count: 
+             - 20
     ```
 - Then execute `main.py -f config.yml`
+- If several values are specified, e.g. like in `agregation_weighting` above, all possible combinations of parameters will be processed.
 - A `results.csv` file will be generated in a new folder for your experiment under `/experiments`. You can read this raw `results.csv` file or use the `analyse_results.ipynb` notebook to quickly generate figures.
 
 ### Config file parameters
