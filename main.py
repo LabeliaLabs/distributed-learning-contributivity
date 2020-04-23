@@ -40,7 +40,8 @@ def main():
     config = utils.init_result_folder(config_filepath, config)
     experiment_path = config["experiment_path"]
 
-    scenario_params_list = config["scenario_params_list"]
+    scenario_params_list = utils.get_scenario_params_list(
+        config["scenario_params_list"])
     n_repeats = config["n_repeats"]
 
     # GPU config
