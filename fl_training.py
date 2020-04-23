@@ -255,7 +255,7 @@ def compute_test_score(
     print("\n### Training model:")
     for epoch_index in range(epoch_count):
 
-        print("\n   Epoch " + str(epoch_index) + " out of " + str(epoch_count-1) + " total epochs")
+        print("\n   Epoch " + str(epoch_index) + "/" + str(epoch_count-1))
         is_first_epoch = epoch_index == 0
         clear_session()
 
@@ -270,7 +270,7 @@ def compute_test_score(
         # Iterate over mini-batches for training, starting each new iteration with an aggregation of the previous one
         for minibatch_index in range(minibatch_count):
 
-            print("\n      Mini-batch " + str(minibatch_index) + " out of " + str(minibatch_count - 1) + " total mini-batches")
+            print("\n      Mini-batch " + str(minibatch_index) + "/" + str(minibatch_count - 1))
             is_first_minibatch = minibatch_index == 0
 
             # Starting model for each partner is the aggregated model from the previous mini-batch iteration
@@ -293,8 +293,8 @@ def compute_test_score(
                 partner_model = agg_model_for_iteration[partner_index]
 
                 # Train on partner local data set
-                print("         Training on partner #" + partner.partner_id + " (id) - "
-                      + str(partner_index) + " on " + str(partners_count) + " partners to train on")
+                print("         Training on partner id #" + partner.partner_id + " ("
+                      + str(partner_index) + "/" + str(partners_count) + " partners)", end =" - ")
                 history = partner_model.fit(
                     minibatched_x_train[partner_index][minibatch_index],
                     minibatched_y_train[partner_index][minibatch_index],
@@ -303,10 +303,7 @@ def compute_test_score(
                     verbose=0,
                     validation_data=(x_val_global, y_val_global),
                 )
-                print(
-                    "            val_accuracy: "
-                    + str(round(history.history["val_accuracy"][0], 2))
-                )  # DEBUG
+                print("val_accuracy " + str(round(history.history["val_accuracy"][0], 2)))  # DEBUG
 
                 # Update the partner's model in the models' list
                 model_list[partner_index] = partner_model

@@ -333,8 +333,8 @@ class Scenario:
         final_relative_nb_samples = [round(x / total_nb_samples, 2) for x in final_nb_samples]
         # print(dict_specific)  # DEBUG
         # print(dict_shared)  # DEBUG
-        print(final_nb_samples)  # DEBUG
-        print(final_relative_nb_samples)  # DEBUG
+        # print(final_nb_samples)  # DEBUG
+        # print(final_relative_nb_samples)  # DEBUG
 
         # Partners receive their subsets and Partner objects are instanciated
 
