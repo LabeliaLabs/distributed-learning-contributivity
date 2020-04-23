@@ -51,7 +51,7 @@ def preprocess_scenarios_data(scenario):
         elif scenario.corrupted_partners[partner_index] == "shuffled":
             print("   ... Corrupting data (shuffling labels) of partner #" + str(partner.partner_id))
             partner.shuffle_labels()
-        elif scenario.corrupted_partners[partner_index] == "not_corrupted":
+        elif scenario.corrupted_datasets[partner_index] == "not_corrupted":
             pass
         else:
             print("Unexpected label of corruption, not corruption performed!")

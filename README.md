@@ -8,7 +8,7 @@ In collaborative data science projects partners sometimes need to train a model 
 
 ## Context of this work
 
-This work is being carried out in the context of the [HealthChain research consortium](https://www.substra.ai/en/healthchain-project). It is work in progress, early stage. We would like to share it with various interested parties and business partners to get their feedback and potential contributions. This is why it is shared as open source content on Substra Foundation’s repositories.
+This work is being carried out in the context of collaborative research projects. It is work in progress. We would like to share it with various interested parties, research and business partners to get their feedback and potential contributions. This is why it is shared as open source content on Substra Foundation’s repositories.
 
 ## About this repository
 
@@ -81,10 +81,10 @@ For a start we made the following choices:
   
 ### Using the code files
 
-- Define your mock scenario(s) in `config.yml` by changing the values of the suggested parameters of the custom scenario (you can browse more available parameters in `scenario.py`). For example:
+- Define your mock scenario(s) in `config.yml` by changing the values of the suggested parameters of the custom scenario (you can browse more available parameters in section [Config file parameters](#config-file-parameters) below). For example:
     ```yaml
     experiment_name: my_custom_experiment
-    n_repeats: 10
+    n_repeats: 5
     scenario_params_list:
      - partners_count: 3
        amounts_per_partner: [0.4, 0.3, 0.3] 
@@ -127,7 +127,7 @@ Number of partners in the mocked collaborative ML scenario.
 Example: `partners_count: 4`
 
 `amounts_per_partner`: `[float]`  
-Percentages of the original dataset each partner receives to mock a collaborative ML scenario where each partner provides data for the ML training.  
+Fractions of the original dataset each partner receives to mock a collaborative ML scenario where each partner provides data for the ML training.  
 Example: `amounts_per_partner: [0.3, 0.3, 0.1, 0.3]`
 
 `samples_split_option`: `random` (default) or `stratified`  
@@ -147,7 +147,7 @@ It is possible to configure the `advanced_split` parameter by indicating, for ea
 
 Example: `[[7, 'shared'], [6, 'shared'], [2, 'specific'], [1, 'specific']]`
 
-`corrupted_partners`: `[not_corrupted (default), shuffled or corrupted]`  
+`corrupted_datasets`: `[not_corrupted (default), shuffled or corrupted]`  
 Enables to artificially corrupt the data of one or several partners:
 
 - `not_corrupted`: data are not corrupted
@@ -162,7 +162,7 @@ Example: `[not_corrupted, not_corrupted, not_corrupted, shuffled]`
 After a training iteration over a given mini-batch, how individual models of each partner are aggregated:
 
 - `uniform`: simple average (non-weighted)
-- `data_volume`: average weighted with the relative amounts of data (in number of data samples)
+- `data_volume`: average weighted with per the amounts of data of partners (number of data samples)
 - `local_score`: average weighted with the performance (on a central validation set) of the individual models
  
 `single_partner_test_mode`: `global` (default) or `local`  
@@ -173,11 +173,11 @@ Number of epochs passed as argument in the `.fit()` function. Superseded when `i
 Example: `epoch_count: 30`
 
 `minibatch_count`: `int` (default: `20`)  
-Number of mini batches into which each partner's dataset is split, and over which are performed the iterations of parallel local training plus aggregation.  
+The distributed learning approach implemented relies on a sequence of (i) training in parallel on each partner's dataset, and then (ii) aggregating the resulting models. This constitutes an individual iteration. These iterations are repeated for all _mini-batches_ into which the partner's datasets are split at the beginning of each epoch. This gives a total of `epoch_count* minibatch_count` iterations.  
 Example: `minibatch_count: 20`
 
 `is_early_stopping`: `True` (default) or `False`  
-When set to `True`, the training phases (whether multi-partner of single-partner) are stopped when the performance reaches a plateau.
+When set to `True`, the training phases (whether multi-partner of single-partner) are stopped when the performance on the validation set reaches a plateau.
 
 ##### Configuration of contributivity measurement methods to be tested
 
@@ -212,7 +212,7 @@ When set to `True`, the amount of data samples and the number of epochs and mini
 ## Contacts
 
 Should you be interested in this open effort and would like to share any question, suggestion or input, you can use the following channels:
-  - This Github repository (issues, PR...)
+  - This Github repository (issues or PRs)
   - Substra Foundation's [Slack workspace](https://substra-workspace.slack.com/join/shared_invite/zt-cpyedcab-FHYgpy08efKJ2FCadE2yCA)
   - Email: hello@substra.org
   - Come meet with us at La Paillasse (Paris, France), Le Palace (Nantes, France) or Studio Iconosquare (Limoges, France)
