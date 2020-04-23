@@ -492,8 +492,6 @@ class Scenario:
         for i, partner in enumerate(self.partners_list):
 
             plt.subplot(self.partners_count, 1, i + 1)  # TODO share y axis
-            # print(partner.y_train) # VERBOSE
-            # data = np.argmax(partner.y_train, axis=1)
             data_count = np.bincount(partner.y_train)
 
             # Fill with 0
@@ -501,7 +499,7 @@ class Scenario:
                 data_count = np.append(data_count, 0)
 
             plt.bar(np.arange(0, 10), data_count)
-            plt.ylabel("partner " + str(i))
+            plt.ylabel("partner " + partner.partner_id)
 
         plt.suptitle("Data distribution")
         plt.xlabel("Digits")
