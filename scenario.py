@@ -111,8 +111,7 @@ class Scenario:
             self.fit_batches_count = params["fit_batches_count"]
             assert self.fit_batches_count > 0
         else:
-            self.fit_batches_count = constants.DEFAULT_FIT_BATCHES_COUNT_FOR_BIGGER_DATASET
-        self.batch_size = constants.DEFAULT_BATCH_SIZE
+            self.fit_batches_count = constants.DEFAULT_FIT_BATCHES_COUNT
 
         # Early stopping stops ML training when performance increase is not significant anymore
         # It is used to optimize the number of epochs and the execution time
@@ -214,9 +213,11 @@ class Scenario:
         print(
             "- "
             + str(self.epoch_count)
-            + " epochs and "
+            + " epochs, "
             + str(self.minibatch_count)
-            + " mini-batches"
+            + " mini-batches and "
+            + str(self.fit_batches_count)
+            + " fit-batches for the bigger mini-batch"
         )
 
         # Describe data
@@ -359,7 +360,15 @@ class Scenario:
 
             # print(partner_y_train)  # DEBUG
 
-            partner = Partner(partner_x_train, x_test, partner_y_train, y_test, str(partner[0]))
+            partner = Partner(
+                partner_x_train,
+                x_test,
+                partner_y_train,
+                y_test,
+                constants.DEFAULT_BATCH_SIZE,
+                constants.DEFAULT_BATCH_SIZE,
+                str(partner[0]),
+            )
             self.partners_list.append(partner)
 
         for partner in shared:
@@ -372,7 +381,15 @@ class Scenario:
 
             # print(partner_y_train)  # DEBUG
 
-            partner = Partner(partner_x_train, x_test, partner_y_train, y_test, str(partner[0]))
+            partner = Partner(
+                partner_x_train,
+                x_test,
+                partner_y_train,
+                y_test,
+                constants.DEFAULT_BATCH_SIZE,
+                constants.DEFAULT_BATCH_SIZE,
+                str(partner[0]),
+            )
             self.partners_list.append(partner)
 
         # Check coherence of partners_list versus partners_count
@@ -475,7 +492,13 @@ class Scenario:
             y_partner_test = y_test[test_idx]
 
             partner = Partner(
-                x_partner_train, x_partner_test, y_partner_train, y_partner_test, str(partner_id)
+                x_partner_train,
+                x_partner_test,
+                y_partner_train,
+                y_partner_test,
+                constants.DEFAULT_BATCH_SIZE,
+                constants.DEFAULT_BATCH_SIZE,
+                str(partner_id),
             )
             self.partners_list.append(partner)
             partner_id += 1
@@ -507,6 +530,16 @@ class Scenario:
         plt.suptitle("Data distribution")
         plt.xlabel("Digits")
         plt.savefig(self.save_folder / "data_distribution.png")
+
+    def compute_batch_sizes(self):
+
+        # For each partner we compute the batch size in multi-partner and single-partner setups
+        for p in self.partners_list:
+            p.batch_size_multi = max(1, int(len(p.x_train) / (self.minibatch_count * self.fit_batches_count)))
+            p.batch_size_single = max(1, int(len(p.x_train) / self.fit_batches_count))
+            print("- compute_batch_sizes(), partner #" + p.partner_id + ": ")  # DEBUG
+            print("   batch_size_single: " + str(p.batch_size_single))  # DEBUG
+            print("   batch_size_multi: " + str(p.batch_size_multi))  # DEBUG
 
     def to_file(self):
 
@@ -567,12 +600,13 @@ class Scenario:
                 dict_results["advanced_split"] = self.advanced_split
                 dict_results["single_partner_test_mode"] = self.single_partner_test_mode
                 dict_results["epoch_count"] = self.epoch_count
+                dict_results["minibatch_count"] = self.minibatch_count
+                dict_results["fit_batches_count"] = self.fit_batches_count
                 dict_results["is_early_stopping"] = self.is_early_stopping
                 dict_results["federated_test_score"] = self.federated_test_score
                 dict_results["federated_computation_time_sec"] = self.federated_computation_time_sec
                 dict_results["scenario_name"] = self.scenario_name
                 dict_results["short_scenario_name"] = self.short_scenario_name
-                dict_results["minibatch_count"] = self.minibatch_count
                 dict_results["aggregation_weighting"] = self.aggregation_weighting
 
                 # Contributivity data

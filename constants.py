@@ -12,7 +12,7 @@ INPUT_SHAPE = (IMG_ROWS, IMG_COLS, 1)
 
 # ML constants
 DEFAULT_BATCH_SIZE = 256
-DEFAULT_FIT_BATCHES_COUNT_FOR_BIGGER_DATASET = 10
+DEFAULT_FIT_BATCHES_COUNT = 8
 PATIENCE = 4  # patience for early stopping
 
 # Contributivity methods names

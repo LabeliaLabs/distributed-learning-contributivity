@@ -12,7 +12,7 @@ import constants
 
 
 class Partner:
-    def __init__(self, x_train, x_test, y_train, y_test, partner_id):
+    def __init__(self, x_train, x_test, y_train, y_test, batch_size_single, batch_size_multi, partner_id):
         self.x_train = x_train
         self.x_val = []
         self.x_test = x_test
@@ -20,6 +20,9 @@ class Partner:
         self.y_train = y_train
         self.y_val = []
         self.y_test = y_test
+
+        self.batch_size_single = batch_size_single
+        self.batch_size_multi = batch_size_multi
 
         self.partner_id = partner_id
 

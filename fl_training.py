@@ -63,25 +63,7 @@ def preprocess_scenarios_data(scenario):
     scenario.y_test = keras.utils.to_categorical(scenario.y_test, constants.NUM_CLASSES)
     print("   Central testset: done.")
 
-    # Compute and update the batch size
-    scenario.batch_size = compute_batch_size(scenario)
-
     return scenario
-
-
-def compute_batch_size(scenario):
-
-    batch_size, bigger_dataset, bigger_minibatch = 0, 0, 0
-
-    # First we identify the partner with the bigger dataset, and the size of a mini-batch of it
-    for p in scenario.partners_list:
-        bigger_dataset = max(bigger_dataset, len(p.x_train))
-    bigger_minibatch = bigger_dataset / scenario.minibatch_count
-
-    # Then we set batch_size so that the bigger mini-batch will be the right number of fit batches
-    batch_size = int(bigger_minibatch / scenario.fit_batches_count)
-
-    return max(batch_size, 1)
 
 
 def compute_test_score_for_single_partner(
@@ -105,7 +87,7 @@ def compute_test_score_for_single_partner(
     history = model.fit(
         partner.x_train,
         partner.y_train,
-        batch_size=constants.BATCH_SIZE,
+        batch_size=partner.batch_size_single,
         epochs=epoch_count,
         verbose=0,
         validation_data=(partner.x_val, partner.y_val),
@@ -128,7 +110,7 @@ def compute_test_score_for_single_partner(
     # Evaluate trained model
     print("- Evaluating model on test data of the partner:", end =" ")
     model_evaluation = model.evaluate(
-        x_test, y_test, batch_size=constants.BATCH_SIZE, verbose=0
+        x_test, y_test, batch_size=partner.batch_size_single, verbose=0
     )
     print(list(zip(model.metrics_names,["%.3f" % elem for elem in model_evaluation])))
 
@@ -308,7 +290,7 @@ def compute_test_score(
                 history = partner_model.fit(
                     minibatched_x_train[partner_index][minibatch_index],
                     minibatched_y_train[partner_index][minibatch_index],
-                    batch_size=constants.BATCH_SIZE,
+                    batch_size=partner.batch_size_multi,
                     epochs=1,
                     verbose=0,
                     validation_data=(x_val_global, y_val_global),
@@ -338,7 +320,7 @@ def compute_test_score(
             aggregate_model_weights(model_list, aggregation_weights)
         )
         model_evaluation = aggregated_model.evaluate(
-            x_val_global, y_val_global, batch_size=constants.BATCH_SIZE, verbose=0,
+            x_val_global, y_val_global, verbose=0,
         )
         current_val_loss = model_evaluation[0]
         global_val_acc.append(model_evaluation[1])
@@ -363,7 +345,7 @@ def compute_test_score(
     # After last epoch or if early stopping was triggered, evaluate model on the global testset
     print("\n### Evaluating model on test data:")
     model_evaluation = aggregated_model.evaluate(
-        x_test, y_test, batch_size=constants.BATCH_SIZE, verbose=0,
+        x_test, y_test, verbose=0,
     )
     print("   Model metrics names: ", aggregated_model.metrics_names)
     print("   Model metrics values: ", ["%.3f" % elem for elem in model_evaluation])
