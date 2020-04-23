@@ -77,7 +77,7 @@ def compute_test_score_for_single_partner(
 ):
     """Return the score on test data of a model trained on a single partner"""
 
-    print("\n## Training and evaluating model on one single partner.")
+    print("\n## Training and evaluating model on partner with id #" + str(partner.partner_id))
 
     # Initialize model
     model = utils.generate_new_cnn_model()
@@ -88,8 +88,8 @@ def compute_test_score_for_single_partner(
         es = EarlyStopping(monitor='val_loss', mode='min', verbose=0, patience=constants.PATIENCE)
         cb.append(es)
         
-    # Train model  
-    print("\n### Training model on one single partner: " + str(partner.partner_id))
+    # Train model
+    print("- Training model...")
     history = model.fit(
         partner.x_train,
         partner.y_train,
@@ -114,17 +114,15 @@ def compute_test_score_for_single_partner(
             + "] is not recognized."
         )
     # Evaluate trained model
-    print("\n### Evaluating model on test data of the partner:")
+    print("- Evaluating model on test data of the partner:", end =" ")
     model_evaluation = model.evaluate(
         x_test, y_test, batch_size=constants.BATCH_SIZE, verbose=0
     )
-    print("   Model metrics names: ", model.metrics_names)
-    print("   Model metrics values: ", ["%.3f" % elem for elem in model_evaluation])
+    print(list(zip(model.metrics_names,["%.3f" % elem for elem in model_evaluation])))
 
     model_eval_score = model_evaluation[1]  # 0 is for the loss
 
     # Return model score on test data
-    print("\nTraining and evaluation on one single partner: done.")
     return model_eval_score
 
 
@@ -293,8 +291,7 @@ def compute_test_score(
                 partner_model = agg_model_for_iteration[partner_index]
 
                 # Train on partner local data set
-                print("         Training on partner id #" + partner.partner_id + " ("
-                      + str(partner_index) + "/" + str(partners_count) + " partners)", end =" - ")
+                print("         Training on partner id #" + partner.partner_id, end =" - ")
                 history = partner_model.fit(
                     minibatched_x_train[partner_index][minibatch_index],
                     minibatched_y_train[partner_index][minibatch_index],
