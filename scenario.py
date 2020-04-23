@@ -130,20 +130,13 @@ class Scenario:
             "WR_SMC",
         ]
 
-        # List of Contributivity methods runned by default if no method was given in the config file
-        DEFAULT_METHODS_LIST = ["Shapley values", "Independant scores", "TMCS"]
-
         self.methods = []
         if "methods" in params and params["methods"]:
-
             for method in params["methods"]:
                 if method in ALL_METHODS_LIST:
                     self.methods.append(method)
                 else:
                     raise Exception("Method [" + method + "] is not in methods list.")
-
-        else:
-            self.methods = DEFAULT_METHODS_LIST
 
         # -------------
         # Miscellaneous
