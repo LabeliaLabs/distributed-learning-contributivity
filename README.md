@@ -121,6 +121,7 @@ For a start we made the following choices:
     ```
 - In `scenario_params_list`, enter a list of sets of scenario(s). Each set must have only one `partners_count` and length of `amout_per_partners` and `corrupted_datasets` must match the `partner_counts`. If a list of parameters is specified, e.g. like in `agregation_weighting` above, all possible combinations of parameters will be processed.
 - Then execute `main.py -f config.yml`
+- If several values are specified, e.g. like in `agregation_weighting` above, all possible combinations of parameters will be processed.
 - A `results.csv` file will be generated in a new folder for your experiment under `/experiments`. You can read this raw `results.csv` file or use the `analyse_results.ipynb` notebook to quickly generate figures.
 
 ### Config file parameters

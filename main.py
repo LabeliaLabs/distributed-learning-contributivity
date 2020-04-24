@@ -79,7 +79,7 @@ def main():
             current_scenario = scenario.Scenario(scenario_params, experiment_path)
             print(current_scenario.to_dataframe())
             print('Scenario %i/%i' %(scenario_id+1, len(scenario_params_list)))
-
+            
             run_scenario(current_scenario)
 
             # Write results to CSV file
