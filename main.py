@@ -25,7 +25,7 @@ import argparse
 
 DEFAULT_CONFIG_FILE = "config.yml"
 
-
+@logger.catch
 def main():
 
     stream, info_logger_id, info_debug_id = init_logger()
