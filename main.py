@@ -44,9 +44,9 @@ def main():
         config["scenario_params_list"])
     n_repeats = config["n_repeats"]
     
-    print('Scenarii to process: ', )
+    print('\nScenario(s) to process:', )
     for ind, scenar in enumerate(scenario_params_list):
-        print('Scenario %i/%i' %(ind+1, len(scenario_params_list)))
+        print('\nScenario %i/%i' %(ind+1, len(scenario_params_list)))
         print(scenar)
 
     # GPU config
@@ -70,8 +70,7 @@ def main():
             print(type(scenario_params["amounts_per_partner"]))
 
             current_scenario = scenario.Scenario(scenario_params, experiment_path)
-            print(current_scenario.to_dataframe())
-            print('Scenario %i/%i' %(scenario_id+1, len(scenario_params_list)))
+            print('\nScenario %i/%i' %(scenario_id+1, len(scenario_params_list)))
 
             run_scenario(current_scenario)
 
