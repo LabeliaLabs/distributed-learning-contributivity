@@ -20,7 +20,7 @@ import scenario
 
 import argparse
 
-DEFAULT_CONFIG_FILE = "config_quick_debug.yml"
+DEFAULT_CONFIG_FILE = "config.yml"
 
 
 def main():
@@ -46,7 +46,7 @@ def main():
     
     print('Scenarii to process: ', )
     for ind, scenar in enumerate(scenario_params_list):
-        print('Scenario %i/%i' %(ind, len(scenario_params_list)))
+        print('Scenario %i/%i' %(ind+1, len(scenario_params_list)))
         print(scenar)
 
     # GPU config
@@ -71,6 +71,7 @@ def main():
 
             current_scenario = scenario.Scenario(scenario_params, experiment_path)
             print(current_scenario.to_dataframe())
+            print('Scenario %i/%i' %(scenario_id+1, len(scenario_params_list)))
 
             run_scenario(current_scenario)
 
