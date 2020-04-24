@@ -35,10 +35,18 @@ def main():
 
         # Parse config file for scenarios to be experimented
         config = get_config_from_file()
-
+        scenario_params_list = utils.get_scenario_params_list(
+            config["scenario_params_list"])
+        
+        n_repeats = config["n_repeats"]
         experiment_path = config["experiment_path"]
         scenario_params_list = config["scenario_params_list"]
         n_repeats = config["n_repeats"]
+        
+        print('Scenarii to process: ', )
+        for scenario_id, scenario_params in enumerate(scenario_params_list):
+            print('Scenario %i/%i' %(scenario_id+1, len(scenario_params_list)))
+            print(scenario_params)
 
         # Move log files to experiment folder
         move_log_file_to_experiment_folder(
@@ -64,10 +72,9 @@ def main():
                 logger.info("Current params:")
                 logger.info(scenario_params)
 
-                print(type(scenario_params["amounts_per_partner"]))
-
                 current_scenario = scenario.Scenario(scenario_params, experiment_path)
                 print(current_scenario.to_dataframe())
+                print('Scenario %i/%i' %(scenario_id+1, len(scenario_params_list)))
 
                 run_scenario(current_scenario)
 
