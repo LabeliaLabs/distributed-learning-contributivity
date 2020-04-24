@@ -98,8 +98,10 @@ For a start we made the following choices:
              - 'uniform'
            epoch_count: 
              - 38
-           methods:
-             - ["Shapley values", "Independant scores", "TMCS"]
+           method:
+             - "Shapley values" 
+             - "Independant scores" 
+             - "TMCS"
            minibatch_count: 
              - 20
          - partners_count: 
@@ -114,8 +116,10 @@ For a start we made the following choices:
              - 'uniform'
            epoch_count: 
              - 38
-           methods:
-             - ["Shapley values", "Independant scores", "TMCS"]
+           method:
+             - "Shapley values" 
+             - "Independant scores"
+             - "TMCS"
            minibatch_count: 
              - 20
     ```
@@ -190,13 +194,11 @@ When set to `True`, the training phases (whether multi-partner of single-partner
 
 ##### Configuration of contributivity measurement methods to be tested
 
-`methods`:  
-A declarative list of the contributivity measurement methods to be executed. Default is:
+`method`:  
+Contributivity measurement method to be executed. Default is:
 ```yaml
 methods:
-    - "Shapley values"
     - "Independant scores"
-    - "TMCS"
 ``` 
 All methods available are:
 ```yaml
