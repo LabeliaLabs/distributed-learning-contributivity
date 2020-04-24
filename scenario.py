@@ -6,6 +6,7 @@ This enables to parameterize a desired scenario to mock a multi-partner ML proje
 from keras.datasets import mnist
 from sklearn.model_selection import train_test_split
 import datetime
+import os
 import numpy as np
 import matplotlib.pyplot as plt
 import uuid
@@ -45,7 +46,7 @@ class Scenario:
         self.contributivity_list = []
 
         # --------------------------------------
-        #  Definition of collaborative scenarios
+        #  Definition of collaborative scenarios
         # --------------------------------------
 
         # partners mock different partners in a collaborative data science project
@@ -72,7 +73,7 @@ class Scenario:
             self.corrupted_datasets = ["not_corrupted"] * self.partners_count
 
         # ---------------------------------------------------
-        #  Configuration of the distributed learning approach
+        #  Configuration of the distributed learning approach
         # ---------------------------------------------------
 
         # When training on a single partner,
@@ -118,7 +119,7 @@ class Scenario:
             self.is_early_stopping = True
 
         # -----------------------------------------------------------------
-        #  Configuration of contributivity measurement methods to be tested
+        #  Configuration of contributivity measurement methods to be tested
         # -----------------------------------------------------------------
 
         # Contributivity methods
@@ -466,8 +467,10 @@ class Scenario:
 
         plt.suptitle("Data distribution")
         plt.xlabel("Digits")
-        # plt.show()  # DEBUG
-        plt.savefig(self.save_folder / "data_distribution.png")
+
+        if not os.path.exists(self.save_folder / 'graphs/'):
+            os.makedirs(self.save_folder / 'graphs/')
+        plt.savefig(self.save_folder / "graphs/data_distribution.png")
 
     def compute_batch_sizes(self):
 
