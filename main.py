@@ -46,9 +46,9 @@ def main():
     n_repeats = config["n_repeats"]
     
     print('Scenarii to process: ', )
-    for ind, scenar in enumerate(scenario_params_list):
-        print('Scenario %i/%i' %(ind+1, len(scenario_params_list)))
-        print(scenar)
+    for scenario_id, scenario_params in enumerate(scenario_params_list):
+        print('Scenario %i/%i' %(scenario_id+1, len(scenario_params_list)))
+        print(scenario_params)
 
     # GPU config
     gpus = tf.config.experimental.list_physical_devices("GPU")
