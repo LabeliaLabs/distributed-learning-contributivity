@@ -40,7 +40,7 @@ class Scenario:
         self.contributivity_list = []
 
         # -------------------------------------
-        # Definition of collaborative scenarios
+        # Definition of collaborative scenarios
         # -------------------------------------
 
         # partners mock different partners in a collaborative data science project
@@ -66,7 +66,7 @@ class Scenario:
             self.corrupted_datasets = ["not_corrupted"] * self.partners_count
 
         # ---------------------------------------------------
-        #  Configuration of the distributed learning approach
+        #  Configuration of the distributed learning approach
         # ---------------------------------------------------
 
         # When training on a single partner, the test set can be either the local partner test set or the global test set
@@ -105,7 +105,7 @@ class Scenario:
             self.is_early_stopping = True
 
         # -----------------------------------------------------------------
-        #  Configuration of contributivity measurement methods to be tested
+        #  Configuration of contributivity measurement methods to be tested
         # -----------------------------------------------------------------
 
         # Contributivity methods
@@ -122,19 +122,15 @@ class Scenario:
         ]
 
         # List of Contributivity methods runned by default if no method was given in the config file
-        DEFAULT_METHODS_LIST = ["Shapley values", "Independant scores", "TMCS"]
+        DEFAULT_METHOD= "Independant scores"
 
-        self.methods = []
-        if "methods" in params and params["methods"]:
-
-            for method in params["methods"]:
-                if method in ALL_METHODS_LIST:
-                    self.methods.append(method)
-                else:
-                    raise Exception("Method [" + method + "] is not in methods list.")
-
+        if "methods" in params:
+            if params["methods"] in ALL_METHODS_LIST:
+                self.methods = params["methods"]
+            else:
+                raise Exception("Method [" + params["methods"] + "] is not in methods list.")
         else:
-            self.methods = DEFAULT_METHODS_LIST
+            self.methods = DEFAULT_METHOD
 
         # -------------
         # Miscellaneous
