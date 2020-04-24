@@ -14,5 +14,8 @@ INPUT_SHAPE = (IMG_ROWS, IMG_COLS, 1)
 BATCH_SIZE = 1024
 PATIENCE = 4  # patience for early stopping
 
+# GPU
+GPU_MEMORY_LIMIT_MB = 4096
+
 # Contributivity methods names
 # TODO

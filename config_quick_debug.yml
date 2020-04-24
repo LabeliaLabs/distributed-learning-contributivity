@@ -1,11 +1,19 @@
 experiment_name: debug_config
 n_repeats: 1
 scenario_params_list:
- - partners_count: 4
-   amounts_per_partner: [0.4, 0.4, 0.1, 0.1]
-   samples_split_option: [[7, 'shared'], [6, 'shared'], [2, 'specific'], [1, 'specific']]
-   aggregation_weighting: 'local_score'
-   corrupted_datasets: [not_corrupted, corrupted, not_corrupted, not_corrupted]
-   is_quick_demo: True
+ - partners_count: 
+    - 4
+   amounts_per_partner: 
+    - [0.4, 0.35, 0.15, 0.1]
+   samples_split_option: 
+    - [[7, 'shared'], [6, 'shared'], [2, 'specific'], [1, 'specific']]
+   aggregation_weighting: 
+    - 'local_score'
+   corrupted_datasets: 
+    - [not_corrupted, corrupted, not_corrupted, not_corrupted]
+    - [not_corrupted, not_corrupted, not_corrupted, not_corrupted]
+   is_quick_demo: 
+    - True
    methods:
-     - "Independant scores"
+    - ["Independant scores"]
+
