@@ -14,5 +14,6 @@ scenario_params_list:
    is_quick_demo: 
     - True
    methods:
-    - ["Independant scores"]
+    - "Independant scores"
+    - "Independant scores"
 
