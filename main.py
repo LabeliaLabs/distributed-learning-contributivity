@@ -26,18 +26,6 @@ import argparse
 DEFAULT_CONFIG_FILE = "config.yml"
 
 
-class StreamToLogger:
-    def __init__(self, level="INFO"):
-        self._level = level
-
-    def write(self, buffer):
-        for line in buffer.rstrip().splitlines():
-            logger.opt(depth=1).log(self._level, line.rstrip())
-
-    def flush(self):
-        pass
-
-
 def main():
 
     stream, info_logger_id, info_debug_id = init_logger()
@@ -171,6 +159,18 @@ def get_config_from_file():
     config = utils.init_result_folder(config_filepath, config)
 
     return config
+
+
+class StreamToLogger:
+    def __init__(self, level="INFO"):
+        self._level = level
+
+    def write(self, buffer):
+        for line in buffer.rstrip().splitlines():
+            logger.opt(depth=1).log(self._level, line.rstrip())
+
+    def flush(self):
+        pass
 
 
 if __name__ == "__main__":
