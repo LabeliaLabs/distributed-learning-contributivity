@@ -81,7 +81,7 @@ For a start we made the following choices:
   
 ### Using the code files
 
-- Define your mock scenario(s) in `config.yml` by changing the values of the suggested parameters of the custom scenario (you can browse more available parameters in section [Config file parameters](#config-file-parameters) below). For example:
+- Define your mock scenario(s) in `config.yml` by changing the values of the suggested parameters of the 2 example scenarios (you can browse more available parameters in section [Config file parameters](#config-file-parameters) below). For example:
     ```yaml
     experiment_name: my_custom_experiment
     n_repeats: 5
@@ -91,8 +91,7 @@ For a start we made the following choices:
            amounts_per_partner: 
               - [0.4, 0.3, 0.3] 
            samples_split_option: 
-             - 'random'
-             - 'stratified'
+             - [[7, 'shared'], [6, 'shared'], [2, 'specific']]
            aggregation_weighting: 
              - 'data_volume' 
              - 'uniform'
@@ -119,10 +118,9 @@ For a start we made the following choices:
            minibatch_count: 
              - 20
     ```
-- In `scenario_params_list`, enter a list of sets of scenario(s). Each set must have only one `partners_count` and length of `amout_per_partners` and `corrupted_datasets` must match the `partner_counts`. If a list of parameters is specified, e.g. like in `agregation_weighting` above, all possible combinations of parameters will be processed.
+- Under `scenario_params_list`, enter a list of sets of scenario(s). Each set must have only one `partners_count` value. The length of `amout_per_partners`, `corrupted_datasets` (and `samples_split_option` when the advanced definition is used) must match the `partner_counts`. If for a given parameter multiple values are specified, e.g. like for `samples_split_option` and `agregation_weighting` in the example above, all possible combinations of parameters will be assembled as separate scenarios and run.
 - Then execute `main.py -f config.yml`
-- If several values are specified, e.g. like in `agregation_weighting` above, all possible combinations of parameters will be processed.
-- A `results.csv` file will be generated in a new folder for your experiment under `/experiments`. You can read this raw `results.csv` file or use the `analyse_results.ipynb` notebook to quickly generate figures.
+- A `results.csv` file will be generated in a new folder for your experiment under `/experiments/<your_experiment>`. You can read this raw `results.csv` file or use the `analyse_results.ipynb` generated notebook to quickly generate figures.
 
 ### Config file parameters
 
@@ -150,20 +148,16 @@ Example: `partners_count: 4`
 Fractions of the original dataset each partner receives to mock a collaborative ML scenario where each partner provides data for the ML training.  
 Example: `amounts_per_partner: [0.3, 0.3, 0.1, 0.3]`
 
-`samples_split_option`: `random` (default) or `stratified`  
+`samples_split_option`: `'random'` (default), `'stratified'` or `[[nb of clusters (int), 'shared' or 'specific']]`   
 How the original dataset data samples are split among partners:
 
-- `random`: the dataset is shuffled and partners receive data samples selected randomly
-- `stratified`: the dataset is stratified per class and each partner receives certain classes only
-
-`advanced_split`: `[[nb of clusters (int), 'shared' or 'specific']]`  
-In certain cases it might be interesting to split the dataset among partners in a more elaborate way. For that we consider the data samples from the initial dataset as split in clusters, defined by their label/class.
-It is possible to configure the `advanced_split` parameter by indicating, for each partner in sequence, the following 2 elements:
-
-- `nb of clusters (int)`: the given partner will receive data samples covering this number of different clusters (clusters of data samples per labels/classes) 
-- `'shared'` or `'specific'`:
-  - `'shared'`: all partners with option `'shared'` receive data samples picked from clusters they share data samples from
-  - `'specific'`: each partner with option `'specific'` receives data samples picked from cluster(s) it is the only one to receive from
+- `'random'`: the dataset is shuffled and partners receive data samples selected randomly
+- `'stratified'`: the dataset is stratified per class and each partner receives certain classes only
+- `[[nb of clusters (int), 'shared' or 'specific']]`: in certain cases it might be interesting to split the dataset among partners in a more elaborate way. For that we consider the data samples from the initial dataset as split in clusters per data labels. The advanced split is configured by indicating, for each partner in sequence, the following 2 elements:
+  - `nb of clusters (int)`: the given partner will receive data samples covering this number of different clusters (clusters of data samples per labels/classes) 
+  - `'shared'` or `'specific'`:
+    - `'shared'`: all partners with option `'shared'` receive data samples picked from clusters they share data samples from
+    - `'specific'`: each partner with option `'specific'` receives data samples picked from cluster(s) it is the only one to receive from
 
 Example: `[[7, 'shared'], [6, 'shared'], [2, 'specific'], [1, 'specific']]`
 
@@ -178,14 +172,14 @@ Example: `[not_corrupted, not_corrupted, not_corrupted, shuffled]`
 
 ##### Configuration of the distributed learning approach
 
-`aggregation_weighting`: `uniform` (default), `data_volume` or `local_score`  
+`aggregation_weighting`: `'uniform'` (default), `'data_volume'` or `'local_score'`  
 After a training iteration over a given mini-batch, how individual models of each partner are aggregated:
 
-- `uniform`: simple average (non-weighted)
-- `data_volume`: average weighted with per the amounts of data of partners (number of data samples)
-- `local_score`: average weighted with the performance (on a central validation set) of the individual models
+- `'uniform'`: simple average (non-weighted)
+- `'data_volume'`: average weighted with per the amounts of data of partners (number of data samples)
+- `'local_score'`: average weighted with the performance (on a central validation set) of the individual models
  
-`single_partner_test_mode`: `global` (default) or `local`  
+`single_partner_test_mode`: `'global'` (default) or `'local'`  
 When training a model on a single partner (this is needed in certain contributivity measurement approaches), defines if the final performance is tested on the central testset or on the partner's local testset. Note: a train-test split is performed on the original dataset, forming a central testset; this testset is also split over each partner (randomly) forming local testsets.  
 
 `epoch_count`: `int` (default: `40`)  
