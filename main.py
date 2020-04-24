@@ -25,8 +25,8 @@ import argparse
 
 DEFAULT_CONFIG_FILE = "config.yml"
 
-class StreamToLogger:
 
+class StreamToLogger:
     def __init__(self, level="INFO"):
         self._level = level
 
@@ -53,8 +53,12 @@ def main():
         n_repeats = config["n_repeats"]
 
         # Move log files to experiment folder
-        move_log_file_to_experiment_folder(info_logger_id, experiment_path, constants.INFO_LOGGING_FILE_NAME)
-        move_log_file_to_experiment_folder(info_debug_id, experiment_path, constants.DEBUG_LOGGING_FILE_NAME)
+        move_log_file_to_experiment_folder(
+            info_logger_id, experiment_path, constants.INFO_LOGGING_FILE_NAME
+        )
+        move_log_file_to_experiment_folder(
+            info_debug_id, experiment_path, constants.DEBUG_LOGGING_FILE_NAME
+        )
 
         # GPU config
         init_GPU_config()
@@ -90,14 +94,15 @@ def main():
 
     return 0
 
+
 def init_logger():
     logger.remove()
     # Forward all logging to standart output
-    logger.add(sys.__stdout__, level='DEBUG')
+    logger.add(sys.__stdout__, level="DEBUG")
     stream = StreamToLogger()
 
-    info_logger_id = logger.add(constants.INFO_LOGGING_FILE_NAME, level='INFO')
-    info_debug_id = logger.add(constants.DEBUG_LOGGING_FILE_NAME, level='DEBUG')
+    info_logger_id = logger.add(constants.INFO_LOGGING_FILE_NAME, level="INFO")
+    info_debug_id = logger.add(constants.DEBUG_LOGGING_FILE_NAME, level="DEBUG")
     return stream, info_logger_id, info_debug_id
 
 
@@ -150,6 +155,7 @@ def run_scenario(current_scenario):
 
     return 0
 
+
 def get_config_from_file():
     parser = argparse.ArgumentParser()
     parser.add_argument("-f", "--file", help="input config file")
@@ -165,6 +171,7 @@ def get_config_from_file():
     config = utils.init_result_folder(config_filepath, config)
 
     return config
+
 
 if __name__ == "__main__":
     main()
