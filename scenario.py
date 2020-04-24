@@ -23,6 +23,7 @@ class Scenario:
         # Identify and get a dataset for running experiments
         self.dataset_name = "MNIST"
         (x_train, y_train), (x_test, y_test) = mnist.load_data()
+        self.nb_samples_used = len(x_train)
 
         # The train set has to be split into a train set and a validation set for early stopping
         self.x_train, self.x_val, self.y_train, self.y_val = train_test_split(
@@ -295,7 +296,7 @@ class Scenario:
         # print(dict_shared)  # DEBUG
 
         # Compute the data amount limiting factor
-        resize_factor = 1
+        resize_factor_specific = 1
 
         # For partners getting data samples from specific clusters...
         # ... compare the nb of available samples vs. the nb of samples initially configured
@@ -305,10 +306,10 @@ class Scenario:
             dict_specific[p.id]["nb_available_samples"] = count_available
             dict_specific[p.id]["nb_samples_configured"] = count_initial_config
             ratio = count_available / count_initial_config
-            resize_factor = min(resize_factor, ratio)
+            resize_factor_specific = min(resize_factor_specific, ratio)
 
         # print(dict_specific)  # DEBUG
-        # print("resize_factor after specific: ", resize_factor)  # DEBUG
+        # print("resize_factor_specific after specific: ", resize_factor_specific)  # DEBUG
 
         # For each partner getting data samples from shared clusters:
         # ... compute the nb of samples initially configured and resize it,
@@ -316,7 +317,7 @@ class Scenario:
         nb_samples_needed_per_cluster = dict.fromkeys(shared_clusters, 0)
         # print(nb_samples_needed_per_cluster)  # DEBUG
         for p in partners_with_shared_clusters:
-            initial_amount_resized = int(amounts_per_partner[p.id] * len(y_train) * resize_factor)
+            initial_amount_resized = int(amounts_per_partner[p.id] * len(y_train) * resize_factor_specific)
             initial_amount_resized_per_cluster = int(initial_amount_resized / p.cluster_count)
             dict_shared[p.id]["nb_samples_configured_resized"] = initial_amount_resized
             dict_shared[p.id]["nb_samples_configured_resized_per_cluster"] = initial_amount_resized_per_cluster
@@ -327,14 +328,14 @@ class Scenario:
         # print(nb_samples_needed_per_cluster)  # DEBUG
 
         # Find if a cluster is requested more samples than it got, and if yes by which factor
-        bigger_need = 1
+        resize_factor_shared = 1
         for cl in nb_samples_needed_per_cluster:
             # print(nb_samples_needed_per_cluster)  # DEBUG
             # print(count_per_cluster)  # DEBUG
-            bigger_need = min(bigger_need, count_per_cluster[cl] / nb_samples_needed_per_cluster[cl])
+            resize_factor_shared = min(resize_factor_shared, count_per_cluster[cl] / nb_samples_needed_per_cluster[cl])
 
         # Compute the final resize factor
-        final_resize_factor = resize_factor * bigger_need
+        final_resize_factor = resize_factor_specific * resize_factor_shared
         # print("final_resize_factor: ", final_resize_factor)  # DEBUG
 
         # Size correctly each partner's subset. For each partner:
@@ -354,6 +355,8 @@ class Scenario:
         total_nb_samples = sum(final_nb_samples)
         final_relative_nb_samples = [round(partner_nb_samples / total_nb_samples, 2) for partner_nb_samples in
                                      final_nb_samples]
+
+        self.nb_samples_used = total_nb_samples
         # print(dict_specific)  # DEBUG
         # print(dict_shared)  # DEBUG
         print(final_nb_samples)  # DEBUG
@@ -486,6 +489,8 @@ class Scenario:
         # Check coherence of number of mini-batches versus smaller partner
         assert self.minibatch_count <= (min(self.amounts_per_partner) * len(x_train))
 
+        self.nb_samples_used = sum([len(p.x_train) for p in self.partners_list])
+
         return 0
 
     def plot_data_distribution(self):
@@ -570,6 +575,7 @@ class Scenario:
                 dict_results["short_scenario_name"] = self.short_scenario_name
                 dict_results["minibatch_count"] = self.minibatch_count
                 dict_results["aggregation_weighting"] = self.aggregation_weighting
+                dict_results["nb_samples_used"] = self.nb_samples_used
 
                 # Contributivity data
                 dict_results["contributivity_method"] = contrib.name
