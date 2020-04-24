@@ -1,21 +1,35 @@
 experiment_name: simple_16
 n_repeats: 10
 scenario_params_list:
- partners_count: 
+ - partners_count: 
       - 3
-      - 2
- amounts_per_partner: 
+   amounts_per_partner: 
       - [0.4, 0.3, 0.3] 
-      - [0.5, 0.5]
- samples_split_option: 
+   samples_split_option: 
      - 'random'
      - 'stratified'
- aggregation_weighting: 
+   aggregation_weighting: 
      - 'data_volume' 
      - 'uniform'
- epoch_count: 
+   epoch_count: 
      - 38
- methods:
+   methods:
      - ["Shapley values", "Independant scores", "TMCS"]
- minibatch_count: 
+   minibatch_count: 
+     - 20
+ - partners_count: 
+     - 2
+   amounts_per_partner: 
+     - [0.5, 0.5]
+   samples_split_option: 
+     - 'random'
+     - 'stratified'
+   aggregation_weighting: 
+     - 'data_volume' 
+     - 'uniform'
+   epoch_count: 
+     - 38
+   methods:
+     - ["Shapley values", "Independant scores", "TMCS"]
+   minibatch_count: 
      - 20
