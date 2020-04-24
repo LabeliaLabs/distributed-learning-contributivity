@@ -11,7 +11,7 @@ import matplotlib.pyplot as plt
 import uuid
 import pandas as pd
 from loguru import logger
-from operator import itemgetter
+import operator
 import random
 
 import constants
@@ -42,9 +42,9 @@ class Scenario:
         # List of contributivity measures selected and computed in the scenario
         self.contributivity_list = []
 
-        # -------------------------------------
-        # Definition of collaborative scenarios
-        # -------------------------------------
+        # --------------------------------------
+        #  Definition of collaborative scenarios
+        # --------------------------------------
 
         # partners mock different partners in a collaborative data science project
         # For defining the number of partners
@@ -62,12 +62,6 @@ class Scenario:
             self.samples_split_option = params["samples_split_option"]
         else:
             self.samples_split_option = "random"
-        if "advanced_split" in params:
-            self.is_advanced_split = True
-            self.advanced_split = params["advanced_split"]
-        else:
-            self.is_advanced_split = False
-            self.advanced_split = "No advanced split provided"
 
         # For configuring if the data of the partners are corrupted or not (useful for testing contributivity measures)
         if "corrupted_datasets" in params:
@@ -79,7 +73,8 @@ class Scenario:
         #  Configuration of the distributed learning approach
         # ---------------------------------------------------
 
-        # When training on a single partner, the test set can be either the local partner test set or the global test set
+        # When training on a single partner,
+        # the test set can be either the local partner test set or the global test set
         if "single_partner_test_mode" in params:
             self.single_partner_test_mode = params[
                 "single_partner_test_mode"
@@ -169,7 +164,7 @@ class Scenario:
         now = datetime.datetime.now()
         now_str = now.strftime("%Y-%m-%d_%Hh%M")
         self.scenario_name = (
-                self.samples_split_option
+                str(self.samples_split_option)
                 + "_"
                 + str(self.partners_count)
                 + "_"
@@ -187,9 +182,7 @@ class Scenario:
         )
 
         self.short_scenario_name = (
-                self.samples_split_option
-                + " "
-                + str(self.partners_count)
+                str(self.partners_count)
                 + " "
                 + str(self.amounts_per_partner)
         )
@@ -205,9 +198,7 @@ class Scenario:
         # Describe scenario
         print("\n### Description of data scenario configured:")
         print("- Number of partners defined:", self.partners_count)
-        print("- Data distribution scenario chosen:")
-        print("   - Simple split option:", self.samples_split_option)
-        print("   - Advanced split:", self.advanced_split)
+        print("- Data distribution scenario chosen:", self.samples_split_option)
         print("- Test data distribution scenario chosen:", self.single_partner_test_mode)
         print("- Weighting option:", self.aggregation_weighting)
         print(
@@ -230,6 +221,10 @@ class Scenario:
 
         self.contributivity_list.append(contributivity)
 
+    def instantiate_scenario_partners(self):
+
+        self.partners_list = [Partner(i) for i in range(self.partners_count)]
+
     def split_data_advanced(self):
         """Advanced split: Populates the partners with their train and test data (not pre-processed)"""
 
@@ -237,48 +232,65 @@ class Scenario:
         y_train = self.y_train
         x_test = self.x_test
         y_test = self.y_test
+        partners_list = self.partners_list
         amounts_per_partner = self.amounts_per_partner
-        advanced_split = self.advanced_split
+        advanced_split_option = self.samples_split_option
 
         # Compose the lists of partners with data samples from shared clusters and those with specific clusters
-        shared = [(idx, x[0]) for idx, x in enumerate(advanced_split) if x[1] == 'shared']
-        specific = [(idx, x[0]) for idx, x in enumerate(advanced_split) if x[1] == 'specific']
+        for p in partners_list:
+            p.cluster_count = int(advanced_split_option[p.id][0])
+            p.cluster_split_option = advanced_split_option[p.id][1]
 
-        # Compose the list of different labels/classes in the dataset
-        classes = list(set(y_train))
+        partners_with_shared_clusters = [p for p in partners_list if p.cluster_split_option == 'shared']
+        partners_with_specific_clusters = [p for p in partners_list if p.cluster_split_option == 'specific']
+
+        # Compose the list of different labels in the dataset
+        labels = list(set(y_train))
         random.seed(42)
-        random.shuffle(classes)
+        random.shuffle(labels)
 
         # Check coherence of the split option:
-        nb_diff_classes = len(classes)
-        assert sum([x[1] for x in specific]) + max([x[1] for x in shared]) <= nb_diff_classes
+        nb_diff_labels = len(labels)
+        specific_clusters_count = sum([p.cluster_count for p in partners_with_specific_clusters])
+        if partners_with_shared_clusters:
+            shared_clusters_count = max([p.cluster_count for p in partners_with_shared_clusters])
+        else:
+            shared_clusters_count = 0
+        assert specific_clusters_count + shared_clusters_count <= nb_diff_labels
 
-        # Stratify the dataset per labels/classes
-        x_train_for_cluster, y_train_for_cluster, count_available_per_cluster = {}, {}, {}
-        for label in classes:
+        # Stratify the dataset into clusters per labels
+        x_train_for_cluster, y_train_for_cluster, count_per_cluster = {}, {}, {}
+        for label in labels:
             idx_in_full_trainset = np.where(y_train == label)
             x_train_for_cluster[label] = x_train[idx_in_full_trainset]
             y_train_for_cluster[label] = y_train[idx_in_full_trainset]
-            count_available_per_cluster[label] = len(y_train_for_cluster[label])
+            count_per_cluster[label] = len(y_train_for_cluster[label])
 
         # Sort partners per nb of different clusters in descending order
-        specific.sort(key=itemgetter(1), reverse=True)
-        shared.sort(key=itemgetter(1), reverse=True)
+        partners_with_shared_clusters = sorted(
+            partners_with_shared_clusters,
+            key=operator.attrgetter("cluster_count"),
+            reverse=True,
+        )
+        partners_with_specific_clusters = sorted(
+            partners_with_specific_clusters,
+            key=operator.attrgetter("cluster_count"),
+            reverse=True,
+        )
 
         # Initialize dict for storing which partners pick from which clusters
         dict_specific, dict_shared = {}, {}
 
-        # First, partners getting data samples from clusters they don't share
-        position = 0
-        for x in specific:
-            dict_specific[x[0]] = {"clusters_list": classes[position:position + x[1]]}
-            position += x[1]
+        # First, partners getting data samples from specific clusters (clusters they don't share with other partners)
+        index = 0
+        for p in partners_with_specific_clusters:
+            dict_specific[p.id] = {"clusters_list": labels[index:index + p.cluster_count]}
+            index += p.cluster_count
 
         # Second, partners getting data samples from shared clusters
-        nb_shared_clusters = max([x[1] for x in shared])
-        shared_clusters = classes[position:position + nb_shared_clusters]
-        for x in shared:
-            dict_shared[x[0]] = {"clusters_list": random.sample(shared_clusters, k=x[1])}
+        shared_clusters = labels[index:index + shared_clusters_count]
+        for p in partners_with_shared_clusters:
+            dict_shared[p.id] = {"clusters_list": random.sample(shared_clusters, k=p.cluster_count)}
 
         # print(shared_clusters)  # DEBUG
         # print(dict_specific)  # DEBUG
@@ -287,14 +299,14 @@ class Scenario:
         # Compute the data amount limiting factor
         resize_factor = 1
 
-        # For partners getting data samples from clusters they don't share
+        # For partners getting data samples from specific clusters...
         # ... compare the nb of available samples vs. the nb of samples initially configured
-        for x in specific:
-            count_available = sum([count_available_per_cluster[cl] for cl in dict_specific[x[0]]["clusters_list"]])
-            count_initialconfig = int(amounts_per_partner[x[0]] * len(y_train))
-            dict_specific[x[0]]["nb_available_samples"] = count_available
-            dict_specific[x[0]]["nb_samples_configured"] = count_initialconfig
-            ratio = count_available / count_initialconfig
+        for p in partners_with_specific_clusters:
+            count_available = sum([count_per_cluster[cl] for cl in dict_specific[p.id]["clusters_list"]])
+            count_initial_config = int(amounts_per_partner[p.id] * len(y_train))
+            dict_specific[p.id]["nb_available_samples"] = count_available
+            dict_specific[p.id]["nb_samples_configured"] = count_initial_config
+            ratio = count_available / count_initial_config
             resize_factor = min(resize_factor, ratio)
 
         # print(dict_specific)  # DEBUG
@@ -305,13 +317,13 @@ class Scenario:
         # ... then sum per cluster how many samples are needed
         nb_samples_needed_per_cluster = dict.fromkeys(shared_clusters, 0)
         # print(nb_samples_needed_per_cluster)  # DEBUG
-        for x in shared:
-            count_initialconfig_resized = int(amounts_per_partner[x[0]] * len(y_train) * resize_factor)
-            count_initialconfig_resized_per_cluster = int(count_initialconfig_resized / x[1])
-            dict_shared[x[0]]["nb_samples_configured_resized"] = count_initialconfig_resized
-            dict_shared[x[0]]["nb_samples_configured_resized_per_cluster"] = count_initialconfig_resized_per_cluster
-            for cl in dict_shared[x[0]]["clusters_list"]:
-                nb_samples_needed_per_cluster[cl] += count_initialconfig_resized_per_cluster
+        for p in partners_with_shared_clusters:
+            initial_amount_resized = int(amounts_per_partner[p.id] * len(y_train) * resize_factor)
+            initial_amount_resized_per_cluster = int(initial_amount_resized / p.cluster_count)
+            dict_shared[p.id]["nb_samples_configured_resized"] = initial_amount_resized
+            dict_shared[p.id]["nb_samples_configured_resized_per_cluster"] = initial_amount_resized_per_cluster
+            for cl in dict_shared[p.id]["clusters_list"]:
+                nb_samples_needed_per_cluster[cl] += initial_amount_resized_per_cluster
 
         # print(dict_shared)  # DEBUG
         # print(nb_samples_needed_per_cluster)  # DEBUG
@@ -320,8 +332,8 @@ class Scenario:
         bigger_need = 1
         for cl in nb_samples_needed_per_cluster:
             # print(nb_samples_needed_per_cluster)  # DEBUG
-            # print(count_available_per_cluster)  # DEBUG
-            bigger_need = min(bigger_need, count_available_per_cluster[cl] / nb_samples_needed_per_cluster[cl])
+            # print(count_per_cluster)  # DEBUG
+            bigger_need = min(bigger_need, count_per_cluster[cl] / nb_samples_needed_per_cluster[cl])
 
         # Compute the final resize factor
         final_resize_factor = resize_factor * bigger_need
@@ -329,88 +341,65 @@ class Scenario:
 
         # Size correctly each partner's subset. For each partner:
         final_nb_samples = [None] * self.partners_count
-        for x in specific:
-            nb_samples = int(amounts_per_partner[x[0]] * len(y_train) * final_resize_factor)
-            dict_specific[x[0]]["final_nb_samples"] = nb_samples
-            final_nb_samples[x[0]] = nb_samples
-        for x in shared:
-            nb_samples = int(amounts_per_partner[x[0]] * len(y_train) * final_resize_factor)
-            dict_shared[x[0]]["final_nb_samples"] = nb_samples
-            final_nb_samples[x[0]] = nb_samples
-            dict_shared[x[0]]["final_nb_samples_p_cluster"] = int(dict_shared[x[0]]["final_nb_samples"] / x[1])
+        for p in partners_with_specific_clusters:
+            nb_samples = int(amounts_per_partner[p.id] * len(y_train) * final_resize_factor)
+            dict_specific[p.id]["final_nb_samples"] = nb_samples
+            final_nb_samples[p.id] = nb_samples
+            dict_specific[p.id]["final_nb_samples_p_cluster"] = int(
+                dict_specific[p.id]["final_nb_samples"] / p.cluster_count)
+        for p in partners_with_shared_clusters:
+            nb_samples = int(amounts_per_partner[p.id] * len(y_train) * final_resize_factor)
+            dict_shared[p.id]["final_nb_samples"] = nb_samples
+            final_nb_samples[p.id] = nb_samples
+            dict_shared[p.id]["final_nb_samples_p_cluster"] = int(
+                dict_shared[p.id]["final_nb_samples"] / p.cluster_count)
         total_nb_samples = sum(final_nb_samples)
-        final_relative_nb_samples = [round(x / total_nb_samples, 2) for x in final_nb_samples]
+        final_relative_nb_samples = [round(partner_nb_samples / total_nb_samples, 2) for partner_nb_samples in
+                                     final_nb_samples]
         # print(dict_specific)  # DEBUG
         # print(dict_shared)  # DEBUG
         # print(final_nb_samples)  # DEBUG
         # print(final_relative_nb_samples)  # DEBUG
 
-        # Partners receive their subsets and Partner objects are instanciated
+        # Partners receive their subsets and Partner objects are instantiated
 
-        for partner in specific:
+        for p in partners_with_specific_clusters:
             list_arrays_x, list_arrays_y = [], []
-            for cl in dict_specific[partner[0]]["clusters_list"]:
-                list_arrays_x.append(x_train_for_cluster[cl])
-                list_arrays_y.append(y_train_for_cluster[cl])
+            for cl in dict_specific[p.id]["clusters_list"]:
+                list_arrays_x.append(x_train_for_cluster[cl][:dict_specific[p.id]["final_nb_samples_p_cluster"]])
+                list_arrays_y.append(y_train_for_cluster[cl][:dict_specific[p.id]["final_nb_samples_p_cluster"]])
+            p.x_train = np.concatenate(list_arrays_x)
+            p.y_train = np.concatenate(list_arrays_y)
+            p.x_test = x_test
+            p.y_test = y_test
+            # print(p_y_train)  # DEBUG
 
-            concat_arrays_x = np.concatenate(list_arrays_x)
-            concat_arrays_y = np.concatenate(list_arrays_y)
-            partner_x_train = concat_arrays_x[:dict_specific[partner[0]]["final_nb_samples"]]
-            partner_y_train = concat_arrays_y[:dict_specific[partner[0]]["final_nb_samples"]]
-
-            # print(partner_y_train)  # DEBUG
-
-            partner = Partner(
-                partner_x_train,
-                x_test,
-                partner_y_train,
-                y_test,
-                constants.DEFAULT_BATCH_SIZE,
-                constants.DEFAULT_BATCH_SIZE,
-                str(partner[0]),
-            )
-            self.partners_list.append(partner)
-
-        for partner in shared:
+        for p in partners_with_shared_clusters:
             list_arrays_x, list_arrays_y = [], []
-            for cl in dict_shared[partner[0]]["clusters_list"]:
-                list_arrays_x.append(x_train_for_cluster[cl][:dict_shared[partner[0]]["final_nb_samples_p_cluster"]])
-                list_arrays_y.append(y_train_for_cluster[cl][:dict_shared[partner[0]]["final_nb_samples_p_cluster"]])
-            partner_x_train = np.concatenate(list_arrays_x)
-            partner_y_train = np.concatenate(list_arrays_y)
+            for cl in dict_shared[p.id]["clusters_list"]:
+                list_arrays_x.append(x_train_for_cluster[cl][:dict_shared[p.id]["final_nb_samples_p_cluster"]])
+                list_arrays_y.append(y_train_for_cluster[cl][:dict_shared[p.id]["final_nb_samples_p_cluster"]])
+            p.x_train = np.concatenate(list_arrays_x)
+            p.y_train = np.concatenate(list_arrays_y)
+            p.x_test = x_test
+            p.y_test = y_test
+            # print(p_y_train)  # DEBUG
 
-            # print(partner_y_train)  # DEBUG
-
-            partner = Partner(
-                partner_x_train,
-                x_test,
-                partner_y_train,
-                y_test,
-                constants.DEFAULT_BATCH_SIZE,
-                constants.DEFAULT_BATCH_SIZE,
-                str(partner[0]),
-            )
-            self.partners_list.append(partner)
-
-        # Check coherence of partners_list versus partners_count
-        assert len(self.partners_list) == self.partners_count
-
-        # Check coherence of number of mini-batches versus smaller partner
+        # Check coherence of number of mini-batches versus partner with small dataset
         assert self.minibatch_count <= min([len(p.x_train) for p in self.partners_list])
 
         # Print for controlling
         print("\n### Splitting data among partners:")
-        if self.is_advanced_split:
+        if isinstance(self.samples_split_option, list):
             print("Advanced split performed.")
             print("- Partners' relative nb of samples: " + str(final_relative_nb_samples))
             print("  (versus initially configured: " + str(amounts_per_partner))
         else:
             print("Simple split performed.")
         for partner in self.partners_list:
-            print("- Partner #" + str(partner.partner_id) + ":")
+            print("- Partner #" + str(partner.id) + ":")
             print("  - Number of samples: " + str(len(partner.x_train)) + " train samples")
-            print("  - y_train first 10 values: " + str(partner.y_train[:10]))
-            print("  - y_train last 10 values: " + str(partner.y_train[-10:]))
+            print("  - y_train unique values: " + str(set(partner.y_train)))
 
         return 0
 
@@ -420,8 +409,6 @@ class Scenario:
         # Fetch parameters of scenario
         x_train = self.x_train
         y_train = self.y_train
-        x_val = self.x_val
-        y_val = self.y_val
         x_test = self.x_test
         y_test = self.y_test
 
@@ -439,7 +426,7 @@ class Scenario:
         splitting_indices[0] = self.amounts_per_partner[0]
         for i in range(self.partners_count - 2):
             splitting_indices[i + 1] = (
-                splitting_indices[i] + self.amounts_per_partner[i + 1]
+                    splitting_indices[i] + self.amounts_per_partner[i + 1]
             )
         splitting_indices_train = (splitting_indices * len(y_train)).astype(int)
         splitting_indices_test = (splitting_indices * len(y_test)).astype(int)
@@ -478,8 +465,9 @@ class Scenario:
         test_idx_idx_list = np.split(test_idx, splitting_indices_test)
 
         # Populate partners
-        partner_id = 0
+        partner_idx = 0
         for train_idx, test_idx in zip(train_idx_idx_list, test_idx_idx_list):
+            current_partner = self.partners_list[partner_idx]
 
             # Train data
             x_partner_train = x_train[train_idx, :]
@@ -491,20 +479,11 @@ class Scenario:
             x_partner_test = x_test[test_idx]
             y_partner_test = y_test[test_idx]
 
-            partner = Partner(
-                x_partner_train,
-                x_partner_test,
-                y_partner_train,
-                y_partner_test,
-                constants.DEFAULT_BATCH_SIZE,
-                constants.DEFAULT_BATCH_SIZE,
-                str(partner_id),
-            )
-            self.partners_list.append(partner)
-            partner_id += 1
-
-        # Check coherence of partners_list versus partners_count
-        assert len(self.partners_list) == self.partners_count
+            current_partner.x_train = x_partner_train
+            current_partner.x_test = x_partner_test
+            current_partner.y_train = y_partner_train
+            current_partner.y_test = y_partner_test
+            partner_idx += 1
 
         # Check coherence of number of mini-batches versus smaller partner
         assert self.minibatch_count <= (min(self.amounts_per_partner) * len(x_train))
@@ -516,8 +495,6 @@ class Scenario:
         for i, partner in enumerate(self.partners_list):
 
             plt.subplot(self.partners_count, 1, i + 1)  # TODO share y axis
-            # print(partner.y_train) # VERBOSE
-            # data = np.argmax(partner.y_train, axis=1)
             data_count = np.bincount(partner.y_train)
 
             # Fill with 0
@@ -525,10 +502,11 @@ class Scenario:
                 data_count = np.append(data_count, 0)
 
             plt.bar(np.arange(0, 10), data_count)
-            plt.ylabel("partner " + str(i))
+            plt.ylabel("partner " + str(partner.id))
 
         plt.suptitle("Data distribution")
         plt.xlabel("Digits")
+        # plt.show()  # DEBUG
         plt.savefig(self.save_folder / "data_distribution.png")
 
     def compute_batch_sizes(self):
@@ -537,7 +515,7 @@ class Scenario:
         for p in self.partners_list:
             p.batch_size_multi = max(1, int(len(p.x_train) / (self.minibatch_count * self.fit_batches_count)))
             p.batch_size_single = max(1, int(len(p.x_train) / self.fit_batches_count))
-            print("- compute_batch_sizes(), partner #" + p.partner_id + ": ")  # DEBUG
+            print("- compute_batch_sizes(), partner #" + str(p.id) + ": ")  # DEBUG
             print("   batch_size_single: " + str(p.batch_size_single))  # DEBUG
             print("   batch_size_multi: " + str(p.batch_size_multi))  # DEBUG
 
@@ -549,23 +527,23 @@ class Scenario:
         out += "Number of data samples - test: " + str(len(self.x_test)) + "\n"
         out += "partners count: " + str(self.partners_count) + "\n"
         out += (
-            "Percentages of data samples per partner: " + str(self.amounts_per_partner) + "\n"
+                "Percentages of data samples per partner: " + str(self.amounts_per_partner) + "\n"
         )
         out += (
-            "random or stratified split of data samples: "
-            + self.samples_split_option
-            + "\n"
+                "random or stratified split of data samples: "
+                + str(self.samples_split_option)
+                + "\n"
         )
         out += (
-            "When training on a single partner, global or local testset: "
-            + self.single_partner_test_mode
-            + "\n"
+                "When training on a single partner, global or local testset: "
+                + self.single_partner_test_mode
+                + "\n"
         )
         out += "Number of epochs: " + str(self.epoch_count) + "\n"
         out += "Number of mini-batches: " + str(self.minibatch_count) + "\n"
         out += "Early stopping on? " + str(self.is_early_stopping) + "\n"
         out += (
-            "Test score of federated training: " + str(self.federated_test_score) + "\n"
+                "Test score of federated training: " + str(self.federated_test_score) + "\n"
         )
         out += "\n"
 
@@ -588,7 +566,6 @@ class Scenario:
             dict_results = {}
 
             for i in range(self.partners_count):
-
                 # Scenario data
                 dict_results["dataset_name"] = self.dataset_name
                 dict_results["train_data_samples_count"] = len(self.x_train)
@@ -596,8 +573,6 @@ class Scenario:
                 dict_results["partners_count"] = self.partners_count
                 dict_results["amounts_per_partner"] = self.amounts_per_partner
                 dict_results["samples_split_option"] = self.samples_split_option
-                dict_results["is_advanced_split"] = self.is_advanced_split
-                dict_results["advanced_split"] = self.advanced_split
                 dict_results["single_partner_test_mode"] = self.single_partner_test_mode
                 dict_results["epoch_count"] = self.epoch_count
                 dict_results["minibatch_count"] = self.minibatch_count

@@ -1,33 +1,43 @@
 experiment_name: simple_16
-n_repeats: 10
+n_repeats: 5
 scenario_params_list:
- - partners_count: 3
-   amounts_per_partner: [0.4, 0.3, 0.3]
-   samples_split_option: 'random'
-   aggregation_weighting: 'data_volume'
-   single_partner_test_mode: 'global'
-   epoch_count: 38
+ - partners_count: 
+      - 3
+   amounts_per_partner: 
+      - [0.4, 0.3, 0.3] 
+   samples_split_option: 
+     - 'random'
+     - 'stratified'
+   aggregation_weighting: 
+     - 'data_volume' 
+     - 'uniform'
+   epoch_count: 
+     - 38
    methods:
-    - "Shapley values"
-    - "Independent scores"
-    - "TMCS"
-   minibatch_count: 20
- - partners_count: 3
-   amounts_per_partner: [0.9, 0.05, 0.05]
-   samples_split_option: 'random'
-   aggregation_weighting: 'uniform'
-   single_partner_test_mode: 'global'
-   epoch_count: 38
-   minibatch_count: 20
+     - "Shapley values"
+     - "Independent scores"
+     - "TMCS"
+   minibatch_count: 
+     - 20
+   fit_batches_count:
+     - 8
+ - partners_count: 
+     - 2
+   amounts_per_partner: 
+     - [0.5, 0.5]
+   samples_split_option: 
+     - 'random'
+     - 'stratified'
+   aggregation_weighting: 
+     - 'data_volume' 
+     - 'uniform'
+   epoch_count: 
+     - 38
    methods:
-    - "Shapley values"
-    - "Independent scores"
-    - "TMCS"
- - partners_count: 2
-   amounts_per_partner: [0.9, 0.1]
-   samples_split_option: 'random'
-   aggregation_weighting: 'data_volume'
-   single_partner_test_mode: 'global'
-   epoch_count: 38
-   minibatch_count: 20
-   
+     - "Shapley values"
+     - "Independent scores"
+     - "TMCS"
+   minibatch_count: 
+     - 20
+   fit_batches_count:
+     - 8

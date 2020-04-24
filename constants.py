@@ -15,5 +15,8 @@ DEFAULT_BATCH_SIZE = 256
 DEFAULT_FIT_BATCHES_COUNT = 8
 PATIENCE = 4  # patience for early stopping
 
+# GPU
+GPU_MEMORY_LIMIT_MB = 4096
+
 # Contributivity methods names
 # TODO

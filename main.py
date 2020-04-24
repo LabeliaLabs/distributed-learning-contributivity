@@ -14,6 +14,7 @@ from loguru import logger
 import tensorflow as tf
 
 
+import constants
 import contributivity
 import fl_training
 import scenario
@@ -40,13 +41,25 @@ def main():
     config = utils.init_result_folder(config_filepath, config)
     experiment_path = config["experiment_path"]
 
-    scenario_params_list = config["scenario_params_list"]
+    scenario_params_list = utils.get_scenario_params_list(
+        config["scenario_params_list"])
     n_repeats = config["n_repeats"]
+    
+    print('Scenarii to process: ', )
+    for scenario_id, scenario_params in enumerate(scenario_params_list):
+        print('Scenario %i/%i' %(scenario_id+1, len(scenario_params_list)))
+        print(scenario_params)
 
     # GPU config
     gpus = tf.config.experimental.list_physical_devices("GPU")
     if gpus:
+        logger.info(f"Found GPU: {gpus[0].name}")
         tf.config.experimental.set_memory_growth(gpus[0], True)
+        tf.config.experimental.set_virtual_device_configuration(
+                gpus[0],
+                [tf.config.experimental.VirtualDeviceConfiguration(memory_limit=constants.GPU_MEMORY_LIMIT_MB)])
+    else:
+        logger.info("No GPU found")
 
     # Close open figures
     plt.close("all")
@@ -65,7 +78,8 @@ def main():
 
             current_scenario = scenario.Scenario(scenario_params, experiment_path)
             print(current_scenario.to_dataframe())
-
+            print('Scenario %i/%i' %(scenario_id+1, len(scenario_params_list)))
+            
             run_scenario(current_scenario)
 
             # Write results to CSV file
@@ -82,9 +96,10 @@ def main():
 
 def run_scenario(current_scenario):
 
+    current_scenario.instantiate_scenario_partners()
     # Split data according to scenario and then pre-process successively...
     # ... train data, early stopping validation data, test data
-    if current_scenario.is_advanced_split:
+    if isinstance(current_scenario.samples_split_option, list):
         current_scenario.split_data_advanced()
     else:
         current_scenario.split_data()

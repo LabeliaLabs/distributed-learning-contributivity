@@ -43,17 +43,17 @@ def preprocess_scenarios_data(scenario):
         )
 
         if scenario.corrupted_datasets[partner_index] == "corrupted":
-            print("   ... Corrupting data (offsetting labels) of partner #" + str(partner.partner_id))
+            print("   ... Corrupting data (offsetting labels) of partner #" + str(partner.id))
             partner.corrupt_labels()
         elif scenario.corrupted_datasets[partner_index] == "shuffled":
-            print("   ... Corrupting data (shuffling labels) of partner #" + str(partner.partner_id))
+            print("   ... Corrupting data (shuffling labels) of partner #" + str(partner.id))
             partner.shuffle_labels()
         elif scenario.corrupted_datasets[partner_index] == "not_corrupted":
             pass
         else:
             print("Unexpected label of corruption, not corruption performed!")
 
-        print("   Partner #" + str(partner.partner_id) + ": done.")
+        print("   Partner #" + str(partner.id) + ": done.")
 
     # Then the scenario central dataset of the scenario
     scenario.x_val = utils.preprocess_input(scenario.x_val)
@@ -71,7 +71,7 @@ def compute_test_score_for_single_partner(
 ):
     """Return the score on test data of a model trained on a single partner"""
 
-    print("\n## Training and evaluating model on partner with id #" + str(partner.partner_id))
+    print("\n## Training and evaluating model on partner with id #" + str(partner.id))
 
     # Initialize model
     model = utils.generate_new_cnn_model()
@@ -81,7 +81,7 @@ def compute_test_score_for_single_partner(
     if is_early_stopping :
         es = EarlyStopping(monitor='val_loss', mode='min', verbose=0, patience=constants.PATIENCE)
         cb.append(es)
-        
+
     # Train model
     print("- Training model...")
     history = model.fit(
@@ -234,8 +234,8 @@ def compute_test_score(
         )
 
     # Else, continue onto a federated learning procedure
-    partners_list = sorted(partners_list, key=operator.attrgetter("partner_id"))
-    print("\n## Training and evaluating model on partners with ids: " + ", ".join(["#"+p.partner_id for p in partners_list]))
+    partners_list = sorted(partners_list, key=operator.attrgetter("id"))
+    print("\n## Training and evaluating model on partners with ids: " + ", ".join(["#"+str(p.id) for p in partners_list]))
 
     # Initialize variables
     model_list, local_score_list = [None] * partners_count, [None] * partners_count
@@ -286,7 +286,7 @@ def compute_test_score(
                 partner_model = agg_model_for_iteration[partner_index]
 
                 # Train on partner local data set
-                print("#" + partner.partner_id, end =" ", flush=True)
+                print("#" + str(partner.id), end =" ", flush=True)
                 history = partner_model.fit(
                     minibatched_x_train[partner_index][minibatch_index],
                     minibatched_y_train[partner_index][minibatch_index],

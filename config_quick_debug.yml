@@ -1,14 +1,20 @@
 experiment_name: debug_config
 n_repeats: 1
 scenario_params_list:
- - partners_count: 4
-   amounts_per_partner: [0.4, 0.3, 0.2, 0.1]
-   samples_split_option: 'stratified'
-   advanced_split: [[7, 'shared'], [6, 'shared'], [2, 'specific'], [1, 'specific']]
-   aggregation_weighting: 'data_volume'
-   corrupted_datasets: [not_corrupted, not_corrupted, not_corrupted, not_corrupted]
-   minibatch_count: 20
-   fit_batches_count: 8
-   is_early_stopping: True
-   is_quick_demo: False
+ - partners_count: 
+    - 4
+   amounts_per_partner: 
+    - [0.4, 0.35, 0.15, 0.1]
+   samples_split_option: 
+    - [[7, 'shared'], [6, 'shared'], [2, 'specific'], [1, 'specific']]
+   aggregation_weighting: 
+    - 'local_score'
+   corrupted_datasets: 
+    - [not_corrupted, corrupted, not_corrupted, not_corrupted]
+    - [not_corrupted, not_corrupted, not_corrupted, not_corrupted]
+   fit_batches_count:
+    - 8
+   is_quick_demo: 
+    - True
    methods:
+    - ["Independent scores"]
