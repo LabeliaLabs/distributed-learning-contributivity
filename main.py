@@ -37,10 +37,8 @@ def main():
         config = get_config_from_file()
         scenario_params_list = utils.get_scenario_params_list(
             config["scenario_params_list"])
-        
-        n_repeats = config["n_repeats"]
+
         experiment_path = config["experiment_path"]
-        scenario_params_list = config["scenario_params_list"]
         n_repeats = config["n_repeats"]
         
         print('Scenarii to process: ', )
