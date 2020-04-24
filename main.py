@@ -14,6 +14,7 @@ from loguru import logger
 import tensorflow as tf
 
 
+import constants
 import contributivity
 import fl_training
 import scenario
@@ -46,7 +47,13 @@ def main():
     # GPU config
     gpus = tf.config.experimental.list_physical_devices("GPU")
     if gpus:
+        logger.info(f"Found GPU: {gpus[0].name}")
         tf.config.experimental.set_memory_growth(gpus[0], True)
+        tf.config.experimental.set_virtual_device_configuration(
+                gpus[0],
+                [tf.config.experimental.VirtualDeviceConfiguration(memory_limit=constants.GPU_MEMORY_LIMIT_MB)])
+    else:
+        logger.info("No GPU found")
 
     # Close open figures
     plt.close("all")
