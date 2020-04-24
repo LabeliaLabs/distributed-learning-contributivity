@@ -108,6 +108,8 @@ def get_scenario_params_list(config):
                 raise Exception("Length of corrupted_datasets does not match number of partners.")
         if add_ok:
             scenario_params_list.append(scenario)
+            
+    print('Number of scenario: ', len(scenario_params_list))
         
     return scenario_params_list
 

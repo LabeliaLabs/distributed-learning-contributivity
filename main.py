@@ -21,7 +21,7 @@ import scenario
 
 import argparse
 
-DEFAULT_CONFIG_FILE = "config.yml"
+DEFAULT_CONFIG_FILE = "config_quick_debug.yml"
 
 
 def main():
@@ -44,6 +44,11 @@ def main():
     scenario_params_list = utils.get_scenario_params_list(
         config["scenario_params_list"])
     n_repeats = config["n_repeats"]
+    
+    print('Scenarii to process: ', )
+    for ind, scenar in enumerate(scenario_params_list):
+        print('Scenario %i/%i' %(ind, len(scenario_params_list)))
+        print(scenar)
 
     # GPU config
     gpus = tf.config.experimental.list_physical_devices("GPU")
