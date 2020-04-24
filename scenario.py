@@ -122,7 +122,7 @@ class Scenario:
         ]
 
         # List of Contributivity methods runned by default if no method was given in the config file
-        DEFAULT_METHOD= "Independant scores"
+        DEFAULT_METHOD = "Independant scores"
 
         if "method" in params:
             if params["method"] in ALL_METHODS_LIST:
