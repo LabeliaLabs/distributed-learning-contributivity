@@ -13,7 +13,7 @@ scenario_params_list:
     - [not_corrupted, not_corrupted, corrupted]
    is_quick_demo: 
     - True
-   methods:
+   method:
     - "Independant scores"
     - "Independant scores"
 

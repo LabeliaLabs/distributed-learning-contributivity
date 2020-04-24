@@ -136,9 +136,9 @@ def run_scenario(current_scenario):
     current_scenario.federated_computation_time_sec = end - start
 
     contrib = contributivity.Contributivity(scenario=current_scenario)
-    contrib.compute_contributivity(current_scenario.methods, current_scenario)
+    contrib.compute_contributivity(current_scenario.method, current_scenario)
     current_scenario.append_contributivity(contrib)
-    print("\n## Evaluating contributivity with " + current_scenario.methods + ":")
+    print("\n## Evaluating contributivity with " + current_scenario.method + ":")
     print(contrib)
 
     # Save results to file

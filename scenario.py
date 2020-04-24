@@ -124,13 +124,13 @@ class Scenario:
         # List of Contributivity methods runned by default if no method was given in the config file
         DEFAULT_METHOD= "Independant scores"
 
-        if "methods" in params:
-            if params["methods"] in ALL_METHODS_LIST:
-                self.methods = params["methods"]
+        if "method" in params:
+            if params["method"] in ALL_METHODS_LIST:
+                self.method = params["method"]
             else:
-                raise Exception("Method [" + params["methods"] + "] is not in methods list.")
+                raise Exception("Method [" + params["method"] + "] is not in methods list.")
         else:
-            self.methods = DEFAULT_METHOD
+            self.method = DEFAULT_METHOD
 
         # -------------
         # Miscellaneous
