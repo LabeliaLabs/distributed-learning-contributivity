@@ -12,7 +12,8 @@ import numpy as np
 import utils
 from loguru import logger
 import tensorflow as tf
-
+import sys
+import contextlib
 
 import constants
 import contributivity
@@ -23,8 +24,29 @@ import argparse
 
 DEFAULT_CONFIG_FILE = "config.yml"
 
+class StreamToLogger:
+
+    def __init__(self, level="INFO"):
+        self._level = level
+
+    def write(self, buffer):
+        for line in buffer.rstrip().splitlines():
+            logger.opt(depth=1).log(self._level, line.rstrip())
+
+    def flush(self):
+        pass
+
 
 def main():
+
+    logger.remove()
+    logger.add(sys.__stdout__)
+    stream = StreamToLogger()
+
+    logger.add("experiment.log")
+
+    with contextlib.redirect_stdout(stream):
+        print("Standard output is sent to added handlers.")
 
     # Parse config file for scenarios to be experimented
     parser = argparse.ArgumentParser()
