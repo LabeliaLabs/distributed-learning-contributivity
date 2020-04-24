@@ -53,8 +53,8 @@ def main():
         n_repeats = config["n_repeats"]
 
         # Move log files to experiment folder
-        move_log_file_to_experiment_folder(info_logger_id, experiment_path)
-        move_log_file_to_experiment_folder(info_debug_id, experiment_path)
+        move_log_file_to_experiment_folder(info_logger_id, experiment_path, constants.INFO_LOGGING_FILE_NAME)
+        move_log_file_to_experiment_folder(info_debug_id, experiment_path, constants.DEBUG_LOGGING_FILE_NAME)
 
         # GPU config
         init_GPU_config()
@@ -113,10 +113,10 @@ def init_GPU_config():
         logger.info("No GPU found")
 
 
-def move_log_file_to_experiment_folder(logger_id, experiment_path):
+def move_log_file_to_experiment_folder(logger_id, experiment_path, filename):
     logger.remove(logger_id)
-    new_log_path =  experiment_path / constants.INFO_LOGGING_FILE_NAME
-    shutil.move(constants.INFO_LOGGING_FILE_NAME, new_log_path)
+    new_log_path = experiment_path / filename
+    shutil.move(filename, new_log_path)
     logger.add(new_log_path)
 
 
