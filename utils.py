@@ -93,11 +93,7 @@ def get_scenario_params_list(config):
 
     scenario_params_list = []
     
-<<<<<<< HEAD
-    for list_scenario in  config:
-=======
     for list_scenario in config:
->>>>>>> 6e50fe34a5659ce77d51cd19f527963a2b4de09d
         params_name = list_scenario.keys()
         params_list = list(list_scenario.values())
         
