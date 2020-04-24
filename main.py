@@ -41,8 +41,14 @@ def main():
     config = utils.init_result_folder(config_filepath, config)
     experiment_path = config["experiment_path"]
 
-    scenario_params_list = config["scenario_params_list"]
+    scenario_params_list = utils.get_scenario_params_list(
+        config["scenario_params_list"])
     n_repeats = config["n_repeats"]
+    
+    print('Scenarii to process: ', )
+    for scenario_id, scenario_params in enumerate(scenario_params_list):
+        print('Scenario %i/%i' %(scenario_id+1, len(scenario_params_list)))
+        print(scenario_params)
 
     # GPU config
     gpus = tf.config.experimental.list_physical_devices("GPU")
@@ -72,7 +78,8 @@ def main():
 
             current_scenario = scenario.Scenario(scenario_params, experiment_path)
             print(current_scenario.to_dataframe())
-
+            print('Scenario %i/%i' %(scenario_id+1, len(scenario_params_list)))
+            
             run_scenario(current_scenario)
 
             # Write results to CSV file

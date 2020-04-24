@@ -10,8 +10,8 @@ import os
 from pathlib import Path
 from loguru import logger
 from shutil import copyfile
+from itertools import product
 import datetime
-
 
 import keras
 from keras.models import Sequential
@@ -73,6 +73,44 @@ def load_cfg(yaml_filepath):
     logger.info(cfg)
 
     return cfg
+
+
+def get_scenario_params_list(config):
+    """
+    Create parameter list for each scenario from the config.
+    
+    Parameters
+    ----------
+    config : dict
+        Dictionary of parameters for experiement
+
+    Returns
+    -------
+    scenario_params_list : list
+        list of parameters for each scenario.
+
+    """
+
+    scenario_params_list = []
+    
+    for list_scenario in config:
+        params_name = list_scenario.keys()
+        params_list = list(list_scenario.values())
+        
+        for el in product(*params_list):
+            scenario = dict(zip(params_name, el))
+
+            if scenario['partners_count'] != len(scenario['amounts_per_partner']):
+                raise Exception("Length of amounts_per_node does not match number of partners.")
+                
+            if 'corrupted_datasets' in params_name:
+                if scenario['partners_count'] != len(scenario['corrupted_datasets']):
+                    raise Exception("Length of corrupted_datasets does not match number of partners.")
+
+            scenario_params_list.append(scenario)
+            
+    print('\nNumber of scenario(s) configured:', len(scenario_params_list))
+    return scenario_params_list
 
 
 def init_result_folder(yaml_filepath, cfg):
