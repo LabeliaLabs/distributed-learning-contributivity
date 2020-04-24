@@ -82,6 +82,7 @@ For a start we made the following choices:
 ### Using the code files
 
 - Define your mock scenario(s) in `config.yml` by changing the values of the suggested parameters of the 2 example scenarios (you can browse more available parameters in section [Config file parameters](#config-file-parameters) below). For example:
+
     ```yaml
     experiment_name: my_custom_experiment
     n_repeats: 5
@@ -101,6 +102,8 @@ For a start we made the following choices:
              - ["Shapley values", "Independant scores", "TMCS"]
            minibatch_count: 
              - 20
+           fit_batches_count:
+             - 8
          - partners_count: 
              - 2
            amounts_per_partner: 
@@ -117,7 +120,10 @@ For a start we made the following choices:
              - ["Shapley values", "Independant scores", "TMCS"]
            minibatch_count: 
              - 20
+           fit_batches_count:
+             - 8
     ```
+
 - Under `scenario_params_list`, enter a list of sets of scenario(s). Each set must have only one `partners_count` value. The length of `amout_per_partners`, `corrupted_datasets` (and `samples_split_option` when the advanced definition is used) must match the `partner_counts`. If for a given parameter multiple values are specified, e.g. like for `samples_split_option` and `agregation_weighting` in the example above, all possible combinations of parameters will be assembled as separate scenarios and run.
 - Then execute `main.py -f config.yml`
 - A `results.csv` file will be generated in a new folder for your experiment under `/experiments/<your_experiment>`. You can read this raw `results.csv` file or use the `analyse_results.ipynb` generated notebook to quickly generate figures.
@@ -170,7 +176,11 @@ Enables to artificially corrupt the data of one or several partners:
   
 Example: `[not_corrupted, not_corrupted, not_corrupted, shuffled]`
 
-##### Configuration of the distributed learning approach
+##### Configuration of the collaborative and distributed learning 
+
+There are several parameters influencing how the collaborative and distributed learning is done over the datasets of the partners. The following schema introduces certain definitions used in the below description of parameters:
+
+![Schema epochs mini-batches fit batches](./img/epoch_minibatch_fitbatch.png)
 
 `aggregation_weighting`: `'uniform'` (default), `'data_volume'` or `'local_score'`  
 After a training iteration over a given mini-batch, how individual models of each partner are aggregated:
