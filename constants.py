@@ -17,5 +17,9 @@ PATIENCE = 4  # patience for early stopping
 # GPU
 GPU_MEMORY_LIMIT_MB = 4096
 
+# Logging
+INFO_LOGGING_FILE_NAME = "info.log"
+DEBUG_LOGGING_FILE_NAME = "debug.log"
+
 # Contributivity methods names
 # TODO
