@@ -24,6 +24,7 @@ class Scenario:
         self.dataset_name = "MNIST"
         (x_train, y_train), (x_test, y_test) = mnist.load_data()
         self.nb_samples_used = len(x_train)
+        self.final_relative_nb_samples = []
 
         # The train set has to be split into a train set and a validation set for early stopping
         self.x_train, self.x_val, self.y_train, self.y_val = train_test_split(
@@ -259,12 +260,12 @@ class Scenario:
         assert specific_clusters_count + shared_clusters_count <= nb_diff_labels
 
         # Stratify the dataset into clusters per labels
-        x_train_for_cluster, y_train_for_cluster, count_per_cluster = {}, {}, {}
+        x_train_for_cluster, y_train_for_cluster, nb_samples_per_cluster = {}, {}, {}
         for label in labels:
             idx_in_full_trainset = np.where(y_train == label)
             x_train_for_cluster[label] = x_train[idx_in_full_trainset]
             y_train_for_cluster[label] = y_train[idx_in_full_trainset]
-            count_per_cluster[label] = len(y_train_for_cluster[label])
+            nb_samples_per_cluster[label] = len(y_train_for_cluster[label])
 
         # For each partner compose the list of clusters from which they will draw data samples
         index = 0
@@ -285,15 +286,15 @@ class Scenario:
         # ... compare the nb of available samples vs. the nb of samples initially configured
         resize_factor_specific = 1
         for p in partners_with_specific_clusters:
-            nb_available_samples = sum([count_per_cluster[cl] for cl in p.clusters_list])
-            nb_samples_configured = int(amounts_per_partner[p.id] * len(y_train))
-            ratio = nb_available_samples / nb_samples_configured
+            nb_available_samples = sum([nb_samples_per_cluster[cl] for cl in p.clusters_list])
+            nb_samples_requested = int(amounts_per_partner[p.id] * len(y_train))
+            ratio = nb_available_samples / nb_samples_requested
             resize_factor_specific = min(resize_factor_specific, ratio)
 
         # For each partner getting data samples from shared clusters:
         # ... compute the nb of samples initially configured and resize it,
         # ... then sum per cluster how many samples are needed.
-        # Then, find if a cluster is requested more samples than it got, and if yes by which factor
+        # Then, find if a cluster is requested more samples than it has, and if yes by which factor
         resize_factor_shared = 1
         nb_samples_needed_per_cluster = dict.fromkeys(shared_clusters, 0)
         for p in partners_with_shared_clusters:
@@ -302,7 +303,7 @@ class Scenario:
             for cl in p.clusters_list:
                 nb_samples_needed_per_cluster[cl] += initial_amount_resized_per_cluster
         for cl in nb_samples_needed_per_cluster:
-            resize_factor_shared = min(resize_factor_shared, count_per_cluster[cl] / nb_samples_needed_per_cluster[cl])
+            resize_factor_shared = min(resize_factor_shared, nb_samples_per_cluster[cl] / nb_samples_needed_per_cluster[cl])
 
         # Compute the final resize factor
         final_resize_factor = resize_factor_specific * resize_factor_shared
@@ -312,7 +313,7 @@ class Scenario:
             p.final_nb_samples = int(amounts_per_partner[p.id] * len(y_train) * final_resize_factor)
             p.final_nb_samples_p_cluster = int(p.final_nb_samples / p.cluster_count)
         self.nb_samples_used = sum([p.final_nb_samples for p in partners_list])
-        final_relative_nb_samples = [round(p.final_nb_samples / self.nb_samples_used, 2) for p in partners_list]
+        self.final_relative_nb_samples = [p.final_nb_samples / self.nb_samples_used for p in partners_list]
 
         # Partners receive their subsets
         shared_clusters_index = dict.fromkeys(shared_clusters, 0)
@@ -340,7 +341,7 @@ class Scenario:
         print("\n### Splitting data among partners:")
         print("Advanced split performed.")
         print("Nb of samples split amongst partners: ", str(self.nb_samples_used))
-        print("- Partners' relative nb of samples: " + str(final_relative_nb_samples))
+        print("- Partners' relative nb of samples: " + str([round(p, 2) for p in self.final_relative_nb_samples]))
         print("  (versus initially configured: " + str(amounts_per_partner))
         for partner in self.partners_list:
             print("- Partner #" + str(partner.id) + ": ", end="")
@@ -439,6 +440,7 @@ class Scenario:
         assert self.minibatch_count <= (min(self.amounts_per_partner) * len(x_train))
 
         self.nb_samples_used = sum([len(p.x_train) for p in self.partners_list])
+        self.final_relative_nb_samples = [p.final_nb_samples / self.nb_samples_used for p in self.partners_list]
 
         # Print for controlling
         print("\n### Splitting data among partners:")
@@ -522,6 +524,7 @@ class Scenario:
                 dict_results["train_data_samples_count"] = len(self.x_train)
                 dict_results["test_data_samples_count"] = len(self.x_test)
                 dict_results["nb_samples_used"] = self.nb_samples_used
+                dict_results["final_relative_nb_samples"] = self.final_relative_nb_samples
                 dict_results["partners_count"] = self.partners_count
                 dict_results["amounts_per_partner"] = self.amounts_per_partner
                 dict_results["samples_split_option"] = self.samples_split_option
