@@ -18,6 +18,9 @@ class Partner:
 
         self.cluster_count = int
         self.cluster_split_option = str
+        self.clusters_list = []
+        self.final_nb_samples = int
+        self.final_nb_samples_p_cluster = int
 
         self.x_train = None
         self.x_val = None
