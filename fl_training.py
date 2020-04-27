@@ -263,7 +263,9 @@ def compute_test_score(
         print("\n      Training on " + str(minibatch_count) + " mini-batches - val_accuracy per partner id:", end ="")
         for minibatch_index in range(minibatch_count):
 
-            print("\n      Mini-batch " + str(minibatch_index).zfill(2) + "/" + str(minibatch_count - 1), end =":   ", flush=True)
+            print("\n      Mini-batch " + str(minibatch_index).zfill(2) + "/" + str(minibatch_count - 1).zfill(2),
+                  end =":   ",
+                  flush=True)
             is_first_minibatch = minibatch_index == 0
 
             # Starting model for each partner is the aggregated model from the previous mini-batch iteration

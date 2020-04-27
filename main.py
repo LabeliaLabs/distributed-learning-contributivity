@@ -71,7 +71,7 @@ def main():
                 logger.info(scenario_params)
 
                 current_scenario = scenario.Scenario(scenario_params, experiment_path)
-                print(current_scenario.to_dataframe())
+                # print(current_scenario.to_dataframe())  # to be deleted?
                 print('Scenario %i/%i' %(scenario_id+1, len(scenario_params_list)))
 
                 run_scenario(current_scenario)
