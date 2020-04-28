@@ -120,9 +120,13 @@ def move_log_file_to_experiment_folder(logger_id, experiment_path, filename):
 
 def run_scenario(current_scenario):
 
+    current_scenario.instantiate_scenario_partners()
     # Split data according to scenario and then pre-process successively...
     # ... train data, early stopping validation data, test data
-    current_scenario.split_data()
+    if isinstance(current_scenario.samples_split_option, list):
+        current_scenario.split_data_advanced()
+    else:
+        current_scenario.split_data()
     current_scenario.plot_data_distribution()
     current_scenario = fl_training.preprocess_scenarios_data(current_scenario)
 
