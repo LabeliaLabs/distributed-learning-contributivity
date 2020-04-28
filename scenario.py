@@ -446,7 +446,7 @@ class Scenario:
         for partner in self.partners_list:
             logger.info(f"   Partner #{partner.id}: "
                         f"{partner.final_nb_samples} samples "
-                        f"with labels {partner.clusters_list})
+                        f"with labels {partner.clusters_list}")
 
         return 0
 

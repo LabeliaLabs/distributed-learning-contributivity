@@ -90,7 +90,7 @@ def main():
 
 def init_logger():
     logger.remove()
-    # Forward all logging to standart output
+    # Forward all logging to standard output
     logger.add(sys.__stdout__, level="DEBUG")
     stream = StreamToLogger()
 
