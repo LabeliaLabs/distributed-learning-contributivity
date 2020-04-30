@@ -4,7 +4,7 @@
 
 ## Introduction
 
-In collaborative data science projects partners sometimes need to train a model on multiple datasets, contributed by different data providing partners. In such cases the partners might have to measure how much each dataset involved contributed to the performance of the model. This is useful for example as a basis to agree on how to share the reward of the ML challenge or the future revenues derived from the predictive model, or to detect possible corrupted datasets or partners not playing by the rules. We explore this question and the opportunity to implement some mechanisms helping partners in such scenarios to measure each dataset's _contributivity_ (as _contribution to the performance of the model_).
+In collaborative data science projects partners sometimes need to train a model on multiple datasets, contributed by different data providing partners. In such cases the partners might have to measure how much each dataset involved contributed to the performance of the model. This is useful for example as a basis to agree on how to share the reward of the ML challenge or the future revenues derived from the predictive model, or to detect possible corrupted datasets or partners not playing by the rules. We explore this question and the opportunity to implement some mechanisms helping partners in such scenarios to measure each dataset's *contributivity* (as *contribution to the performance of the model*).
 
 ## Context of this work
 
@@ -18,14 +18,14 @@ The objective is to compare the contributivity figures obtained with the differe
 
 ### Experimental approach
 
-We want to start experimenting contributivity evaluations in collaborative data science and distributed learning scenarios. Our exploration of this topic is in progress, as is this library and associated experimentations. To make the most out of it, it is key to capitalize on this effort and develop it as a reproducible pipeline that can be improved, enriched, complemented over time.
+We want to start experimenting contributivity evaluations in collaborative data science and distributed learning scenarios. Our exploration of this topic is in progress, as is this library and associated experiments. To make the most out of it, it is key to capitalize on this effort and develop it as a reproducible pipeline that can be improved, enriched, complemented over time.
 
 For a start we made the following choices:
 
 - What we want to compare (with the Shapley values being the baseline, see section below):
   - Contributivity relative values
   - Computation time
-- Public dataset for experimentations: MNIST
+- Public dataset for experiments: MNIST
 - ML algorithm: CNN adapted to MNIST, not too deep so it can run on CPU
 - Distributed learning approach: federated learning (variants of basic federated learning are being implemented too)
 
@@ -35,7 +35,7 @@ For a start we made the following choices:
 
 - [done] [**Shapley values**](https://arxiv.org/pdf/1902.10275.pdf):  
 
-  These indicators seem to be very good candidates to measure the contributivity of each data providers, because they are usually used in game theory to fairly attributes the gain of a coalitional game amongst its players, which is exactly want we are looking for here.
+  These indicators seem to be very good candidates to measure the contributivity of each data providers, because they are usually used in game theory to fairly attributes the gain of a coalition game amongst its players, which is exactly want we are looking for here.
   
   A coalition game is a game where players form coalitions and each coalitions gets a score according to some rules. The winners are the players who manage to be in the coalition with the best score. Here we can consider each data provider is a player, and that forming a coalition is building a federated model using the dataset of each player within the coalition. The score of a coalition is then the performance on a test set of the federated model built by the coalition.
 
@@ -50,7 +50,7 @@ For a start we made the following choices:
   As the Shapley value is an average we can estimate it using the Monte-Carlo method. Here it consists in sampling a reasonable number of increments (says a hundred per player) and to take the average of the sampled increments of a player as the estimation of the Shapley value of that player.
     
   - [done] **[Truncated Monte-Carlo Shapley](https://arxiv.org/pdf/1904.02868.pdf) approximation**:  
-  The idea of Truncated Monte-Carlo is that, for big coalition, the increments of a player are usually small, therefore we can consider their value is null instead of spending computional power to compute it. This reduce the number of times we have to fit a model, but adds a small bias the estimation.
+  The idea of Truncated Monte-Carlo is that, for big coalition, the increments of a player are usually small, therefore we can consider their value is null instead of spending computational power to compute it. This reduce the number of times we have to fit a model, but adds a small bias the estimation.
     
   - [done] **Interpolated truncated Monte-Carlo**:  
   This method is an attempt to reduce the bias of the Truncated monte-Carlo method. Here we do not consider the value of an increment of a big coalition is null, but we do a linear interpolation to better approximate its value.
@@ -67,7 +67,7 @@ For a start we made the following choices:
 
   "Stratification and with proper allocation" is another method to reduce the number of sampled increments in the Monte-Carlo method while keeping the same accuracy. There are two ideas behind this method:
 
-  1. The Shapley value is a mean of means taken on strata of increments. A strata of increments corresponds the all the increments of coalition with the same number of players. We can estimate the means on each stata independently rather than the whole mean, this improves the accuracy and reduces the number of increments to sample.
+  1. The Shapley value is a mean of means taken on strata of increments. A strata of increments corresponds the all the increments of coalition with the same number of players. We can estimate the means on each strata independently rather than the whole mean, this improves the accuracy and reduces the number of increments to sample.
   1. We can allocate a different amount of sampled increment to each mean of a strata. If we allocate more sample to the stratas where the increments value varies more, we can reduce the accuracy even more.
    
   As we can estimate the mean of a strata by sampling with replacement of without replacement, it gives two approximation methods:
@@ -99,7 +99,7 @@ For a start we made the following choices:
            epoch_count: 
              - 38
            methods:
-             - ["Shapley values", "Independant scores", "TMCS"]
+             - ["Shapley values", "Independent scores", "TMCS"]
            minibatch_count: 
              - 20
            fit_batches_count:
@@ -117,7 +117,7 @@ For a start we made the following choices:
            epoch_count: 
              - 38
            methods:
-             - ["Shapley values", "Independant scores", "TMCS"]
+             - ["Shapley values", "Independent scores", "TMCS"]
            minibatch_count: 
              - 20
            fit_batches_count:
