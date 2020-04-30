@@ -17,8 +17,7 @@ class Partner:
 
         self.id = partner_id
 
-        self.batch_size_single = constants.DEFAULT_BATCH_SIZE
-        self.batch_size_multi = constants.DEFAULT_BATCH_SIZE
+        self.batch_size = constants.DEFAULT_BATCH_SIZE
 
         self.cluster_count = int
         self.cluster_split_option = str

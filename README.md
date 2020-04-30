@@ -197,11 +197,11 @@ Number of epochs passed as argument in the `.fit()` function. Superseded when `i
 Example: `epoch_count: 30`
 
 `minibatch_count`: `int` (default: `20`)  
-The distributed learning approach implemented relies on a sequence of (i) training in parallel on each partner's dataset, and then (ii) aggregating the resulting models. This constitutes an individual iteration. These iterations are repeated for all _mini-batches_ into which the partner's datasets are split at the beginning of each epoch. This gives a total of `epoch_count* minibatch_count` iterations.  
+The distributed learning approach implemented relies on a sequence of (i) training in parallel on each partner's dataset, and then (ii) aggregating the resulting models. This constitutes an individual iteration. These iterations are repeated for all *mini-batches* into which the partner's datasets are split at the beginning of each epoch. This gives a total of `epoch_count * minibatch_count` iterations.  
 Example: `minibatch_count: 20`
 
 `fit_batches_count`: `int` (default: `8`)  
-The ML training implemented relies on Keras' `.fit()` function, which takes as argument a `batch_size`, used as the number of samples per gradient update. Depending on the number of samples in the train dataset, this defines how many gradient updates are done per `.fit()` iteration. The `fit_batches_count` parameter enables to specify this number of gradient updates per `.fit()` iteration (both in multi-partner setting where there is 1 `.fit()` iteration per mini-batch, and in single-partner setting where there is 1 `.fit()` iteration per epoch).  
+The ML training implemented relies on Keras' `.fit()` function, which takes as argument a `batch_size`, used as the number of samples per gradient update. Depending on the number of samples in the train dataset, this defines how many gradient updates are done per iteration over the dataset passed as argument to `.fit()`. The `fit_batches_count` parameter enables to specify this number of gradient updates per iteration over the dataset passed as argument to `.fit()` (both for multi-partner setting where there is one `.fit()` iteration per mini-batch with a single epoch, and for single-partner setting where there is one `.fit()` iteration with multiple epochs).  
 Example: `fit_batches_count: 5`
 
 `is_early_stopping`: `True` (default) or `False`  

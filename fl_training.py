@@ -77,9 +77,9 @@ def compute_test_score_for_single_partner(
     # Initialize model
     model = utils.generate_new_cnn_model()
 
-    # Set earlystopping if needed
-    cb=[]
-    if is_early_stopping :
+    # Set if early stopping if needed
+    cb = []
+    if is_early_stopping:
         es = EarlyStopping(monitor='val_loss', mode='min', verbose=0, patience=constants.PATIENCE)
         cb.append(es)
 
@@ -88,7 +88,7 @@ def compute_test_score_for_single_partner(
     history = model.fit(
         partner.x_train,
         partner.y_train,
-        batch_size=partner.batch_size_single,
+        batch_size=partner.batch_size,
         epochs=epoch_count,
         verbose=0,
         validation_data=(partner.x_val, partner.y_val),
@@ -109,9 +109,7 @@ def compute_test_score_for_single_partner(
             + "] is not recognized."
         )
     # Evaluate trained model
-    model_evaluation = model.evaluate(
-        x_test, y_test, batch_size=partner.batch_size_single, verbose=0
-    )
+    model_evaluation = model.evaluate(x_test, y_test, batch_size=constants.DEFAULT_BATCH_SIZE, verbose=0)
     logger.info(f"   Model evaluation on test data: "
                 f"{list(zip(model.metrics_names,['%.3f' % elem for elem in model_evaluation]))}")
 
@@ -160,7 +158,6 @@ def prepare_aggregation_weights(
 ):
     """Returns a list of weights for the weighted average aggregation of model weights"""
 
-    aggregation_weights = []
     if aggregation_weighting == "uniform":
         aggregation_weights = [1 / partners_count] * partners_count
     elif aggregation_weighting == "data_volume":
@@ -286,7 +283,7 @@ def compute_test_score(
                 history = partner_model.fit(
                     minibatched_x_train[partner_index][minibatch_index],
                     minibatched_y_train[partner_index][minibatch_index],
-                    batch_size=partner.batch_size_multi,
+                    batch_size=partner.batch_size,
                     epochs=1,
                     verbose=0,
                     validation_data=(x_val_global, y_val_global),
@@ -317,7 +314,7 @@ def compute_test_score(
             aggregate_model_weights(model_list, aggregation_weights)
         )
         model_evaluation = aggregated_model.evaluate(
-            x_val_global, y_val_global, verbose=0,
+            x_val_global, y_val_global, batch_size=constants.DEFAULT_BATCH_SIZE, verbose=0,
         )
         current_val_loss = model_evaluation[0]
         global_val_acc.append(model_evaluation[1])
@@ -340,7 +337,7 @@ def compute_test_score(
     # After last epoch or if early stopping was triggered, evaluate model on the global testset
     logger.info("### Evaluating model on test data:")
     model_evaluation = aggregated_model.evaluate(
-        x_test, y_test, verbose=0,
+        x_test, y_test, batch_size=constants.DEFAULT_BATCH_SIZE, verbose=0,
     )
     logger.info(f"   Model metrics names: {aggregated_model.metrics_names}")
     logger.info(f"   Model metrics values: {['%.3f' % elem for elem in model_evaluation]}")
@@ -371,7 +368,7 @@ def compute_test_score(
 
         plt.figure()
         plt.plot(
-            score_matrix[: epoch_index + 1,]
+            score_matrix[: epoch_index + 1, ]
         )  # Cut the matrix
         plt.title("Model accuracy")
         plt.ylabel("Accuracy")

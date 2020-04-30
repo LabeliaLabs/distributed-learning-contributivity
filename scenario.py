@@ -473,11 +473,8 @@ class Scenario:
 
         # For each partner we compute the batch size in multi-partner and single-partner setups
         for p in self.partners_list:
-            p.batch_size_multi = max(1, int(len(p.x_train) / (self.minibatch_count * self.fit_batches_count)))
-            p.batch_size_single = max(1, int(len(p.x_train) / self.fit_batches_count))
-            logger.info(f"   compute_batch_sizes(), partner #{p.id}: "
-                         f"single {p.batch_size_single}, "
-                         f"multi {p.batch_size_multi}")
+            p.batch_size = max(1, int(len(p.x_train) / (self.minibatch_count * self.fit_batches_count)))
+            logger.info(f"   compute_batch_sizes(), partner #{p.id}: {p.batch_size}")
 
     def to_dataframe(self):
 
