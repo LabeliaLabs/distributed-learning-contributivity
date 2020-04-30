@@ -322,30 +322,28 @@ def compute_test_score(
         current_val_loss = model_evaluation[0]
         global_val_acc.append(model_evaluation[1])
         global_val_loss.append(current_val_loss)
-        print(
-            "\n   Aggregated model evaluation at the end of the epoch:",
-            ["%.3f" % elem for elem in model_evaluation],
-        )
+        logger.info(f"   Aggregated model evaluation at the end of the epoch: "
+                    f"{['%.3f' % elem for elem in model_evaluation]}")
 
-        print("      Checking if early stopping critera are met:")
+        logger.info("      Checking if early stopping criteria are met:")
         if is_early_stopping:
             # Early stopping parameters
             if (
                 epoch_index >= constants.PATIENCE
                 and current_val_loss > global_val_loss[-constants.PATIENCE]
             ):
-                print("         -> Early stopping critera are met, stopping here.")
+                logger.info("         -> Early stopping criteria are met, stopping here.")
                 break
             else:
-                print("         -> Early stopping critera are not met, continuing with training.")
+                logger.info("         -> Early stopping criteria are not met, continuing with training.")
 
     # After last epoch or if early stopping was triggered, evaluate model on the global testset
-    print("\n### Evaluating model on test data:")
+    logger.info("### Evaluating model on test data:")
     model_evaluation = aggregated_model.evaluate(
         x_test, y_test, verbose=0,
     )
-    print("   Model metrics names: ", aggregated_model.metrics_names)
-    print("   Model metrics values: ", ["%.3f" % elem for elem in model_evaluation])
+    logger.info(f"   Model metrics names: {aggregated_model.metrics_names}")
+    logger.info(f"   Model metrics values: {['%.3f' % elem for elem in model_evaluation]}")
     test_score = model_evaluation[1]  # 0 is for the loss
 
     # Plot training history
@@ -383,5 +381,5 @@ def compute_test_score(
         plt.ylim([0, 1])
         plt.savefig(save_folder / "all_partners.png")
 
-    print("\nTraining and evaluation on multiple partners: done.")
+    logger.info("Training and evaluation on multiple partners: done.")
     return test_score

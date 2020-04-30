@@ -475,47 +475,9 @@ class Scenario:
         for p in self.partners_list:
             p.batch_size_multi = max(1, int(len(p.x_train) / (self.minibatch_count * self.fit_batches_count)))
             p.batch_size_single = max(1, int(len(p.x_train) / self.fit_batches_count))
-            logger.debug(f"   compute_batch_sizes(), partner #{p.id}: "
+            logger.info(f"   compute_batch_sizes(), partner #{p.id}: "
                          f"single {p.batch_size_single}, "
                          f"multi {p.batch_size_multi}")
-
-    def to_file(self):
-
-        out = ""
-        out += "Dataset name: " + self.dataset_name + "\n"
-        out += "Number of data samples - train: " + str(len(self.x_train)) + "\n"
-        out += "Number of data samples - test: " + str(len(self.x_test)) + "\n"
-        out += "partners count: " + str(self.partners_count) + "\n"
-        out += (
-                "Percentages of data samples per partner: " + str(self.amounts_per_partner) + "\n"
-        )
-        out += (
-                "Data samples split option: "
-                + str(self.samples_split_option)
-                + "\n"
-        )
-        out += (
-                "When training on a single partner, global or local testset: "
-                + self.single_partner_test_mode
-                + "\n"
-        )
-        out += "Number of epochs: " + str(self.epoch_count) + "\n"
-        out += "Number of mini-batches: " + str(self.minibatch_count) + "\n"
-        out += "Early stopping on? " + str(self.is_early_stopping) + "\n"
-        out += (
-                "Test score of federated training: " + str(self.federated_test_score) + "\n"
-        )
-        out += "\n"
-
-        out += str(len(self.contributivity_list)) + " contributivity methods: " + "\n"
-
-        for contrib in self.contributivity_list:
-            out += str(contrib) + "\n\n"
-
-        target_file_path = self.save_folder / "results_summary.txt"
-
-        with open(target_file_path, "w", encoding="utf-8") as f:
-            f.write(out)
 
     def to_dataframe(self):
 
@@ -560,7 +522,5 @@ class Scenario:
                 dict_results["contributivity_std"] = contrib.scores_std[i]
 
                 df = df.append(dict_results, ignore_index=True)
-
-        # df.info()  # to be deleted?
 
         return df
