@@ -349,13 +349,13 @@ def compute_test_score(
     if is_save_fig:
 
         # Save data
-        metrics_results = {}
-        metrics_results["score_matrix"] = score_matrix
-        metrics_results["global_val_acc"] = global_val_acc
-        metrics_results["global_val_loss"] = global_val_loss
-        metrics_results["score_matrix_extended"] = score_matrix_extended
-        with open(save_folder / "metrics_results.p", 'wb') as f:
-            pickle.dump(metrics_results, f)
+        history_data = {}
+        history_data["score_matrix"] = score_matrix
+        history_data["global_val_acc"] = global_val_acc
+        history_data["global_val_loss"] = global_val_loss
+        history_data["score_matrix_extended"] = score_matrix_extended
+        with open(save_folder / "history_data.p", 'wb') as f:
+            pickle.dump(history_data, f)
 
         if not os.path.exists(save_folder / 'graphs/'):
             os.makedirs(save_folder / 'graphs/')
