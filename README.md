@@ -87,41 +87,45 @@ For a start we made the following choices:
     experiment_name: my_custom_experiment
     n_repeats: 5
     scenario_params_list:
-         - partners_count: 
-              - 3
-           amounts_per_partner: 
-              - [0.4, 0.3, 0.3] 
-           samples_split_option: 
-             - [[7, 'shared'], [6, 'shared'], [2, 'specific']]
-           aggregation_weighting: 
-             - 'data_volume' 
-             - 'uniform'
-           epoch_count: 
-             - 38
-           methods:
-             - ["Shapley values", "Independent scores", "TMCS"]
-           minibatch_count: 
-             - 20
-           gradient_updates_per_pass_count:
-             - 8
-         - partners_count: 
-             - 2
-           amounts_per_partner: 
-             - [0.5, 0.5]
-           samples_split_option: 
-             - 'random'
-             - 'stratified'
-           aggregation_weighting: 
-             - 'data_volume' 
-             - 'uniform'
-           epoch_count: 
-             - 38
-           methods:
-             - ["Shapley values", "Independent scores", "TMCS"]
-           minibatch_count: 
-             - 20
-           gradient_updates_per_pass_count:
-             - 8
+     - partners_count: 
+         - 3
+       amounts_per_partner: 
+         - [0.4, 0.3, 0.3] 
+       samples_split_option: 
+         - [[7, 'shared'], [6, 'shared'], [2, 'specific']]
+       multi_partner_learning_approach:
+         - 'fedavg'
+       aggregation_weighting: 
+         - 'data_volume' 
+         - 'uniform'
+       epoch_count: 
+         - 38
+       methods:
+         - ["Shapley values", "Independent scores", "TMCS"]
+       minibatch_count: 
+         - 20
+       gradient_updates_per_pass_count:
+         - 8
+     - partners_count: 
+         - 2
+       amounts_per_partner: 
+         - [0.5, 0.5]
+       samples_split_option: 
+         - 'random'
+         - 'stratified'
+       multi_partner_learning_approach:
+         - 'fedavg'
+       aggregation_weighting: 
+         - 'data_volume' 
+         - 'uniform'
+       epoch_count: 
+         - 38
+       methods:
+         - ["Shapley values", "Independent scores", "TMCS"]
+       minibatch_count: 
+         - 20
+       gradient_updates_per_pass_count:
+         - 8
     ```
 
 - Under `scenario_params_list`, enter a list of sets of scenario(s). Each set must have only one `partners_count` value. The length of `amout_per_partners`, `corrupted_datasets` (and `samples_split_option` when the advanced definition is used) must match the `partner_counts`. If for a given parameter multiple values are specified, e.g. like for `samples_split_option` and `agregation_weighting` in the example above, all possible combinations of parameters will be assembled as separate scenarios and run.
@@ -180,7 +184,19 @@ Example: `[not_corrupted, not_corrupted, not_corrupted, shuffled]`
 
 There are several parameters influencing how the collaborative and distributed learning is done over the datasets of the partners. The following schema introduces certain definitions used in the below description of parameters:
 
-![Schema epochs mini-batches fit batches](./img/epoch_minibatch_fitbatch.png)
+![Schema epochs mini-batches gradient updates](img/epoch_minibatch_gradientupdates.png)
+
+`multi_partner_learning_approach`: `'fedavg'` (default), `'seq'` or `'seqavg'`  
+Define the multi-partner learning approach, among the following as described by the schemas:
+
+- `'fedavg'`: stands for federated averaging
+  ![Schema fedavg](img/collaborative_rounds_fedavg.png)
+  
+- `'seq'`: stands for sequential
+  ![Schema seq](img/collaborative_rounds_seq.png)
+  
+- `'seqavg'`: stands for sequential averaging
+  ![Schema seqavg](img/collaborative_rounds_seqavg.png)
 
 `aggregation_weighting`: `'uniform'` (default), `'data_volume'` or `'local_score'`  
 After a training iteration over a given mini-batch, how individual models of each partner are aggregated:
