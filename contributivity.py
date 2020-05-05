@@ -204,7 +204,7 @@ class Contributivity:
         end = timer()
         self.computation_time_sec = end - start
 
-    # %% compute Shapley values with the truncated Monte-carlo metho
+    # %% compute Shapley values with the truncated Monte-carlo method
     def truncated_MC(self, the_scenario, sv_accuracy=0.01, alpha=0.9, truncation=0.05):
         """Return the vector of approximated Shapley value corresponding to a list of partner and a characteristic function using the truncated monte-carlo method."""
         start = timer()

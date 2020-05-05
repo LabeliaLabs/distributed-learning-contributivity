@@ -366,15 +366,18 @@ class Scenario:
 
         # Then we parameterize this via the splitting_indices to be passed to np.split
         # This is to transform the percentages from the scenario configuration into indices where to split the data
-        splitting_indices = np.empty((self.partners_count - 1,))
-        splitting_indices[0] = self.amounts_per_partner[0]
-        for i in range(self.partners_count - 2):
-            splitting_indices[i + 1] = (
-                    splitting_indices[i] + self.amounts_per_partner[i + 1]
-            )
-        splitting_indices_train = (splitting_indices * len(y_train)).astype(int)
-        splitting_indices_test = (splitting_indices * len(y_test)).astype(int)
-        # print('- Splitting indices defined (for train data):', splitting_indices_train) # VERBOSE
+        if self.partners_count == 1:
+            splitting_indices_train = 1
+            splitting_indices_test = 1
+        else:
+            splitting_indices = np.empty((self.partners_count - 1,))
+            splitting_indices[0] = self.amounts_per_partner[0]
+            for i in range(self.partners_count - 2):
+                splitting_indices[i + 1] = (
+                        splitting_indices[i] + self.amounts_per_partner[i + 1]
+                )
+            splitting_indices_train = (splitting_indices * len(y_train)).astype(int)
+            splitting_indices_test = (splitting_indices * len(y_test)).astype(int)
 
         # Configure the desired data distribution scenario
 
@@ -473,8 +476,14 @@ class Scenario:
     def compute_batch_sizes(self):
 
         # For each partner we compute the batch size in multi-partner and single-partner setups
+        if self.partners_count == 1:
+            p = self.partners_list[0]
+            p.batch_size = max(1, int(len(p.x_train) / self.gradient_updates_per_pass_count))
+        else:
+            for p in self.partners_list:
+                p.batch_size = max(1, int(len(p.x_train) / (self.minibatch_count * self.gradient_updates_per_pass_count)))
+
         for p in self.partners_list:
-            p.batch_size = max(1, int(len(p.x_train) / (self.minibatch_count * self.gradient_updates_per_pass_count)))
             logger.info(f"   compute_batch_sizes(), partner #{p.id}: {p.batch_size}")
 
     def to_dataframe(self):

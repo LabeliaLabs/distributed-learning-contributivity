@@ -230,7 +230,7 @@ def compute_test_score(
 
     # Else, continue onto a federated learning procedure
     partners_list = sorted(partners_list, key=operator.attrgetter("id"))
-    logger.info(f"## Training and evaluating model on partners with ids:{[' #'+str(p.id) for p in partners_list]}")
+    logger.info(f"## Training and evaluating model on partners with ids: {['#'+str(p.id) for p in partners_list]}")
 
     # Initialize variables
     model_list, local_score_list = [None] * partners_count, [None] * partners_count
