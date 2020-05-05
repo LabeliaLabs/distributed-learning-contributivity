@@ -131,7 +131,7 @@ class Contributivity:
                     subset_with_i = np.sort(np.append(subset, i))
                     if (
                         tuple(subset_with_i) in self.charac_fct_values
-                    ):  # we store the new knwon increments
+                    ):  # we store the new known increments
                         self.increments_values[i][tuple(subset)] = (
                             self.charac_fct_values[tuple(subset_with_i)]
                             - self.charac_fct_values[tuple(subset)]
@@ -890,7 +890,6 @@ class Contributivity:
                 np.any(continuer) or (1 - alpha) < v_max / (sv_accuracy ** 2)
             ):  # Check if the length of the confidence interval  is below the value of sv_accuracy
                 t += 1
-                # print(t)  # to be deleted?
                 for k in range(N):
                     # select the strata to add an increment
                     if np.any(continuer[k]):
