@@ -14,6 +14,7 @@ from loguru import logger
 import operator
 import random
 
+import constants
 from partner import Partner
 
 
@@ -90,7 +91,7 @@ class Scenario:
         else:
             self.aggregation_weighting = "uniform"
 
-        # Number of epochs and mini-batches in ML training
+        # Number of epochs, mini-batches and fit_batches in ML training
         if "epoch_count" in params:
             self.epoch_count = params["epoch_count"]
             assert self.epoch_count > 0
@@ -102,6 +103,12 @@ class Scenario:
             assert self.minibatch_count > 0
         else:
             self.minibatch_count = 20
+
+        if "gradient_updates_per_pass_count" in params:
+            self.gradient_updates_per_pass_count = params["gradient_updates_per_pass_count"]
+            assert self.gradient_updates_per_pass_count > 0
+        else:
+            self.gradient_updates_per_pass_count = constants.DEFAULT_gradient_updates_per_pass_count
 
         # Early stopping stops ML training when performance increase is not significant anymore
         # It is used to optimize the number of epochs and the execution time
@@ -117,7 +124,7 @@ class Scenario:
         # Contributivity methods
         ALL_METHODS_LIST = [
             "Shapley values",
-            "Independant scores",
+            "Independent scores",
             "TMCS",
             "ITMCS",
             "IS_lin_S",
@@ -127,20 +134,13 @@ class Scenario:
             "WR_SMC",
         ]
 
-        # List of Contributivity methods runned by default if no method was given in the config file
-        DEFAULT_METHODS_LIST = ["Shapley values", "Independant scores", "TMCS"]
-
         self.methods = []
         if "methods" in params and params["methods"]:
-
             for method in params["methods"]:
                 if method in ALL_METHODS_LIST:
                     self.methods.append(method)
                 else:
                     raise Exception("Method [" + method + "] is not in methods list.")
-
-        else:
-            self.methods = DEFAULT_METHODS_LIST
 
         # -------------
         # Miscellaneous
@@ -198,24 +198,21 @@ class Scenario:
         # ------------------------------------------------
 
         # Describe scenario
-        print("\n### Description of data scenario configured:")
-        print("- Number of partners defined:", self.partners_count)
-        print("- Data distribution scenario chosen:", self.samples_split_option)
-        print("- Test data distribution scenario chosen:", self.single_partner_test_mode)
-        print("- Weighting option:", self.aggregation_weighting)
-        print(
-            "- Number of epochs and mini-batches: "
-            + str(self.epoch_count)
-            + " epochs and "
-            + str(self.minibatch_count)
-            + " mini-batches"
-        )
+        logger.info("### Description of data scenario configured:")
+        logger.info(f"   Number of partners defined: {self.partners_count}")
+        logger.info(f"   Data distribution scenario chosen: {self.samples_split_option}")
+        logger.info(f"   Test data distribution scenario chosen: {self.single_partner_test_mode}")
+        logger.info(f"   Weighting option: {self.aggregation_weighting}")
+        logger.info(f"   Iterations parameters: "
+                    f"{self.epoch_count} epochs > "
+                    f"{self.minibatch_count} mini-batches > "
+                    f"{self.gradient_updates_per_pass_count} gradient updates per pass")
 
         # Describe data
-        print("\n### Data loaded: ", self.dataset_name)
-        print("- " + str(len(self.x_train)) + " train data with " + str(len(self.y_train)) + " labels")
-        print("- " + str(len(self.x_val)) + " val data with " + str(len(self.y_val)) + " labels")
-        print("- " + str(len(self.x_test)) + " test data " + str(len(self.y_test)) + " labels")
+        logger.info(f"### Data loaded: {self.dataset_name}")
+        logger.info(f"   {len(self.x_train)} train data with {len(self.y_train)} labels")
+        logger.info(f"   {len(self.x_val)} train data with {len(self.y_val)} labels")
+        logger.info(f"   {len(self.x_test)} train data with {len(self.y_test)} labels")
 
     def append_contributivity(self, contributivity):
 
@@ -303,7 +300,9 @@ class Scenario:
             for cl in p.clusters_list:
                 nb_samples_needed_per_cluster[cl] += initial_amount_resized_per_cluster
         for cl in nb_samples_needed_per_cluster:
-            resize_factor_shared = min(resize_factor_shared, nb_samples_per_cluster[cl] / nb_samples_needed_per_cluster[cl])
+            resize_factor_shared = min(resize_factor_shared,
+                                       nb_samples_per_cluster[cl] / nb_samples_needed_per_cluster[cl],
+                                       )
 
         # Compute the final resize factor
         final_resize_factor = resize_factor_specific * resize_factor_shared
@@ -338,15 +337,13 @@ class Scenario:
         assert self.minibatch_count <= min([len(p.x_train) for p in self.partners_list])
 
         # Print for controlling
-        print("\n### Splitting data among partners:")
-        print("Advanced split performed.")
-        print("Nb of samples split amongst partners: ", str(self.nb_samples_used))
-        print("- Partners' relative nb of samples: " + str([round(p, 2) for p in self.final_relative_nb_samples]))
-        print("  (versus initially configured: " + str(amounts_per_partner))
+        logger.info("### Splitting data among partners:")
+        logger.info(f"   Advanced split performed.")
+        logger.info(f"   Nb of samples split amongst partners: {self.nb_samples_used}")
+        logger.info(f"   Partners' relative nb of samples: {[round(p, 2) for p in self.final_relative_nb_samples]} "
+                    f"   (versus initially configured: {amounts_per_partner})")
         for partner in self.partners_list:
-            print("- Partner #" + str(partner.id) + ": ", end="")
-            print(str(len(partner.x_train)) + " train samples, ", end="")
-            print("y_train unique values: " + str(partner.clusters_list))
+            logger.info(f"   Partner #{partner.id}: {len(partner.x_train)} samples with labels {partner.clusters_list}")
 
         return 0
 
@@ -443,13 +440,13 @@ class Scenario:
         self.final_relative_nb_samples = [p.final_nb_samples / self.nb_samples_used for p in self.partners_list]
 
         # Print for controlling
-        print("\n### Splitting data among partners:")
-        print("Simple split performed.")
-        print("Nb of samples split amongst partners: ", str(self.nb_samples_used))
+        logger.info(f"### Splitting data among partners:")
+        logger.info(f"   Simple split performed.")
+        logger.info(f"   Nb of samples split amongst partners: {self.nb_samples_used}")
         for partner in self.partners_list:
-            print("- Partner #" + str(partner.id) + ": ", end="")
-            print(str(partner.final_nb_samples) + " train samples, ", end="")
-            print("y_train unique values: " + str(partner.clusters_list))
+            logger.info(f"   Partner #{partner.id}: "
+                        f"{partner.final_nb_samples} samples "
+                        f"with labels {partner.clusters_list}")
 
         return 0
 
@@ -472,43 +469,12 @@ class Scenario:
         # plt.show()  # DEBUG
         plt.savefig(self.save_folder / "data_distribution.png")
 
-    def to_file(self):
+    def compute_batch_sizes(self):
 
-        out = ""
-        out += "Dataset name: " + self.dataset_name + "\n"
-        out += "Number of data samples - train: " + str(len(self.x_train)) + "\n"
-        out += "Number of data samples - test: " + str(len(self.x_test)) + "\n"
-        out += "partners count: " + str(self.partners_count) + "\n"
-        out += (
-                "Percentages of data samples per partner: " + str(self.amounts_per_partner) + "\n"
-        )
-        out += (
-                "Data samples split option: "
-                + str(self.samples_split_option)
-                + "\n"
-        )
-        out += (
-                "When training on a single partner, global or local testset: "
-                + self.single_partner_test_mode
-                + "\n"
-        )
-        out += "Number of epochs: " + str(self.epoch_count) + "\n"
-        out += "Number of mini-batches: " + str(self.minibatch_count) + "\n"
-        out += "Early stopping on? " + str(self.is_early_stopping) + "\n"
-        out += (
-                "Test score of federated training: " + str(self.federated_test_score) + "\n"
-        )
-        out += "\n"
-
-        out += str(len(self.contributivity_list)) + " contributivity methods: " + "\n"
-
-        for contrib in self.contributivity_list:
-            out += str(contrib) + "\n\n"
-
-        target_file_path = self.save_folder / "results_summary.txt"
-
-        with open(target_file_path, "w", encoding="utf-8") as f:
-            f.write(out)
+        # For each partner we compute the batch size in multi-partner and single-partner setups
+        for p in self.partners_list:
+            p.batch_size = max(1, int(len(p.x_train) / (self.minibatch_count * self.gradient_updates_per_pass_count)))
+            logger.info(f"   compute_batch_sizes(), partner #{p.id}: {p.batch_size}")
 
     def to_dataframe(self):
 
@@ -531,6 +497,7 @@ class Scenario:
                 dict_results["single_partner_test_mode"] = self.single_partner_test_mode
                 dict_results["epoch_count"] = self.epoch_count
                 dict_results["minibatch_count"] = self.minibatch_count
+                dict_results["gradient_updates_per_pass_count"] = self.gradient_updates_per_pass_count
                 dict_results["is_early_stopping"] = self.is_early_stopping
                 dict_results["federated_test_score"] = self.federated_test_score
                 dict_results["federated_computation_time_sec"] = self.federated_computation_time_sec
@@ -552,7 +519,5 @@ class Scenario:
                 dict_results["contributivity_std"] = contrib.scores_std[i]
 
                 df = df.append(dict_results, ignore_index=True)
-
-        df.info()
 
         return df

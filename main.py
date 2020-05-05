@@ -71,7 +71,6 @@ def main():
                 logger.info(scenario_params)
 
                 current_scenario = scenario.Scenario(scenario_params, experiment_path)
-                print(current_scenario.to_dataframe())
                 print('Scenario %i/%i' %(scenario_id+1, len(scenario_params_list)))
 
                 run_scenario(current_scenario)
@@ -90,7 +89,7 @@ def main():
 
 def init_logger():
     logger.remove()
-    # Forward all logging to standart output
+    # Forward all logging to standard output
     logger.add(sys.__stdout__, level="DEBUG")
     stream = StreamToLogger()
 
@@ -128,6 +127,7 @@ def run_scenario(current_scenario):
     else:
         current_scenario.split_data()
     current_scenario.plot_data_distribution()
+    current_scenario.compute_batch_sizes()
     current_scenario = fl_training.preprocess_scenarios_data(current_scenario)
 
     # Train and eval on all partners according to scenario
@@ -146,9 +146,6 @@ def run_scenario(current_scenario):
         current_scenario.append_contributivity(contrib)
         print("\n## Evaluating contributivity with " + method + ":")
         print(contrib)
-
-    # Save results to file
-    current_scenario.to_file()
 
     return 0
 

@@ -9,11 +9,12 @@ scenario_params_list:
     - [[7, 'shared'], [6, 'shared'], [2, 'specific'], [1, 'specific']]
    aggregation_weighting: 
     - 'local_score'
-   corrupted_datasets: 
+   corrupted_datasets:
     - [not_corrupted, corrupted, not_corrupted, not_corrupted]
     - [not_corrupted, not_corrupted, not_corrupted, not_corrupted]
+   gradient_updates_per_pass_count:
+    - 8
    is_quick_demo: 
     - True
    methods:
-    - ["Independant scores"]
-
+    - ["Independent scores"]

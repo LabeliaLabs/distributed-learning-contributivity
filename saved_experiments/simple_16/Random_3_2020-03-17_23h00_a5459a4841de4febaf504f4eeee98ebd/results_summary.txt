@@ -19,7 +19,7 @@ Normalized contributivity scores: [0.39507685 0.30343058 0.30149257]
 
 
 
-Independant scores raw
+Independent scores raw
 Computation time: 0:00:30
 Contributivity scores: [0.98210001 0.9799     0.97750002]
 Std of the contributivity scores: [0. 0. 0.]
@@ -27,7 +27,7 @@ Normalized contributivity scores: [0.33410444 0.33335601 0.33253955]
 
 
 
-Independant scores additive
+Independent scores additive
 Computation time: 0:00:30
 Contributivity scores: [0.26215975 0.26158363 0.26095659]
 Std of the contributivity scores: [0. 0. 0.]

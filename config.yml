@@ -1,5 +1,5 @@
 experiment_name: simple_16
-n_repeats: 10
+n_repeats: 5
 scenario_params_list:
  - partners_count: 
       - 3
@@ -14,9 +14,11 @@ scenario_params_list:
    epoch_count: 
      - 38
    methods:
-     - ["Shapley values", "Independant scores", "TMCS"]
+     - ["Shapley values", "Independent scores", "TMCS"]
    minibatch_count: 
      - 20
+   gradient_updates_per_pass_count:
+     - 8
  - partners_count: 
      - 2
    amounts_per_partner: 
@@ -30,6 +32,8 @@ scenario_params_list:
    epoch_count: 
      - 38
    methods:
-     - ["Shapley values", "Independant scores", "TMCS"]
+     - ["Shapley values", "Independent scores", "TMCS"]
    minibatch_count: 
      - 20
+   gradient_updates_per_pass_count:
+     - 8

@@ -197,7 +197,7 @@ class Contributivity:
             performance_scores.append(
                 self.not_twice_characteristic(np.array([i]), the_scenario)
             )
-        self.name = "Independant scores raw"
+        self.name = "Independent scores raw"
         self.contributivity_scores = np.array(performance_scores)
         self.scores_std = np.zeros(len(performance_scores))
         self.normalized_scores = performance_scores / np.sum(performance_scores)
@@ -981,7 +981,7 @@ class Contributivity:
         if method_to_compute == "Shapley values":
             # Contributivity 1: Baseline contributivity measurement (Shapley Value)
             self.compute_SV(current_scenario)
-        elif method_to_compute == "Independant scores":
+        elif method_to_compute == "Independent scores":
             # Contributivity 2: Performance scores of models trained independently on each partner
             self.compute_independent_scores(current_scenario)
         elif method_to_compute == "TMCS":

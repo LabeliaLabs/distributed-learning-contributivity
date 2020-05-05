@@ -13,6 +13,7 @@ from sklearn.model_selection import train_test_split
 import numpy as np
 import matplotlib.pyplot as plt
 import operator
+from loguru import logger
 
 import utils
 import constants
@@ -21,13 +22,10 @@ import constants
 # os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
 
 
-#%% Pre-process data for ML training
-
-
 def preprocess_scenarios_data(scenario):
     """Return scenario with central datasets (val, test) and distributed datasets (partners) pre-processed"""
 
-    print("\n## Pre-processing datasets of the scenario for keras CNN:")
+    logger.info("## Pre-processing datasets of the scenario for keras CNN:")
 
     # First, datasets of each partner
     for partner_index, partner in enumerate(scenario.partners_list):
@@ -46,30 +44,27 @@ def preprocess_scenarios_data(scenario):
         )
 
         if scenario.corrupted_datasets[partner_index] == "corrupted":
-            print("   ... Corrupting data (offsetting labels) of partner #" + str(partner.id))
+            logger.info(f"   ... Corrupting data (offsetting labels) of partner #{partner.id}")
             partner.corrupt_labels()
         elif scenario.corrupted_datasets[partner_index] == "shuffled":
-            print("   ... Corrupting data (shuffling labels) of partner #" + str(partner.id))
+            logger.info(f"   ... Corrupting data (shuffling labels) of partner #{partner.id}")
             partner.shuffle_labels()
         elif scenario.corrupted_datasets[partner_index] == "not_corrupted":
             pass
         else:
-            print("Unexpected label of corruption, not corruption performed!")
+            logger.info("Unexpected label of corruption, not corruption performed!")
 
-        print("   Partner #" + str(partner.id) + ": done.")
+        logger.info(f"   Partner #{partner.id}: done.")
 
     # Then the scenario central dataset of the scenario
     scenario.x_val = utils.preprocess_input(scenario.x_val)
     scenario.y_val = keras.utils.to_categorical(scenario.y_val, constants.NUM_CLASSES)
-    print("   Central early stopping validation set: done.")
+    logger.info("   Central early stopping validation set: done.")
     scenario.x_test = utils.preprocess_input(scenario.x_test)
     scenario.y_test = keras.utils.to_categorical(scenario.y_test, constants.NUM_CLASSES)
-    print("   Central testset: done.")
+    logger.info("   Central testset: done.")
 
     return scenario
-
-
-#%% Single partner training
 
 
 def compute_test_score_for_single_partner(
@@ -77,23 +72,23 @@ def compute_test_score_for_single_partner(
 ):
     """Return the score on test data of a model trained on a single partner"""
 
-    print("\n## Training and evaluating model on one single partner.")
+    logger.info(f"## Training and evaluating model on partner with id #{partner.id}")
 
     # Initialize model
     model = utils.generate_new_cnn_model()
 
-    # Set earlystopping if needed
-    cb=[]
-    if is_early_stopping :
+    # Set if early stopping if needed
+    cb = []
+    if is_early_stopping:
         es = EarlyStopping(monitor='val_loss', mode='min', verbose=0, patience=constants.PATIENCE)
         cb.append(es)
-        
-    # Train model  
-    print("\n### Training model on one single partner: " + str(partner.id))
+
+    # Train model
+    logger.info("   Training model...")
     history = model.fit(
         partner.x_train,
         partner.y_train,
-        batch_size=constants.BATCH_SIZE,
+        batch_size=partner.batch_size,
         epochs=epoch_count,
         verbose=0,
         validation_data=(partner.x_val, partner.y_val),
@@ -114,21 +109,14 @@ def compute_test_score_for_single_partner(
             + "] is not recognized."
         )
     # Evaluate trained model
-    print("\n### Evaluating model on test data of the partner:")
-    model_evaluation = model.evaluate(
-        x_test, y_test, batch_size=constants.BATCH_SIZE, verbose=0
-    )
-    print("   Model metrics names: ", model.metrics_names)
-    print("   Model metrics values: ", ["%.3f" % elem for elem in model_evaluation])
+    model_evaluation = model.evaluate(x_test, y_test, batch_size=constants.DEFAULT_BATCH_SIZE, verbose=0)
+    logger.info(f"   Model evaluation on test data: "
+                f"{list(zip(model.metrics_names,['%.3f' % elem for elem in model_evaluation]))}")
 
     model_eval_score = model_evaluation[1]  # 0 is for the loss
 
     # Return model score on test data
-    print("\nTraining and evaluation on one single partner: done.")
     return model_eval_score
-
-
-#%% TODO no methods overloading
 
 
 def compute_test_score_with_scenario(scenario, is_save_fig=False):
@@ -170,7 +158,6 @@ def prepare_aggregation_weights(
 ):
     """Returns a list of weights for the weighted average aggregation of model weights"""
 
-    aggregation_weights = []
     if aggregation_weighting == "uniform":
         aggregation_weights = [1 / partners_count] * partners_count
     elif aggregation_weighting == "data_volume":
@@ -243,7 +230,7 @@ def compute_test_score(
 
     # Else, continue onto a federated learning procedure
     partners_list = sorted(partners_list, key=operator.attrgetter("id"))
-    print("\n## Training and evaluating model on partners with ids: " + ", ".join(["#"+str(p.id) for p in partners_list]))
+    logger.info(f"## Training and evaluating model on partners with ids:{[' #'+str(p.id) for p in partners_list]}")
 
     # Initialize variables
     model_list, local_score_list = [None] * partners_count, [None] * partners_count
@@ -252,10 +239,9 @@ def compute_test_score(
     global_val_acc, global_val_loss = [], []
 
     # Train model (iterate for each epoch and mini-batch)
-    print("\n### Training model:")
     for epoch_index in range(epoch_count):
 
-        print("\n   Epoch " + str(epoch_index) + " out of " + str(epoch_count-1) + " total epochs")
+        epoch_nb_str = f"Epoch {str(epoch_index).zfill(2)}/{str(epoch_count-1).zfill(2)}"
         is_first_epoch = epoch_index == 0
         clear_session()
 
@@ -270,7 +256,7 @@ def compute_test_score(
         # Iterate over mini-batches for training, starting each new iteration with an aggregation of the previous one
         for minibatch_index in range(minibatch_count):
 
-            print("\n      Mini-batch " + str(minibatch_index) + " out of " + str(minibatch_count - 1) + " total mini-batches")
+            mb_nb_str = f"Minibatch {str(minibatch_index).zfill(2)}/{str(minibatch_count-1).zfill(2)}"
             is_first_minibatch = minibatch_index == 0
 
             # Starting model for each partner is the aggregated model from the previous mini-batch iteration
@@ -293,20 +279,17 @@ def compute_test_score(
                 partner_model = agg_model_for_iteration[partner_index]
 
                 # Train on partner local data set
-                print("         Training on partner #" + str(partner.id) + " (id) - "
-                      + str(partner_index) + " on " + str(partners_count) + " partners to train on")
+                partner_id_str = f"Partner {partner.id}/{partners_count}"
                 history = partner_model.fit(
                     minibatched_x_train[partner_index][minibatch_index],
                     minibatched_y_train[partner_index][minibatch_index],
-                    batch_size=constants.BATCH_SIZE,
+                    batch_size=partner.batch_size,
                     epochs=1,
                     verbose=0,
                     validation_data=(x_val_global, y_val_global),
                 )
-                print(
-                    "            val_accuracy: "
-                    + str(round(history.history["val_accuracy"][0], 2))
-                )  # DEBUG
+                val_acc_str = f"{round(history.history['val_accuracy'][0],2)}"
+                logger.info(f"{epoch_nb_str} > {mb_nb_str} > {partner_id_str} > val_acc: {val_acc_str}")
 
                 # Update the partner's model in the models' list
                 model_list[partner_index] = partner_model
@@ -331,35 +314,33 @@ def compute_test_score(
             aggregate_model_weights(model_list, aggregation_weights)
         )
         model_evaluation = aggregated_model.evaluate(
-            x_val_global, y_val_global, batch_size=constants.BATCH_SIZE, verbose=0,
+            x_val_global, y_val_global, batch_size=constants.DEFAULT_BATCH_SIZE, verbose=0,
         )
         current_val_loss = model_evaluation[0]
         global_val_acc.append(model_evaluation[1])
         global_val_loss.append(current_val_loss)
-        print(
-            "\n   Aggregated model evaluation at the end of the epoch:",
-            ["%.3f" % elem for elem in model_evaluation],
-        )
+        logger.info(f"   Aggregated model evaluation at the end of the epoch: "
+                    f"{['%.3f' % elem for elem in model_evaluation]}")
 
-        print("      Checking if early stopping critera are met:")
+        logger.info("      Checking if early stopping criteria are met:")
         if is_early_stopping:
             # Early stopping parameters
             if (
                 epoch_index >= constants.PATIENCE
                 and current_val_loss > global_val_loss[-constants.PATIENCE]
             ):
-                print("         -> Early stopping critera are met, stopping here.")
+                logger.info("         -> Early stopping criteria are met, stopping here.")
                 break
             else:
-                print("         -> Early stopping critera are not met, continuing with training.")
+                logger.info("         -> Early stopping criteria are not met, continuing with training.")
 
     # After last epoch or if early stopping was triggered, evaluate model on the global testset
-    print("\n### Evaluating model on test data:")
+    logger.info("### Evaluating model on test data:")
     model_evaluation = aggregated_model.evaluate(
-        x_test, y_test, batch_size=constants.BATCH_SIZE, verbose=0,
+        x_test, y_test, batch_size=constants.DEFAULT_BATCH_SIZE, verbose=0,
     )
-    print("   Model metrics names: ", aggregated_model.metrics_names)
-    print("   Model metrics values: ", ["%.3f" % elem for elem in model_evaluation])
+    logger.info(f"   Model metrics names: {aggregated_model.metrics_names}")
+    logger.info(f"   Model metrics values: {['%.3f' % elem for elem in model_evaluation]}")
     test_score = model_evaluation[1]  # 0 is for the loss
 
     # Plot training history
@@ -387,7 +368,7 @@ def compute_test_score(
 
         plt.figure()
         plt.plot(
-            score_matrix[: epoch_index + 1,]
+            score_matrix[: epoch_index + 1, ]
         )  # Cut the matrix
         plt.title("Model accuracy")
         plt.ylabel("Accuracy")
@@ -397,5 +378,5 @@ def compute_test_score(
         plt.ylim([0, 1])
         plt.savefig(save_folder / "all_partners.png")
 
-    print("\nTraining and evaluation on multiple partners: done.")
+    logger.info("Training and evaluation on multiple partners: done.")
     return test_score

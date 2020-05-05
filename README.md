@@ -4,7 +4,7 @@
 
 ## Introduction
 
-In collaborative data science projects partners sometimes need to train a model on multiple datasets, contributed by different data providing partners. In such cases the partners might have to measure how much each dataset involved contributed to the performance of the model. This is useful for example as a basis to agree on how to share the reward of the ML challenge or the future revenues derived from the predictive model, or to detect possible corrupted datasets or partners not playing by the rules. We explore this question and the opportunity to implement some mechanisms helping partners in such scenarios to measure each dataset's _contributivity_ (as _contribution to the performance of the model_).
+In collaborative data science projects partners sometimes need to train a model on multiple datasets, contributed by different data providing partners. In such cases the partners might have to measure how much each dataset involved contributed to the performance of the model. This is useful for example as a basis to agree on how to share the reward of the ML challenge or the future revenues derived from the predictive model, or to detect possible corrupted datasets or partners not playing by the rules. We explore this question and the opportunity to implement some mechanisms helping partners in such scenarios to measure each dataset's *contributivity* (as *contribution to the performance of the model*).
 
 ## Context of this work
 
@@ -18,14 +18,14 @@ The objective is to compare the contributivity figures obtained with the differe
 
 ### Experimental approach
 
-We want to start experimenting contributivity evaluations in collaborative data science and distributed learning scenarios. Our exploration of this topic is in progress, as is this library and associated experimentations. To make the most out of it, it is key to capitalize on this effort and develop it as a reproducible pipeline that can be improved, enriched, complemented over time.
+We want to start experimenting contributivity evaluations in collaborative data science and distributed learning scenarios. Our exploration of this topic is in progress, as is this library and associated experiments. To make the most out of it, it is key to capitalize on this effort and develop it as a reproducible pipeline that can be improved, enriched, complemented over time.
 
 For a start we made the following choices:
 
 - What we want to compare (with the Shapley values being the baseline, see section below):
   - Contributivity relative values
   - Computation time
-- Public dataset for experimentations: MNIST
+- Public dataset for experiments: MNIST
 - ML algorithm: CNN adapted to MNIST, not too deep so it can run on CPU
 - Distributed learning approach: federated learning (variants of basic federated learning are being implemented too)
 
@@ -35,7 +35,7 @@ For a start we made the following choices:
 
 - [done] [**Shapley values**](https://arxiv.org/pdf/1902.10275.pdf):  
 
-  These indicators seem to be very good candidates to measure the contributivity of each data providers, because they are usually used in game theory to fairly attributes the gain of a coalitional game amongst its players, which is exactly want we are looking for here.
+  These indicators seem to be very good candidates to measure the contributivity of each data providers, because they are usually used in game theory to fairly attributes the gain of a coalition game amongst its players, which is exactly want we are looking for here.
   
   A coalition game is a game where players form coalitions and each coalitions gets a score according to some rules. The winners are the players who manage to be in the coalition with the best score. Here we can consider each data provider is a player, and that forming a coalition is building a federated model using the dataset of each player within the coalition. The score of a coalition is then the performance on a test set of the federated model built by the coalition.
 
@@ -50,7 +50,7 @@ For a start we made the following choices:
   As the Shapley value is an average we can estimate it using the Monte-Carlo method. Here it consists in sampling a reasonable number of increments (says a hundred per player) and to take the average of the sampled increments of a player as the estimation of the Shapley value of that player.
     
   - [done] **[Truncated Monte-Carlo Shapley](https://arxiv.org/pdf/1904.02868.pdf) approximation**:  
-  The idea of Truncated Monte-Carlo is that, for big coalition, the increments of a player are usually small, therefore we can consider their value is null instead of spending computional power to compute it. This reduce the number of times we have to fit a model, but adds a small bias the estimation.
+  The idea of Truncated Monte-Carlo is that, for big coalition, the increments of a player are usually small, therefore we can consider their value is null instead of spending computational power to compute it. This reduce the number of times we have to fit a model, but adds a small bias the estimation.
     
   - [done] **Interpolated truncated Monte-Carlo**:  
   This method is an attempt to reduce the bias of the Truncated monte-Carlo method. Here we do not consider the value of an increment of a big coalition is null, but we do a linear interpolation to better approximate its value.
@@ -67,7 +67,7 @@ For a start we made the following choices:
 
   "Stratification and with proper allocation" is another method to reduce the number of sampled increments in the Monte-Carlo method while keeping the same accuracy. There are two ideas behind this method:
 
-  1. The Shapley value is a mean of means taken on strata of increments. A strata of increments corresponds the all the increments of coalition with the same number of players. We can estimate the means on each stata independently rather than the whole mean, this improves the accuracy and reduces the number of increments to sample.
+  1. The Shapley value is a mean of means taken on strata of increments. A strata of increments corresponds the all the increments of coalition with the same number of players. We can estimate the means on each strata independently rather than the whole mean, this improves the accuracy and reduces the number of increments to sample.
   1. We can allocate a different amount of sampled increment to each mean of a strata. If we allocate more sample to the stratas where the increments value varies more, we can reduce the accuracy even more.
    
   As we can estimate the mean of a strata by sampling with replacement of without replacement, it gives two approximation methods:
@@ -82,6 +82,7 @@ For a start we made the following choices:
 ### Using the code files
 
 - Define your mock scenario(s) in `config.yml` by changing the values of the suggested parameters of the 2 example scenarios (you can browse more available parameters in section [Config file parameters](#config-file-parameters) below). For example:
+
     ```yaml
     experiment_name: my_custom_experiment
     n_repeats: 5
@@ -98,9 +99,11 @@ For a start we made the following choices:
            epoch_count: 
              - 38
            methods:
-             - ["Shapley values", "Independant scores", "TMCS"]
+             - ["Shapley values", "Independent scores", "TMCS"]
            minibatch_count: 
              - 20
+           gradient_updates_per_pass_count:
+             - 8
          - partners_count: 
              - 2
            amounts_per_partner: 
@@ -114,10 +117,13 @@ For a start we made the following choices:
            epoch_count: 
              - 38
            methods:
-             - ["Shapley values", "Independant scores", "TMCS"]
+             - ["Shapley values", "Independent scores", "TMCS"]
            minibatch_count: 
              - 20
+           gradient_updates_per_pass_count:
+             - 8
     ```
+
 - Under `scenario_params_list`, enter a list of sets of scenario(s). Each set must have only one `partners_count` value. The length of `amout_per_partners`, `corrupted_datasets` (and `samples_split_option` when the advanced definition is used) must match the `partner_counts`. If for a given parameter multiple values are specified, e.g. like for `samples_split_option` and `agregation_weighting` in the example above, all possible combinations of parameters will be assembled as separate scenarios and run.
 - Then execute `main.py -f config.yml`
 - A `results.csv` file will be generated in a new folder for your experiment under `/experiments/<your_experiment>`. You can read this raw `results.csv` file or use the `analyse_results.ipynb` generated notebook to quickly generate figures.
@@ -170,7 +176,11 @@ Enables to artificially corrupt the data of one or several partners:
   
 Example: `[not_corrupted, not_corrupted, not_corrupted, shuffled]`
 
-##### Configuration of the distributed learning approach
+##### Configuration of the collaborative and distributed learning 
+
+There are several parameters influencing how the collaborative and distributed learning is done over the datasets of the partners. The following schema introduces certain definitions used in the below description of parameters:
+
+![Schema epochs mini-batches fit batches](./img/epoch_minibatch_fitbatch.png)
 
 `aggregation_weighting`: `'uniform'` (default), `'data_volume'` or `'local_score'`  
 After a training iteration over a given mini-batch, how individual models of each partner are aggregated:
@@ -187,36 +197,37 @@ Number of epochs passed as argument in the `.fit()` function. Superseded when `i
 Example: `epoch_count: 30`
 
 `minibatch_count`: `int` (default: `20`)  
-The distributed learning approach implemented relies on a sequence of (i) training in parallel on each partner's dataset, and then (ii) aggregating the resulting models. This constitutes an individual iteration. These iterations are repeated for all _mini-batches_ into which the partner's datasets are split at the beginning of each epoch. This gives a total of `epoch_count* minibatch_count` iterations.  
+The distributed learning approach implemented relies on a sequence of (i) training in parallel on each partner's dataset, and then (ii) aggregating the resulting models. This constitutes an individual iteration. These iterations are repeated for all *mini-batches* into which the partner's datasets are split at the beginning of each epoch. This gives a total of `epoch_count * minibatch_count` iterations.  
 Example: `minibatch_count: 20`
+
+`gradient_updates_per_pass_count`: `int` (default: `8`)  
+The ML training implemented relies on Keras' `.fit()` function, which takes as argument a `batch_size`, used as the number of samples per gradient update. Depending on the number of samples in the train dataset, this defines how many gradient updates are done per `.fit()` iteration. The `gradient_updates_per_pass_count` parameter enables to specify this number of gradient updates per `.fit()` iteration (both in multi-partner setting where there is 1 `.fit()` iteration per mini-batch, and in single-partner setting where there is 1 `.fit()` iteration per epoch).  
+Example: `gradient_updates_per_pass_count: 5`
 
 `is_early_stopping`: `True` (default) or `False`  
 When set to `True`, the training phases (whether multi-partner of single-partner) are stopped when the performance on the validation set reaches a plateau.
 
+**Note:** to only launch the distributed learning on the scenarios (and no contributivity measurement methods), omit the `methods` parameter (see section [Configuration of contributivity measurement methods to be tested](#configuration-of-contributivity-measurement-methods-to-be-tested) below).
+
 ##### Configuration of contributivity measurement methods to be tested
 
 `methods`:  
-A declarative list of the contributivity measurement methods to be executed. Default is:
-```yaml
-methods:
-    - "Shapley values"
-    - "Independant scores"
-    - "TMCS"
-``` 
+A declarative list `[]` of the contributivity measurement methods to be executed.
 All methods available are:
-```yaml
-methods:
-    - "Shapley values"
-    - "Independant scores"
-    - "TMCS"
-    - "ITMCS"
-    - "IS_lin_S"
-    - "IS_reg_S"
-    - "AIS_Kriging_S"
-    - "SMCS"
-    - "WR_SMC"
 ```
-See above section [Contributivity measurement approaches studied and implemented](#contributivity-measurement-approaches-studied-and-implemented) for explanation of the different methods.
+- "Shapley values"
+- "Independent scores"
+- "TMCS"
+- "ITMCS"
+- "IS_lin_S"
+- "IS_reg_S"
+- "AIS_Kriging_S"
+- "SMCS"
+- "WR_SMC"
+```
+See above section [Contributivity measurement approaches studied and implemented](#contributivity-measurement-approaches-studied-and-implemented) for explanation of the different methods.  
+**Note:** When `methods` is omitted in the config file only the distributed learning is run.  
+Example: `["Shapley values", "Independent scores", "TMCS"]`
 
 ##### Miscellaneous
 
