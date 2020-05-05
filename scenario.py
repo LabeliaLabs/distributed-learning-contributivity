@@ -108,7 +108,7 @@ class Scenario:
             self.gradient_updates_per_pass_count = params["gradient_updates_per_pass_count"]
             assert self.gradient_updates_per_pass_count > 0
         else:
-            self.gradient_updates_per_pass_count = constants.DEFAULT_gradient_updates_per_pass_count
+            self.gradient_updates_per_pass_count = constants.DEFAULT_GRADIENT_UPDATES_PER_PASS_COUNT
 
         # Early stopping stops ML training when performance increase is not significant anymore
         # It is used to optimize the number of epochs and the execution time
