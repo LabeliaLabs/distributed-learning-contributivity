@@ -6,6 +6,7 @@
 import bisect
 from itertools import combinations
 import math
+from loguru import logger
 
 
 def power_set(List):
@@ -19,7 +20,7 @@ def main(partners_count, char_func_list):
     characteristic_function = char_func_list  # Updated by @bowni
 
     if n == 0:
-        print("No players, exiting")  # Updated by @bowni
+        logger.info("No players, exiting")  # Updated by @bowni
         quit()
 
     tempList = list([i for i in range(n)])
@@ -59,5 +60,4 @@ def main(partners_count, char_func_list):
 
         shapley_values.append(shapley)
 
-    #    print(shapley_values)
     return shapley_values  # Added by @bowni
