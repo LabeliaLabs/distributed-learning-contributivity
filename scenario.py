@@ -468,6 +468,7 @@ class Scenario:
         plt.xlabel("Digits")
         # plt.show()  # DEBUG
         plt.savefig(self.save_folder / "data_distribution.png")
+        plt.close()
 
     def compute_batch_sizes(self):
 

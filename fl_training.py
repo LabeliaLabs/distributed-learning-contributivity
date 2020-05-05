@@ -357,6 +357,7 @@ def compute_test_score(
         plt.ylabel("Loss")
         plt.xlabel("Epoch")
         plt.savefig(save_folder / "federated_training_loss.png")
+        plt.close()
 
         plt.figure()
         plt.plot(global_val_acc)
@@ -365,6 +366,7 @@ def compute_test_score(
         # plt.yscale('log')
         plt.ylim([0, 1])
         plt.savefig(save_folder / "federated_training_acc.png")
+        plt.close()
 
         plt.figure()
         plt.plot(
@@ -377,6 +379,7 @@ def compute_test_score(
         # plt.yscale('log')
         plt.ylim([0, 1])
         plt.savefig(save_folder / "all_partners.png")
+        plt.close()
 
     logger.info("Training and evaluation on multiple partners: done.")
     return test_score
