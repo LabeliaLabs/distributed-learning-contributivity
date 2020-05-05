@@ -102,7 +102,7 @@ For a start we made the following choices:
              - ["Shapley values", "Independent scores", "TMCS"]
            minibatch_count: 
              - 20
-           fit_batches_count:
+           gradient_updates_per_pass_count:
              - 8
          - partners_count: 
              - 2
@@ -120,7 +120,7 @@ For a start we made the following choices:
              - ["Shapley values", "Independent scores", "TMCS"]
            minibatch_count: 
              - 20
-           fit_batches_count:
+           gradient_updates_per_pass_count:
              - 8
     ```
 
@@ -200,9 +200,9 @@ Example: `epoch_count: 30`
 The distributed learning approach implemented relies on a sequence of (i) training in parallel on each partner's dataset, and then (ii) aggregating the resulting models. This constitutes an individual iteration. These iterations are repeated for all *mini-batches* into which the partner's datasets are split at the beginning of each epoch. This gives a total of `epoch_count * minibatch_count` iterations.  
 Example: `minibatch_count: 20`
 
-`fit_batches_count`: `int` (default: `8`)  
-The ML training implemented relies on Keras' `.fit()` function, which takes as argument a `batch_size`, used as the number of samples per gradient update. Depending on the number of samples in the train dataset, this defines how many gradient updates are done per iteration over the dataset passed as argument to `.fit()`. The `fit_batches_count` parameter enables to specify this number of gradient updates per iteration over the dataset passed as argument to `.fit()` (both for multi-partner setting where there is one `.fit()` iteration per mini-batch with a single epoch, and for single-partner setting where there is one `.fit()` iteration with multiple epochs).  
-Example: `fit_batches_count: 5`
+`gradient_updates_per_pass_count`: `int` (default: `8`)  
+The ML training implemented relies on Keras' `.fit()` function, which takes as argument a `batch_size`, used as the number of samples per gradient update. Depending on the number of samples in the train dataset, this defines how many gradient updates are done per `.fit()` iteration. The `gradient_updates_per_pass_count` parameter enables to specify this number of gradient updates per `.fit()` iteration (both in multi-partner setting where there is 1 `.fit()` iteration per mini-batch, and in single-partner setting where there is 1 `.fit()` iteration per epoch).  
+Example: `gradient_updates_per_pass_count: 5`
 
 `is_early_stopping`: `True` (default) or `False`  
 When set to `True`, the training phases (whether multi-partner of single-partner) are stopped when the performance on the validation set reaches a plateau.
@@ -212,22 +212,22 @@ When set to `True`, the training phases (whether multi-partner of single-partner
 ##### Configuration of contributivity measurement methods to be tested
 
 `methods`:  
-A declarative list of the contributivity measurement methods to be executed.
+A declarative list `[]` of the contributivity measurement methods to be executed.
 All methods available are:
-```yaml
-methods:
-    - "Shapley values"
-    - "Independent scores"
-    - "TMCS"
-    - "ITMCS"
-    - "IS_lin_S"
-    - "IS_reg_S"
-    - "AIS_Kriging_S"
-    - "SMCS"
-    - "WR_SMC"
+```
+- "Shapley values"
+- "Independent scores"
+- "TMCS"
+- "ITMCS"
+- "IS_lin_S"
+- "IS_reg_S"
+- "AIS_Kriging_S"
+- "SMCS"
+- "WR_SMC"
 ```
 See above section [Contributivity measurement approaches studied and implemented](#contributivity-measurement-approaches-studied-and-implemented) for explanation of the different methods.  
-**Note:** When `methods` is omitted in the config file only the distributed learning is run.
+**Note:** When `methods` is omitted in the config file only the distributed learning is run.  
+Example: `["Shapley values", "Independent scores", "TMCS"]`
 
 ##### Miscellaneous
 

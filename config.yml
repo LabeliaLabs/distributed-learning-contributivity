@@ -14,12 +14,10 @@ scenario_params_list:
    epoch_count: 
      - 38
    methods:
-     - "Shapley values"
-     - "Independent scores"
-     - "TMCS"
+     - ["Shapley values", "Independent scores", "TMCS"]
    minibatch_count: 
      - 20
-   fit_batches_count:
+   gradient_updates_per_pass_count:
      - 8
  - partners_count: 
      - 2
@@ -34,10 +32,8 @@ scenario_params_list:
    epoch_count: 
      - 38
    methods:
-     - "Shapley values"
-     - "Independent scores"
-     - "TMCS"
+     - ["Shapley values", "Independent scores", "TMCS"]
    minibatch_count: 
      - 20
-   fit_batches_count:
+   gradient_updates_per_pass_count:
      - 8

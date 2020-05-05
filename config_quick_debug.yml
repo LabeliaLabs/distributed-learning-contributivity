@@ -12,7 +12,7 @@ scenario_params_list:
    corrupted_datasets:
     - [not_corrupted, corrupted, not_corrupted, not_corrupted]
     - [not_corrupted, not_corrupted, not_corrupted, not_corrupted]
-   fit_batches_count:
+   gradient_updates_per_pass_count:
     - 8
    is_quick_demo: 
     - True

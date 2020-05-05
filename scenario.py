@@ -104,11 +104,11 @@ class Scenario:
         else:
             self.minibatch_count = 20
 
-        if "fit_batches_count" in params:
-            self.fit_batches_count = params["fit_batches_count"]
-            assert self.fit_batches_count > 0
+        if "gradient_updates_per_pass_count" in params:
+            self.gradient_updates_per_pass_count = params["gradient_updates_per_pass_count"]
+            assert self.gradient_updates_per_pass_count > 0
         else:
-            self.fit_batches_count = constants.DEFAULT_FIT_BATCHES_COUNT
+            self.gradient_updates_per_pass_count = constants.DEFAULT_gradient_updates_per_pass_count
 
         # Early stopping stops ML training when performance increase is not significant anymore
         # It is used to optimize the number of epochs and the execution time
@@ -206,7 +206,7 @@ class Scenario:
         logger.info(f"   Iterations parameters: "
                     f"{self.epoch_count} epochs > "
                     f"{self.minibatch_count} mini-batches > "
-                    f"{self.fit_batches_count} fit-batches")
+                    f"{self.gradient_updates_per_pass_count} gradient updates per pass")
 
         # Describe data
         logger.info(f"### Data loaded: {self.dataset_name}")
@@ -341,7 +341,7 @@ class Scenario:
         logger.info(f"   Advanced split performed.")
         logger.info(f"   Nb of samples split amongst partners: {self.nb_samples_used}")
         logger.info(f"   Partners' relative nb of samples: {[round(p, 2) for p in self.final_relative_nb_samples]} "
-                    f"   (versus initially configured: {amounts_per_partner}")
+                    f"   (versus initially configured: {amounts_per_partner})")
         for partner in self.partners_list:
             logger.info(f"   Partner #{partner.id}: {len(partner.x_train)} samples with labels {partner.clusters_list}")
 
@@ -473,7 +473,7 @@ class Scenario:
 
         # For each partner we compute the batch size in multi-partner and single-partner setups
         for p in self.partners_list:
-            p.batch_size = max(1, int(len(p.x_train) / (self.minibatch_count * self.fit_batches_count)))
+            p.batch_size = max(1, int(len(p.x_train) / (self.minibatch_count * self.gradient_updates_per_pass_count)))
             logger.info(f"   compute_batch_sizes(), partner #{p.id}: {p.batch_size}")
 
     def to_dataframe(self):
@@ -497,7 +497,7 @@ class Scenario:
                 dict_results["single_partner_test_mode"] = self.single_partner_test_mode
                 dict_results["epoch_count"] = self.epoch_count
                 dict_results["minibatch_count"] = self.minibatch_count
-                dict_results["fit_batches_count"] = self.fit_batches_count
+                dict_results["gradient_updates_per_pass_count"] = self.gradient_updates_per_pass_count
                 dict_results["is_early_stopping"] = self.is_early_stopping
                 dict_results["federated_test_score"] = self.federated_test_score
                 dict_results["federated_computation_time_sec"] = self.federated_computation_time_sec

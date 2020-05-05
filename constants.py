@@ -12,7 +12,7 @@ INPUT_SHAPE = (IMG_ROWS, IMG_COLS, 1)
 
 # ML constants
 DEFAULT_BATCH_SIZE = 256
-DEFAULT_FIT_BATCHES_COUNT = 8
+DEFAULT_gradient_updates_per_pass_count = 8
 PATIENCE = 4  # patience for early stopping
 
 # GPU
