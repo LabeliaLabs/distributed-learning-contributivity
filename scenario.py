@@ -20,7 +20,7 @@ from partner import Partner
 
 
 class Scenario:
-    def __init__(self, params, experiment_path):
+    def __init__(self, params, experiment_path, scenario_id=1, n_repeat=1):
 
         # Identify and get a dataset for running experiments
         self.dataset_name = "MNIST"
@@ -147,6 +147,9 @@ class Scenario:
         # Miscellaneous
         # -------------
 
+        # scenario id and number of repetition
+        self.scenario_id = scenario_id
+        self.n_repeat = n_repeat
         # The quick demo parameters overwrites previously defined paramaters to make the scenario faster to compute
         if "is_quick_demo" in params and params["is_quick_demo"]:
             # Use less data and less epochs to speed up the computations
@@ -167,15 +170,12 @@ class Scenario:
         now = datetime.datetime.now()
         now_str = now.strftime("%Y-%m-%d_%Hh%M")
         self.scenario_name = (
-                str(self.samples_split_option)
+                "scenario_"
+                + str(self.scenario_id)
                 + "_"
-                + str(self.partners_count)
+                + "repeat"
                 + "_"
-                + str(self.amounts_per_partner)
-                + "_"
-                + str(self.corrupted_datasets)
-                + "_"
-                + str(self.single_partner_test_mode)
+                + str(self.n_repeat)
                 + "_"
                 + now_str
                 + "_"
