@@ -108,7 +108,7 @@ class Scenario:
             self.gradient_updates_per_pass_count = params["gradient_updates_per_pass_count"]
             assert self.gradient_updates_per_pass_count > 0
         else:
-            self.gradient_updates_per_pass_count = constants.DEFAULT_gradient_updates_per_pass_count
+            self.gradient_updates_per_pass_count = constants.DEFAULT_GRADIENT_UPDATES_PER_PASS_COUNT
 
         # Early stopping stops ML training when performance increase is not significant anymore
         # It is used to optimize the number of epochs and the execution time
@@ -366,15 +366,18 @@ class Scenario:
 
         # Then we parameterize this via the splitting_indices to be passed to np.split
         # This is to transform the percentages from the scenario configuration into indices where to split the data
-        splitting_indices = np.empty((self.partners_count - 1,))
-        splitting_indices[0] = self.amounts_per_partner[0]
-        for i in range(self.partners_count - 2):
-            splitting_indices[i + 1] = (
-                    splitting_indices[i] + self.amounts_per_partner[i + 1]
-            )
-        splitting_indices_train = (splitting_indices * len(y_train)).astype(int)
-        splitting_indices_test = (splitting_indices * len(y_test)).astype(int)
-        # print('- Splitting indices defined (for train data):', splitting_indices_train) # VERBOSE
+        if self.partners_count == 1:
+            splitting_indices_train = 1
+            splitting_indices_test = 1
+        else:
+            splitting_indices = np.empty((self.partners_count - 1,))
+            splitting_indices[0] = self.amounts_per_partner[0]
+            for i in range(self.partners_count - 2):
+                splitting_indices[i + 1] = (
+                        splitting_indices[i] + self.amounts_per_partner[i + 1]
+                )
+            splitting_indices_train = (splitting_indices * len(y_train)).astype(int)
+            splitting_indices_test = (splitting_indices * len(y_test)).astype(int)
 
         # Configure the desired data distribution scenario
 
@@ -468,51 +471,63 @@ class Scenario:
         plt.xlabel("Digits")
         # plt.show()  # DEBUG
         plt.savefig(self.save_folder / "data_distribution.png")
+        plt.close()
 
     def compute_batch_sizes(self):
 
         # For each partner we compute the batch size in multi-partner and single-partner setups
+        if self.partners_count == 1:
+            p = self.partners_list[0]
+            p.batch_size = max(1, int(len(p.x_train) / self.gradient_updates_per_pass_count))
+        else:
+            for p in self.partners_list:
+                p.batch_size = max(1, int(len(p.x_train) / (self.minibatch_count * self.gradient_updates_per_pass_count)))
+
         for p in self.partners_list:
-            p.batch_size = max(1, int(len(p.x_train) / (self.minibatch_count * self.gradient_updates_per_pass_count)))
             logger.info(f"   compute_batch_sizes(), partner #{p.id}: {p.batch_size}")
 
     def to_dataframe(self):
 
         df = pd.DataFrame()
+        dict_results = {}
+
+        # Scenario definition parameters
+        dict_results["scenario_name"] = self.scenario_name
+        dict_results["short_scenario_name"] = self.short_scenario_name
+        dict_results["dataset_name"] = self.dataset_name
+        dict_results["train_data_samples_count"] = len(self.x_train)
+        dict_results["test_data_samples_count"] = len(self.x_test)
+        dict_results["partners_count"] = self.partners_count
+        dict_results["amounts_per_partner"] = self.amounts_per_partner
+        dict_results["nb_samples_used"] = self.nb_samples_used
+        dict_results["final_relative_nb_samples"] = self.final_relative_nb_samples
+
+        # Multi-partner learning approach parameters
+        dict_results["samples_split_option"] = self.samples_split_option
+        dict_results["single_partner_test_mode"] = self.single_partner_test_mode
+        dict_results["aggregation_weighting"] = self.aggregation_weighting
+        dict_results["epoch_count"] = self.epoch_count
+        dict_results["minibatch_count"] = self.minibatch_count
+        dict_results["gradient_updates_per_pass_count"] = self.gradient_updates_per_pass_count
+        dict_results["is_early_stopping"] = self.is_early_stopping
+        dict_results["federated_test_score"] = self.federated_test_score
+        dict_results["federated_computation_time_sec"] = self.federated_computation_time_sec
+
+        if not self.contributivity_list:
+            df = df.append(dict_results, ignore_index=True)
 
         for contrib in self.contributivity_list:
 
-            dict_results = {}
+            # Contributivity data
+            dict_results["contributivity_method"] = contrib.name
+            dict_results["contributivity_scores"] = contrib.contributivity_scores
+            dict_results["contributivity_stds"] = contrib.scores_std
+            dict_results["computation_time_sec"] = contrib.computation_time_sec
+            dict_results["first_characteristic_calls_count"] = contrib.first_charac_fct_calls_count
 
             for i in range(self.partners_count):
-                # Scenario data
-                dict_results["dataset_name"] = self.dataset_name
-                dict_results["train_data_samples_count"] = len(self.x_train)
-                dict_results["test_data_samples_count"] = len(self.x_test)
-                dict_results["nb_samples_used"] = self.nb_samples_used
-                dict_results["final_relative_nb_samples"] = self.final_relative_nb_samples
-                dict_results["partners_count"] = self.partners_count
-                dict_results["amounts_per_partner"] = self.amounts_per_partner
-                dict_results["samples_split_option"] = self.samples_split_option
-                dict_results["single_partner_test_mode"] = self.single_partner_test_mode
-                dict_results["epoch_count"] = self.epoch_count
-                dict_results["minibatch_count"] = self.minibatch_count
-                dict_results["gradient_updates_per_pass_count"] = self.gradient_updates_per_pass_count
-                dict_results["is_early_stopping"] = self.is_early_stopping
-                dict_results["federated_test_score"] = self.federated_test_score
-                dict_results["federated_computation_time_sec"] = self.federated_computation_time_sec
-                dict_results["scenario_name"] = self.scenario_name
-                dict_results["short_scenario_name"] = self.short_scenario_name
-                dict_results["aggregation_weighting"] = self.aggregation_weighting
 
-                # Contributivity data
-                dict_results["contributivity_method"] = contrib.name
-                dict_results["contributivity_scores"] = contrib.contributivity_scores
-                dict_results["contributivity_stds"] = contrib.scores_std
-                dict_results["computation_time_sec"] = contrib.computation_time_sec
-                dict_results["first_characteristic_calls_count"] = contrib.first_charac_fct_calls_count
-
-                # partner data
+                # Partner-specific data
                 dict_results["partner_id"] = i
                 dict_results["amount_per_partner"] = self.amounts_per_partner[i]
                 dict_results["contributivity_score"] = contrib.contributivity_scores[i]

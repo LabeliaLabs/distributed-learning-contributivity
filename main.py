@@ -31,7 +31,7 @@ def main():
     stream, info_logger_id, info_debug_id = init_logger()
 
     with contextlib.redirect_stdout(stream):
-        print("Standard output is sent to added handlers.")
+        logger.info("Standard output is sent to added handlers.")
 
         # Parse config file for scenarios to be experimented
         config = get_config_from_file()
@@ -40,11 +40,9 @@ def main():
 
         experiment_path = config["experiment_path"]
         n_repeats = config["n_repeats"]
-        
-        print('Scenarii to process: ', )
+
         for scenario_id, scenario_params in enumerate(scenario_params_list):
-            print('Scenario %i/%i' %(scenario_id+1, len(scenario_params_list)))
-            print(scenario_params)
+            logger.info(f"Scenario {scenario_id+1}/{len(scenario_params_list)}: {scenario_params}")
 
         # Move log files to experiment folder
         move_log_file_to_experiment_folder(
@@ -67,11 +65,11 @@ def main():
 
             for scenario_id, scenario_params in enumerate(scenario_params_list):
 
+                logger.info(f"Scenario {scenario_id + 1}/{len(scenario_params_list)}")
                 logger.info("Current params:")
                 logger.info(scenario_params)
 
                 current_scenario = scenario.Scenario(scenario_params, experiment_path)
-                print('Scenario %i/%i' %(scenario_id+1, len(scenario_params_list)))
 
                 run_scenario(current_scenario)
 
@@ -140,12 +138,11 @@ def run_scenario(current_scenario):
     current_scenario.federated_computation_time_sec = end - start
 
     for method in current_scenario.methods:
-        print(method)
+        logger.info(f"{method}")
         contrib = contributivity.Contributivity(scenario=current_scenario)
         contrib.compute_contributivity(method, current_scenario)
         current_scenario.append_contributivity(contrib)
-        print("\n## Evaluating contributivity with " + method + ":")
-        print(contrib)
+        logger.info(f"## Evaluating contributivity with {method}: {contrib}")
 
     return 0
 
