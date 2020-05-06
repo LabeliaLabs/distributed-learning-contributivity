@@ -111,8 +111,8 @@ def get_scenario_params_list(config):
                     raise Exception("Length of corrupted_datasets does not match number of partners.")
 
             scenario_params_list.append(scenario)
-            
-    print('\nNumber of scenario(s) configured:', len(scenario_params_list))
+
+    logger.info(f"Number of scenario(s) configured: {len(scenario_params_list)}")
     return scenario_params_list
 
 

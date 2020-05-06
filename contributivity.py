@@ -12,6 +12,7 @@ from scipy.stats import norm
 from itertools import combinations
 from math import factorial
 from sklearn.linear_model import LinearRegression
+from loguru import logger
 
 import fl_training
 import shapley_value.shapley as sv
@@ -130,7 +131,7 @@ class Contributivity:
                     subset_with_i = np.sort(np.append(subset, i))
                     if (
                         tuple(subset_with_i) in self.charac_fct_values
-                    ):  # we store the new knwon increments
+                    ):  # we store the new known increments
                         self.increments_values[i][tuple(subset)] = (
                             self.charac_fct_values[tuple(subset_with_i)]
                             - self.charac_fct_values[tuple(subset)]
@@ -142,12 +143,11 @@ class Contributivity:
 
     def compute_SV(self, the_scenario):
         start = timer()
-        print("\n# Launching computation of Shapley Value of all partners")
+        logger.info("# Launching computation of Shapley Value of all partners")
 
         # Initialize list of all players (partners) indexes
         partners_count = len(the_scenario.partners_list)
         partners_idx = np.arange(partners_count)
-        # print('All players (partners) indexes: ', partners_idx) # VERBOSE
 
         # Define all possible coalitions of players
         coalitions = [
@@ -155,18 +155,15 @@ class Contributivity:
             for i in range(len(partners_idx))
             for j in combinations(partners_idx, i + 1)
         ]
-        # print('All possible coalitions of players (partners): ', coalitions) # VERBOSE
 
         # For each coalition, obtain value of characteristic function...
         # ... i.e.: train and evaluate model on partners part of the given coalition
         characteristic_function = []
 
         for coalition in coalitions:
-            # print('\nComputing characteristic function on coalition ', coalition) # VERBOSE
             characteristic_function.append(
                 self.not_twice_characteristic(coalition, the_scenario)
             )
-        # print('\nValue of characteristic function for all coalitions: ', characteristic_function) # VERBOSE
 
         # Compute Shapley Value for each partner
         # We are using this python implementation: https://github.com/susobhang70/shapley_value
@@ -185,9 +182,7 @@ class Contributivity:
     def compute_independent_scores(self, the_scenario):
         start = timer()
 
-        print(
-            "\n# Launching computation of perf. scores of models trained independently on each partner"
-        )
+        logger.info("# Launching computation of perf. scores of models trained independently on each partner")
 
         # Initialize a list of performance scores
         performance_scores = []
@@ -204,7 +199,7 @@ class Contributivity:
         end = timer()
         self.computation_time_sec = end - start
 
-    # %% compute Shapley values with the truncated Monte-carlo metho
+    # %% compute Shapley values with the truncated Monte-carlo method
     def truncated_MC(self, the_scenario, sv_accuracy=0.01, alpha=0.9, truncation=0.05):
         """Return the vector of approximated Shapley value corresponding to a list of partner and a characteristic function using the truncated monte-carlo method."""
         start = timer()
@@ -890,17 +885,16 @@ class Contributivity:
                         increments_to_generate[k][strata].append(str(subset))
                     continuer[k].append(True)
 
-            # sampnling
+            # Sampling
             while (
-                np.any(continuer) or (1 - alpha)  <  v_max / (sv_accuracy ** 2)
+                np.any(continuer) or (1 - alpha) < v_max / (sv_accuracy ** 2)
             ):  # Check if the length of the confidence interval  is below the value of sv_accuracy
                 t += 1
-                print(t)
                 for k in range(N):
                     # select the strata to add an increment
                     if np.any(continuer[k]):
-                        p = np.array(continuer[k])/np.sum(continuer[k])  # alocate uniformly among strata that are not fully explored
-                    elif np.sum(sigma2[k])==0:
+                        p = np.array(continuer[k])/np.sum(continuer[k])  # Allocate uniformly among strata that are not fully explored
+                    elif np.sum(sigma2[k]) == 0:
                         continue
                     else:
                         p = sigma2[k] / np.sum(sigma2[k])
@@ -935,10 +929,10 @@ class Contributivity:
                         sigma2[k, strata] += (v - mu[k, strata]) ** 2
                     if length > 1:
                         sigma2[k, strata] /= length - 1
-                    else: #avoid creating a Nan value  when length = 1 
-                        sigma2[k, strata]=0
-                    sigma2[k, strata]*= (1/length-   factorial(N - 1 - strata) * factorial(strata)  / factorial(N-1) )
-                    print("t: ", t, ",k: ", k, ", strata: ",strata, ",sigma2: ",sigma2[k])
+                    else:  # Avoid creating a Nan value when length = 1
+                        sigma2[k, strata] = 0
+                    sigma2[k, strata] *= (1/length-   factorial(N - 1 - strata) * factorial(strata)  / factorial(N-1) )
+                    logger.info(f"t: {t}, k: {k}, strat: {strata}, sigma2: {sigma2[k]}")
                 
                 shap = np.mean(mu, axis=1)
                 var = np.zeros(N)  # variance of the estimator
@@ -1001,13 +995,13 @@ class Contributivity:
                 truncation=truncation,
             )
         elif method_to_compute == "IS_lin_S":
-            # Contributivity 5:   importance sampling with linear interpolation model
+            # Contributivity 5: Importance sampling with linear interpolation model
             self.IS_lin(current_scenario, sv_accuracy=sv_accuracy, alpha=alpha)
         elif method_to_compute == "IS_reg_S":
-            # Contributivity 6: importance sampling with regression model
+            # Contributivity 6: Importance sampling with regression model
             self.IS_reg(current_scenario, sv_accuracy=sv_accuracy, alpha=alpha)
         elif method_to_compute == "AIS_Kriging_S":
-            # Contributivity 7: Adaptative importance sampling with kriging model
+            # Contributivity 7: Adaptative importance sampling with Kriging model
             self.AIS_Kriging(
                 current_scenario, sv_accuracy=sv_accuracy, alpha=alpha, update=update
             )
@@ -1020,4 +1014,4 @@ class Contributivity:
                 current_scenario, sv_accuracy=sv_accuracy, alpha=alpha
             )
         else:
-            print("Unrecognized name of method, statement ignored!")
+            logger.info("Unrecognized name of method, statement ignored!")
