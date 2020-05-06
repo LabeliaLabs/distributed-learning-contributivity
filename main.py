@@ -65,11 +65,11 @@ def main():
 
             for scenario_id, scenario_params in enumerate(scenario_params_list):
 
+                logger.info(f"Scenario {scenario_id + 1}/{len(scenario_params_list)}")
                 logger.info("Current params:")
                 logger.info(scenario_params)
 
                 current_scenario = scenario.Scenario(scenario_params, experiment_path)
-                logger.info(f"Scenario {scenario_id + 1}/{len(scenario_params_list)}")
 
                 run_scenario(current_scenario)
 
