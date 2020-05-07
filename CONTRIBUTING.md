@@ -2,7 +2,7 @@
 
 > Please, feel free to suggest any other relevant item, to ask for edits or even to submit a Pull Request!
 >
-> You can also have a look at these broarder [contributing guidelines](https://github.com/SubstraFoundation/.github/blob/master/CONTRIBUTING.md).
+> You can also have a look at these broader [contributing guidelines](https://github.com/SubstraFoundation/.github/blob/master/CONTRIBUTING.md).
 
 - [Contributing to Contributivity](#contributing-to-contributivity)
   - [1. Git workflow & branching](#1-git-workflow--branching)
@@ -28,7 +28,7 @@ To go further, here is a good example of a successful project build with a versi
 
 ### 2.1 Python Virtual Environment
 
-In order to keep your installation of Substra separated from your general Python environement, which is a general Python good practice, it is recommanded to prepare a Python [virtual environment](https://virtualenv.pypa.io/en/latest/). In a new terminal window, please use one of the following method:
+In order to keep your installation separated from your general Python environment, which is a general Python good practice, it is recommended to set up a Python [virtual environment](https://virtualenv.pypa.io/en/latest/). In a new terminal window, please use one of the following method:
 
 ```sh
 # Method 1: install the virtualenv package
@@ -47,9 +47,6 @@ python3 -m venv NAME_OF_YOUR_VENV
 
 # Method 1 & 2: activate your new virtual env
 source NAME_OF_YOUR_VENV/bin/activate
-
-# Method 1 & 2: install Substra package inside your fresh new virtual environment
-pip3 install substra
 
 # Method 1 & 2: stop your virtual environment
 deactivate
@@ -75,7 +72,7 @@ Once inside your new virtual environment, you can install the project dependenci
 
 What is installed inside a virtual environment is separated from your general Python setup.
 
-If you want to go futher, please refer to the [official documentation](https://docs.conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html).
+If you want to go further, please refer to the [official documentation](https://docs.conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html).
 
 If you are looking for more Python Virtual Environment resources, you might be interested in this post from [Real Python](https://realpython.com/python-virtual-environments-a-primer/).
 
@@ -120,14 +117,14 @@ Flake8 is a famous Python linting package that might be of help within your deve
 # -*- coding : utf-8
 
 """
-Documentation du module
+Documentation of module
 """
 
 # 1. imports from standard library (ex. sys)
 
 # 2. imports from third party library (ex. arrow)
 
-# 3. imports from project modules (prject internal modules)
+# 3. imports from project modules (project internal modules)
 
 # 4. global variables
 
@@ -157,11 +154,11 @@ Jupyter Notebooks are awesome! It allows you run Python code (but not only!) in 
 Plus, Jupyter Notebooks come with a serious set of crazy cool and neatly documented widgets, [help yourself](
 https://ipywidgets.readthedocs.io/en/latest/).
 
-Note: [Juperter lab](https://github.com/jupyterlab/jupyterlab) is like the future of Notebook, be sure to have a look, you might like it!
+Note: [Jupyter lab](https://github.com/jupyterlab/jupyterlab) is like the future of Notebook, be sure to have a look, you might like it!
 
 #### 2.5 Sharing & online rendering
 
-Notebooks now have really efficent ways to share your code and display your outputs, among them, you will find:
+Notebooks now have really efficient ways to share your code and display your outputs, among them, you will find:
 
 - [Binder](https://mybinder.org/) that lets you turn a Git repository into a collection of interactive notebooks!
 - [Voila](https://github.com/voila-dashboards/voila) is a newcomer that will allow to build dashboads for your presentations!
