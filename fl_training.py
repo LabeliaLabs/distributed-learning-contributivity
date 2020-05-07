@@ -6,6 +6,8 @@ Functions for model training and evaluation (single-partner and multi-partner ca
 
 from __future__ import print_function
 
+import os
+import pickle
 import keras
 from keras.backend.tensorflow_backend import clear_session
 from keras.callbacks import EarlyStopping
@@ -347,16 +349,21 @@ def compute_test_score(
     if is_save_fig:
 
         # Save data
-        np.save(save_folder / "score_matrix", score_matrix)
-        np.save(save_folder / "global_val_acc", global_val_acc)
-        np.save(save_folder / "global_val_loss", global_val_loss)
-        np.save(save_folder / "score_matrix_extended", score_matrix_extended)
+        history_data = {}
+        history_data["score_matrix"] = score_matrix
+        history_data["global_val_acc"] = global_val_acc
+        history_data["global_val_loss"] = global_val_loss
+        history_data["score_matrix_extended"] = score_matrix_extended
+        with open(save_folder / "history_data.p", 'wb') as f:
+            pickle.dump(history_data, f)
 
+        if not os.path.exists(save_folder / 'graphs/'):
+            os.makedirs(save_folder / 'graphs/')
         plt.figure()
         plt.plot(global_val_loss)
         plt.ylabel("Loss")
         plt.xlabel("Epoch")
-        plt.savefig(save_folder / "federated_training_loss.png")
+        plt.savefig(save_folder / "graphs/federated_training_loss.png")
         plt.close()
 
         plt.figure()
@@ -365,7 +372,7 @@ def compute_test_score(
         plt.xlabel("Epoch")
         # plt.yscale('log')
         plt.ylim([0, 1])
-        plt.savefig(save_folder / "federated_training_acc.png")
+        plt.savefig(save_folder / "graphs/federated_training_acc.png")
         plt.close()
 
         plt.figure()
@@ -378,7 +385,7 @@ def compute_test_score(
         plt.legend(["partner " + str(i) for i in range(partners_count)])
         # plt.yscale('log')
         plt.ylim([0, 1])
-        plt.savefig(save_folder / "all_partners.png")
+        plt.savefig(save_folder / "graphs/all_partners.png")
         plt.close()
 
     logger.info("Training and evaluation on multiple partners: done.")

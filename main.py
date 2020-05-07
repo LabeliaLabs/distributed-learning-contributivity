@@ -69,7 +69,10 @@ def main():
                 logger.info("Current params:")
                 logger.info(scenario_params)
 
-                current_scenario = scenario.Scenario(scenario_params, experiment_path)
+                current_scenario = scenario.Scenario(scenario_params, 
+                                                     experiment_path,
+                                                     scenario_id=scenario_id+1,
+                                                     n_repeat=i+1)
 
                 run_scenario(current_scenario)
 

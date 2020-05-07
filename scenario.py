@@ -6,6 +6,7 @@ This enables to parameterize a desired scenario to mock a multi-partner ML proje
 from keras.datasets import mnist
 from sklearn.model_selection import train_test_split
 import datetime
+import os
 import numpy as np
 import matplotlib.pyplot as plt
 import uuid
@@ -19,7 +20,7 @@ from partner import Partner
 
 
 class Scenario:
-    def __init__(self, params, experiment_path):
+    def __init__(self, params, experiment_path, scenario_id=1, n_repeat=1):
 
         # Identify and get a dataset for running experiments
         self.dataset_name = "MNIST"
@@ -45,7 +46,7 @@ class Scenario:
         self.contributivity_list = []
 
         # --------------------------------------
-        #  Definition of collaborative scenarios
+        #  Definition of collaborative scenarios
         # --------------------------------------
 
         # partners mock different partners in a collaborative data science project
@@ -72,7 +73,7 @@ class Scenario:
             self.corrupted_datasets = ["not_corrupted"] * self.partners_count
 
         # ---------------------------------------------------
-        #  Configuration of the distributed learning approach
+        #  Configuration of the distributed learning approach
         # ---------------------------------------------------
 
         # When training on a single partner,
@@ -118,7 +119,7 @@ class Scenario:
             self.is_early_stopping = True
 
         # -----------------------------------------------------------------
-        #  Configuration of contributivity measurement methods to be tested
+        #  Configuration of contributivity measurement methods to be tested
         # -----------------------------------------------------------------
 
         # Contributivity methods
@@ -146,6 +147,9 @@ class Scenario:
         # Miscellaneous
         # -------------
 
+        # scenario id and number of repetition
+        self.scenario_id = scenario_id
+        self.n_repeat = n_repeat
         # The quick demo parameters overwrites previously defined paramaters to make the scenario faster to compute
         if "is_quick_demo" in params and params["is_quick_demo"]:
             # Use less data and less epochs to speed up the computations
@@ -166,15 +170,12 @@ class Scenario:
         now = datetime.datetime.now()
         now_str = now.strftime("%Y-%m-%d_%Hh%M")
         self.scenario_name = (
-                str(self.samples_split_option)
+                "scenario_"
+                + str(self.scenario_id)
                 + "_"
-                + str(self.partners_count)
+                + "repeat"
                 + "_"
-                + str(self.amounts_per_partner)
-                + "_"
-                + str(self.corrupted_datasets)
-                + "_"
-                + str(self.single_partner_test_mode)
+                + str(self.n_repeat)
                 + "_"
                 + now_str
                 + "_"
@@ -469,8 +470,10 @@ class Scenario:
 
         plt.suptitle("Data distribution")
         plt.xlabel("Digits")
-        # plt.show()  # DEBUG
-        plt.savefig(self.save_folder / "data_distribution.png")
+
+        if not os.path.exists(self.save_folder / 'graphs/'):
+            os.makedirs(self.save_folder / 'graphs/')
+        plt.savefig(self.save_folder / "graphs/data_distribution.png")
         plt.close()
 
     def compute_batch_sizes(self):
