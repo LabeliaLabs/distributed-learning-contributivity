@@ -190,13 +190,18 @@ There are several parameters influencing how the collaborative and distributed l
 Define the multi-partner learning approach, among the following as described by the schemas:
 
 - `'fedavg'`: stands for federated averaging
-  ![Schema fedavg](img/collaborative_rounds_fedavg.png)
+    
+    ![Schema fedavg](img/collaborative_rounds_fedavg.png)
   
 - `'seq'`: stands for sequential
-  ![Schema seq](img/collaborative_rounds_seq.png)
+    
+    ![Schema seq](img/collaborative_rounds_seq.png)
   
 - `'seqavg'`: stands for sequential averaging
-  ![Schema seqavg](img/collaborative_rounds_seqavg.png)
+    
+    ![Schema seqavg](img/collaborative_rounds_seqavg.png)
+    
+Example: `multi_partner_learning_approach: 'seqavg'`
 
 `aggregation_weighting`: `'uniform'` (default), `'data_volume'` or `'local_score'`  
 After a training iteration over a given mini-batch, how individual models of each partner are aggregated:
@@ -204,9 +209,12 @@ After a training iteration over a given mini-batch, how individual models of eac
 - `'uniform'`: simple average (non-weighted)
 - `'data_volume'`: average weighted with per the amounts of data of partners (number of data samples)
 - `'local_score'`: average weighted with the performance (on a central validation set) of the individual models
+
+Example: `aggregation_weighting: 'data_volume'`
  
 `single_partner_test_mode`: `'global'` (default) or `'local'`  
 When training a model on a single partner (this is needed in certain contributivity measurement approaches), defines if the final performance is tested on the central testset or on the partner's local testset. Note: a train-test split is performed on the original dataset, forming a central testset; this testset is also split over each partner (randomly) forming local testsets.  
+Example: `single_partner_test_mode: 'global'`  
 
 `epoch_count`: `int` (default: `40`)  
 Number of epochs passed as argument in the `.fit()` function. Superseded when `is_early_stopping` is set to `true`.  
@@ -221,7 +229,8 @@ The ML training implemented relies on Keras' `.fit()` function, which takes as a
 Example: `gradient_updates_per_pass_count: 5`
 
 `is_early_stopping`: `True` (default) or `False`  
-When set to `True`, the training phases (whether multi-partner of single-partner) are stopped when the performance on the validation set reaches a plateau.
+When set to `True`, the training phases (whether multi-partner of single-partner) are stopped when the performance on the validation set reaches a plateau.  
+Example: `is_early_stopping: False`
 
 **Note:** to only launch the distributed learning on the scenarios (and no contributivity measurement methods), omit the `methods` parameter (see section [Configuration of contributivity measurement methods to be tested](#configuration-of-contributivity-measurement-methods-to-be-tested) below).
 
@@ -248,7 +257,8 @@ Example: `["Shapley values", "Independent scores", "TMCS"]`
 ##### Miscellaneous
 
 `is_quick_demo`: `True` or `False` (default)  
-When set to `True`, the amount of data samples and the number of epochs and mini-batches are significantly reduced, to minimize the duration of the run.
+When set to `True`, the amount of data samples and the number of epochs and mini-batches are significantly reduced, to minimize the duration of the run.  
+Example: `is_quick_demo: True`
 
 ## Contacts
 
