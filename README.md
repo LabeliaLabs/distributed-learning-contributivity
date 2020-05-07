@@ -283,7 +283,18 @@ Example: `is_quick_demo: True`
   
 - [future prospect] **Federated step-by-step increments**:
 
-  See open [issue #105](https://github.com/SubstraFoundation/distributed-learning-contributivity/issues/105). 
+  See open [issue #105](https://github.com/SubstraFoundation/distributed-learning-contributivity/issues/105).
+  
+### Ongoing work and improvement plan
+
+The current work focuses on the following 4 priorities:
+
+1. Improve the **[multi-partner learning approaches](https://github.com/SubstraFoundation/distributed-learning-contributivity/projects/4)**
+1. Continue developing new **[contributivity measurement methods](https://github.com/SubstraFoundation/distributed-learning-contributivity/projects/3)**
+1. Perform **[experiments](https://github.com/SubstraFoundation/distributed-learning-contributivity/projects/1)** and gain experience about best-suited contributivity measurement methods in different situations
+1. Make the library **[agnostic/compatible with other datasets and model architectures](https://github.com/SubstraFoundation/distributed-learning-contributivity/projects/2)**
+
+This work is collaborative, enthusiasts are welcome to comment open issues and PRs or open new ones.
 
 ## Contacts
 
