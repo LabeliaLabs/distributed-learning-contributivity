@@ -6,6 +6,7 @@ This enables to parameterize a desired scenario to mock a multi-partner ML proje
 from keras.datasets import mnist
 from sklearn.model_selection import train_test_split
 import datetime
+import os
 import numpy as np
 import matplotlib.pyplot as plt
 import uuid
@@ -19,7 +20,7 @@ from partner import Partner
 
 
 class Scenario:
-    def __init__(self, params, experiment_path):
+    def __init__(self, params, experiment_path, scenario_id=1, n_repeat=1):
 
         # Identify and get a dataset for running experiments
         self.dataset_name = "MNIST"
@@ -45,7 +46,7 @@ class Scenario:
         self.contributivity_list = []
 
         # --------------------------------------
-        #  Definition of collaborative scenarios
+        #  Definition of collaborative scenarios
         # --------------------------------------
 
         # partners mock different partners in a collaborative data science project
@@ -72,7 +73,7 @@ class Scenario:
             self.corrupted_datasets = ["not_corrupted"] * self.partners_count  # default
 
         # ---------------------------------------------------
-        #  Configuration of the distributed learning approach
+        #  Configuration of the distributed learning approach
         # ---------------------------------------------------
 
         # Multi-partner learning approach
@@ -134,7 +135,7 @@ class Scenario:
             self.is_early_stopping = True  # default
 
         # -----------------------------------------------------------------
-        #  Configuration of contributivity measurement methods to be tested
+        #  Configuration of contributivity measurement methods to be tested
         # -----------------------------------------------------------------
 
         # Contributivity methods
@@ -162,6 +163,10 @@ class Scenario:
         # Miscellaneous
         # -------------
 
+        # Scenario id and number of repetition
+        self.scenario_id = scenario_id
+        self.n_repeat = n_repeat
+
         # The quick demo parameters overwrites previously defined parameters to make the scenario faster to compute
         if "is_quick_demo" in params and params["is_quick_demo"]:
             # Use less data and less epochs to speed up the computations
@@ -182,15 +187,12 @@ class Scenario:
         now = datetime.datetime.now()
         now_str = now.strftime("%Y-%m-%d_%Hh%M")
         self.scenario_name = (
-                str(self.samples_split_option)
+                "scenario_"
+                + str(self.scenario_id)
                 + "_"
-                + str(self.partners_count)
+                + "repeat"
                 + "_"
-                + str(self.amounts_per_partner)
-                + "_"
-                + str(self.corrupted_datasets)
-                + "_"
-                + str(self.single_partner_test_mode)
+                + str(self.n_repeat)
                 + "_"
                 + now_str
                 + "_"
@@ -486,8 +488,10 @@ class Scenario:
 
         plt.suptitle("Data distribution")
         plt.xlabel("Digits")
-        # plt.show()  # DEBUG
-        plt.savefig(self.save_folder / "data_distribution.png")
+
+        if not os.path.exists(self.save_folder / 'graphs/'):
+            os.makedirs(self.save_folder / 'graphs/')
+        plt.savefig(self.save_folder / "graphs/data_distribution.png")
         plt.close()
 
     def compute_batch_sizes(self):
@@ -506,43 +510,46 @@ class Scenario:
     def to_dataframe(self):
 
         df = pd.DataFrame()
+        dict_results = {}
+
+        # Scenario definition parameters
+        dict_results["scenario_name"] = self.scenario_name
+        dict_results["short_scenario_name"] = self.short_scenario_name
+        dict_results["dataset_name"] = self.dataset_name
+        dict_results["train_data_samples_count"] = len(self.x_train)
+        dict_results["test_data_samples_count"] = len(self.x_test)
+        dict_results["partners_count"] = self.partners_count
+        dict_results["amounts_per_partner"] = self.amounts_per_partner
+        dict_results["samples_split_option"] = self.samples_split_option
+        dict_results["nb_samples_used"] = self.nb_samples_used
+        dict_results["final_relative_nb_samples"] = self.final_relative_nb_samples
+
+        # Multi-partner learning approach parameters
+        dict_results["multi_partner_learning_approach"] = self.multi_partner_learning_approach
+        dict_results["aggregation_weighting"] = self.aggregation_weighting
+        dict_results["single_partner_test_mode"] = self.single_partner_test_mode
+        dict_results["epoch_count"] = self.epoch_count
+        dict_results["minibatch_count"] = self.minibatch_count
+        dict_results["gradient_updates_per_pass_count"] = self.gradient_updates_per_pass_count
+        dict_results["is_early_stopping"] = self.is_early_stopping
+        dict_results["federated_test_score"] = self.federated_test_score
+        dict_results["federated_computation_time_sec"] = self.federated_computation_time_sec
+
+        if not self.contributivity_list:
+            df = df.append(dict_results, ignore_index=True)
 
         for contrib in self.contributivity_list:
 
-            dict_results = {}
+            # Contributivity data
+            dict_results["contributivity_method"] = contrib.name
+            dict_results["contributivity_scores"] = contrib.contributivity_scores
+            dict_results["contributivity_stds"] = contrib.scores_std
+            dict_results["computation_time_sec"] = contrib.computation_time_sec
+            dict_results["first_characteristic_calls_count"] = contrib.first_charac_fct_calls_count
 
             for i in range(self.partners_count):
-                # Scenario data
-                dict_results["dataset_name"] = self.dataset_name
-                dict_results["train_data_samples_count"] = len(self.x_train)
-                dict_results["test_data_samples_count"] = len(self.x_test)
-                dict_results["samples_split_option"] = self.samples_split_option
-                dict_results["nb_samples_used"] = self.nb_samples_used
-                dict_results["final_relative_nb_samples"] = self.final_relative_nb_samples
-                dict_results["partners_count"] = self.partners_count
-                dict_results["amounts_per_partner"] = self.amounts_per_partner
-                dict_results["scenario_name"] = self.scenario_name
-                dict_results["short_scenario_name"] = self.short_scenario_name
 
-                # Multi-partner learning parameters
-                dict_results["multi_partner_learning_approach"] = self.multi_partner_learning_approach
-                dict_results["aggregation_weighting"] = self.aggregation_weighting
-                dict_results["single_partner_test_mode"] = self.single_partner_test_mode
-                dict_results["epoch_count"] = self.epoch_count
-                dict_results["minibatch_count"] = self.minibatch_count
-                dict_results["gradient_updates_per_pass_count"] = self.gradient_updates_per_pass_count
-                dict_results["is_early_stopping"] = self.is_early_stopping
-                dict_results["federated_test_score"] = self.federated_test_score
-                dict_results["federated_computation_time_sec"] = self.federated_computation_time_sec
-
-                # Contributivity-related parameters
-                dict_results["contributivity_method"] = contrib.name
-                dict_results["contributivity_scores"] = contrib.contributivity_scores
-                dict_results["contributivity_stds"] = contrib.scores_std
-                dict_results["computation_time_sec"] = contrib.computation_time_sec
-                dict_results["first_characteristic_calls_count"] = contrib.first_charac_fct_calls_count
-
-                # partner data
+                # Partner-specific data
                 dict_results["partner_id"] = i
                 dict_results["amount_per_partner"] = self.amounts_per_partner[i]
                 dict_results["contributivity_score"] = contrib.contributivity_scores[i]
