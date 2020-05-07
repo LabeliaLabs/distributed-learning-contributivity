@@ -267,7 +267,7 @@ def collaborative_round_fit(model_to_fit, train_data, val_data, batch_size):
     return history
 
 
-def print_collaborative_round_partner_result(
+def log_collaborative_round_partner_result(
         partner, partner_index, partners_count, collaborative_round_indexes, validation_score):
     """Print the validation accuracy of the collaborative round"""
 
@@ -340,8 +340,8 @@ def compute_collaborative_round_fedavg(
         )
         history = collaborative_round_fit(partner_model, train_data_for_fit_iteration, val_data, partner.batch_size)
 
-        # Print results of the round
-        print_collaborative_round_partner_result(
+        # Log results of the round
+        log_collaborative_round_partner_result(
             partner, partner_index, partners_count, collaborative_round_indexes, history.history["val_accuracy"][0])
 
         # Update the partner's model in the models' list
@@ -369,6 +369,8 @@ def compute_collaborative_round_sequential(
     partners_count = len(partners_list)
     epoch_index, epoch_count, minibatch_index, minibatch_count = collaborative_round_indexes
     minibatched_x_train, minibatched_y_train = train_data
+    is_last_round = minibatch_index == minibatch_count - 1
+    local_score_list, model_list, score_matrix, score_matrix_extended = iterative_results
 
     # Iterate over partners for training the model sequentially
     shuffled_indexes = np.random.permutation(len(partners_list))
@@ -385,9 +387,13 @@ def compute_collaborative_round_sequential(
         history = collaborative_round_fit(
             sequentially_trained_model, train_data_for_fit_iteration, val_data, partner.batch_size)
 
-        # Print results of the round
-        print_collaborative_round_partner_result(
+        # Log results of the round
+        log_collaborative_round_partner_result(
             partner, for_loop_idx, partners_count, collaborative_round_indexes, history.history["val_accuracy"][0])
+
+        # On final collaborative round, save the partner's model in the models' list
+        if is_last_round:
+            model_list[partner_index] = build_from_previous_model(sequentially_trained_model)
 
         # Update iterative results
         update_iterative_results(partner_index, collaborative_round_indexes, history, iterative_results)
@@ -414,9 +420,9 @@ def compute_collaborative_round_seqavg(
     local_score_list, model_list, score_matrix, score_matrix_extended = iterative_results
     minibatched_x_train, minibatched_y_train = train_data
 
-    # Starting model for each partner is the aggregated model from the previous mini-batch iteration
+    # Starting model for each partner is the aggregated model from the previous collaborative round
     if is_very_first_minibatch:  # Except for the very first mini-batch where it is a new model
-        logger.debug(f"(seqavg) Very first minibatch of epoch n°{epoch_index}, init a new model for the round")
+        logger.debug(f"(seqavg) Very first minibatch, init a new model for the round")
         model_for_round = utils.generate_new_cnn_model()
     else:
         logger.debug(f"(seqavg) Minibatch n°{minibatch_index} of epoch n°{epoch_index}, "
@@ -431,27 +437,19 @@ def compute_collaborative_round_seqavg(
 
         partner = partners_list[partner_index]
 
-        # Reference the partner's model
-        if for_loop_idx == 0:
-            logger.debug("(seqavg) First partner of collaborative round, init with the model prepared for the round")
-            partner_model = model_for_round
-        else:
-            previous_partner_index = shuffled_indexes[for_loop_idx-1]
-            partner_model = build_from_previous_model(model_list[previous_partner_index])
-
         # Train on partner local data set
         train_data_for_fit_iteration = (
             minibatched_x_train[partner_index][minibatch_index],
             minibatched_y_train[partner_index][minibatch_index],
         )
-        history = collaborative_round_fit(partner_model, train_data_for_fit_iteration, val_data, partner.batch_size)
+        history = collaborative_round_fit(model_for_round, train_data_for_fit_iteration, val_data, partner.batch_size)
 
-        # Print results of the round
-        print_collaborative_round_partner_result(
+        # Log results
+        log_collaborative_round_partner_result(
             partner, for_loop_idx, partners_count, collaborative_round_indexes, history.history["val_accuracy"][0])
 
-        # Update the partner's model in the models' list
-        model_list[partner_index] = partner_model
+        # Save the partner's model in the models' list
+        model_list[partner_index] = build_from_previous_model(model_for_round)
 
         # Update iterative results
         update_iterative_results(partner_index, collaborative_round_indexes, history, iterative_results)
@@ -548,11 +546,10 @@ def compute_test_score(
                 )
 
         # At the end of each epoch, evaluate the model for early stopping on a global validation set
-        if multi_partner_learning_approach == 'fedavg' or multi_partner_learning_approach == 'seqavg':
-            aggregation_weights = prepare_aggregation_weights(aggregation_weighting, partners_list, local_score_list)
-            model_to_evaluate = build_aggregated_model(aggregate_model_weights(model_list, aggregation_weights))
-        elif multi_partner_learning_approach == 'seq':
-            model_to_evaluate = sequentially_trained_model
+        # Even in the 'seq' approach we aggregate here...
+        # ... to minimize the dependence to the order of partners on last minibatch
+        aggregation_weights = prepare_aggregation_weights(aggregation_weighting, partners_list, local_score_list)
+        model_to_evaluate = build_aggregated_model(aggregate_model_weights(model_list, aggregation_weights))
         model_evaluation = model_to_evaluate.evaluate(
             x_val_global, y_val_global, batch_size=constants.DEFAULT_BATCH_SIZE, verbose=0,
         )

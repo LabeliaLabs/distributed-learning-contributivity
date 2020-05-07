@@ -88,7 +88,7 @@ class Scenario:
             if approach in multi_partner_learning_approaches_list:
                 self.multi_partner_learning_approach = approach
             else:
-                raise Exception(f"Multi-partner learning approach '{approach}' is not in methods list.")
+                raise Exception(f"Multi-partner learning approach '{approach}' is not a valid approach.")
         else:
             self.multi_partner_learning_approach = 'fedavg'  # default
 
