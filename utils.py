@@ -101,7 +101,7 @@ def get_scenario_params_list(config):
             scenario = dict(zip(params_name, el))
 
             if scenario['partners_count'] != len(scenario['amounts_per_partner']):
-                raise Exception("Length of amounts_per_node does not match number of partners.")
+                raise Exception("Length of amounts_per_partner does not match number of partners.")
 
             if isinstance(scenario['samples_split_option'], list) and scenario['partners_count'] != len(scenario['samples_split_option']):
                 raise Exception("Length of samples_split_option does not match number of partners.")

@@ -110,6 +110,7 @@ class Contributivity:
                 the_scenario.y_val,
                 the_scenario.x_test,
                 the_scenario.y_test,
+                the_scenario.multi_partner_learning_approach,
                 the_scenario.aggregation_weighting,
                 the_scenario.minibatch_count,
                 the_scenario.is_early_stopping,

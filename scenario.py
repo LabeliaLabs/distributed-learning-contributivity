@@ -64,17 +64,33 @@ class Scenario:
         if "samples_split_option" in params:
             self.samples_split_option = params["samples_split_option"]
         else:
-            self.samples_split_option = "random"
+            self.samples_split_option = "random"  # default
 
         # For configuring if the data of the partners are corrupted or not (useful for testing contributivity measures)
         if "corrupted_datasets" in params:
             self.corrupted_datasets = params["corrupted_datasets"]
         else:
-            self.corrupted_datasets = ["not_corrupted"] * self.partners_count
+            self.corrupted_datasets = ["not_corrupted"] * self.partners_count  # default
 
         # ---------------------------------------------------
         #  Configuration of the distributed learning approach
         # ---------------------------------------------------
+
+        # Multi-partner learning approach
+        multi_partner_learning_approaches_list = [
+            "fedavg",
+            "seq",
+            "seqavg",
+        ]
+
+        if "multi_partner_learning_approach" in params:
+            approach = params["multi_partner_learning_approach"]
+            if approach in multi_partner_learning_approaches_list:
+                self.multi_partner_learning_approach = approach
+            else:
+                raise Exception(f"Multi-partner learning approach '{approach}' is not a valid approach.")
+        else:
+            self.multi_partner_learning_approach = 'fedavg'  # default
 
         # When training on a single partner,
         # the test set can be either the local partner test set or the global test set
@@ -83,27 +99,27 @@ class Scenario:
                 "single_partner_test_mode"
             ]  # Toggle between 'local' and 'global'
         else:
-            self.single_partner_test_mode = "global"
+            self.single_partner_test_mode = "global"  # default
 
         # Define how federated learning aggregation steps are weighted. Toggle between 'uniform' and 'data_volume'
         # Default is 'uniform'
         if "aggregation_weighting" in params:
             self.aggregation_weighting = params["aggregation_weighting"]
         else:
-            self.aggregation_weighting = "uniform"
+            self.aggregation_weighting = "uniform"  # default
 
         # Number of epochs, mini-batches and fit_batches in ML training
         if "epoch_count" in params:
             self.epoch_count = params["epoch_count"]
             assert self.epoch_count > 0
         else:
-            self.epoch_count = 40
+            self.epoch_count = 40  # default
 
         if "minibatch_count" in params:
             self.minibatch_count = params["minibatch_count"]
             assert self.minibatch_count > 0
         else:
-            self.minibatch_count = 20
+            self.minibatch_count = 20  # default
 
         if "gradient_updates_per_pass_count" in params:
             self.gradient_updates_per_pass_count = params["gradient_updates_per_pass_count"]
@@ -116,14 +132,14 @@ class Scenario:
         if "is_early_stopping" in params:
             self.is_early_stopping = params["is_early_stopping"]
         else:
-            self.is_early_stopping = True
+            self.is_early_stopping = True  # default
 
         # -----------------------------------------------------------------
         #  Configuration of contributivity measurement methods to be tested
         # -----------------------------------------------------------------
 
         # Contributivity methods
-        ALL_METHODS_LIST = [
+        contributivity_methods_list = [
             "Shapley values",
             "Independent scores",
             "TMCS",
@@ -138,19 +154,20 @@ class Scenario:
         self.methods = []
         if "methods" in params and params["methods"]:
             for method in params["methods"]:
-                if method in ALL_METHODS_LIST:
+                if method in contributivity_methods_list:
                     self.methods.append(method)
                 else:
-                    raise Exception("Method [" + method + "] is not in methods list.")
+                    raise Exception(f"Contributivity method '{method}' is not in methods list.")
 
         # -------------
         # Miscellaneous
         # -------------
 
-        # scenario id and number of repetition
+        # Scenario id and number of repetition
         self.scenario_id = scenario_id
         self.n_repeat = n_repeat
-        # The quick demo parameters overwrites previously defined paramaters to make the scenario faster to compute
+
+        # The quick demo parameters overwrites previously defined parameters to make the scenario faster to compute
         if "is_quick_demo" in params and params["is_quick_demo"]:
             # Use less data and less epochs to speed up the computations
             logger.info("Quick demo: limit number of data and number of epochs.")
@@ -203,6 +220,7 @@ class Scenario:
         logger.info(f"   Number of partners defined: {self.partners_count}")
         logger.info(f"   Data distribution scenario chosen: {self.samples_split_option}")
         logger.info(f"   Test data distribution scenario chosen: {self.single_partner_test_mode}")
+        logger.info(f"   Multi-partner learning approach: {self.multi_partner_learning_approach}")
         logger.info(f"   Weighting option: {self.aggregation_weighting}")
         logger.info(f"   Iterations parameters: "
                     f"{self.epoch_count} epochs > "
@@ -502,13 +520,14 @@ class Scenario:
         dict_results["test_data_samples_count"] = len(self.x_test)
         dict_results["partners_count"] = self.partners_count
         dict_results["amounts_per_partner"] = self.amounts_per_partner
+        dict_results["samples_split_option"] = self.samples_split_option
         dict_results["nb_samples_used"] = self.nb_samples_used
         dict_results["final_relative_nb_samples"] = self.final_relative_nb_samples
 
         # Multi-partner learning approach parameters
-        dict_results["samples_split_option"] = self.samples_split_option
-        dict_results["single_partner_test_mode"] = self.single_partner_test_mode
+        dict_results["multi_partner_learning_approach"] = self.multi_partner_learning_approach
         dict_results["aggregation_weighting"] = self.aggregation_weighting
+        dict_results["single_partner_test_mode"] = self.single_partner_test_mode
         dict_results["epoch_count"] = self.epoch_count
         dict_results["minibatch_count"] = self.minibatch_count
         dict_results["gradient_updates_per_pass_count"] = self.gradient_updates_per_pass_count
