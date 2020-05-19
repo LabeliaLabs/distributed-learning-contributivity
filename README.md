@@ -142,6 +142,8 @@ How the original dataset data samples are split among partners:
 
 Example: `[[7, 'shared'], [6, 'shared'], [2, 'specific'], [1, 'specific']]`
 
+![Example of the advanced split option](img/advanced_split_example.png)
+
 `corrupted_datasets`: `[not_corrupted (default), shuffled or corrupted]`  
 Enables to artificially corrupt the data of one or several partners:
 
