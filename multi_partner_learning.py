@@ -65,7 +65,7 @@ class MultiPartnerLearning:
         self.minibatched_x_train = [None] * self.partners_count
         self.minibatched_y_train = [None] * self.partners_count
         self.aggregation_weights = []
-        self.model_list = [None] * self.partners_count
+        self.models_weights_list = [None] * self.partners_count
         self.local_score_list = [None] * self.partners_count
         self.score_matrix = np.zeros(shape=(self.epoch_count, self.partners_count))
         self.score_matrix_extended = np.zeros(shape=(self.epoch_count, self.minibatch_count, self.partners_count))
@@ -288,7 +288,7 @@ class MultiPartnerLearning:
             self.log_collaborative_round_partner_result(partner, partner_index, history.history["val_accuracy"][0])
 
             # Update the partner's model in the models' list
-            self.model_list[partner_index] = partner_model
+            self.models_weights_list[partner_index] = partner_model.get_weights()
 
             # Update iterative results
             self.update_iterative_results(partner_index, history)
@@ -324,7 +324,7 @@ class MultiPartnerLearning:
 
             # On final collaborative round, save the partner's model in the models' list
             if is_last_round:
-                self.model_list[partner_index] = self.build_from_previous_model(sequentially_trained_model)
+                self.models_weights_list[partner_index] = sequentially_trained_model.get_weights()
 
             # Update iterative results
             self.update_iterative_results(partner_index, history)
@@ -368,7 +368,7 @@ class MultiPartnerLearning:
             self.log_collaborative_round_partner_result(partner, for_loop_idx, history.history["val_accuracy"][0])
 
             # Save the partner's model in the models' list
-            self.model_list[partner_index] = self.build_from_previous_model(model_for_round)
+            self.models_weights_list[partner_index] = model_for_round.get_weights()
 
             # Update iterative results
             self.update_iterative_results(partner_index, history)
@@ -407,8 +407,7 @@ class MultiPartnerLearning:
     def aggregate_model_weights(self):
         """Aggregate model weights from the list of models, with a weighted average"""
 
-        weights_per_model = [model.get_weights() for model in self.model_list]
-        weights_per_layer = list(zip(*weights_per_model))
+        weights_per_layer = list(zip(*self.models_weights_list))
         new_weights = list()
 
         for weights_for_layer in weights_per_layer:
