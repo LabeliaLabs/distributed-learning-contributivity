@@ -14,7 +14,7 @@ from math import factorial
 from sklearn.linear_model import LinearRegression
 from loguru import logger
 
-import fl_training
+import multi_partner_learning
 import shapley_value.shapley as sv
 
 
@@ -98,25 +98,27 @@ class Contributivity:
 
         if len(subset) > 0:
             subset = np.sort(subset)
-        if (
-            tuple(subset) not in self.charac_fct_values
-        ):  # Characteristic_func(permut) has not been computed yet, so we compute, store, and return characteristic_func(permut)
+        if (tuple(subset) not in self.charac_fct_values):
+            # Characteristic_func(permut) has not been computed yet...
+            # ... so we compute, store, and return characteristic_func(permut)
             self.first_charac_fct_calls_count += 1
             small_partners_list = np.array([the_scenario.partners_list[i] for i in subset])
-            self.charac_fct_values[tuple(subset)] = fl_training.compute_test_score(
+            mpl = multi_partner_learning.MultiPartnerLearning(
                 small_partners_list,
                 the_scenario.epoch_count,
+                the_scenario.minibatch_count,
                 the_scenario.x_val,
                 the_scenario.y_val,
                 the_scenario.x_test,
                 the_scenario.y_test,
                 the_scenario.multi_partner_learning_approach,
                 the_scenario.aggregation_weighting,
-                the_scenario.minibatch_count,
-                the_scenario.is_early_stopping,
                 the_scenario.single_partner_test_mode,
+                is_early_stopping=True,
+                is_save_fig=False,
                 save_folder=the_scenario.save_folder,
             )
+            self.charac_fct_values[tuple(subset)] = mpl.compute_test_score()
             # we add the new increments
             for i in range(len(the_scenario.partners_list)):
                 if i in subset:

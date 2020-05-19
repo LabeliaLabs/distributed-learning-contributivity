@@ -20,6 +20,7 @@ import constants
 import contributivity
 import fl_training
 import scenario
+import multi_partner_learning
 
 import argparse
 
@@ -134,9 +135,8 @@ def run_scenario(current_scenario):
     # Train and eval on all partners according to scenario
     is_save_fig = True
     start = timer()
-    current_scenario.federated_test_score = fl_training.compute_test_score_with_scenario(
-        current_scenario, is_save_fig
-    )
+    mpl = multi_partner_learning.init_multipartnerlearning_from_scenario(current_scenario)
+    current_scenario.federated_test_score = mpl.compute_test_score()
     end = timer()
     current_scenario.federated_computation_time_sec = end - start
 
