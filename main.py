@@ -129,7 +129,7 @@ def run_scenario(current_scenario):
         current_scenario.split_data()
     current_scenario.plot_data_distribution()
     current_scenario.compute_batch_sizes()
-    current_scenario = fl_training.preprocess_scenarios_data(current_scenario)
+    current_scenario = utils.preprocess_scenarios_data(current_scenario)
 
     # Train and eval on all partners according to scenario
     is_save_fig = True

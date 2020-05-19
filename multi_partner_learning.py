@@ -11,6 +11,7 @@ import pickle
 import keras
 from keras.backend.tensorflow_backend import clear_session
 from keras.callbacks import EarlyStopping
+from sklearn.model_selection import train_test_split
 import numpy as np
 import matplotlib.pyplot as plt
 import operator
@@ -21,6 +22,51 @@ import constants
 
 # import os
 # os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
+
+
+def preprocess_scenarios_data(scenario):
+    """Return scenario with central datasets (val, test) and distributed datasets (partners) pre-processed"""
+
+    logger.info("## Pre-processing datasets of the scenario for keras CNN:")
+
+    # First, datasets of each partner
+    for partner_index, partner in enumerate(scenario.partners_list):
+
+        # Preprocess inputs (x) data
+        partner.x_train = utils.preprocess_input(partner.x_train)
+        partner.x_test = utils.preprocess_input(partner.x_test)
+
+        # Preprocess labels (y) data
+        partner.y_train = keras.utils.to_categorical(partner.y_train, constants.NUM_CLASSES)
+        partner.y_test = keras.utils.to_categorical(partner.y_test, constants.NUM_CLASSES)
+
+        # Create validation dataset
+        partner.x_train, partner.x_val, partner.y_train, partner.y_val = train_test_split(
+            partner.x_train, partner.y_train, test_size=0.1, random_state=42
+        )
+
+        if scenario.corrupted_datasets[partner_index] == "corrupted":
+            logger.info(f"   ... Corrupting data (offsetting labels) of partner #{partner.id}")
+            partner.corrupt_labels()
+        elif scenario.corrupted_datasets[partner_index] == "shuffled":
+            logger.info(f"   ... Corrupting data (shuffling labels) of partner #{partner.id}")
+            partner.shuffle_labels()
+        elif scenario.corrupted_datasets[partner_index] == "not_corrupted":
+            pass
+        else:
+            logger.info("Unexpected label of corruption, not corruption performed!")
+
+        logger.info(f"   Partner #{partner.id}: done.")
+
+    # Then the scenario central dataset of the scenario
+    scenario.x_val = utils.preprocess_input(scenario.x_val)
+    scenario.y_val = keras.utils.to_categorical(scenario.y_val, constants.NUM_CLASSES)
+    logger.info("   Central early stopping validation set: done.")
+    scenario.x_test = utils.preprocess_input(scenario.x_test)
+    scenario.y_test = keras.utils.to_categorical(scenario.y_test, constants.NUM_CLASSES)
+    logger.info("   Central testset: done.")
+
+    return scenario
 
 
 def compute_test_score_for_single_partner(
