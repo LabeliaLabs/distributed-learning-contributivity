@@ -18,7 +18,6 @@ import shutil
 
 import constants
 import contributivity
-import fl_training
 import scenario
 import multi_partner_learning
 
