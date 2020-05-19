@@ -135,7 +135,7 @@ def run_scenario(current_scenario):
     is_save_fig = True
     start = timer()
     mpl = multi_partner_learning.init_multipartnerlearning_from_scenario(current_scenario)
-    current_scenario.federated_test_score = mpl.compute_test_score()
+    current_scenario.federated_test_result = mpl.compute_test_score()
     end = timer()
     current_scenario.federated_computation_time_sec = end - start
 

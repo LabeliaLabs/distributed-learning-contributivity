@@ -118,7 +118,7 @@ class Contributivity:
                 is_save_fig=False,
                 save_folder=the_scenario.save_folder,
             )
-            self.charac_fct_values[tuple(subset)] = mpl.compute_test_score()
+            self.charac_fct_values[tuple(subset)] = mpl.compute_test_score()[0]
             # we add the new increments
             for i in range(len(the_scenario.partners_list)):
                 if i in subset:

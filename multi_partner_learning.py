@@ -117,7 +117,8 @@ class MultiPartnerLearning:
         model_eval_score = model_evaluation[1]  # 0 is for the loss
 
         # Return model score on test data
-        return model_eval_score
+        nb_epochs_done = (es.stopped_epoch + 1) if es.stopped_epoch != 0 else self.epoch_count
+        return [model_eval_score, nb_epochs_done]
 
     def compute_test_score(self):
         """Return the score on test data of a final aggregated model trained in a federated way on each partner"""
@@ -250,7 +251,7 @@ class MultiPartnerLearning:
             plt.close()
 
         logger.info("Training and evaluation on multiple partners: done.")
-        return test_score
+        return [test_score, self.epoch_index + 1]
 
     def compute_collaborative_round_fedavg(self):
         """Proceed to a collaborative round with a federated averaging approach"""

@@ -36,7 +36,7 @@ class Scenario:
         self.y_test = y_test
 
         # Performance of the model trained in a distributed way on all partners
-        self.federated_test_score = int
+        self.federated_test_result = []
         self.federated_computation_time_sec = int
 
         # List of all partners defined in the scenario
@@ -532,7 +532,8 @@ class Scenario:
         dict_results["minibatch_count"] = self.minibatch_count
         dict_results["gradient_updates_per_pass_count"] = self.gradient_updates_per_pass_count
         dict_results["is_early_stopping"] = self.is_early_stopping
-        dict_results["federated_test_score"] = self.federated_test_score
+        dict_results["federated_test_score"] = self.federated_test_result[0]
+        dict_results["federated_test_nb_epochs_done"] = self.federated_test_result[1]
         dict_results["federated_computation_time_sec"] = self.federated_computation_time_sec
 
         if not self.contributivity_list:
