@@ -67,8 +67,8 @@ class MultiPartnerLearning:
         self.aggregation_weights = []
         self.models_weights_list = [None] * self.partners_count
         self.local_score_list = [None] * self.partners_count
-        self.score_matrix = np.zeros(shape=(self.epoch_count, self.partners_count))
-        self.score_matrix_extended = np.zeros(shape=(self.epoch_count, self.minibatch_count, self.partners_count))
+        self.score_matrix_minibatch_end = np.zeros(shape=(self.epoch_count, self.minibatch_count, self.partners_count))
+        self.score_matrix_minibatch_start = np.zeros(shape=(self.epoch_count, self.minibatch_count))
         self.global_val_acc, self.global_val_loss = [], []
         self.is_save_fig = is_save_fig
         self.save_folder = save_folder
@@ -143,7 +143,7 @@ class MultiPartnerLearning:
             f"## Training and evaluating model on partners with ids: {['#' + str(p.id) for p in partners_list]}")
 
         # Initialize variables
-        score_matrix, score_matrix_extended = self.score_matrix, self.score_matrix_extended
+        score_matrix_minibatch_end = self.score_matrix_minibatch_end
         global_val_acc, global_val_loss = self.global_val_acc, self.global_val_loss
         model_to_evaluate, sequentially_trained_model = None, None
         if self.learning_approach == 'seq':
@@ -209,15 +209,14 @@ class MultiPartnerLearning:
         logger.info(f"   Model metrics values: {['%.3f' % elem for elem in model_evaluation]}")
         test_score = model_evaluation[1]  # 0 is for the loss
 
-        # Plot training history
+        # Plot training history # TODO: move the data saving and plotting in dedicated functions
         if self.is_save_fig:
 
             # Save data
             history_data = {}
-            history_data["score_matrix"] = score_matrix
             history_data["global_val_acc"] = global_val_acc
             history_data["global_val_loss"] = global_val_loss
-            history_data["score_matrix_extended"] = score_matrix_extended
+            history_data["score_matrix_minibatch_end"] = score_matrix_minibatch_end
             with open(self.save_folder / "history_data.p", 'wb') as f:
                 pickle.dump(history_data, f)
 
@@ -240,7 +239,7 @@ class MultiPartnerLearning:
             plt.close()
 
             plt.figure()
-            plt.plot(score_matrix[: self.epoch_index + 1, ])  # Cut the matrix
+            plt.plot(score_matrix_minibatch_end[: self.epoch_index + 1, self.minibatch_count, ])  # Cut the matrix
             plt.title("Model accuracy")
             plt.ylabel("Accuracy")
             plt.xlabel("Epoch")
@@ -261,6 +260,7 @@ class MultiPartnerLearning:
         # Initialize variables
         epoch_index, minibatch_index = self.epoch_index, self.minibatch_index
         is_very_first_minibatch = (epoch_index == 0 and minibatch_index == 0)
+        x_val, y_val = self.val_data
 
         # Starting model for each partner is the aggregated model from the previous mini-batch iteration
         if is_very_first_minibatch:  # Except for the very first mini-batch where it is a new model
@@ -270,6 +270,11 @@ class MultiPartnerLearning:
             logger.debug(f"(fedavg) Minibatch n°{minibatch_index} of epoch n°{epoch_index}, "
                          f"init aggregated model for each partner with models from previous round")
             partners_model_list_for_iteration = self.init_with_agg_models()
+
+        # Evaluate and store accuracy of mini-batch start model
+        model_to_evaluate = partners_model_list_for_iteration[0]
+        model_evaluation = model_to_evaluate.evaluate(x_val, y_val, batch_size=constants.DEFAULT_BATCH_SIZE, verbose=0)
+        self.score_matrix_minibatch_start[epoch_index, minibatch_index] = model_evaluation[1]
 
         # Iterate over partners for training each individual model
         for partner_index, partner in enumerate(self.partners_list):
@@ -304,6 +309,12 @@ class MultiPartnerLearning:
         # Initialize variables
         epoch_index, minibatch_index = self.epoch_index, self.minibatch_index
         is_last_round = minibatch_index == self.minibatch_count - 1
+        x_val, y_val = self.val_data
+
+        # Evaluate and store accuracy of mini-batch start model
+        model_evaluation = sequentially_trained_model.evaluate(
+            x_val, y_val, batch_size=constants.DEFAULT_BATCH_SIZE, verbose=0)
+        self.score_matrix_minibatch_start[epoch_index, minibatch_index] = model_evaluation[1]
 
         # Iterate over partners for training the model sequentially
         shuffled_indexes = np.random.permutation(self.partners_count)
@@ -340,6 +351,7 @@ class MultiPartnerLearning:
         # Initialize variables
         epoch_index, minibatch_index = self.epoch_index, self.minibatch_index
         is_very_first_minibatch = (epoch_index == 0 and minibatch_index == 0)
+        x_val, y_val = self.val_data
 
         # Starting model for each partner is the aggregated model from the previous collaborative round
         if is_very_first_minibatch:  # Except for the very first mini-batch where it is a new model
@@ -349,6 +361,10 @@ class MultiPartnerLearning:
             logger.debug(f"(seqavg) Minibatch n°{minibatch_index} of epoch n°{epoch_index}, "
                          f"init model by aggregating models from previous round")
             model_for_round = self.init_with_agg_model()
+
+        # Evaluate and store accuracy of mini-batch start model
+        model_evaluation = model_for_round.evaluate(x_val, y_val, batch_size=constants.DEFAULT_BATCH_SIZE, verbose=0)
+        self.score_matrix_minibatch_start[epoch_index, minibatch_index] = model_evaluation[1]
 
         # Iterate over partners for training each individual model
         shuffled_indexes = np.random.permutation(self.partners_count)
@@ -504,11 +520,7 @@ class MultiPartnerLearning:
         self.local_score_list[partner_index] = validation_score  # TO DO check if coherent
 
         # At the end of each mini-batch, for each partner, populate the extended score matrix
-        self.score_matrix_extended[self.epoch_index, self.minibatch_index, partner_index] = validation_score
-
-        # At the end of each epoch (at end of last mini-batch), for each partner, populate the score matrix
-        if self.minibatch_index == (self.minibatch_count - 1):
-            self.score_matrix[self.epoch_index, partner_index] = validation_score
+        self.score_matrix_minibatch_end[self.epoch_index, self.minibatch_index, partner_index] = validation_score
 
 
 def init_multipartnerlearning_from_scenario(scenario, is_save_fig=False):
