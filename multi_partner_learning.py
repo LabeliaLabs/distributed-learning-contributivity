@@ -3,14 +3,11 @@
 Functions for model training and evaluation (single-partner and multi-partner cases)
 """
 
-from __future__ import print_function
-
 import os
 import pickle
 import keras
 from keras.backend.tensorflow_backend import clear_session
 from keras.callbacks import EarlyStopping
-from sklearn.model_selection import train_test_split
 import numpy as np
 import matplotlib.pyplot as plt
 import operator
@@ -18,9 +15,6 @@ from loguru import logger
 
 import utils
 import constants
-
-# import os
-# os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
 
 
 class MultiPartnerLearning:
@@ -67,9 +61,9 @@ class MultiPartnerLearning:
         self.aggregation_weights = []
         self.models_weights_list = [None] * self.partners_count
         self.local_score_list = [None] * self.partners_count
-        self.score_matrix_minibatch_end = np.zeros(shape=(self.epoch_count, self.minibatch_count, self.partners_count))
-        self.score_matrix_minibatch_start = np.zeros(shape=(self.epoch_count, self.minibatch_count))
-        self.global_val_acc, self.global_val_loss = [], []
+        self.score_matrix_per_partner = np.zeros(shape=(self.epoch_count, self.minibatch_count, self.partners_count))
+        self.score_matrix_collective_models = np.zeros(shape=(self.epoch_count, self.minibatch_count + 1))
+        self.global_val_loss = []
         self.is_save_fig = is_save_fig
         self.save_folder = save_folder
 
@@ -143,8 +137,7 @@ class MultiPartnerLearning:
             f"## Training and evaluating model on partners with ids: {['#' + str(p.id) for p in partners_list]}")
 
         # Initialize variables
-        score_matrix_minibatch_end = self.score_matrix_minibatch_end
-        global_val_acc, global_val_loss = self.global_val_acc, self.global_val_loss
+        global_val_loss = self.global_val_loss
         model_to_evaluate, sequentially_trained_model = None, None
         if self.learning_approach == 'seq':
             sequentially_trained_model = utils.generate_new_cnn_model()
@@ -178,13 +171,13 @@ class MultiPartnerLearning:
             # At the end of each epoch, evaluate the model for early stopping on a global validation set
             # Even in the 'seq' approach we aggregate here...
             # ... to minimize the dependence to the order of partners on last minibatch
-            self.prepare_aggregation_weights(self.local_score_list)
-            model_to_evaluate = self.build_aggregated_model(self.aggregate_model_weights())
+            self.prepare_aggregation_weights()
+            model_to_evaluate = self.build_model_from_weights(self.aggregate_model_weights())
             model_evaluation = model_to_evaluate.evaluate(
                 x_val, y_val, batch_size=constants.DEFAULT_BATCH_SIZE, verbose=0,
             )
+            self.score_matrix_collective_models[epoch_index, minibatch_count] = model_evaluation[1]
             current_val_loss = model_evaluation[0]
-            global_val_acc.append(model_evaluation[1])
             global_val_loss.append(current_val_loss)
             logger.info(f"   Model evaluation at the end of the epoch: "
                         f"{['%.3f' % elem for elem in model_evaluation]}")
@@ -214,9 +207,9 @@ class MultiPartnerLearning:
 
             # Save data
             history_data = {}
-            history_data["global_val_acc"] = global_val_acc
             history_data["global_val_loss"] = global_val_loss
-            history_data["score_matrix_minibatch_end"] = score_matrix_minibatch_end
+            history_data["score_matrix_per_partner"] = self.score_matrix_per_partner
+            history_data["score_matrix_collective_models"] = self.score_matrix_collective_models
             with open(self.save_folder / "history_data.p", 'wb') as f:
                 pickle.dump(history_data, f)
 
@@ -230,7 +223,7 @@ class MultiPartnerLearning:
             plt.close()
 
             plt.figure()
-            plt.plot(global_val_acc)
+            plt.plot(self.score_matrix_collective_models[: self.epoch_index + 1, self.minibatch_count])
             plt.ylabel("Accuracy")
             plt.xlabel("Epoch")
             # plt.yscale('log')
@@ -239,7 +232,7 @@ class MultiPartnerLearning:
             plt.close()
 
             plt.figure()
-            plt.plot(score_matrix_minibatch_end[: self.epoch_index + 1, self.minibatch_count, ])  # Cut the matrix
+            plt.plot(self.score_matrix_per_partner[: self.epoch_index + 1, self.minibatch_count - 1, ])
             plt.title("Model accuracy")
             plt.ylabel("Accuracy")
             plt.xlabel("Epoch")
@@ -274,7 +267,7 @@ class MultiPartnerLearning:
         # Evaluate and store accuracy of mini-batch start model
         model_to_evaluate = partners_model_list_for_iteration[0]
         model_evaluation = model_to_evaluate.evaluate(x_val, y_val, batch_size=constants.DEFAULT_BATCH_SIZE, verbose=0)
-        self.score_matrix_minibatch_start[epoch_index, minibatch_index] = model_evaluation[1]
+        self.score_matrix_collective_models[epoch_index, minibatch_index] = model_evaluation[1]
 
         # Iterate over partners for training each individual model
         for partner_index, partner in enumerate(self.partners_list):
@@ -314,7 +307,7 @@ class MultiPartnerLearning:
         # Evaluate and store accuracy of mini-batch start model
         model_evaluation = sequentially_trained_model.evaluate(
             x_val, y_val, batch_size=constants.DEFAULT_BATCH_SIZE, verbose=0)
-        self.score_matrix_minibatch_start[epoch_index, minibatch_index] = model_evaluation[1]
+        self.score_matrix_collective_models[epoch_index, minibatch_index] = model_evaluation[1]
 
         # Iterate over partners for training the model sequentially
         shuffled_indexes = np.random.permutation(self.partners_count)
@@ -364,7 +357,7 @@ class MultiPartnerLearning:
 
         # Evaluate and store accuracy of mini-batch start model
         model_evaluation = model_for_round.evaluate(x_val, y_val, batch_size=constants.DEFAULT_BATCH_SIZE, verbose=0)
-        self.score_matrix_minibatch_start[epoch_index, minibatch_index] = model_evaluation[1]
+        self.score_matrix_collective_models[epoch_index, minibatch_index] = model_evaluation[1]
 
         # Iterate over partners for training each individual model
         shuffled_indexes = np.random.permutation(self.partners_count)
@@ -408,7 +401,7 @@ class MultiPartnerLearning:
             self.minibatched_x_train[partner_index] = np.split(x_train, (split_indices[:-1] * len(x_train)).astype(int))
             self.minibatched_y_train[partner_index] = np.split(y_train, (split_indices[:-1] * len(y_train)).astype(int))
 
-    def prepare_aggregation_weights(self, input_weights):
+    def prepare_aggregation_weights(self):
         """Returns a list of weights for the weighted average aggregation of model weights"""
 
         if self.aggregation_weighting == "uniform":
@@ -417,7 +410,7 @@ class MultiPartnerLearning:
             partners_sizes = [len(partner.x_train) for partner in self.partners_list]
             self.aggregation_weights = partners_sizes / np.sum(partners_sizes)
         elif self.aggregation_weighting == "local_score":
-            self.aggregation_weights = input_weights / np.sum(input_weights)
+            self.aggregation_weights = self.local_score_list / np.sum(self.local_score_list)
         else:
             raise NameError("The aggregation_weighting value [" + self.aggregation_weighting + "] is not recognized.")
 
@@ -436,32 +429,18 @@ class MultiPartnerLearning:
         return new_weights
 
     @staticmethod
-    def build_aggregated_model(new_weights):
+    def build_model_from_weights(new_weights):
         """Generate a new model initialized with weights passed as arguments"""
 
-        aggregated_model = utils.generate_new_cnn_model()
-        aggregated_model.set_weights(new_weights)
-        aggregated_model.compile(
+        new_model = utils.generate_new_cnn_model()
+        new_model.set_weights(new_weights)
+        new_model.compile(
             loss=keras.losses.categorical_crossentropy,
             optimizer="adam",
             metrics=["accuracy"],
         )
 
-        return aggregated_model
-
-    @staticmethod
-    def build_from_previous_model(previous_model):
-        """Return a new model initialized with weights of a given model"""
-
-        new_model_from_previous_model = utils.generate_new_cnn_model()
-        new_model_from_previous_model.set_weights(previous_model.get_weights())
-        new_model_from_previous_model.compile(
-            loss=keras.losses.categorical_crossentropy,
-            optimizer="adam",
-            metrics=["accuracy"],
-        )
-
-        return new_model_from_previous_model
+        return new_model
 
     def init_with_new_models(self):
         """Return a list of newly generated models, one per partner"""
@@ -474,16 +453,16 @@ class MultiPartnerLearning:
     def init_with_agg_model(self):
         """Return a new model aggregating models from model_list"""
 
-        self.prepare_aggregation_weights(self.local_score_list)
-        return self.build_aggregated_model(self.aggregate_model_weights())
+        self.prepare_aggregation_weights()
+        return self.build_model_from_weights(self.aggregate_model_weights())
 
     def init_with_agg_models(self):
         """Return a list with the aggregated model duplicated for each partner"""
 
-        self.prepare_aggregation_weights(self.local_score_list)
+        self.prepare_aggregation_weights()
         partners_model_list = [None] * self.partners_count
         for partner_index, partner in enumerate(self.partners_list):
-            partners_model_list[partner_index] = self.build_aggregated_model(self.aggregate_model_weights())
+            partners_model_list[partner_index] = self.build_model_from_weights(self.aggregate_model_weights())
         return partners_model_list
 
     @staticmethod
@@ -519,8 +498,8 @@ class MultiPartnerLearning:
 
         self.local_score_list[partner_index] = validation_score  # TO DO check if coherent
 
-        # At the end of each mini-batch, for each partner, populate the extended score matrix
-        self.score_matrix_minibatch_end[self.epoch_index, self.minibatch_index, partner_index] = validation_score
+        # At the end of each mini-batch, for each partner, populate the score matrix per partner
+        self.score_matrix_per_partner[self.epoch_index, self.minibatch_index, partner_index] = validation_score
 
 
 def init_multipartnerlearning_from_scenario(scenario, is_save_fig=False):
