@@ -118,14 +118,15 @@ class Contributivity:
                 is_save_fig=False,
                 save_folder=the_scenario.save_folder,
             )
-            self.charac_fct_values[tuple(subset)] = mpl.compute_test_score()[0]
+            mpl.compute_test_score()
+            self.charac_fct_values[tuple(subset)] = mpl.test_score
             # we add the new increments
             for i in range(len(the_scenario.partners_list)):
                 if i in subset:
                     subset_without_i = np.delete(subset, np.argwhere(subset == i))
                     if (
                         tuple(subset_without_i) in self.charac_fct_values
-                    ):  # we store the new knwon increments
+                    ):  # we store the new known increments
                         self.increments_values[i][tuple(subset_without_i)] = (
                             self.charac_fct_values[tuple(subset)]
                             - self.charac_fct_values[tuple(subset_without_i)]

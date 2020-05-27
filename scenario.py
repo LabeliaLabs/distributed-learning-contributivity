@@ -38,7 +38,8 @@ class Scenario:
         self.y_test = y_test
 
         # Performance of the model trained in a distributed way on all partners
-        self.federated_test_result = []
+        self.mpl_test_score = None
+        self.mpl_nb_epochs_done = int
         self.federated_computation_time_sec = int
 
         # List of all partners defined in the scenario
@@ -77,6 +78,8 @@ class Scenario:
         # ---------------------------------------------------
         #  Configuration of the distributed learning approach
         # ---------------------------------------------------
+
+        self.mpl = None
 
         # Multi-partner learning approach
         multi_partner_learning_approaches_list = [
@@ -504,7 +507,10 @@ class Scenario:
             p.batch_size = max(1, int(len(p.x_train) / self.gradient_updates_per_pass_count))
         else:
             for p in self.partners_list:
-                p.batch_size = max(1, int(len(p.x_train) / (self.minibatch_count * self.gradient_updates_per_pass_count)))
+                p.batch_size = max(
+                    1,
+                    int(len(p.x_train) / (self.minibatch_count * self.gradient_updates_per_pass_count)),
+                )
 
         for p in self.partners_list:
             logger.info(f"   compute_batch_sizes(), partner #{p.id}: {p.batch_size}")
@@ -551,6 +557,12 @@ class Scenario:
         self.y_test = keras.utils.to_categorical(self.y_test, constants.NUM_CLASSES)
         logger.info("   Central testset: done.")
 
+    def compute_mpl(self):
+
+        self.mpl.compute_test_score()
+        self.mpl_test_score = self.mpl.test_score
+        self.mpl_nb_epochs_done = self.mpl.nb_epochs_done
+
     def to_dataframe(self):
 
         df = pd.DataFrame()
@@ -576,8 +588,8 @@ class Scenario:
         dict_results["minibatch_count"] = self.minibatch_count
         dict_results["gradient_updates_per_pass_count"] = self.gradient_updates_per_pass_count
         dict_results["is_early_stopping"] = self.is_early_stopping
-        dict_results["federated_test_score"] = self.federated_test_result[0]
-        dict_results["federated_test_nb_epochs_done"] = self.federated_test_result[1]
+        dict_results["mpl_test_score"] = self.mpl_test_score
+        dict_results["mpl_nb_epochs_done"] = self.mpl_nb_epochs_done
         dict_results["federated_computation_time_sec"] = self.federated_computation_time_sec
 
         if not self.contributivity_list:

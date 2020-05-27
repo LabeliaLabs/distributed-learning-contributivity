@@ -64,6 +64,8 @@ class MultiPartnerLearning:
         self.score_matrix_per_partner = np.zeros(shape=(self.epoch_count, self.minibatch_count, self.partners_count))
         self.score_matrix_collective_models = np.zeros(shape=(self.epoch_count, self.minibatch_count + 1))
         self.loss_collective_models = []
+        self.test_score = None
+        self.nb_epochs_done = int
         self.is_save_fig = is_save_fig
         self.save_folder = save_folder
 
@@ -108,11 +110,9 @@ class MultiPartnerLearning:
         logger.info(f"   Model evaluation on test data: "
                     f"{list(zip(model.metrics_names, ['%.3f' % elem for elem in model_evaluation]))}")
 
-        model_eval_score = model_evaluation[1]  # 0 is for the loss
-
-        # Return model score on test data
-        nb_epochs_done = (es.stopped_epoch + 1) if es.stopped_epoch != 0 else self.epoch_count
-        return [model_eval_score, nb_epochs_done]
+        # Save model score on test data
+        self.test_score = model_evaluation[1]  # 0 is for the loss
+        self.nb_epochs_done = (es.stopped_epoch + 1) if es.stopped_epoch != 0 else self.epoch_count
 
     def compute_test_score(self):
         """Return the score on test data of a final aggregated model trained in a federated way on each partner"""
@@ -199,7 +199,8 @@ class MultiPartnerLearning:
             x_test, y_test, batch_size=constants.DEFAULT_BATCH_SIZE, verbose=0)
         logger.info(f"   Model metrics names: {model_to_evaluate.metrics_names}")
         logger.info(f"   Model metrics values: {['%.3f' % elem for elem in model_evaluation]}")
-        test_score = model_evaluation[1]  # 0 is for the loss
+        self.test_score = model_evaluation[1]  # 0 is for the loss
+        self.nb_epochs_done = self.epoch_index + 1
 
         # Plot training history # TODO: move the data saving and plotting in dedicated functions
         if self.is_save_fig:
@@ -242,7 +243,6 @@ class MultiPartnerLearning:
             plt.close()
 
         logger.info("Training and evaluation on multiple partners: done.")
-        return [test_score, self.epoch_index + 1]
 
     def compute_collaborative_round_fedavg(self):
         """Proceed to a collaborative round with a federated averaging approach"""
