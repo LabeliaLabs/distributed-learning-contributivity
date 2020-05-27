@@ -63,7 +63,7 @@ class MultiPartnerLearning:
         self.local_score_list = [None] * self.partners_count
         self.score_matrix_per_partner = np.zeros(shape=(self.epoch_count, self.minibatch_count, self.partners_count))
         self.score_matrix_collective_models = np.zeros(shape=(self.epoch_count, self.minibatch_count + 1))
-        self.global_val_loss = []
+        self.loss_collective_models = []
         self.is_save_fig = is_save_fig
         self.save_folder = save_folder
 
@@ -137,7 +137,6 @@ class MultiPartnerLearning:
             f"## Training and evaluating model on partners with ids: {['#' + str(p.id) for p in partners_list]}")
 
         # Initialize variables
-        global_val_loss = self.global_val_loss
         model_to_evaluate, sequentially_trained_model = None, None
         if self.learning_approach == 'seq':
             sequentially_trained_model = utils.generate_new_cnn_model()
@@ -178,7 +177,7 @@ class MultiPartnerLearning:
             )
             self.score_matrix_collective_models[epoch_index, minibatch_count] = model_evaluation[1]
             current_val_loss = model_evaluation[0]
-            global_val_loss.append(current_val_loss)
+            self.loss_collective_models.append(current_val_loss)
             logger.info(f"   Model evaluation at the end of the epoch: "
                         f"{['%.3f' % elem for elem in model_evaluation]}")
 
@@ -187,7 +186,7 @@ class MultiPartnerLearning:
                 # Early stopping parameters
                 if (
                         epoch_index >= constants.PATIENCE
-                        and current_val_loss > global_val_loss[-constants.PATIENCE]
+                        and current_val_loss > self.loss_collective_models[-constants.PATIENCE]
                 ):
                     logger.info("         -> Early stopping criteria are met, stopping here.")
                     break
@@ -207,7 +206,7 @@ class MultiPartnerLearning:
 
             # Save data
             history_data = {}
-            history_data["global_val_loss"] = global_val_loss
+            history_data["loss_collective_models"] = self.loss_collective_models
             history_data["score_matrix_per_partner"] = self.score_matrix_per_partner
             history_data["score_matrix_collective_models"] = self.score_matrix_collective_models
             with open(self.save_folder / "history_data.p", 'wb') as f:
@@ -216,7 +215,7 @@ class MultiPartnerLearning:
             if not os.path.exists(self.save_folder / 'graphs/'):
                 os.makedirs(self.save_folder / 'graphs/')
             plt.figure()
-            plt.plot(global_val_loss)
+            plt.plot(self.loss_collective_models)
             plt.ylabel("Loss")
             plt.xlabel("Epoch")
             plt.savefig(self.save_folder / "graphs/federated_training_loss.png")

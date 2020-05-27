@@ -7,6 +7,7 @@ from keras.datasets import mnist
 from sklearn.model_selection import train_test_split
 import datetime
 import os
+import keras
 import numpy as np
 import matplotlib.pyplot as plt
 import uuid
@@ -17,6 +18,7 @@ import random
 
 import constants
 from partner import Partner
+import utils
 
 
 class Scenario:
@@ -506,6 +508,48 @@ class Scenario:
 
         for p in self.partners_list:
             logger.info(f"   compute_batch_sizes(), partner #{p.id}: {p.batch_size}")
+
+    def preprocess_scenarios_data(self):
+        """Return scenario with central datasets (val, test) and distributed datasets (partners) pre-processed"""
+
+        logger.info("## Pre-processing datasets of the scenario for keras CNN:")
+
+        # First, datasets of each partner
+        for partner_index, partner in enumerate(self.partners_list):
+
+            # Preprocess inputs (x) data
+            partner.x_train = utils.preprocess_input(partner.x_train)
+            partner.x_test = utils.preprocess_input(partner.x_test)
+
+            # Preprocess labels (y) data
+            partner.y_train = keras.utils.to_categorical(partner.y_train, constants.NUM_CLASSES)
+            partner.y_test = keras.utils.to_categorical(partner.y_test, constants.NUM_CLASSES)
+
+            # Create validation dataset
+            partner.x_train, partner.x_val, partner.y_train, partner.y_val = train_test_split(
+                partner.x_train, partner.y_train, test_size=0.1, random_state=42
+            )
+
+            if self.corrupted_datasets[partner_index] == "corrupted":
+                logger.info(f"   ... Corrupting data (offsetting labels) of partner #{partner.id}")
+                partner.corrupt_labels()
+            elif self.corrupted_datasets[partner_index] == "shuffled":
+                logger.info(f"   ... Corrupting data (shuffling labels) of partner #{partner.id}")
+                partner.shuffle_labels()
+            elif self.corrupted_datasets[partner_index] == "not_corrupted":
+                pass
+            else:
+                logger.info("Unexpected label of corruption, not corruption performed!")
+
+            logger.info(f"   Partner #{partner.id}: done.")
+
+        # Then the scenario central dataset of the scenario
+        self.x_val = utils.preprocess_input(self.x_val)
+        self.y_val = keras.utils.to_categorical(self.y_val, constants.NUM_CLASSES)
+        logger.info("   Central early stopping validation set: done.")
+        self.x_test = utils.preprocess_input(self.x_test)
+        self.y_test = keras.utils.to_categorical(self.y_test, constants.NUM_CLASSES)
+        logger.info("   Central testset: done.")
 
     def to_dataframe(self):
 
