@@ -61,7 +61,7 @@ class MultiPartnerLearning:
         self.minibatched_y_train = [None] * self.partners_count
         self.aggregation_weights = []
         self.models_weights_list = [None] * self.partners_count
-        self.local_score_list = [None] * self.partners_count
+        self.scores_last_learning_round = [None] * self.partners_count
         self.score_matrix_per_partner = np.zeros(shape=(self.epoch_count, self.minibatch_count, self.partners_count))
         self.score_matrix_collective_models = np.zeros(shape=(self.epoch_count, self.minibatch_count + 1))
         self.loss_collective_models = []
@@ -419,7 +419,7 @@ class MultiPartnerLearning:
             partners_sizes = [len(partner.x_train) for partner in self.partners_list]
             self.aggregation_weights = partners_sizes / np.sum(partners_sizes)
         elif self.aggregation_weighting == "local_score":
-            self.aggregation_weights = self.local_score_list / np.sum(self.local_score_list)
+            self.aggregation_weights = self.scores_last_learning_round / np.sum(self.scores_last_learning_round)
         else:
             raise NameError("The aggregation_weighting value [" + self.aggregation_weighting + "] is not recognized.")
 
@@ -505,7 +505,7 @@ class MultiPartnerLearning:
 
         validation_score = fit_history.history["val_accuracy"][0]
 
-        self.local_score_list[partner_index] = validation_score  # TO DO check if coherent
+        self.scores_last_learning_round[partner_index] = validation_score  # TO DO check if coherent
 
         # At the end of each mini-batch, for each partner, populate the score matrix per partner
         self.score_matrix_per_partner[self.epoch_index, self.minibatch_index, partner_index] = validation_score
