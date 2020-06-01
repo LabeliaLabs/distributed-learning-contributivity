@@ -14,21 +14,27 @@ import datetime
 
 import keras
 from keras.models import Sequential
-from keras.layers import Dense, Flatten
+from keras.layers import Dense, Dropout, Activation, Flatten
 from keras.layers import Conv2D, MaxPooling2D
 
 import constants
 
 
 def generate_new_cnn_model():
+
+    if constants.DATASET == "MNIST":
+        model = generate_new_cnn_model_mnist()
+    elif constants.DATASET == "CIFAR10":
+        model = generate_new_cnn_model_cifar10()
+
+    return model
+
+
+def generate_new_cnn_model_mnist():
     """Return a CNN model from scratch based on given batch_size"""
 
     model = Sequential()
-    model.add(
-        Conv2D(
-            32, kernel_size=(3, 3), activation="relu", input_shape=constants.INPUT_SHAPE
-        )
-    )
+    model.add(Conv2D(32, kernel_size=(3, 3), activation="relu", input_shape=constants.INPUT_SHAPE))
     model.add(Conv2D(64, (3, 3), activation="relu"))
     model.add(MaxPooling2D(pool_size=(2, 2)))
     model.add(Flatten())
@@ -44,10 +50,62 @@ def generate_new_cnn_model():
     return model
 
 
+def generate_new_cnn_model_cifar10():
+
+    model = Sequential()
+    model.add(Conv2D(32, (3, 3), padding='same', input_shape=constants.INPUT_SHAPE))
+    model.add(Activation('relu'))
+    model.add(Conv2D(32, (3, 3)))
+    model.add(Activation('relu'))
+    model.add(MaxPooling2D(pool_size=(2, 2)))
+    model.add(Dropout(0.25))
+
+    model.add(Conv2D(64, (3, 3), padding='same'))
+    model.add(Activation('relu'))
+    model.add(Conv2D(64, (3, 3)))
+    model.add(Activation('relu'))
+    model.add(MaxPooling2D(pool_size=(2, 2)))
+    model.add(Dropout(0.25))
+
+    model.add(Flatten())
+    model.add(Dense(512))
+    model.add(Activation('relu'))
+    model.add(Dropout(0.5))
+    model.add(Dense(constants.NUM_CLASSES))
+    model.add(Activation('softmax'))
+
+    # initiate RMSprop optimizer
+    opt = keras.optimizers.RMSprop(learning_rate=0.0001, decay=1e-6)
+
+    # Let's train the model using RMSprop
+    model.compile(loss='categorical_crossentropy',
+                  optimizer=opt,
+                  metrics=['accuracy'])
+
+    return model
+
+
 def preprocess_input(x):
-    """Return input data so it works with default keras CNN"""
+
+    if constants.DATASET == "MNIST":
+        x = preprocess_input_mnist(x)
+    elif constants.DATASET == "CIFAR10":
+        x = preprocess_input_cifar10(x)
+
+    return x
+
+
+def preprocess_input_mnist(x):
 
     x = x.reshape(x.shape[0], constants.IMG_ROWS, constants.IMG_COLS, 1)
+    x = x.astype("float32")
+    x /= 255
+
+    return x
+
+
+def preprocess_input_cifar10(x):
+
     x = x.astype("float32")
     x /= 255
 

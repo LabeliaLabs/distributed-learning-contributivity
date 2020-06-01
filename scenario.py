@@ -3,7 +3,7 @@
 This enables to parameterize a desired scenario to mock a multi-partner ML project.
 """
 
-from keras.datasets import mnist
+from keras.datasets import mnist, cifar10
 from sklearn.model_selection import train_test_split
 import datetime
 import os
@@ -25,8 +25,28 @@ class Scenario:
     def __init__(self, params, experiment_path, scenario_id=1, n_repeat=1):
 
         # Identify and get a dataset for running experiments
-        self.dataset_name = "MNIST"
-        (x_train, y_train), (x_test, y_test) = mnist.load_data()
+        supported_datasets = ["MNIST", "CIFAR10"]
+        if "dataset_name" in params:
+            dataset_name = params["dataset_name"]
+            if dataset_name in supported_datasets:
+                self.dataset_name = dataset_name
+            else:
+                raise Exception(f"Dataset named '{dataset_name}' is not supported (yet). You could add it!")
+        else:
+            self.dataset_name = "MNIST"  # default
+        constants.DATASET = self.dataset_name
+        logger.debug(f"Dataset selected: {constants.DATASET}")
+
+        if self.dataset_name == "MNIST":
+            (x_train, y_train), (x_test, y_test) = mnist.load_data()
+            constants.INPUT_SHAPE = (28, 28, 1)
+            constants.NUM_CLASSES = 10
+        elif self.dataset_name == "CIFAR10":
+            (x_train, y_train), (x_test, y_test) = cifar10.load_data()
+            constants.INPUT_SHAPE = (32, 32, 3)
+            constants.NUM_CLASSES = 10
+            y_train = y_train.flatten()
+            y_test = y_test.flatten()
         self.nb_samples_used = len(x_train)
         self.final_relative_nb_samples = []
 

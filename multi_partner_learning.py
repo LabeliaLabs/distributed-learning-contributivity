@@ -496,7 +496,7 @@ class MultiPartnerLearning:
 
         epoch_nb_str = f"Epoch {str(self.epoch_index).zfill(2)}/{str(self.epoch_count - 1).zfill(2)}"
         mb_nb_str = f"Minibatch {str(self.minibatch_index).zfill(2)}/{str(self.minibatch_count - 1).zfill(2)}"
-        partner_id_str = f"Partner id #{partner.id} ({partner_index}/{self.partners_count})"
+        partner_id_str = f"Partner id #{partner.id} ({partner_index}/{self.partners_count - 1})"
         val_acc_str = f"{round(validation_score, 2)}"
 
         logger.info(f"{epoch_nb_str} > {mb_nb_str} > {partner_id_str} > val_acc: {val_acc_str}")

@@ -3,6 +3,9 @@
 Declaration of constants.
 """
 
+# Dataset
+DATASET = str
+
 # Data constants
 NUM_CLASSES = 10
 
