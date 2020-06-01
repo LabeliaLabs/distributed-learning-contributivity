@@ -79,7 +79,8 @@ class Scenario:
         # Multi-partner learning approach
         multi_partner_learning_approaches_list = [
             "fedavg",
-            "seq",
+            "seq-pure",
+            "seq-with-final-agg",
             "seqavg",
         ]
 

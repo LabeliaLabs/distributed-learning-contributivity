@@ -146,7 +146,7 @@ class MultiPartnerLearning:
 
         # Initialize variables
         model_to_evaluate, sequentially_trained_model = None, None
-        if self.learning_approach == 'seq':
+        if self.learning_approach in ['seq-pure', 'seq-with-final-agg']:
             sequentially_trained_model = utils.generate_new_cnn_model()
 
         # Train model (iterate for each epoch and mini-batch)
@@ -155,7 +155,7 @@ class MultiPartnerLearning:
             self.epoch_index = epoch_index
 
             # Clear Keras' old models (except if the approach is sequential and the model has to persist across epochs)
-            if self.learning_approach != 'seq':
+            if self.learning_approach not in ['seq-pure', 'seq-with-final-agg']:
                 clear_session()
 
             # Split the train dataset in mini-batches
@@ -169,17 +169,18 @@ class MultiPartnerLearning:
                 if self.learning_approach == 'fedavg':
                     self.compute_collaborative_round_fedavg()
 
-                elif self.learning_approach == 'seq':
+                elif self.learning_approach in ['seq-pure', 'seq-with-final-agg']:
                     self.compute_collaborative_round_sequential(sequentially_trained_model)
 
                 elif self.learning_approach == 'seqavg':
                     self.compute_collaborative_round_seqavg()
 
             # At the end of each epoch, evaluate the model for early stopping on a global validation set
-            # Even in the 'seq' approach we aggregate here...
-            # ... to minimize the dependence to the order of partners on last minibatch
             self.prepare_aggregation_weights()
-            model_to_evaluate = self.build_model_from_weights(self.aggregate_model_weights())
+            if self.learning_approach == 'seq-pure':
+                model_to_evaluate = sequentially_trained_model
+            elif self.learning_approach in ['fedavg', 'seq-with-final-agg', 'seqavg']:
+                model_to_evaluate = self.build_model_from_weights(self.aggregate_model_weights())
             model_evaluation = model_to_evaluate.evaluate(
                 x_val, y_val, batch_size=constants.DEFAULT_BATCH_SIZE, verbose=0,
             )

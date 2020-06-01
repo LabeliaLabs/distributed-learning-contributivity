@@ -159,14 +159,14 @@ There are several parameters influencing how the collaborative and distributed l
 
 ![Schema epochs mini-batches gradient updates](img/epoch_minibatch_gradientupdates.png)
 
-`multi_partner_learning_approach`: `'fedavg'` (default), `'seq'` or `'seqavg'`  
+`multi_partner_learning_approach`: `'fedavg'` (default), `'seq-pure'`, `'seq-with-final-agg'` or `'seqavg'`  
 Define the multi-partner learning approach, among the following as described by the schemas:
 
 - `'fedavg'`: stands for federated averaging
     
     ![Schema fedavg](img/collaborative_rounds_fedavg.png)
   
-- `'seq'`: stands for sequential
+- `'seq-...'`: stands for sequential and comes with 2 variations, `'seq-pure'` with no aggregation at all, and `'seq-with-final-agg'` where an aggregation is performed before evaluating on the validation set and test set (on last mini-batch of each epoch) for mitigating impact when the very last subset on which the model is trained is of low quality, or corrupted, or just detrimental to the model performance.
     
     ![Schema seq](img/collaborative_rounds_seq.png)
   
