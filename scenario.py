@@ -37,9 +37,6 @@ class Scenario:
         self.x_test = x_test
         self.y_test = y_test
 
-        # TODO: make computation time an attribute of the object Multi-partner Learning
-        self.federated_computation_time_sec = int
-
         # List of all partners defined in the scenario
         self.partners_list = []
 
@@ -582,7 +579,7 @@ class Scenario:
         dict_results["is_early_stopping"] = self.is_early_stopping
         dict_results["mpl_test_score"] = self.mpl.test_score
         dict_results["mpl_nb_epochs_done"] = self.mpl.nb_epochs_done
-        dict_results["federated_computation_time_sec"] = self.federated_computation_time_sec
+        dict_results["learning_computation_time_sec"] = self.mpl.learning_computation_time
 
         if not self.contributivity_list:
             df = df.append(dict_results, ignore_index=True)

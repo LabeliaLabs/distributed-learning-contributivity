@@ -4,6 +4,7 @@ Functions for model training and evaluation (single-partner and multi-partner ca
 """
 
 import os
+from timeit import default_timer as timer
 import pickle
 import keras
 from keras.backend.tensorflow_backend import clear_session
@@ -68,12 +69,14 @@ class MultiPartnerLearning:
         self.nb_epochs_done = int
         self.is_save_fig = is_save_fig
         self.save_folder = save_folder
+        self.learning_computation_time = None
 
         logger.debug("MultiPartnerLearning object instantiated.")
 
     def compute_test_score_for_single_partner(self, partner):
         """Return the score on test data of a model trained on a single partner"""
 
+        start = timer()
         logger.info(f"## Training and evaluating model on partner with id #{partner.id}")
 
         # Initialize model
@@ -114,8 +117,13 @@ class MultiPartnerLearning:
         self.test_score = model_evaluation[1]  # 0 is for the loss
         self.nb_epochs_done = (es.stopped_epoch + 1) if es.stopped_epoch != 0 else self.epoch_count
 
+        end = timer()
+        self.learning_computation_time = end - start
+
     def compute_test_score(self):
         """Return the score on test data of a final aggregated model trained in a federated way on each partner"""
+
+        start = timer()
 
         partners_list = self.partners_list
         partners_count = self.partners_count
@@ -243,6 +251,8 @@ class MultiPartnerLearning:
             plt.close()
 
         logger.info("Training and evaluation on multiple partners: done.")
+        end = timer()
+        self.learning_computation_time = end - start
 
     def compute_collaborative_round_fedavg(self):
         """Proceed to a collaborative round with a federated averaging approach"""

@@ -133,14 +133,11 @@ def run_scenario(current_scenario):
     current_scenario.preprocess_scenarios_data()
 
     # Train and eval on all partners according to scenario
-    start = timer()
     current_scenario.mpl = multi_partner_learning.init_multipartnerlearning_from_scenario(
         current_scenario,
         is_save_fig=True,
     )
     current_scenario.mpl.compute_test_score()
-    end = timer()
-    current_scenario.federated_computation_time_sec = end - start
 
     for method in current_scenario.methods:
         logger.info(f"{method}")
