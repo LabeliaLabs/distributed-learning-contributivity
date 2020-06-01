@@ -138,7 +138,7 @@ def run_scenario(current_scenario):
         current_scenario,
         is_save_fig=True,
     )
-    current_scenario.compute_mpl()
+    current_scenario.mpl.compute_test_score()
     end = timer()
     current_scenario.federated_computation_time_sec = end - start
 

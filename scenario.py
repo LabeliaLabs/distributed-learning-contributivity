@@ -37,9 +37,7 @@ class Scenario:
         self.x_test = x_test
         self.y_test = y_test
 
-        # Performance of the model trained in a distributed way on all partners
-        self.mpl_test_score = None
-        self.mpl_nb_epochs_done = int
+        # TODO: make computation time an attribute of the object Multi-partner Learning
         self.federated_computation_time_sec = int
 
         # List of all partners defined in the scenario
@@ -557,12 +555,6 @@ class Scenario:
         self.y_test = keras.utils.to_categorical(self.y_test, constants.NUM_CLASSES)
         logger.info("   Central testset: done.")
 
-    def compute_mpl(self):
-
-        self.mpl.compute_test_score()
-        self.mpl_test_score = self.mpl.test_score
-        self.mpl_nb_epochs_done = self.mpl.nb_epochs_done
-
     def to_dataframe(self):
 
         df = pd.DataFrame()
@@ -588,8 +580,8 @@ class Scenario:
         dict_results["minibatch_count"] = self.minibatch_count
         dict_results["gradient_updates_per_pass_count"] = self.gradient_updates_per_pass_count
         dict_results["is_early_stopping"] = self.is_early_stopping
-        dict_results["mpl_test_score"] = self.mpl_test_score
-        dict_results["mpl_nb_epochs_done"] = self.mpl_nb_epochs_done
+        dict_results["mpl_test_score"] = self.mpl.test_score
+        dict_results["mpl_nb_epochs_done"] = self.mpl.nb_epochs_done
         dict_results["federated_computation_time_sec"] = self.federated_computation_time_sec
 
         if not self.contributivity_list:
