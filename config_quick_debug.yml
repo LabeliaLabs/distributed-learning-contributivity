@@ -8,13 +8,12 @@ scenario_params_list:
    samples_split_option: 
     - 'random'
    multi_partner_learning_approach:
-    - 'fedavg'
-    - 'seq'
-    - 'seqavg'
+    - 'seq-pure'
+    - 'seq-with-final-agg'
    aggregation_weighting: 
-    - 'data_volume'
+    - 'uniform'
    corrupted_datasets:
-    - [not_corrupted, not_corrupted, not_corrupted]
+    - [not_corrupted, corrupted, not_corrupted]
    gradient_updates_per_pass_count:
     - 8
    is_quick_demo: 

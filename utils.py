@@ -6,7 +6,6 @@ Some utils functions.
 
 from __future__ import print_function
 import yaml
-import os
 from pathlib import Path
 from loguru import logger
 from shutil import copyfile
@@ -46,7 +45,7 @@ def generate_new_cnn_model():
 
 
 def preprocess_input(x):
-    """Return intput data so it works with default keras CNN"""
+    """Return input data so it works with default keras CNN"""
 
     x = x.reshape(x.shape[0], constants.IMG_ROWS, constants.IMG_COLS, 1)
     x = x.astype("float32")
@@ -82,7 +81,7 @@ def get_scenario_params_list(config):
     Parameters
     ----------
     config : dict
-        Dictionary of parameters for experiement
+        Dictionary of parameters for experiment
 
     Returns
     -------
@@ -103,7 +102,8 @@ def get_scenario_params_list(config):
             if scenario['partners_count'] != len(scenario['amounts_per_partner']):
                 raise Exception("Length of amounts_per_partner does not match number of partners.")
 
-            if isinstance(scenario['samples_split_option'], list) and scenario['partners_count'] != len(scenario['samples_split_option']):
+            if isinstance(scenario['samples_split_option'], list) \
+                    and (scenario['partners_count'] != len(scenario['samples_split_option'])):
                 raise Exception("Length of samples_split_option does not match number of partners.")
 
             if 'corrupted_datasets' in params_name:
@@ -122,6 +122,7 @@ def init_result_folder(yaml_filepath, cfg):
 
     Args:
         yaml_filepath : str
+        cfg
 
     Returns:
         folder_name

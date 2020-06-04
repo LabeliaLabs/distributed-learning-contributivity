@@ -7,3 +7,4 @@ pandas==0.25.3
 seaborn==0.10.0
 loguru==0.4.1
 tensorflow==2.1.0
+PyYAML~=5.3.1

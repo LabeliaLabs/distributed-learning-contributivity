@@ -10,7 +10,8 @@ scenario_params_list:
      - 'stratified'
    multi_partner_learning_approach:
      - 'fedavg'
-     - 'seq'
+     - 'seq-pure'
+     - 'seq-with-final-agg'
      - 'seqavg'
    aggregation_weighting: 
      - 'data_volume' 

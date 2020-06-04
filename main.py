@@ -18,12 +18,13 @@ import shutil
 
 import constants
 import contributivity
-import fl_training
 import scenario
+import multi_partner_learning
 
 import argparse
 
 DEFAULT_CONFIG_FILE = "config.yml"
+
 
 @logger.catch
 def main():
@@ -129,16 +130,14 @@ def run_scenario(current_scenario):
         current_scenario.split_data()
     current_scenario.plot_data_distribution()
     current_scenario.compute_batch_sizes()
-    current_scenario = fl_training.preprocess_scenarios_data(current_scenario)
+    current_scenario.preprocess_scenarios_data()
 
     # Train and eval on all partners according to scenario
-    is_save_fig = True
-    start = timer()
-    current_scenario.federated_test_score = fl_training.compute_test_score_with_scenario(
-        current_scenario, is_save_fig
+    current_scenario.mpl = multi_partner_learning.init_multipartnerlearning_from_scenario(
+        current_scenario,
+        is_save_fig=True,
     )
-    end = timer()
-    current_scenario.federated_computation_time_sec = end - start
+    current_scenario.mpl.compute_test_score()
 
     for method in current_scenario.methods:
         logger.info(f"{method}")
