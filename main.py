@@ -47,10 +47,10 @@ def main():
 
         # Move log files to experiment folder
         move_log_file_to_experiment_folder(
-            info_logger_id, experiment_path, constants.INFO_LOGGING_FILE_NAME
+            info_logger_id, experiment_path, constants.INFO_LOGGING_FILE_NAME, "INFO"
         )
         move_log_file_to_experiment_folder(
-            info_debug_id, experiment_path, constants.DEBUG_LOGGING_FILE_NAME
+            info_debug_id, experiment_path, constants.DEBUG_LOGGING_FILE_NAME, "DEBUG"
         )
 
         # GPU config
@@ -112,11 +112,11 @@ def init_GPU_config():
         logger.info("No GPU found")
 
 
-def move_log_file_to_experiment_folder(logger_id, experiment_path, filename):
+def move_log_file_to_experiment_folder(logger_id, experiment_path, filename, level):
     logger.remove(logger_id)
     new_log_path = experiment_path / filename
     shutil.move(filename, new_log_path)
-    logger.add(new_log_path)
+    logger.add(new_log_path, level=level)
 
 
 def run_scenario(current_scenario):
