@@ -194,17 +194,17 @@ class MultiPartnerLearning:
             logger.info(f"   Model evaluation at the end of the epoch: "
                         f"{['%.3f' % elem for elem in model_evaluation]}")
 
-            logger.info("      Checking if early stopping criteria are met:")
+            logger.debug("      Checking if early stopping criteria are met:")
             if is_early_stopping:
                 # Early stopping parameters
                 if (
                         epoch_index >= constants.PATIENCE
                         and current_val_loss > self.loss_collective_models[-constants.PATIENCE]
                 ):
-                    logger.info("         -> Early stopping criteria are met, stopping here.")
+                    logger.debug("         -> Early stopping criteria are met, stopping here.")
                     break
                 else:
-                    logger.info("         -> Early stopping criteria are not met, continuing with training.")
+                    logger.debug("         -> Early stopping criteria are not met, continuing with training.")
 
         # After last epoch or if early stopping was triggered, evaluate model on the global testset
         logger.info("### Evaluating model on test data:")
@@ -508,7 +508,7 @@ class MultiPartnerLearning:
         partner_id_str = f"Partner id #{partner.id} ({partner_index}/{self.partners_count})"
         val_acc_str = f"{round(validation_score, 2)}"
 
-        logger.info(f"{epoch_nb_str} > {mb_nb_str} > {partner_id_str} > val_acc: {val_acc_str}")
+        logger.debug(f"{epoch_nb_str} > {mb_nb_str} > {partner_id_str} > val_acc: {val_acc_str}")
 
     def update_iterative_results(self, partner_index, fit_history):
         """Update the results arrays with results from the collaboration round"""

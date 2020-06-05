@@ -32,7 +32,7 @@ def main():
     stream, info_logger_id, info_debug_id = init_logger()
 
     with contextlib.redirect_stdout(stream):
-        logger.info("Standard output is sent to added handlers.")
+        logger.debug("Standard output is sent to added handlers.")
 
         # Parse config file for scenarios to be experimented
         config = get_config_from_file()
