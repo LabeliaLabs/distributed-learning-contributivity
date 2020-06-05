@@ -257,7 +257,7 @@ class MultiPartnerLearning:
         plt.title("Model accuracy")
         plt.ylabel("Accuracy")
         plt.xlabel("Epoch")
-        plt.legend(["partner " + str(i) for i in range(partners_count)])
+        plt.legend(["partner " + str(i) for i in range(self.partners_count)])
         # plt.yscale('log')
         plt.ylim([0, 1])
         plt.savefig(self.save_folder / "graphs/all_partners.png")
