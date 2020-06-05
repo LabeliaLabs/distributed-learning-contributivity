@@ -115,7 +115,7 @@ class Contributivity:
                 the_scenario.aggregation_weighting,
                 the_scenario.single_partner_test_mode,
                 is_early_stopping=True,
-                is_save_fig=False,
+                is_save_data=False,
                 save_folder=the_scenario.save_folder,
             )
             mpl.compute_test_score()
