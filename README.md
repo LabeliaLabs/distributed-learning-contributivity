@@ -6,9 +6,19 @@
 
 In collaborative data science projects partners sometimes need to train a model on multiple datasets, contributed by different data providing partners. In such cases the partners might have to measure how much each dataset involved contributed to the performance of the model. This is useful for example as a basis to agree on how to share the reward of the ML challenge or the future revenues derived from the predictive model, or to detect possible corrupted datasets or partners not playing by the rules. We explore this question and the opportunity to implement some mechanisms helping partners in such scenarios to measure each dataset's *contributivity* (as *contribution to the performance of the model*).
 
-## Context of this work
+### Context of this work
 
 This work is being carried out in the context of collaborative research projects. It is work in progress. We would like to share it with various interested parties, research and business partners to get their feedback and potential contributions. This is why it is shared as open source content on Substra Foundation’s repositories.
+
+### How to interact with this?
+
+It depends in what capacity you are interested! For example:
+
+- If you'd like to experiment right now by yourself multi-partner learning approaches and contributivity measurement methods, jump to section **[Using the code files](#using-the-code-files)**
+- If you'd like to get in touch with the workgroup, jump to section **[Contacts, contributions, collaborations](#contacts-contributions-collaborations)**. If you are a student or a teacher, we love discussing student projects!
+- If you are very familiar with this type of projects, well you can either have a look at section **[Ongoing work and improvement plan](#ongoing-work-and-improvement-plan)** or head towards [issues](https://github.com/SubstraFoundation/distributed-learning-contributivity/issues) and [PRs](https://github.com/SubstraFoundation/distributed-learning-contributivity/pulls) to see what's going on these days. We use the `help wanted` tag to flag issues on which help is particularly wanted, but other open issues would also very much welcome contributions
+
+Should you have any question, [reach out](#contacts-contributions-collaborations) and we'll be happy to discuss how we could help.
 
 ## About this repository
 
@@ -296,12 +306,16 @@ The current work focuses on the following 4 priorities:
 1. Perform **[experiments](https://github.com/SubstraFoundation/distributed-learning-contributivity/projects/1)** and gain experience about best-suited contributivity measurement methods in different situations
 1. Make the library **[agnostic/compatible with other datasets and model architectures](https://github.com/SubstraFoundation/distributed-learning-contributivity/projects/2)**
 
+There is also a transverse, continuous improvement effort on **[code quality, readibility, optimization](https://github.com/SubstraFoundation/distributed-learning-contributivity/projects/5)**.
+
 This work is collaborative, enthusiasts are welcome to comment open issues and PRs or open new ones.
 
-## Contacts
+## Contacts, contributions, collaborations
 
 Should you be interested in this open effort and would like to share any question, suggestion or input, you can use the following channels:
   - This Github repository (issues or PRs)
-  - Substra Foundation's [Slack workspace](https://substra-workspace.slack.com/join/shared_invite/zt-cpyedcab-FHYgpy08efKJ2FCadE2yCA)
+  - Substra Foundation's [Slack workspace](https://substra-workspace.slack.com/join/shared_invite/zt-cpyedcab-FHYgpy08efKJ2FCadE2yCA), channel `#workgroup-mpl-contributivity`
   - Email: hello@substra.org
   - Come meet with us at La Paillasse (Paris, France), Le Palace (Nantes, France) or Studio Iconosquare (Limoges, France)
+  
+ ![logo Substra Foundation](./img/Substra_Logo couleur_RVB_w150px.png)
