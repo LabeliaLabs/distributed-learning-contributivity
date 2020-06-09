@@ -32,7 +32,7 @@ def main():
     stream, info_logger_id, info_debug_id = init_logger()
 
     with contextlib.redirect_stdout(stream):
-        logger.info("Standard output is sent to added handlers.")
+        logger.debug("Standard output is sent to added handlers.")
 
         # Parse config file for scenarios to be experimented
         config = get_config_from_file()
@@ -47,10 +47,10 @@ def main():
 
         # Move log files to experiment folder
         move_log_file_to_experiment_folder(
-            info_logger_id, experiment_path, constants.INFO_LOGGING_FILE_NAME
+            info_logger_id, experiment_path, constants.INFO_LOGGING_FILE_NAME, "INFO"
         )
         move_log_file_to_experiment_folder(
-            info_debug_id, experiment_path, constants.DEBUG_LOGGING_FILE_NAME
+            info_debug_id, experiment_path, constants.DEBUG_LOGGING_FILE_NAME, "DEBUG"
         )
 
         # GPU config
@@ -112,11 +112,11 @@ def init_GPU_config():
         logger.info("No GPU found")
 
 
-def move_log_file_to_experiment_folder(logger_id, experiment_path, filename):
+def move_log_file_to_experiment_folder(logger_id, experiment_path, filename, level):
     logger.remove(logger_id)
     new_log_path = experiment_path / filename
     shutil.move(filename, new_log_path)
-    logger.add(new_log_path)
+    logger.add(new_log_path, level=level)
 
 
 def run_scenario(current_scenario):
@@ -133,9 +133,9 @@ def run_scenario(current_scenario):
     current_scenario.preprocess_scenarios_data()
 
     # Train and eval on all partners according to scenario
-    current_scenario.mpl = multi_partner_learning.init_multipartnerlearning_from_scenario(
+    current_scenario.mpl = multi_partner_learning.init_multi_partner_learning_from_scenario(
         current_scenario,
-        is_save_fig=True,
+        is_save_data=True,
     )
     current_scenario.mpl.compute_test_score()
 

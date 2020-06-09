@@ -115,7 +115,7 @@ class Contributivity:
                 the_scenario.aggregation_weighting,
                 the_scenario.single_partner_test_mode,
                 is_early_stopping=True,
-                is_save_fig=False,
+                is_save_data=False,
                 save_folder=the_scenario.save_folder,
             )
             mpl.compute_test_score()
@@ -936,7 +936,7 @@ class Contributivity:
                     else:  # Avoid creating a Nan value when length = 1
                         sigma2[k, strata] = 0
                     sigma2[k, strata] *= (1/length-   factorial(N - 1 - strata) * factorial(strata)  / factorial(N-1) )
-                    logger.info(f"t: {t}, k: {k}, strat: {strata}, sigma2: {sigma2[k]}")
+                    logger.debug(f"t: {t}, k: {k}, strat: {strata}, sigma2: {sigma2[k]}")
                 
                 shap = np.mean(mu, axis=1)
                 var = np.zeros(N)  # variance of the estimator
@@ -1018,4 +1018,4 @@ class Contributivity:
                 current_scenario, sv_accuracy=sv_accuracy, alpha=alpha
             )
         else:
-            logger.info("Unrecognized name of method, statement ignored!")
+            logger.warning("Unrecognized name of method, statement ignored!")
