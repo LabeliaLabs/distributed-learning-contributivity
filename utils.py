@@ -12,12 +12,38 @@ from shutil import copyfile
 from itertools import product
 import datetime
 
+
 import keras
 from keras.models import Sequential
 from keras.layers import Dense, Flatten
 from keras.layers import Conv2D, MaxPooling2D
 
 import constants
+
+
+
+
+def a_data_valuator_model(x_length,
+                          y_length,
+                          additional_layers=1,
+                          hidden_dim=100,
+                          activ_fct="relu"
+                          ):
+    """Return a CNN model from scratch based on given batch_size"""
+
+    model = Sequential()
+    model.add(Dense(hidden_dim, input_dim=x_length+y_length, activation='relu'))
+    for _ in range(additional_layers):
+        model.add(Dense(hidden_dim, activation='relu'))
+    model.add(Dense(1, activation='sigmoid'))
+
+    model.compile(
+        loss=keras.losses.MeanAbsoluteError(),
+        optimizer="SGD",
+        metrics=["accuracy"],
+    )
+
+    return model
 
 
 def generate_new_cnn_model():

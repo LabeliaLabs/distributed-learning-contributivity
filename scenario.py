@@ -150,6 +150,7 @@ class Scenario:
             "AIS_Kriging_S",
             "SMCS",
             "WR_SMC",
+            "DVRL"
         ]
 
         self.methods = []
