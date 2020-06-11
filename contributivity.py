@@ -98,7 +98,7 @@ class Contributivity:
 
         if len(subset) > 0:
             subset = np.sort(subset)
-        if (tuple(subset) not in self.charac_fct_values):
+        if tuple(subset) not in self.charac_fct_values:
             # Characteristic_func(permut) has not been computed yet...
             # ... so we compute, store, and return characteristic_func(permut)
             self.first_charac_fct_calls_count += 1
@@ -107,10 +107,7 @@ class Contributivity:
                 small_partners_list,
                 the_scenario.epoch_count,
                 the_scenario.minibatch_count,
-                the_scenario.x_val,
-                the_scenario.y_val,
-                the_scenario.x_test,
-                the_scenario.y_test,
+                the_scenario.dataset,
                 the_scenario.multi_partner_learning_approach,
                 the_scenario.aggregation_weighting,
                 the_scenario.single_partner_test_mode,

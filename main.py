@@ -6,9 +6,7 @@ A script for:
     - measuring the respective contributions of each partner to the model performance (termed "contributivity")
 """
 
-from timeit import default_timer as timer
 import matplotlib.pyplot as plt
-import numpy as np
 import utils
 from loguru import logger
 import tensorflow as tf
