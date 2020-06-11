@@ -28,7 +28,7 @@ class MultiPartnerLearning:
                  aggregation_weighting="uniform",
                  single_partner_test_mode="global",
                  is_early_stopping=True,
-                 is_save_fig=False,
+                 is_save_data=False,
                  save_folder="",
                  ):
 
@@ -59,12 +59,12 @@ class MultiPartnerLearning:
         self.aggregation_weights = []
         self.models_weights_list = [None] * self.partners_count
         self.scores_last_learning_round = [None] * self.partners_count
-        self.score_matrix_per_partner = np.zeros(shape=(self.epoch_count, self.minibatch_count, self.partners_count))
-        self.score_matrix_collective_models = np.zeros(shape=(self.epoch_count, self.minibatch_count + 1))
+        self.score_matrix_per_partner = np.nan * np.zeros(shape=(self.epoch_count, self.minibatch_count, self.partners_count))
+        self.score_matrix_collective_models = np.nan * np.zeros(shape=(self.epoch_count, self.minibatch_count + 1))
         self.loss_collective_models = []
         self.test_score = None
         self.nb_epochs_done = int
-        self.is_save_fig = is_save_fig
+        self.is_save_data = is_save_data
         self.save_folder = save_folder
         self.learning_computation_time = None
 
@@ -181,23 +181,27 @@ class MultiPartnerLearning:
             model_evaluation = model_to_evaluate.evaluate(
                 x_val, y_val, batch_size=constants.DEFAULT_BATCH_SIZE, verbose=0,
             )
-            self.score_matrix_collective_models[epoch_index, minibatch_count] = model_evaluation[1]
+
             current_val_loss = model_evaluation[0]
+            current_val_metric = model_evaluation[1]
+
+            self.score_matrix_collective_models[epoch_index, minibatch_count] = current_val_metric
             self.loss_collective_models.append(current_val_loss)
+
             logger.info(f"   Model evaluation at the end of the epoch: "
                         f"{['%.3f' % elem for elem in model_evaluation]}")
 
-            logger.info("      Checking if early stopping criteria are met:")
+            logger.debug("      Checking if early stopping criteria are met:")
             if is_early_stopping:
                 # Early stopping parameters
                 if (
                         epoch_index >= constants.PATIENCE
                         and current_val_loss > self.loss_collective_models[-constants.PATIENCE]
                 ):
-                    logger.info("         -> Early stopping criteria are met, stopping here.")
+                    logger.debug("         -> Early stopping criteria are met, stopping here.")
                     break
                 else:
-                    logger.info("         -> Early stopping criteria are not met, continuing with training.")
+                    logger.debug("         -> Early stopping criteria are not met, continuing with training.")
 
         # After last epoch or if early stopping was triggered, evaluate model on the global testset
         logger.info("### Evaluating model on test data:")
@@ -209,48 +213,53 @@ class MultiPartnerLearning:
         self.nb_epochs_done = self.epoch_index + 1
 
         # Plot training history # TODO: move the data saving and plotting in dedicated functions
-        if self.is_save_fig:
-
-            # Save data
-            history_data = {}
-            history_data["loss_collective_models"] = self.loss_collective_models
-            history_data["score_matrix_per_partner"] = self.score_matrix_per_partner
-            history_data["score_matrix_collective_models"] = self.score_matrix_collective_models
-            with open(self.save_folder / "history_data.p", 'wb') as f:
-                pickle.dump(history_data, f)
-
-            if not os.path.exists(self.save_folder / 'graphs/'):
-                os.makedirs(self.save_folder / 'graphs/')
-            plt.figure()
-            plt.plot(self.loss_collective_models)
-            plt.ylabel("Loss")
-            plt.xlabel("Epoch")
-            plt.savefig(self.save_folder / "graphs/federated_training_loss.png")
-            plt.close()
-
-            plt.figure()
-            plt.plot(self.score_matrix_collective_models[: self.epoch_index + 1, self.minibatch_count])
-            plt.ylabel("Accuracy")
-            plt.xlabel("Epoch")
-            # plt.yscale('log')
-            plt.ylim([0, 1])
-            plt.savefig(self.save_folder / "graphs/federated_training_acc.png")
-            plt.close()
-
-            plt.figure()
-            plt.plot(self.score_matrix_per_partner[: self.epoch_index + 1, self.minibatch_count - 1, ])
-            plt.title("Model accuracy")
-            plt.ylabel("Accuracy")
-            plt.xlabel("Epoch")
-            plt.legend(["partner " + str(i) for i in range(partners_count)])
-            # plt.yscale('log')
-            plt.ylim([0, 1])
-            plt.savefig(self.save_folder / "graphs/all_partners.png")
-            plt.close()
+        if self.is_save_data:
+            self.save_data()
 
         logger.info("Training and evaluation on multiple partners: done.")
         end = timer()
         self.learning_computation_time = end - start
+
+
+    def save_data(self):
+        """Save figures, losses and metrics to disk"""
+
+        history_data = {}
+        history_data["loss_collective_models"] = self.loss_collective_models
+        history_data["score_matrix_per_partner"] = self.score_matrix_per_partner
+        history_data["score_matrix_collective_models"] = self.score_matrix_collective_models
+        with open(self.save_folder / "history_data.p", 'wb') as f:
+            pickle.dump(history_data, f)
+
+        if not os.path.exists(self.save_folder / 'graphs/'):
+            os.makedirs(self.save_folder / 'graphs/')
+        plt.figure()
+        plt.plot(self.loss_collective_models)
+        plt.ylabel("Loss")
+        plt.xlabel("Epoch")
+        plt.savefig(self.save_folder / "graphs/federated_training_loss.png")
+        plt.close()
+
+        plt.figure()
+        plt.plot(self.score_matrix_collective_models[: self.epoch_index + 1, self.minibatch_count])
+        plt.ylabel("Accuracy")
+        plt.xlabel("Epoch")
+        # plt.yscale('log')
+        plt.ylim([0, 1])
+        plt.savefig(self.save_folder / "graphs/federated_training_acc.png")
+        plt.close()
+
+        plt.figure()
+        plt.plot(self.score_matrix_per_partner[: self.epoch_index + 1, self.minibatch_count - 1, ])
+        plt.title("Model accuracy")
+        plt.ylabel("Accuracy")
+        plt.xlabel("Epoch")
+        plt.legend(["partner " + str(i) for i in range(self.partners_count)])
+        # plt.yscale('log')
+        plt.ylim([0, 1])
+        plt.savefig(self.save_folder / "graphs/all_partners.png")
+        plt.close()
+
 
     def compute_collaborative_round_fedavg(self):
         """Proceed to a collaborative round with a federated averaging approach"""
@@ -495,7 +504,7 @@ class MultiPartnerLearning:
         partner_id_str = f"Partner id #{partner.id} ({partner_index}/{self.partners_count - 1})"
         val_acc_str = f"{round(validation_score, 2)}"
 
-        logger.info(f"{epoch_nb_str} > {mb_nb_str} > {partner_id_str} > val_acc: {val_acc_str}")
+        logger.debug(f"{epoch_nb_str} > {mb_nb_str} > {partner_id_str} > val_acc: {val_acc_str}")
 
     def update_iterative_results(self, partner_index, fit_history):
         """Update the results arrays with results from the collaboration round"""
@@ -508,7 +517,7 @@ class MultiPartnerLearning:
         self.score_matrix_per_partner[self.epoch_index, self.minibatch_index, partner_index] = validation_score
 
 
-def init_multipartnerlearning_from_scenario(scenario, is_save_fig=False):
+def init_multi_partner_learning_from_scenario(scenario, is_save_data=True):
 
     mpl = MultiPartnerLearning(
         scenario.partners_list,
@@ -519,7 +528,7 @@ def init_multipartnerlearning_from_scenario(scenario, is_save_fig=False):
         scenario.aggregation_weighting,
         scenario.single_partner_test_mode,
         scenario.is_early_stopping,
-        is_save_fig,
+        is_save_data,
         scenario.save_folder,
     )
 

@@ -523,15 +523,17 @@ class Scenario:
     def compute_batch_sizes(self):
 
         # For each partner we compute the batch size in multi-partner and single-partner setups
+        BATCH_SIZE_MIN = 1
+        BATCH_SIZE_MAX = constants.MAX_BATCH_SIZE
+
         if self.partners_count == 1:
             p = self.partners_list[0]
-            p.batch_size = max(1, int(len(p.x_train) / self.gradient_updates_per_pass_count))
+            batch_size = int(len(p.x_train) / self.gradient_updates_per_pass_count)
+            p.batch_size = np.clip(batch_size, BATCH_SIZE_MIN, BATCH_SIZE_MAX)
         else:
             for p in self.partners_list:
-                p.batch_size = max(
-                    1,
-                    int(len(p.x_train) / (self.minibatch_count * self.gradient_updates_per_pass_count)),
-                )
+                batch_size = int(len(p.x_train) / (self.minibatch_count * self.gradient_updates_per_pass_count))
+                p.batch_size = np.clip(batch_size, BATCH_SIZE_MIN, BATCH_SIZE_MAX)
 
         for p in self.partners_list:
             logger.debug(f"   Compute batch sizes, partner #{p.id}: {p.batch_size}")

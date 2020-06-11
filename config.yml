@@ -14,7 +14,7 @@ scenario_params_list:
    multi_partner_learning_approach:
      - 'fedavg'
      - 'seq-pure'
-     - 'seq-with-final-agg',
+     - 'seq-with-final-agg'
      - 'seqavg'
    aggregation_weighting: 
      - 'data_volume' 
