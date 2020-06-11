@@ -65,9 +65,10 @@ def load_cfg(yaml_filepath):
         cfg : dict
     """
     logger.info("Loading experiment yaml file")
-    # Read YAML experiment definition file
+
     yaml=YAML(typ='safe')
     with open(yaml_filepath, "r") as stream:
+        # This will fail if there are duplicated keys in the YAML file
         cfg = yaml.load(stream)
 
     logger.info(cfg)
