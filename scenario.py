@@ -22,7 +22,7 @@ import utils
 
 
 class Scenario:
-    def __init__(self, params, experiment_path, scenario_id=1, n_repeat=1):
+    def __init__(self, params, experiment_path, scenario_id=1, n_repeat=1, is_logged_scenario=True):
 
         # Identify and get a dataset for running experiments
         self.dataset_name = "MNIST"
@@ -215,24 +215,24 @@ class Scenario:
         # ------------------------------------------------
         # Print the description of the scenario configured
         # ------------------------------------------------
+        if is_logged_scenario:
+            # Describe scenario
+            logger.info("### Description of data scenario configured:")
+            logger.info(f"   Number of partners defined: {self.partners_count}")
+            logger.info(f"   Data distribution scenario chosen: {self.samples_split_option}")
+            logger.info(f"   Test data distribution scenario chosen: {self.single_partner_test_mode}")
+            logger.info(f"   Multi-partner learning approach: {self.multi_partner_learning_approach}")
+            logger.info(f"   Weighting option: {self.aggregation_weighting}")
+            logger.info(f"   Iterations parameters: "
+                        f"{self.epoch_count} epochs > "
+                        f"{self.minibatch_count} mini-batches > "
+                        f"{self.gradient_updates_per_pass_count} gradient updates per pass")
 
-        # Describe scenario
-        logger.info("### Description of data scenario configured:")
-        logger.info(f"   Number of partners defined: {self.partners_count}")
-        logger.info(f"   Data distribution scenario chosen: {self.samples_split_option}")
-        logger.info(f"   Test data distribution scenario chosen: {self.single_partner_test_mode}")
-        logger.info(f"   Multi-partner learning approach: {self.multi_partner_learning_approach}")
-        logger.info(f"   Weighting option: {self.aggregation_weighting}")
-        logger.info(f"   Iterations parameters: "
-                    f"{self.epoch_count} epochs > "
-                    f"{self.minibatch_count} mini-batches > "
-                    f"{self.gradient_updates_per_pass_count} gradient updates per pass")
-
-        # Describe data
-        logger.info(f"### Data loaded: {self.dataset_name}")
-        logger.info(f"   {len(self.x_train)} train data with {len(self.y_train)} labels")
-        logger.info(f"   {len(self.x_val)} train data with {len(self.y_val)} labels")
-        logger.info(f"   {len(self.x_test)} train data with {len(self.y_test)} labels")
+            # Describe data
+            logger.info(f"### Data loaded: {self.dataset_name}")
+            logger.info(f"   {len(self.x_train)} train data with {len(self.y_train)} labels")
+            logger.info(f"   {len(self.x_val)} train data with {len(self.y_val)} labels")
+            logger.info(f"   {len(self.x_test)} train data with {len(self.y_test)} labels")
 
     def append_contributivity(self, contributivity):
 

@@ -42,6 +42,8 @@ def main():
         experiment_path = config["experiment_path"]
         n_repeats = config["n_repeats"]
 
+        validate_scenario_list(scenario_params_list, experiment_path)
+
         for scenario_id, scenario_params in enumerate(scenario_params_list):
             logger.info(f"Scenario {scenario_id+1}/{len(scenario_params_list)}: {scenario_params}")
 
@@ -117,6 +119,18 @@ def move_log_file_to_experiment_folder(logger_id, experiment_path, filename, lev
     new_log_path = experiment_path / filename
     shutil.move(filename, new_log_path)
     logger.add(new_log_path, level=level)
+
+
+
+def validate_scenario_list(scenario_params_list, experiment_path):
+
+    logger.debug("Starting to validate scenarios")
+    for scenario_id, scenario_params in enumerate(scenario_params_list):
+
+        logger.debug(f"Validation scenario {scenario_id + 1}/{len(scenario_params_list)}")
+        scenario.Scenario(scenario_params, experiment_path, is_logged_scenario=False)
+    
+    logger.debug("All scenario have been validated")
 
 
 def run_scenario(current_scenario):
