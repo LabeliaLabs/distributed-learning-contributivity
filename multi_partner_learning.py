@@ -9,6 +9,10 @@ import pickle
 import keras
 from keras.backend.tensorflow_backend import clear_session
 from keras.callbacks import EarlyStopping
+from keras.models import Model
+from keras.layers import Input
+from keras.layers import Dense
+from keras.layers.merge import concatenate
 import numpy as np
 import matplotlib.pyplot as plt
 import operator
@@ -33,7 +37,7 @@ class MultiPartnerLearning:
                  single_partner_test_mode="global",
                  is_early_stopping=True,
                  is_save_data=False,
-                 save_folder="",
+                 save_folder="" 
                  ):
 
         # Attributes related to partners
@@ -54,7 +58,7 @@ class MultiPartnerLearning:
         self.epoch_index = 0
         self.minibatch_count = minibatch_count
         self.minibatch_index = 0
-        self.is_early_stopping = is_early_stopping
+        self.is_early_stopping = is_early_stopping 
 
         # Attributes for storing intermediate artefacts and results
         self.minibatched_x_train = [None] * self.partners_count
@@ -70,15 +74,11 @@ class MultiPartnerLearning:
         self.is_save_data = is_save_data
         self.save_folder = save_folder
         self.learning_computation_time = None
+        
 
         logger.debug("MultiPartnerLearning object instantiated.")
 
-    def compute_test_score_for_single_partner(self, partner):
-        """Return the score on test data of a model trained on a single partner"""
-
-        start = timer()
-        logger.info(f"## Training and evaluating model on partner with id #{partner.id}")
-
+    def train_single_model(self,partner):
         # Initialize model
         model = utils.generate_new_cnn_model()
 
@@ -90,7 +90,7 @@ class MultiPartnerLearning:
 
         # Train model
         logger.info("   Training model...")
-        history = model.fit(
+        model.fit(
             partner.x_train,
             partner.y_train,
             batch_size=partner.batch_size,
@@ -99,7 +99,73 @@ class MultiPartnerLearning:
             validation_data=self.val_data,
             callbacks=cb,
         )
+        
+        self.nb_epochs_done = (es.stopped_epoch + 1) if es.stopped_epoch != 0 else self.epoch_count
+        return model
+    
+ 
+    def make_stacked_meta_model(self, meta_model_hidden_dim=10):
+        logger.info(f"## Making metamodel")
+        # make a list with single partner 's models
+        list_of_models=[None]*self.partners_count
+        for partner_idx, partner in enumerate(self.partners_list): 
+            list_of_models[partner_idx]=self.train_single_model(partner)
+            
+        # update all layers in all models to not be trainable
+        for i in range(len(list_of_models)):
+            model = list_of_models[i]
+            for layer in model.layers:
+                # make not trainable
+                layer.trainable = False
+                # rename to avoid 'unique layer name' issue
+                layer.name = 'ensemble_' + str(i+1) + '_' + layer.name
+        # define multi-headed input
+        ensemble_visible = [model.input for model in list_of_models]
+        # concatenate merge output from each model
+        ensemble_outputs = [model.output for model in list_of_models]
+        merge = concatenate(ensemble_outputs)
+        hidden = Dense(meta_model_hidden_dim, activation='relu')(merge)
+        output = Dense(constants.NUM_CLASSES, activation='softmax')(hidden)
+        meta_model = Model(inputs=ensemble_visible, outputs=output)
+        # compile
+        meta_model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
+        return meta_model
 
+    def compute_test_score_with_stacking(self ):
+        # First, if only one partner, fall back to dedicated single partner function
+        if self.partners_count == 1:
+            return self.compute_test_score_for_single_partner(self.partners_list[0])
+
+        
+        logger.info(f"## Training and evaluating stacked modelon partners with ids: {['#' + str(p.id) for p in self.partners_list]}")
+        start = timer()
+        x_val, y_val = self.val_data
+        x_test, y_test = self.test_data
+        meta_model=self.make_stacked_meta_model(meta_model_hidden_dim=constants.NUM_CLASSES)
+        logger.info(f"## Meta-model compiled.")
+        # prepare input data
+        X = [x_val for _ in range(len(meta_model.input))]
+        # fit model
+        logger.info(f"## Fitting the meta-model...")
+        meta_model.fit(X, y_val, epochs=100, verbose=0)
+        
+        # Evaluate trained model
+        logger.info(f"## Evaluating the meta-model...")
+        ## prepare test data
+        X = [x_test for _ in range(len(meta_model.input))]
+        model_evaluation = meta_model.evaluate(X, y_test, batch_size=constants.DEFAULT_BATCH_SIZE, verbose=0)
+        
+        self.test_score = model_evaluation[1]  # 0 is for the loss
+        end = timer()
+        self.learning_computation_time = end - start
+            
+    def compute_test_score_for_single_partner(self, partner):
+        """compute test the score on test data of a model trained on a single partner"""
+
+        start = timer()
+        logger.info(f"## Training and evaluating model on partner with id #{partner.id}")
+
+        model=self.train_single_model(partner)
         # Reference a testset according to the scenario configuration
         if self.single_partner_test_mode == "global":
             x_test, y_test = self.test_data
@@ -115,12 +181,13 @@ class MultiPartnerLearning:
 
         # Save model score on test data
         self.test_score = model_evaluation[1]  # 0 is for the loss
-        self.nb_epochs_done = (es.stopped_epoch + 1) if es.stopped_epoch != 0 else self.epoch_count
+        
 
         end = timer()
         self.learning_computation_time = end - start
+        
 
-    def compute_test_score(self):
+    def compute_federated_test_score(self):
         """Return the score on test data of a final aggregated model trained in a federated way on each partner"""
 
         start = timer()

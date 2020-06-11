@@ -82,6 +82,7 @@ class Scenario:
             "seq-pure",
             "seq-with-final-agg",
             "seqavg",
+            "stacking",
         ]
 
         if "multi_partner_learning_approach" in params:
