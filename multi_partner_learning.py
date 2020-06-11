@@ -220,7 +220,6 @@ class MultiPartnerLearning:
         end = timer()
         self.learning_computation_time = end - start
 
-
     def save_data(self):
         """Save figures, losses and metrics to disk"""
 
