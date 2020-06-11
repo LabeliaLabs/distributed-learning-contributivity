@@ -11,4 +11,5 @@ install:
 
 # command to run tests
 script:
+  - pytest tests.py
   - python main.py -f config_quick_debug.yml
