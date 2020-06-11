@@ -122,7 +122,7 @@ def move_log_file_to_experiment_folder(logger_id, experiment_path, filename, lev
 
 
 def validate_scenario_list(scenario_params_list, experiment_path):
-    """Instanciate every sceneario withouth running it to check if
+    """Instanciate every scenario without running it to check if
     every scenario is correctly specified"""
 
     logger.debug("Starting to validate scenarios")
