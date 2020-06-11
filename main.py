@@ -86,7 +86,7 @@ def main():
 
                 with open(experiment_path / "results.csv", "a") as f:
                     df_results.to_csv(f, header=f.tell() == 0, index=False)
-                    logger.info("Results saved")
+                    logger.info(f"Results saved to {str(experiment_path)}/result.csv")
 
     return 0
 
