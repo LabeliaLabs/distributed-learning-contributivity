@@ -5,7 +5,7 @@ Some utils functions.
 """
 
 from __future__ import print_function
-import yaml
+from ruamel.yaml import YAML
 from pathlib import Path
 from loguru import logger
 from shutil import copyfile
@@ -66,8 +66,9 @@ def load_cfg(yaml_filepath):
     """
     logger.info("Loading experiment yaml file")
     # Read YAML experiment definition file
+    yaml=YAML(typ='safe')
     with open(yaml_filepath, "r") as stream:
-        cfg = yaml.load(stream, Loader=yaml.FullLoader)
+        cfg = yaml.load(stream)
 
     logger.info(cfg)
 
