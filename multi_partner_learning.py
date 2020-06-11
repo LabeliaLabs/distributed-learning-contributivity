@@ -162,7 +162,7 @@ class MultiPartnerLearning:
         X = [x_test for _ in range(len(meta_model.input))]
         model_evaluation = meta_model.evaluate(X, y_test, batch_size=constants.DEFAULT_BATCH_SIZE, verbose=0)
         logger.info(f"   Model evaluation on test data: "
-                    f"{list(zip(model.metrics_names, ['%.3f' % elem for elem in model_evaluation]))}")   
+                    f"{list(zip(meta_model.metrics_names, ['%.3f' % elem for elem in model_evaluation]))}")   
         self.test_score = model_evaluation[1]  # 0 is for the loss
         end = timer()
         self.learning_computation_time = end - start
