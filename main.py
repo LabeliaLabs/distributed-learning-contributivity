@@ -121,15 +121,24 @@ def move_log_file_to_experiment_folder(logger_id, experiment_path, filename, lev
     logger.add(new_log_path, level=level)
 
 
-
 def validate_scenario_list(scenario_params_list, experiment_path):
+    """Instanciate every sceneario withouth running it to check if
+    every scenario is correctly specified"""
 
     logger.debug("Starting to validate scenarios")
+
     for scenario_id, scenario_params in enumerate(scenario_params_list):
 
         logger.debug(f"Validation scenario {scenario_id + 1}/{len(scenario_params_list)}")
-        scenario.Scenario(scenario_params, experiment_path, is_logged_scenario=False)
-    
+
+        current_scenario = scenario.Scenario(scenario_params, experiment_path, is_logging_enabled=False)
+        current_scenario.instantiate_scenario_partners()
+
+        if isinstance(current_scenario.samples_split_option, list):
+            current_scenario.split_data_advanced()
+        else:
+            current_scenario.split_data(is_logging_enabled=False)        
+
     logger.debug("All scenario have been validated")
 
 

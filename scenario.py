@@ -22,7 +22,7 @@ import utils
 
 
 class Scenario:
-    def __init__(self, params, experiment_path, scenario_id=1, n_repeat=1, is_logged_scenario=True):
+    def __init__(self, params, experiment_path, scenario_id=1, n_repeat=1, is_logging_enabled=True):
 
         # Identify and get a dataset for running experiments
         self.dataset_name = "MNIST"
@@ -215,7 +215,7 @@ class Scenario:
         # ------------------------------------------------
         # Print the description of the scenario configured
         # ------------------------------------------------
-        if is_logged_scenario:
+        if is_logging_enabled:
             # Describe scenario
             logger.info("### Description of data scenario configured:")
             logger.info(f"   Number of partners defined: {self.partners_count}")
@@ -367,7 +367,7 @@ class Scenario:
 
         return 0
 
-    def split_data(self):
+    def split_data(self, is_logging_enabled=True):
         """Populates the partners with their train and test data (not pre-processed)"""
 
         # Fetch parameters of scenario
@@ -462,14 +462,14 @@ class Scenario:
         self.nb_samples_used = sum([len(p.x_train) for p in self.partners_list])
         self.final_relative_nb_samples = [p.final_nb_samples / self.nb_samples_used for p in self.partners_list]
 
-        # Print for controlling
-        logger.info(f"### Splitting data among partners:")
-        logger.info(f"   Simple split performed.")
-        logger.info(f"   Nb of samples split amongst partners: {self.nb_samples_used}")
-        for partner in self.partners_list:
-            logger.info(f"   Partner #{partner.id}: "
-                        f"{partner.final_nb_samples} samples "
-                        f"with labels {partner.clusters_list}")
+        if is_logging_enabled:
+            logger.info(f"### Splitting data among partners:")
+            logger.info(f"   Simple split performed.")
+            logger.info(f"   Nb of samples split amongst partners: {self.nb_samples_used}")
+            for partner in self.partners_list:
+                logger.info(f"   Partner #{partner.id}: "
+                            f"{partner.final_nb_samples} samples "
+                            f"with labels {partner.clusters_list}")
 
         return 0
 
