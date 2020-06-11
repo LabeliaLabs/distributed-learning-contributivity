@@ -7,9 +7,8 @@ scenario_params_list:
     - [0.5, 0.25, 0.25]
    samples_split_option: 
     - 'random'
-   multi_partner_learning_approach:
-    - 'seq-pure'
-    - 'seq-with-final-agg'
+   multi_partner_learning_approach: 
+    - 'stacking'
    aggregation_weighting: 
     - 'uniform'
    corrupted_datasets:
@@ -19,4 +18,4 @@ scenario_params_list:
    is_quick_demo: 
     - True
    methods:
-    - ["Independent scores"]
+    - ["TMCS"]

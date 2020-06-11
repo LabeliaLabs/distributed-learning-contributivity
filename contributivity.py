@@ -118,7 +118,10 @@ class Contributivity:
                 is_save_data=False,
                 save_folder=the_scenario.save_folder,
             )
-            mpl.compute_test_score()
+            if the_scenario.multi_partner_learning_approach == "stacking":
+                mpl.compute_test_score_with_stacking()
+            else:
+                mpl.compute_federated_test_score()
             self.charac_fct_values[tuple(subset)] = mpl.test_score
             # we add the new increments
             for i in range(len(the_scenario.partners_list)):

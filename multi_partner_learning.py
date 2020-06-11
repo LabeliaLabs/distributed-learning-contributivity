@@ -79,29 +79,36 @@ class MultiPartnerLearning:
         logger.debug("MultiPartnerLearning object instantiated.")
 
     def train_single_model(self,partner):
-        # Initialize model
-        model = utils.generate_new_cnn_model()
-
-        # Set if early stopping if needed
-        cb = []
-        if self.is_early_stopping:
-            es = EarlyStopping(monitor='val_loss', mode='min', verbose=0, patience=constants.PATIENCE)
-            cb.append(es)
-
-        # Train model
-        logger.info("   Training model...")
-        model.fit(
-            partner.x_train,
-            partner.y_train,
-            batch_size=partner.batch_size,
-            epochs=self.epoch_count,
-            verbose=0,
-            validation_data=self.val_data,
-            callbacks=cb,
-        )
-        
-        self.nb_epochs_done = (es.stopped_epoch + 1) if es.stopped_epoch != 0 else self.epoch_count
-        return model
+        #first check if the model was already trained
+        if not partner.model==None:
+            return partner.model
+        else:
+            # Initialize model
+            model = utils.generate_new_cnn_model()
+    
+            # Set if early stopping if needed
+            cb = []
+            if self.is_early_stopping:
+                es = EarlyStopping(monitor='val_loss', mode='min', verbose=0, patience=constants.PATIENCE)
+                cb.append(es)
+    
+            # Train model
+            logger.info(f"   Training model on partner with id #{partner.id}" )
+            model.fit(
+                partner.x_train,
+                partner.y_train,
+                batch_size=partner.batch_size,
+                epochs=self.epoch_count,
+                verbose=0,
+                validation_data=self.val_data,
+                callbacks=cb,
+            )
+            #store the model
+            partner.model=model
+            
+            self.nb_epochs_done = (es.stopped_epoch + 1) if es.stopped_epoch != 0 else self.epoch_count
+            
+            return model
     
  
     def make_stacked_meta_model(self, meta_model_hidden_dim=10):
@@ -154,7 +161,8 @@ class MultiPartnerLearning:
         ## prepare test data
         X = [x_test for _ in range(len(meta_model.input))]
         model_evaluation = meta_model.evaluate(X, y_test, batch_size=constants.DEFAULT_BATCH_SIZE, verbose=0)
-        
+        logger.info(f"   Model evaluation on test data: "
+                    f"{list(zip(model.metrics_names, ['%.3f' % elem for elem in model_evaluation]))}")   
         self.test_score = model_evaluation[1]  # 0 is for the loss
         end = timer()
         self.learning_computation_time = end - start
