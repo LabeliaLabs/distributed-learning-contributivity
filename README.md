@@ -318,4 +318,4 @@ Should you be interested in this open effort and would like to share any questio
   - Email: hello@substra.org
   - Come meet with us at La Paillasse (Paris, France), Le Palace (Nantes, France) or Studio Iconosquare (Limoges, France)
   
- ![logo Substra Foundation](./img/Substra_Logo couleur_RVB_w150px.png)
+ ![logo Substra Foundation](./img/substra_logo_couleur_rvb_w150px.png)
