@@ -728,6 +728,7 @@ def init_multi_partner_learning_from_scenario(scenario, is_save_data=True):
         scenario.x_test,
         scenario.y_test,
         scenario.multi_partner_learning_approach,
+        scenario.epoch_count_for_meta_model,
         scenario.aggregation_weighting,
         scenario.single_partner_test_mode,
         scenario.is_early_stopping,
