@@ -24,10 +24,10 @@ class Scenario:
     def __init__(self, params, experiment_path, scenario_id=1, n_repeat=1):
 
         # Get and verify which dataset is configured
-        supported_datasets = ["mnist", "cifar10"]
+        supported_datasets_names = ["mnist", "cifar10"]
         if "dataset_name" in params:
             dataset_name = params["dataset_name"]
-            if dataset_name not in supported_datasets:
+            if dataset_name not in supported_datasets_names:
                 raise Exception(f"Dataset named '{dataset_name}' is not supported (yet). You could add it!")
         else:
             dataset_name = "mnist"  # default

@@ -115,7 +115,7 @@ Finally, with given scenarios and multi-partner learning approaches, we can addr
    
 3. Then execute `main.py -f config.yml`
 
-4. A `results.csv` file will be generated in a new folder for your experiment under `/experiments/<your_experiment>`. You can read this raw `results.csv` file or use the generated notebooks in `/notebooks`.
+4. A `results.csv` file will be generated in a new folder for your experiment under `/experiments/<your_experiment>`. You can read this raw `results.csv` file or use the notebooks in `/notebooks`.
 
 ### Config file parameters
 
