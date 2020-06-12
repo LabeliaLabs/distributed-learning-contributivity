@@ -9,19 +9,21 @@ A script for:
 from timeit import default_timer as timer
 import matplotlib.pyplot as plt
 import numpy as np
-import utils
 from loguru import logger
 import tensorflow as tf
-import sys
+
+import argparse
 import contextlib
+import os
 import shutil
+import sys
 
 import constants
 import contributivity
-import scenario
 import multi_partner_learning
+import scenario
+import utils
 
-import argparse
 
 DEFAULT_CONFIG_FILE = "config.yml"
 
@@ -84,7 +86,7 @@ def main():
 
                 with open(experiment_path / "results.csv", "a") as f:
                     df_results.to_csv(f, header=f.tell() == 0, index=False)
-                    logger.info(f"Results saved to {str(experiment_path)}/results.csv")
+                    logger.info(f"Results saved to {os.path.relpath(experiment_path)}/results.csv")
 
     return 0
 
