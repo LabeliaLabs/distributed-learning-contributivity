@@ -151,6 +151,7 @@ class MultiPartnerLearning:
         return meta_model
 
     def compute_test_score_with_stacking(self):
+        
         # First, if only one partner, fall back to dedicated single partner function
         if self.partners_count == 1:
             return self.compute_test_score_for_single_partner(self.partners_list[0])
@@ -165,18 +166,21 @@ class MultiPartnerLearning:
             meta_model_hidden_dim=constants.NUM_CLASSES
         )
         logger.info("## Meta-model compiled.")
+        
         # prepare input data
         X = [x_val for _ in range(len(meta_model.input))]
+        
         # fit model
         logger.info("## Fitting the meta-model...")
         meta_model.fit(X, y_val, epochs=self.epoch_count_for_meta_model, verbose=0)
 
+        # prepare test data
+        X_test = [x_test for _ in range(len(meta_model.input))]
+    
         # Evaluate trained model
         logger.info("## Evaluating the meta-model...")
-        ## prepare test data
-        X = [x_test for _ in range(len(meta_model.input))]
         model_evaluation = meta_model.evaluate(
-            X, y_test, batch_size=constants.DEFAULT_BATCH_SIZE, verbose=0
+            X_test, y_test, batch_size=constants.DEFAULT_BATCH_SIZE, verbose=0
         )
         logger.info(
             f"   Model evaluation on test data: "
