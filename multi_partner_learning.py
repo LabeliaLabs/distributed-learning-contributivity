@@ -32,6 +32,7 @@ class MultiPartnerLearning:
         x_test_global,
         y_test_global,
         multi_partner_learning_approach,
+        epoch_count_for_meta_model=0,
         aggregation_weighting="uniform",
         single_partner_test_mode="global",
         is_early_stopping=True,
@@ -58,7 +59,8 @@ class MultiPartnerLearning:
         self.minibatch_count = minibatch_count
         self.minibatch_index = 0
         self.is_early_stopping = is_early_stopping
-
+        self.epoch_count_for_meta_model=epoch_count_for_meta_model
+        
         # Attributes for storing intermediate artefacts and results
         self.minibatched_x_train = [None] * self.partners_count
         self.minibatched_y_train = [None] * self.partners_count
@@ -167,7 +169,7 @@ class MultiPartnerLearning:
         X = [x_val for _ in range(len(meta_model.input))]
         # fit model
         logger.info("## Fitting the meta-model...")
-        meta_model.fit(X, y_val, epochs=100, verbose=0)
+        meta_model.fit(X, y_val, epochs=self.epoch_count_for_meta_model, verbose=0)
 
         # Evaluate trained model
         logger.info("## Evaluating the meta-model...")

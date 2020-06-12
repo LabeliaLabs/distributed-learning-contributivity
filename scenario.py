@@ -116,6 +116,12 @@ class Scenario:
             assert self.epoch_count > 0
         else:
             self.epoch_count = 40  # default
+            
+        if "epoch_count_for_meta_model" in params:
+            self.epoch_count_for_meta_model = params["epoch_count_for_meta_model"]
+            assert self.epoch_count_for_meta_model > 0 
+        else:
+            self.epoch_count_for_meta_model = 100  # default
 
         if "minibatch_count" in params:
             self.minibatch_count = params["minibatch_count"]
@@ -359,7 +365,7 @@ class Scenario:
 
         # Print for controlling
         logger.info("### Splitting data among partners:")
-        logger.info(f"   Advanced split performed.")
+        logger.info("   Advanced split performed.")
         logger.info(f"   Nb of samples split amongst partners: {self.nb_samples_used}")
         logger.info(f"   Partners' relative nb of samples: {[round(p, 2) for p in self.final_relative_nb_samples]} "
                     f"   (versus initially configured: {amounts_per_partner})")
@@ -464,8 +470,8 @@ class Scenario:
         self.final_relative_nb_samples = [p.final_nb_samples / self.nb_samples_used for p in self.partners_list]
 
         # Print for controlling
-        logger.info(f"### Splitting data among partners:")
-        logger.info(f"   Simple split performed.")
+        logger.info("### Splitting data among partners:")
+        logger.info("   Simple split performed.")
         logger.info(f"   Nb of samples split amongst partners: {self.nb_samples_used}")
         for partner in self.partners_list:
             logger.info(f"   Partner #{partner.id}: "
