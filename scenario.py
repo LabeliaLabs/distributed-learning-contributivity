@@ -187,6 +187,7 @@ class Scenario:
             self.y_test = self.y_test[:500]
             self.epoch_count = 3
             self.minibatch_count = 2
+            self.epoch_count_for_meta_model = 5
 
         # -------
         # Outputs
