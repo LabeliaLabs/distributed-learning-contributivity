@@ -122,32 +122,36 @@ class MultiPartnerLearning:
             return partner.model
 
     def make_stacked_meta_model(self, meta_model_hidden_dim=10):
-        logger.info("## Making metamodel")
-        # make a list with single partner 's models
-        list_of_models = [None] * self.partners_count
-        for partner_idx, partner in enumerate(self.partners_list):
-            list_of_models[partner_idx] = self.train_single_model(partner)
+    
+        logger.info("## Model ensembling approach - Creating the meta-model")
+        
+        # Create a list with an independently trained model for each partner
+        list_of_models = []
+        for partner in self.partners_list:
+            list_of_models.append(self.train_single_model(partner))
 
-        # update all layers in all models to not be trainable
+        # Update all layers in all models to not be trainable
         for i in range(len(list_of_models)):
             model = list_of_models[i]
             for layer in model.layers:
-                # make not trainable
-                layer.trainable = False
-                # rename to avoid 'unique layer name' issue
-                layer.name = "ensemble_" + str(i + 1) + "_" + layer.name
-        # define multi-headed input
+                layer.trainable = False  # Make it not trainable
+                layer.name = f"ensemble_{i+1}_{layer.name}"  # Rename it to avoid 'unique layer name' issue
+                
+        # Define multi-headed input
         ensemble_visible = [model.input for model in list_of_models]
-        # concatenate merge output from each model
+        
+        # Concatenate merge output from each model
         ensemble_outputs = [model.output for model in list_of_models]
         merge = concatenate(ensemble_outputs)
         hidden = Dense(meta_model_hidden_dim, activation="relu")(merge)
         output = Dense(constants.NUM_CLASSES, activation="softmax")(hidden)
         meta_model = Model(inputs=ensemble_visible, outputs=output)
-        # compile
+        
+        # Compile the meta-model
         meta_model.compile(
             loss="categorical_crossentropy", optimizer="adam", metrics=["accuracy"]
         )
+        
         return meta_model
 
     def compute_test_score_with_stacking(self):
