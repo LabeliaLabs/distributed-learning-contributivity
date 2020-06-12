@@ -459,9 +459,18 @@ class MultiPartnerLearning:
     def init_with_new_models(self):
         """Return a list of newly generated models, one per partner"""
 
+        # Init a list to receive a new model for each partner
         partners_model_list = []
-        for partner in self.partners_list:
-            partners_model_list.append(self.generate_new_model())
+
+        # Generate a new model and add it to the list
+        new_model = self.generate_new_model()
+        partners_model_list.append(new_model)
+
+        # For each remaining partner, duplicate the new model and add it to the list
+        new_model_weights = new_model.get_weights()
+        for i in range(len(self.partners_list)-1):
+            partners_model_list.append(self.build_model_from_weights(new_model_weights))
+
         return partners_model_list
 
     def init_with_agg_model(self):
