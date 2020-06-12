@@ -5,7 +5,7 @@ Some utils functions.
 """
 
 from __future__ import print_function
-import yaml
+from ruamel.yaml import YAML
 from pathlib import Path
 from loguru import logger
 from shutil import copyfile
@@ -65,9 +65,11 @@ def load_cfg(yaml_filepath):
         cfg : dict
     """
     logger.info("Loading experiment yaml file")
-    # Read YAML experiment definition file
+
+    yaml=YAML(typ='safe')
     with open(yaml_filepath, "r") as stream:
-        cfg = yaml.load(stream, Loader=yaml.FullLoader)
+        # This will fail if there are duplicated keys in the YAML file
+        cfg = yaml.load(stream)
 
     logger.info(cfg)
 
