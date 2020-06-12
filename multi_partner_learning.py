@@ -187,7 +187,7 @@ class MultiPartnerLearning:
         self.learning_computation_time = end - start
 
     def compute_test_score_for_single_partner(self, partner):
-        """compute test the score on test data of a model trained on a single partner"""
+        """ Compute the score on test data of a model trained on a single partner"""
 
         start = timer()
         logger.info(
