@@ -6,7 +6,7 @@ The dataset object used in the multi-partner learning and contributivity measure
 from sklearn.model_selection import train_test_split
 
 
-class Dataset:
+class DatasetAndModel:
 
     def __init__(self,
                  dataset_name,

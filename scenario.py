@@ -15,7 +15,7 @@ from loguru import logger
 import operator
 import random
 
-from dataset import Dataset
+from dataset_and_model import DatasetAndModel
 import constants
 from partner import Partner
 
@@ -41,7 +41,7 @@ class Scenario:
         else:
             raise Exception(f"Dataset named '{dataset_name}' is not supported (yet). You could add it!")
 
-        self.dataset = Dataset(
+        self.dataset = DatasetAndModel(
             dataset_name,
             dataset_module.x_train,
             dataset_module.x_test,
