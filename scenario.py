@@ -22,7 +22,7 @@ import utils
 
 
 class Scenario:
-    def __init__(self, params, experiment_path, scenario_id=1, n_repeat=1, is_logging_enabled=True):
+    def __init__(self, params, experiment_path, scenario_id=1, n_repeat=1, is_dry_run=False):
 
         # Identify and get a dataset for running experiments
         self.dataset_name = "MNIST"
@@ -209,13 +209,13 @@ class Scenario:
         )
 
         self.save_folder = experiment_path / self.scenario_name
-
-        self.save_folder.mkdir(parents=True, exist_ok=True)
+        if not is_dry_run:
+            self.save_folder.mkdir(parents=True, exist_ok=True)
 
         # ------------------------------------------------
         # Print the description of the scenario configured
         # ------------------------------------------------
-        if is_logging_enabled:
+        if not is_dry_run:
             # Describe scenario
             logger.info("### Description of data scenario configured:")
             logger.info(f"   Number of partners defined: {self.partners_count}")
@@ -242,7 +242,7 @@ class Scenario:
 
         self.partners_list = [Partner(i) for i in range(self.partners_count)]
 
-    def split_data_advanced(self):
+    def split_data_advanced(self, is_logging_enabled=True):
         """Advanced split: Populates the partners with their train and test data (not pre-processed)"""
 
         x_train = self.x_train
@@ -356,14 +356,14 @@ class Scenario:
         # Check coherence of number of mini-batches versus partner with small dataset
         assert self.minibatch_count <= min([len(p.x_train) for p in self.partners_list])
 
-        # Print for controlling
-        logger.info("### Splitting data among partners:")
-        logger.info(f"   Advanced split performed.")
-        logger.info(f"   Nb of samples split amongst partners: {self.nb_samples_used}")
-        logger.info(f"   Partners' relative nb of samples: {[round(p, 2) for p in self.final_relative_nb_samples]} "
-                    f"   (versus initially configured: {amounts_per_partner})")
-        for partner in self.partners_list:
-            logger.info(f"   Partner #{partner.id}: {len(partner.x_train)} samples with labels {partner.clusters_list}")
+        if is_logging_enabled:
+            logger.info("### Splitting data among partners:")
+            logger.info(f"   Advanced split performed.")
+            logger.info(f"   Nb of samples split amongst partners: {self.nb_samples_used}")
+            logger.info(f"   Partners' relative nb of samples: {[round(p, 2) for p in self.final_relative_nb_samples]} "
+                        f"   (versus initially configured: {amounts_per_partner})")
+            for partner in self.partners_list:
+                logger.info(f"   Partner #{partner.id}: {len(partner.x_train)} samples with labels {partner.clusters_list}")
 
         return 0
 
