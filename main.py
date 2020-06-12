@@ -137,7 +137,7 @@ def run_scenario(current_scenario):
         current_scenario,
         is_save_data=True,
     )
-    if current_scenario.multi_partner_learning_approach=="stacking":
+    if current_scenario.multi_partner_learning_approach == "stacking":
         current_scenario.mpl.compute_test_score_with_stacking()
     else:
         current_scenario.mpl.compute_federated_test_score()
