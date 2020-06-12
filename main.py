@@ -130,7 +130,8 @@ def validate_scenario_list(scenario_params_list, experiment_path):
     for scenario_id, scenario_params in enumerate(scenario_params_list):
 
         logger.debug(f"Validation scenario {scenario_id + 1}/{len(scenario_params_list)}")
-
+        
+        # TODO: we should not create scenario folder at this point
         current_scenario = scenario.Scenario(scenario_params, experiment_path, is_logging_enabled=False)
         current_scenario.instantiate_scenario_partners()
 
