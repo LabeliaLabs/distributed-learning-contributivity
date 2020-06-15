@@ -6,22 +6,22 @@ A script for:
     - measuring the respective contributions of each partner to the model performance (termed "contributivity")
 """
 
-from timeit import default_timer as timer
 import matplotlib.pyplot as plt
-import numpy as np
-import utils
 from loguru import logger
 import tensorflow as tf
-import sys
+
+import argparse
 import contextlib
+import os
 import shutil
+import sys
 
 import constants
 import contributivity
-import scenario
 import multi_partner_learning
+import scenario
+import utils
 
-import argparse
 
 DEFAULT_CONFIG_FILE = "config.yml"
 
@@ -41,6 +41,8 @@ def main():
 
         experiment_path = config["experiment_path"]
         n_repeats = config["n_repeats"]
+
+        validate_scenario_list(scenario_params_list, experiment_path)
 
         for scenario_id, scenario_params in enumerate(scenario_params_list):
             logger.info(f"Scenario {scenario_id+1}/{len(scenario_params_list)}: {scenario_params}")
@@ -70,10 +72,12 @@ def main():
                 logger.info("Current params:")
                 logger.info(scenario_params)
 
-                current_scenario = scenario.Scenario(scenario_params, 
-                                                     experiment_path,
-                                                     scenario_id=scenario_id+1,
-                                                     n_repeat=i+1)
+                current_scenario = scenario.Scenario(
+                    scenario_params,
+                    experiment_path,
+                    scenario_id=scenario_id+1,
+                    n_repeat=i+1
+                )
 
                 run_scenario(current_scenario)
 
@@ -84,7 +88,7 @@ def main():
 
                 with open(experiment_path / "results.csv", "a") as f:
                     df_results.to_csv(f, header=f.tell() == 0, index=False)
-                    logger.info("Results saved")
+                    logger.info(f"Results saved to {os.path.relpath(experiment_path)}/results.csv")
 
     return 0
 
@@ -117,6 +121,28 @@ def move_log_file_to_experiment_folder(logger_id, experiment_path, filename, lev
     new_log_path = experiment_path / filename
     shutil.move(filename, new_log_path)
     logger.add(new_log_path, level=level)
+
+
+def validate_scenario_list(scenario_params_list, experiment_path):
+    """Instanciate every scenario without running it to check if
+    every scenario is correctly specified"""
+
+    logger.debug("Starting to validate scenarios")
+
+    for scenario_id, scenario_params in enumerate(scenario_params_list):
+
+        logger.debug(f"Validation scenario {scenario_id + 1}/{len(scenario_params_list)}")
+        
+        # TODO: we should not create scenario folder at this point
+        current_scenario = scenario.Scenario(scenario_params, experiment_path, is_dry_run=True)
+        current_scenario.instantiate_scenario_partners()
+
+        if isinstance(current_scenario.samples_split_option, list):
+            current_scenario.split_data_advanced(is_logging_enabled=False)
+        else:
+            current_scenario.split_data(is_logging_enabled=False)        
+
+    logger.debug("All scenario have been validated")
 
 
 def run_scenario(current_scenario):

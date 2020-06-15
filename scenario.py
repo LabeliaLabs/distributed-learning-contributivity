@@ -3,11 +3,10 @@
 This enables to parameterize a desired scenario to mock a multi-partner ML project.
 """
 
-from keras.datasets import mnist
+from datasets import dataset_mnist, dataset_cifar10
 from sklearn.model_selection import train_test_split
 import datetime
 import os
-import keras
 import numpy as np
 import matplotlib.pyplot as plt
 import uuid
@@ -16,26 +15,49 @@ from loguru import logger
 import operator
 import random
 
+from dataset import Dataset
 import constants
 from partner import Partner
-import utils
 
 
 class Scenario:
-    def __init__(self, params, experiment_path, scenario_id=1, n_repeat=1):
+    def __init__(self, params, experiment_path, scenario_id=1, n_repeat=1, is_dry_run=False):
 
-        # Identify and get a dataset for running experiments
-        self.dataset_name = "MNIST"
-        (x_train, y_train), (x_test, y_test) = mnist.load_data()
-        self.nb_samples_used = len(x_train)
+        # Get and verify which dataset is configured
+        supported_datasets_names = ["mnist", "cifar10"]
+        if "dataset_name" in params:
+            dataset_name = params["dataset_name"]
+            if dataset_name not in supported_datasets_names:
+                raise Exception(f"Dataset named '{dataset_name}' is not supported (yet). You could add it!")
+        else:
+            dataset_name = "mnist"  # default
+        logger.debug(f"Dataset selected: {dataset_name}")
+
+        # Reference the module corresponding to the dataset selected and initialize the Dataset object
+        if dataset_name == "mnist":
+            dataset_module = dataset_mnist
+        elif dataset_name == "cifar10":
+            dataset_module = dataset_cifar10
+        else:
+            raise Exception(f"Dataset named '{dataset_name}' is not supported (yet). You could add it!")
+
+        self.dataset = Dataset(
+            dataset_name,
+            dataset_module.x_train,
+            dataset_module.x_test,
+            dataset_module.y_train,
+            dataset_module.y_test,
+            dataset_module.input_shape,
+            dataset_module.num_classes,
+            dataset_module.preprocess_dataset_labels,
+            dataset_module.generate_new_model_for_dataset,
+        )
+
+        self.nb_samples_used = len(self.dataset.x_train)
         self.final_relative_nb_samples = []
 
         # The train set has to be split into a train set and a validation set for early stopping
-        self.x_train, self.x_val, self.y_train, self.y_val = train_test_split(
-            x_train, y_train, test_size=0.2, random_state=42
-        )
-        self.x_test = x_test
-        self.y_test = y_test
+        self.dataset.train_val_split()
 
         # List of all partners defined in the scenario
         self.partners_list = []
@@ -179,12 +201,15 @@ class Scenario:
         if "is_quick_demo" in params and params["is_quick_demo"]:
             # Use less data and less epochs to speed up the computations
             logger.info("Quick demo: limit number of data and number of epochs.")
-            self.x_train = self.x_train[:1000]
-            self.y_train = self.y_train[:1000]
-            self.x_val = self.x_val[:500]
-            self.y_val = self.y_val[:500]
-            self.x_test = self.x_test[:500]
-            self.y_test = self.y_test[:500]
+            index_train = np.random.choice(self.dataset.x_train.shape[0], 1000, replace=False)
+            index_val = np.random.choice(self.dataset.x_val.shape[0], 500, replace=False)
+            index_test = np.random.choice(self.dataset.x_test.shape[0], 500, replace=False)
+            self.dataset.x_train = self.dataset.x_train[index_train]
+            self.dataset.y_train = self.dataset.y_train[index_train]
+            self.dataset.x_val = self.dataset.x_val[index_val]
+            self.dataset.y_val = self.dataset.y_val[index_val]
+            self.dataset.x_test = self.dataset.x_test[index_test]
+            self.dataset.y_test = self.dataset.y_test[index_test]
             self.epoch_count = 3
             self.minibatch_count = 2
             self.epoch_count_for_meta_model = 5
@@ -217,30 +242,31 @@ class Scenario:
         )
 
         self.save_folder = experiment_path / self.scenario_name
-
-        self.save_folder.mkdir(parents=True, exist_ok=True)
+        if not is_dry_run:
+            self.save_folder.mkdir(parents=True, exist_ok=True)
 
         # ------------------------------------------------
         # Print the description of the scenario configured
         # ------------------------------------------------
 
-        # Describe scenario
-        logger.info("### Description of data scenario configured:")
-        logger.info(f"   Number of partners defined: {self.partners_count}")
-        logger.info(f"   Data distribution scenario chosen: {self.samples_split_option}")
-        logger.info(f"   Test data distribution scenario chosen: {self.single_partner_test_mode}")
-        logger.info(f"   Multi-partner learning approach: {self.multi_partner_learning_approach}")
-        logger.info(f"   Weighting option: {self.aggregation_weighting}")
-        logger.info(f"   Iterations parameters: "
-                    f"{self.epoch_count} epochs > "
-                    f"{self.minibatch_count} mini-batches > "
-                    f"{self.gradient_updates_per_pass_count} gradient updates per pass")
+        if not is_dry_run:
+            # Describe scenario
+            logger.info("### Description of data scenario configured:")
+            logger.info(f"   Number of partners defined: {self.partners_count}")
+            logger.info(f"   Data distribution scenario chosen: {self.samples_split_option}")
+            logger.info(f"   Test data distribution scenario chosen: {self.single_partner_test_mode}")
+            logger.info(f"   Multi-partner learning approach: {self.multi_partner_learning_approach}")
+            logger.info(f"   Weighting option: {self.aggregation_weighting}")
+            logger.info(f"   Iterations parameters: "
+                        f"{self.epoch_count} epochs > "
+                        f"{self.minibatch_count} mini-batches > "
+                        f"{self.gradient_updates_per_pass_count} gradient updates per pass")
 
-        # Describe data
-        logger.info(f"### Data loaded: {self.dataset_name}")
-        logger.info(f"   {len(self.x_train)} train data with {len(self.y_train)} labels")
-        logger.info(f"   {len(self.x_val)} train data with {len(self.y_val)} labels")
-        logger.info(f"   {len(self.x_test)} train data with {len(self.y_test)} labels")
+            # Describe data
+            logger.info(f"### Data loaded: {self.dataset.name}")
+            logger.info(f"   {len(self.dataset.x_train)} train data with {len(self.dataset.y_train)} labels")
+            logger.info(f"   {len(self.dataset.x_val)} val data with {len(self.dataset.y_val)} labels")
+            logger.info(f"   {len(self.dataset.x_test)} test data with {len(self.dataset.y_test)} labels")
 
     def append_contributivity(self, contributivity):
 
@@ -250,13 +276,13 @@ class Scenario:
 
         self.partners_list = [Partner(i) for i in range(self.partners_count)]
 
-    def split_data_advanced(self):
+    def split_data_advanced(self, is_logging_enabled=True):
         """Advanced split: Populates the partners with their train and test data (not pre-processed)"""
 
-        x_train = self.x_train
-        y_train = self.y_train
-        x_test = self.x_test
-        y_test = self.y_test
+        x_train = self.dataset.x_train
+        y_train = self.dataset.y_train
+        x_test = self.dataset.x_test
+        y_test = self.dataset.y_test
         partners_list = self.partners_list
         amounts_per_partner = self.amounts_per_partner
         advanced_split_option = self.samples_split_option
@@ -375,14 +401,14 @@ class Scenario:
 
         return 0
 
-    def split_data(self):
+    def split_data(self, is_logging_enabled=True):
         """Populates the partners with their train and test data (not pre-processed)"""
 
         # Fetch parameters of scenario
-        x_train = self.x_train
-        y_train = self.y_train
-        x_test = self.x_test
-        y_test = self.y_test
+        x_train = self.dataset.x_train
+        y_train = self.dataset.y_train
+        x_test = self.dataset.x_test
+        y_test = self.dataset.y_test
 
         # Configure the desired splitting scenario - Datasets sizes
         # Should the partners receive an equivalent amount of samples each...
@@ -519,23 +545,25 @@ class Scenario:
                 p.batch_size = np.clip(batch_size, BATCH_SIZE_MIN, BATCH_SIZE_MAX)
 
         for p in self.partners_list:
-            logger.info(f"   compute_batch_sizes(), partner #{p.id}: {p.batch_size}")
+            logger.debug(f"   Compute batch sizes, partner #{p.id}: {p.batch_size}")
 
     def preprocess_scenarios_data(self):
         """Return scenario with central datasets (val, test) and distributed datasets (partners) pre-processed"""
 
-        logger.info("## Pre-processing datasets of the scenario for keras CNN:")
+        logger.debug("## Pre-processing datasets of the scenario for keras CNN:")
 
-        # First, datasets of each partner
+        # First, the scenario central dataset of the scenario
+        self.dataset.y_val = self.dataset.preprocess_dataset_labels(self.dataset.y_val)
+        logger.debug("   Central early stopping validation set: done.")
+        self.dataset.y_test = self.dataset.preprocess_dataset_labels(self.dataset.y_test)
+        logger.debug("   Central testset: done.")
+
+        # Then, datasets of each partner
         for partner_index, partner in enumerate(self.partners_list):
 
-            # Preprocess inputs (x) data
-            partner.x_train = utils.preprocess_input(partner.x_train)
-            partner.x_test = utils.preprocess_input(partner.x_test)
-
             # Preprocess labels (y) data
-            partner.y_train = keras.utils.to_categorical(partner.y_train, constants.NUM_CLASSES)
-            partner.y_test = keras.utils.to_categorical(partner.y_test, constants.NUM_CLASSES)
+            partner.y_train = self.dataset.preprocess_dataset_labels(partner.y_train)
+            partner.y_test = self.dataset.preprocess_dataset_labels(partner.y_test)
 
             # Create validation dataset
             partner.x_train, partner.x_val, partner.y_train, partner.y_val = train_test_split(
@@ -543,25 +571,17 @@ class Scenario:
             )
 
             if self.corrupted_datasets[partner_index] == "corrupted":
-                logger.info(f"   ... Corrupting data (offsetting labels) of partner #{partner.id}")
+                logger.debug(f"   ... Corrupting data (offsetting labels) of partner #{partner.id}")
                 partner.corrupt_labels()
             elif self.corrupted_datasets[partner_index] == "shuffled":
-                logger.info(f"   ... Corrupting data (shuffling labels) of partner #{partner.id}")
+                logger.debug(f"   ... Corrupting data (shuffling labels) of partner #{partner.id}")
                 partner.shuffle_labels()
             elif self.corrupted_datasets[partner_index] == "not_corrupted":
                 pass
             else:
-                logger.info("Unexpected label of corruption, not corruption performed!")
+                logger.debug("Unexpected label of corruption, not corruption performed!")
 
-            logger.info(f"   Partner #{partner.id}: done.")
-
-        # Then the scenario central dataset of the scenario
-        self.x_val = utils.preprocess_input(self.x_val)
-        self.y_val = keras.utils.to_categorical(self.y_val, constants.NUM_CLASSES)
-        logger.info("   Central early stopping validation set: done.")
-        self.x_test = utils.preprocess_input(self.x_test)
-        self.y_test = keras.utils.to_categorical(self.y_test, constants.NUM_CLASSES)
-        logger.info("   Central testset: done.")
+            logger.debug(f"   Partner #{partner.id}: done.")
 
     def to_dataframe(self):
 
@@ -571,9 +591,9 @@ class Scenario:
         # Scenario definition parameters
         dict_results["scenario_name"] = self.scenario_name
         dict_results["short_scenario_name"] = self.short_scenario_name
-        dict_results["dataset_name"] = self.dataset_name
-        dict_results["train_data_samples_count"] = len(self.x_train)
-        dict_results["test_data_samples_count"] = len(self.x_test)
+        dict_results["dataset_name"] = self.dataset.name
+        dict_results["train_data_samples_count"] = len(self.dataset.x_train)
+        dict_results["test_data_samples_count"] = len(self.dataset.x_test)
         dict_results["partners_count"] = self.partners_count
         dict_results["amounts_per_partner"] = self.amounts_per_partner
         dict_results["samples_split_option"] = self.samples_split_option
