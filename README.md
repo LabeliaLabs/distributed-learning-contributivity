@@ -35,8 +35,7 @@ For a start we made the following choices:
 - What we want to compare (with the Shapley values being the baseline, see section below):
   - Contributivity relative values
   - Computation time
-- Public dataset for experiments: MNIST
-- ML algorithm: CNN adapted to MNIST, not too deep so it can run on CPU
+- Public datasets for experiments currently supported: MNIST, CIFAR10
 
 ### Structure of the library
 
@@ -66,10 +65,13 @@ Finally, with given scenarios and multi-partner learning approaches, we can addr
     experiment_name: my_custom_experiment
     n_repeats: 5
     scenario_params_list:
-     - partners_count: 
+     - dataset_name:
+         - 'mnist'
+         - 'cifar10'
+       partners_count: 
          - 3
        amounts_per_partner: 
-         - [0.4, 0.3, 0.3] 
+         - [0.4, 0.3, 0.3]
        samples_split_option: 
          - [[7, 'shared'], [6, 'shared'], [2, 'specific']]
        multi_partner_learning_approach:
@@ -85,7 +87,9 @@ Finally, with given scenarios and multi-partner learning approaches, we can addr
          - 20
        gradient_updates_per_pass_count:
          - 8
-     - partners_count: 
+     - dataset_name:
+         - 'mnist'
+       partners_count: 
          - 2
        amounts_per_partner: 
          - [0.5, 0.5]
@@ -100,18 +104,18 @@ Finally, with given scenarios and multi-partner learning approaches, we can addr
        epoch_count: 
          - 38
        methods:
-         - ["Shapley values", "Independent scores", "TMCS"]
+         - ["Shapley values", "SMCS", "IS_lin_S", "IS_reg_S"]
        minibatch_count: 
          - 20
        gradient_updates_per_pass_count:
          - 8
     ```
 
-   Under `scenario_params_list`, enter a list of sets of scenario(s). Each set starts with ` - partners_count:` and must have only one `partners_count` value. The length of `amount_per_partners`, `corrupted_datasets` (and `samples_split_option` when the advanced definition is used) must match the `partner_counts` value. If for a given parameter multiple values are specified, e.g. like for `agregation_weighting` in the first scenario set of the above example, all possible combinations of parameters will be assembled as separate scenarios and run.
+   Under `scenario_params_list`, enter a list of sets of scenario(s). Each set starts with ` - dataset_name:` and must have only one `partners_count` value. The length of `amount_per_partners`, `corrupted_datasets` (and `samples_split_option` when the advanced definition is used) must match the `partner_counts` value. If for a given parameter multiple values are specified, e.g. like for `agregation_weighting` in the first scenario set of the above example, all possible combinations of parameters will be assembled as separate scenarios and run.
    
 3. Then execute `main.py -f config.yml`
 
-4. A `results.csv` file will be generated in a new folder for your experiment under `/experiments/<your_experiment>`. You can read this raw `results.csv` file or use the `analyse_results.ipynb` generated notebook to quickly generate figures.
+4. A `results.csv` file will be generated in a new folder for your experiment under `/experiments/<your_experiment>`. You can read this raw `results.csv` file or use the notebooks in `/notebooks`.
 
 ### Config file parameters
 
@@ -128,6 +132,11 @@ How many times the same experiment is run.
 Example: `n_repeats: 2`
 
 #### Scenario-level parameters
+
+##### Choice of dataset
+
+`dataset_name`: `'mnist'` (default) or `'cifar10'`  
+MNIST and CIFAR10 are currently supported. They come with their associated modules in `/datasets` for loading data, pre-processing inputs, and define a model architecture.
 
 ##### Definition of collaborative scenarios
 
@@ -249,7 +258,7 @@ Example: `is_quick_demo: True`
 
 - [**Shapley values**](https://arxiv.org/pdf/1902.10275.pdf):  
 
-  These indicators seem to be very good candidates to measure the contributivity of each data providers, because they are usually used in game theory to fairly attributes the gain of a coalition game amongst its players, which is exactly want we are looking for here.
+  These indicators seem to be very good candidates to measure the contributivity of each data providers, because they are usually used in game theory to fairly attributes the gain of a coalition game amongst its players, which is exactly what we are looking for here.
   
   A coalition game is a game where players form coalitions and each coalitions gets a score according to some rules. The winners are the players who manage to be in the coalition with the best score. Here we can consider each data provider is a player, and that forming a coalition is building a federated model using the dataset of each player within the coalition. The score of a coalition is then the performance on a test set of the federated model built by the coalition.
 

@@ -6,9 +6,7 @@ A script for:
     - measuring the respective contributions of each partner to the model performance (termed "contributivity")
 """
 
-from timeit import default_timer as timer
 import matplotlib.pyplot as plt
-import numpy as np
 from loguru import logger
 import tensorflow as tf
 
@@ -74,10 +72,12 @@ def main():
                 logger.info("Current params:")
                 logger.info(scenario_params)
 
-                current_scenario = scenario.Scenario(scenario_params, 
-                                                     experiment_path,
-                                                     scenario_id=scenario_id+1,
-                                                     n_repeat=i+1)
+                current_scenario = scenario.Scenario(
+                    scenario_params,
+                    experiment_path,
+                    scenario_id=scenario_id+1,
+                    n_repeat=i+1
+                )
 
                 run_scenario(current_scenario)
 

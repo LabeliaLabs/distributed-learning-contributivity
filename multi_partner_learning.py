@@ -14,7 +14,6 @@ import matplotlib.pyplot as plt
 import operator
 from loguru import logger
 
-import utils
 import constants
 
 
@@ -24,10 +23,7 @@ class MultiPartnerLearning:
                  partners_list,
                  epoch_count,
                  minibatch_count,
-                 x_val_global,
-                 y_val_global,
-                 x_test_global,
-                 y_test_global,
+                 dataset,
                  multi_partner_learning_approach,
                  aggregation_weighting="uniform",
                  single_partner_test_mode="global",
@@ -40,9 +36,10 @@ class MultiPartnerLearning:
         self.partners_list = partners_list
         self.partners_count = len(partners_list)
 
-        # Attributes related to data
-        self.val_data = (x_val_global, y_val_global)
-        self.test_data = (x_test_global, y_test_global)
+        # Attributes related to the data and the model
+        self.val_data = (dataset.x_val, dataset.y_val)
+        self.test_data = (dataset.x_test, dataset.y_test)
+        self.generate_new_model = dataset.generate_new_model
 
         # Attributes related to the multi-partner learning approach
         self.learning_approach = multi_partner_learning_approach
@@ -80,7 +77,7 @@ class MultiPartnerLearning:
         logger.info(f"## Training and evaluating model on partner with id #{partner.id}")
 
         # Initialize model
-        model = utils.generate_new_cnn_model()
+        model = self.generate_new_model()
 
         # Set if early stopping if needed
         cb = []
@@ -147,7 +144,7 @@ class MultiPartnerLearning:
         # Initialize variables
         model_to_evaluate, sequentially_trained_model = None, None
         if self.learning_approach in ['seq-pure', 'seq-with-final-agg']:
-            sequentially_trained_model = utils.generate_new_cnn_model()
+            sequentially_trained_model = self.generate_new_model()
 
         # Train model (iterate for each epoch and mini-batch)
         for epoch_index in range(epoch_count):
@@ -222,7 +219,6 @@ class MultiPartnerLearning:
         logger.info("Training and evaluation on multiple partners: done.")
         end = timer()
         self.learning_computation_time = end - start
-
 
     def save_data(self):
         """Save figures, losses and metrics to disk"""
@@ -368,7 +364,7 @@ class MultiPartnerLearning:
         # Starting model for each partner is the aggregated model from the previous collaborative round
         if is_very_first_minibatch:  # Except for the very first mini-batch where it is a new model
             logger.debug(f"(seqavg) Very first minibatch, init a new model for the round")
-            model_for_round = utils.generate_new_cnn_model()
+            model_for_round = self.generate_new_model()
         else:
             logger.debug(f"(seqavg) Minibatch n°{minibatch_index} of epoch n°{epoch_index}, "
                          f"init model by aggregating models from previous round")
@@ -447,11 +443,10 @@ class MultiPartnerLearning:
 
         return new_weights
 
-    @staticmethod
-    def build_model_from_weights(new_weights):
+    def build_model_from_weights(self, new_weights):
         """Generate a new model initialized with weights passed as arguments"""
 
-        new_model = utils.generate_new_cnn_model()
+        new_model = self.generate_new_model()
         new_model.set_weights(new_weights)
         new_model.compile(
             loss=keras.losses.categorical_crossentropy,
@@ -464,9 +459,18 @@ class MultiPartnerLearning:
     def init_with_new_models(self):
         """Return a list of newly generated models, one per partner"""
 
-        partners_model_list = [None] * self.partners_count
-        for partner_index, partner in enumerate(self.partners_list):
-            partners_model_list[partner_index] = utils.generate_new_cnn_model()
+        # Init a list to receive a new model for each partner
+        partners_model_list = []
+
+        # Generate a new model and add it to the list
+        new_model = self.generate_new_model()
+        partners_model_list.append(new_model)
+
+        # For each remaining partner, duplicate the new model and add it to the list
+        new_model_weights = new_model.get_weights()
+        for i in range(len(self.partners_list)-1):
+            partners_model_list.append(self.build_model_from_weights(new_model_weights))
+
         return partners_model_list
 
     def init_with_agg_model(self):
@@ -479,9 +483,9 @@ class MultiPartnerLearning:
         """Return a list with the aggregated model duplicated for each partner"""
 
         self.prepare_aggregation_weights()
-        partners_model_list = [None] * self.partners_count
-        for partner_index, partner in enumerate(self.partners_list):
-            partners_model_list[partner_index] = self.build_model_from_weights(self.aggregate_model_weights())
+        partners_model_list = []
+        for partner in self.partners_list:
+            partners_model_list.append(self.build_model_from_weights(self.aggregate_model_weights()))
         return partners_model_list
 
     @staticmethod
@@ -505,7 +509,7 @@ class MultiPartnerLearning:
 
         epoch_nb_str = f"Epoch {str(self.epoch_index).zfill(2)}/{str(self.epoch_count - 1).zfill(2)}"
         mb_nb_str = f"Minibatch {str(self.minibatch_index).zfill(2)}/{str(self.minibatch_count - 1).zfill(2)}"
-        partner_id_str = f"Partner id #{partner.id} ({partner_index}/{self.partners_count})"
+        partner_id_str = f"Partner id #{partner.id} ({partner_index}/{self.partners_count - 1})"
         val_acc_str = f"{round(validation_score, 2)}"
 
         logger.debug(f"{epoch_nb_str} > {mb_nb_str} > {partner_id_str} > val_acc: {val_acc_str}")
@@ -527,10 +531,7 @@ def init_multi_partner_learning_from_scenario(scenario, is_save_data=True):
         scenario.partners_list,
         scenario.epoch_count,
         scenario.minibatch_count,
-        scenario.x_val,
-        scenario.y_val,
-        scenario.x_test,
-        scenario.y_test,
+        scenario.dataset,
         scenario.multi_partner_learning_approach,
         scenario.aggregation_weighting,
         scenario.single_partner_test_mode,
