@@ -210,9 +210,9 @@ class Scenario:
             self.dataset.y_val = self.dataset.y_val[index_val]
             self.dataset.x_test = self.dataset.x_test[index_test]
             self.dataset.y_test = self.dataset.y_test[index_test]
-            self.epoch_count = 3
-            self.minibatch_count = 2
-            self.epoch_count_for_meta_model = 5
+            self.epoch_count = 10
+            self.minibatch_count = 5
+            self.epoch_count_for_meta_model = 100
 
         # -------
         # Outputs

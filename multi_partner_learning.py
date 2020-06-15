@@ -26,10 +26,7 @@ class MultiPartnerLearning:
         partners_list,
         epoch_count,
         minibatch_count,
-        x_val_global,
-        y_val_global,
-        x_test_global,
-        y_test_global,
+        dataset,
         multi_partner_learning_approach,
         epoch_count_for_meta_model=0,
         aggregation_weighting="uniform",
@@ -38,7 +35,7 @@ class MultiPartnerLearning:
         is_save_data=False,
         save_folder="",
     ):
-
+ 
         # Attributes related to partners
         self.partners_list = partners_list
         self.partners_count = len(partners_list)
@@ -47,7 +44,8 @@ class MultiPartnerLearning:
         self.val_data = (dataset.x_val, dataset.y_val)
         self.test_data = (dataset.x_test, dataset.y_test)
         self.generate_new_model = dataset.generate_new_model
-
+        self.num_classes = dataset.num_classes
+        
         # Attributes related to the multi-partner learning approach
         self.learning_approach = multi_partner_learning_approach
         self.aggregation_weighting = aggregation_weighting
@@ -144,7 +142,7 @@ class MultiPartnerLearning:
         ensemble_outputs = [model.output for model in list_of_models]
         merge = concatenate(ensemble_outputs)
         hidden = Dense(meta_model_hidden_dim, activation="relu")(merge)
-        output = Dense(constants.NUM_CLASSES, activation="softmax")(hidden)
+        output = Dense(self.num_classes , activation="softmax")(hidden)
         meta_model = Model(inputs=ensemble_visible, outputs=output)
         
         # Compile the meta-model
@@ -167,7 +165,7 @@ class MultiPartnerLearning:
         x_val, y_val = self.val_data
         x_test, y_test = self.test_data
         meta_model = self.make_stacked_meta_model(
-            meta_model_hidden_dim=constants.NUM_CLASSES
+            meta_model_hidden_dim=self.num_classes 
         )
         logger.info("## Meta-model compiled.")
         

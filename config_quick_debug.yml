@@ -11,11 +11,11 @@ scenario_params_list:
    samples_split_option: 
     - 'random'
    multi_partner_learning_approach:
-    - 'fedavg'
+    - 'stacking'
    aggregation_weighting:
     - 'uniform'
    methods:
-    - ["Shapley values", "Independent scores"]
+    - ["TMCS", "Independent scores"]
    gradient_updates_per_pass_count:
     - 5
    is_quick_demo:
