@@ -86,7 +86,7 @@ class MultiPartnerLearning:
         # first check if the model was not already trained
         if partner.model == None: 
             # Initialize model
-            model = utils.generate_new_cnn_model()
+            model = self.generate_new_model()
 
             # Set if early stopping if needed
             cb = []
@@ -258,7 +258,7 @@ class MultiPartnerLearning:
         # Initialize variables
         model_to_evaluate, sequentially_trained_model = None, None
         if self.learning_approach in ["seq-pure", "seq-with-final-agg"]:
-            sequentially_trained_model = utils.generate_new_cnn_model()
+            sequentially_trained_model = self.generate_new_model()
 
         # Train model (iterate for each epoch and mini-batch)
         for epoch_index in range(epoch_count):
@@ -536,7 +536,7 @@ class MultiPartnerLearning:
             logger.debug(
                 "(seqavg) Very first minibatch, init a new model for the round"
             )
-            model_for_round = utils.generate_new_cnn_model()
+            model_for_round = self.generate_new_model()
         else:
             logger.debug(
                 f"(seqavg) Minibatch n°{minibatch_index} of epoch n°{epoch_index}, "
@@ -643,7 +643,7 @@ class MultiPartnerLearning:
     def build_model_from_weights(new_weights):
         """Generate a new model initialized with weights passed as arguments"""
 
-        new_model = utils.generate_new_cnn_model()
+        new_model = self.generate_new_model()
         new_model.set_weights(new_weights)
         new_model.compile(
             loss=keras.losses.categorical_crossentropy,
@@ -658,7 +658,7 @@ class MultiPartnerLearning:
 
         partners_model_list = [None] * self.partners_count
         for partner_index, partner in enumerate(self.partners_list):
-            partners_model_list[partner_index] = utils.generate_new_cnn_model()
+            partners_model_list[partner_index] = self.generate_new_model()
         return partners_model_list
 
     def init_with_agg_model(self):
