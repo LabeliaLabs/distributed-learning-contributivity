@@ -1,4 +1,4 @@
-experiment_name: my_example
+experiment_name: stacking_general_check
 n_repeats: 5
 scenario_params_list:
  - dataset_name:
