@@ -51,21 +51,36 @@ def get_scenario_params_list(config):
     """
 
     scenario_params_list = []
+    # Separate scenarios from different dataset
+    config_dataset = []
 
     for list_scenario in config:
+        
         if isinstance(list_scenario['dataset_name'], dict):
             for dataset_name in list_scenario['dataset_name'].keys():
-                
+                # Add path to init model from an existing model
                 dataset_scenario = list_scenario.copy()
                 dataset_scenario['dataset_name'] = [dataset_name]
                 dataset_scenario['init_model_from'] = list_scenario['dataset_name'][dataset_name]
+                
+                config_dataset.append(dataset_scenario)
+            else:
+                config_dataset.append(list_scenario)
+    
+    for list_scenario in config_dataset:
+        params_name = list_scenario.keys()
+        params_list = list(list_scenario.values())
         
+<<<<<<< HEAD
                 params_name = dataset_scenario.keys()
                 params_list = list(dataset_scenario.values())
         else:
             params_name = list_scenario.keys()
             params_list = list(list_scenario.values())
 
+=======
+        #Òprint(list_scenario)
+>>>>>>> Change way to build scenarios
         for el in product(*params_list):
             scenario = dict(zip(params_name, el))
         
@@ -79,8 +94,16 @@ def get_scenario_params_list(config):
             if 'corrupted_datasets' in params_name:
                 if scenario['partners_count'] != len(scenario['corrupted_datasets']):
                     raise Exception("Length of corrupted_datasets does not match number of partners.")
+            
+            # keep only init model from if it is a path. 
+            try:
+                if scenario['init_model_from'] == None:
+                    del scenario['init_model_from']
+            except KeyError:
+                pass
         
             scenario_params_list.append(scenario)
+            
 
     logger.info(f"Number of scenario(s) configured: {len(scenario_params_list)}")
     return scenario_params_list
