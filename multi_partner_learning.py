@@ -159,7 +159,7 @@ class MultiPartnerLearning:
             return self.compute_test_score_for_single_partner(self.partners_list[0])
 
         logger.info(
-            f"## Training and evaluating stacked modelon partners with ids: {['#' + str(p.id) for p in self.partners_list]}"
+            f"## Training and evaluating stacked model on partners with ids: {['#' + str(p.id) for p in self.partners_list]}"
         )
         start = timer()
         x_val, y_val = self.val_data
@@ -170,19 +170,19 @@ class MultiPartnerLearning:
         logger.info("## Meta-model compiled.")
         
         # prepare input data
-        X = [x_val for _ in range(len(meta_model.input))]
+        x_val_extended = [x_val for _ in range(len(meta_model.input))]
         
         # fit model
         logger.info("## Fitting the meta-model...")
-        meta_model.fit(X, y_val, epochs=self.epoch_count_for_meta_model, verbose=0)
+        meta_model.fit(x_val_extended, y_val, epochs=self.epoch_count_for_meta_model, verbose=0)
 
         # prepare test data
-        X_test = [x_test for _ in range(len(meta_model.input))]
+        x_test_extended  = [x_test for _ in range(len(meta_model.input))]
     
         # Evaluate trained model
         logger.info("## Evaluating the meta-model...")
         model_evaluation = meta_model.evaluate(
-            X_test, y_test, batch_size=constants.DEFAULT_BATCH_SIZE, verbose=0
+            x_test_extended , y_test, batch_size=constants.DEFAULT_BATCH_SIZE, verbose=0
         )
         logger.info(
             f"   Model evaluation on test data: "
