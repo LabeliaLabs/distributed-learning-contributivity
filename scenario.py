@@ -210,9 +210,9 @@ class Scenario:
             self.dataset.y_val = self.dataset.y_val[index_val]
             self.dataset.x_test = self.dataset.x_test[index_test]
             self.dataset.y_test = self.dataset.y_test[index_test]
-            self.epoch_count = 10
-            self.minibatch_count = 5
-            self.epoch_count_for_meta_model = 100
+            self.epoch_count = 3
+            self.minibatch_count = 2
+            self.epoch_count_for_meta_model = 3
 
         # -------
         # Outputs
@@ -391,13 +391,14 @@ class Scenario:
         assert self.minibatch_count <= min([len(p.x_train) for p in self.partners_list])
 
         # Print for controlling
-        logger.info("### Splitting data among partners:")
-        logger.info("   Advanced split performed.")
-        logger.info(f"   Nb of samples split amongst partners: {self.nb_samples_used}")
-        logger.info(f"   Partners' relative nb of samples: {[round(p, 2) for p in self.final_relative_nb_samples]} "
-                    f"   (versus initially configured: {amounts_per_partner})")
-        for partner in self.partners_list:
-            logger.info(f"   Partner #{partner.id}: {len(partner.x_train)} samples with labels {partner.clusters_list}")
+        if is_logging_enabled:
+            logger.info("### Splitting data among partners:")
+            logger.info("   Advanced split performed.")
+            logger.info(f"   Nb of samples split amongst partners: {self.nb_samples_used}")
+            logger.info(f"   Partners' relative nb of samples: {[round(p, 2) for p in self.final_relative_nb_samples]} "
+                        f"   (versus initially configured: {amounts_per_partner})")
+            for partner in self.partners_list:
+                logger.info(f"   Partner #{partner.id}: {len(partner.x_train)} samples with labels {partner.clusters_list}")
 
         return 0
 
@@ -497,13 +498,14 @@ class Scenario:
         self.final_relative_nb_samples = [p.final_nb_samples / self.nb_samples_used for p in self.partners_list]
 
         # Print for controlling
-        logger.info("### Splitting data among partners:")
-        logger.info("   Simple split performed.")
-        logger.info(f"   Nb of samples split amongst partners: {self.nb_samples_used}")
-        for partner in self.partners_list:
-            logger.info(f"   Partner #{partner.id}: "
-                        f"{partner.final_nb_samples} samples "
-                        f"with labels {partner.clusters_list}")
+        if is_logging_enabled:
+            logger.info("### Splitting data among partners:")
+            logger.info("   Simple split performed.")
+            logger.info(f"   Nb of samples split amongst partners: {self.nb_samples_used}")
+            for partner in self.partners_list:
+                logger.info(f"   Partner #{partner.id}: "
+                            f"{partner.final_nb_samples} samples "
+                            f"with labels {partner.clusters_list}")
 
         return 0
 
