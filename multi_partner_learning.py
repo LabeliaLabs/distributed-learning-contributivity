@@ -29,6 +29,7 @@ class MultiPartnerLearning:
                  is_early_stopping=True,
                  is_save_data=False,
                  save_folder="",
+                 init_model_from=None,
                  ):
 
         # Attributes related to partners
@@ -39,6 +40,7 @@ class MultiPartnerLearning:
         self.val_data = (dataset.x_val, dataset.y_val)
         self.test_data = (dataset.x_test, dataset.y_test)
         self.generate_new_model = dataset.generate_new_model
+        self.init_model_from = init_model_from
 
         # Attributes related to the multi-partner learning approach
         self.learning_approach = multi_partner_learning_approach
