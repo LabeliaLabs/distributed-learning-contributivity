@@ -178,7 +178,7 @@ There are several parameters influencing how the collaborative and distributed l
 
 ![Schema epochs mini-batches gradient updates](img/epoch_minibatch_gradientupdates.png)
 
-`multi_partner_learning_approach`: `'fedavg'` (default), `'seq-pure'`, `'seq-with-final-agg'` or `'seqavg'`  
+`multi_partner_learning_approach`: `'fedavg'` (default), `'seq-pure'`, `'seq-with-final-agg'`,`'seqavg'` or `'stacking'`
 Define the multi-partner learning approach, among the following as described by the schemas:
 
 - `'fedavg'`: stands for federated averaging
@@ -192,6 +192,10 @@ Define the multi-partner learning approach, among the following as described by 
 - `'seqavg'`: stands for sequential averaging
     
     ![Schema seqavg](img/collaborative_rounds_seqavg.png)
+    
+ - `'stacking'`: stands for model stacking
+    
+    ![Schema stacking](img/model_stacking.png)
     
 Example: `multi_partner_learning_approach: 'seqavg'`
 
