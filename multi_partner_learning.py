@@ -208,10 +208,23 @@ class MultiPartnerLearning:
         # Plot training history # TODO: move the data saving and plotting in dedicated functions
         if self.is_save_data:
             self.save_data()
+        
+        self.save_final_model_weights(model_to_evaluate)
 
         logger.info("Training and evaluation on multiple partners: done.")
         end = timer()
         self.learning_computation_time = end - start
+        
+    def save_final_model_weights(self, model_to_save):
+        """Save final model weights"""
+        #TODO: Have the last metrics in the model filename? 
+        
+        model_folder = os.path.join(self.save_folder, 'model')
+
+        if not os.path.isdir(model_folder):
+            os.makedirs(model_folder)
+            
+        model_to_save.save_weights(os.path.join(model_folder, 'final_weights.h5'))
 
     def save_data(self):
         """Save figures, losses and metrics to disk"""
