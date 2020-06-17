@@ -179,6 +179,12 @@ class Scenario:
         else:
             self.is_early_stopping = True  # default
 
+        # Model from previous coalition used to initialise model
+        try:
+            self.init_model_from = params["init_model_from"]
+        except:
+            self.init_model_from= ""
+
         # -----------------------------------------------------------------
         #  Configuration of contributivity measurement methods to be tested
         # -----------------------------------------------------------------
