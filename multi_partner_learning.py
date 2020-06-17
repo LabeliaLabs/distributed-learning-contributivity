@@ -144,7 +144,7 @@ class MultiPartnerLearning:
         model_to_evaluate, sequentially_trained_model = None, None
         if self.learning_approach in ['seq-pure', 'seq-with-final-agg']:
             if os.path.isfile(self.init_model_from):
-                print('init model from previous coalition')
+                logger.debug("Initiate modem with previous coalition")
                 sequentially_trained_model = self.init_with_previous_learned_model()
             else:
                 sequentially_trained_model = self.generate_new_model()
