@@ -64,23 +64,13 @@ def get_scenario_params_list(config):
                 dataset_scenario['init_model_from'] = list_scenario['dataset_name'][dataset_name]
                 
                 config_dataset.append(dataset_scenario)
-            else:
-                config_dataset.append(list_scenario)
+        else:
+            config_dataset.append(list_scenario)
     
     for list_scenario in config_dataset:
         params_name = list_scenario.keys()
         params_list = list(list_scenario.values())
-        
-<<<<<<< HEAD
-                params_name = dataset_scenario.keys()
-                params_list = list(dataset_scenario.values())
-        else:
-            params_name = list_scenario.keys()
-            params_list = list(list_scenario.values())
 
-=======
-        #Òprint(list_scenario)
->>>>>>> Change way to build scenarios
         for el in product(*params_list):
             scenario = dict(zip(params_name, el))
         
