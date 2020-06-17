@@ -234,8 +234,15 @@ class MultiPartnerLearning:
         if not os.path.isdir(model_folder):
             os.makedirs(model_folder)
             
-        model_to_save.save_weights(os.path.join(model_folder, 
-                                                self.dataset_name+'_final_weights.h5'))
+        model_weights = []
+        for layer in model_to_save.layers:
+            layer_weights = []
+            for weight in layer.get_weights():
+                layer_weights.append(weight)
+            model_weights.append(layer_weights)
+            
+        np.save(os.path.join(model_folder, self.dataset_name+'_final_weights.npy'), 
+                model_weights)
 
     def save_data(self):
         """Save figures, losses and metrics to disk"""
@@ -286,7 +293,8 @@ class MultiPartnerLearning:
         epoch_index, minibatch_index = self.epoch_index, self.minibatch_index
         is_very_first_minibatch = (epoch_index == 0 and minibatch_index == 0)
         x_val, y_val = self.val_data
-        
+
+#TODO: To remove!!!        
         logger.debug(self.init_model_from)
         logger.debug(os.path.isfile(self.init_model_from))
         
@@ -294,7 +302,6 @@ class MultiPartnerLearning:
         # Starting model for each partner is the aggregated model from the previous mini-batch iteration
         if is_very_first_minibatch:  # Except for the very first mini-batch where it is a new model
             if os.path.isfile(self.init_model_from):
-                print('je suis ici')
                 partners_model_list_for_iteration = self.init_with_previous_learned_model()
                 logger.debug(f"(fedavg) Very first minibatch of epoch n°{epoch_index}, init models with previous coalition model for each partner")
             else:
