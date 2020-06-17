@@ -29,7 +29,7 @@ class MultiPartnerLearning:
                  is_early_stopping=True,
                  is_save_data=False,
                  save_folder="",
-                 init_model_from=None,
+                 init_model_from="",
                  ):
 
         # Attributes related to partners
@@ -39,6 +39,7 @@ class MultiPartnerLearning:
         # Attributes related to the data and the model
         self.val_data = (dataset.x_val, dataset.y_val)
         self.test_data = (dataset.x_test, dataset.y_test)
+        self.dataset_name = dataset.name
         self.generate_new_model = dataset.generate_new_model
         self.init_model_from = init_model_from
 
@@ -77,7 +78,10 @@ class MultiPartnerLearning:
         logger.info(f"## Training and evaluating model on partner with id #{partner.id}")
 
         # Initialize model
-        model = self.generate_new_model()
+        if os.path.isfile(self.init_model_from):
+            model = self.init_with_previous_learned_model()
+        else:
+            model = self.generate_new_model()
 
         # Set if early stopping if needed
         cb = []
@@ -139,7 +143,11 @@ class MultiPartnerLearning:
         # Initialize variables
         model_to_evaluate, sequentially_trained_model = None, None
         if self.learning_approach in ['seq-pure', 'seq-with-final-agg']:
-            sequentially_trained_model = self.generate_new_model()
+            if os.path.isfile(self.init_model_from):
+                print('init model from previous coalition')
+                sequentially_trained_model = self.init_with_previous_learned_model()
+            else:
+                sequentially_trained_model = self.generate_new_model()
 
         # Train model (iterate for each epoch and mini-batch)
         for epoch_index in range(epoch_count):
@@ -226,7 +234,8 @@ class MultiPartnerLearning:
         if not os.path.isdir(model_folder):
             os.makedirs(model_folder)
             
-        model_to_save.save_weights(os.path.join(model_folder, 'final_weights.h5'))
+        model_to_save.save_weights(os.path.join(model_folder, 
+                                                self.dataset_name+'_final_weights.h5'))
 
     def save_data(self):
         """Save figures, losses and metrics to disk"""
@@ -277,11 +286,20 @@ class MultiPartnerLearning:
         epoch_index, minibatch_index = self.epoch_index, self.minibatch_index
         is_very_first_minibatch = (epoch_index == 0 and minibatch_index == 0)
         x_val, y_val = self.val_data
+        
+        logger.debug(self.init_model_from)
+        logger.debug(os.path.isfile(self.init_model_from))
+        
 
         # Starting model for each partner is the aggregated model from the previous mini-batch iteration
         if is_very_first_minibatch:  # Except for the very first mini-batch where it is a new model
-            logger.debug(f"(fedavg) Very first minibatch of epoch n°{epoch_index}, init new models for each partner")
-            partners_model_list_for_iteration = self.init_with_new_models()
+            if os.path.isfile(self.init_model_from):
+                print('je suis ici')
+                partners_model_list_for_iteration = self.init_with_previous_learned_model()
+                logger.debug(f"(fedavg) Very first minibatch of epoch n°{epoch_index}, init models with previous coalition model for each partner")
+            else:
+                partners_model_list_for_iteration = self.init_with_new_models()
+                logger.debug(f"(fedavg) Very first minibatch of epoch n°{epoch_index}, init new models for each partner")
         else:
             logger.debug(f"(fedavg) Minibatch n°{minibatch_index} of epoch n°{epoch_index}, "
                          f"init aggregated model for each partner with models from previous round")
@@ -458,6 +476,7 @@ class MultiPartnerLearning:
         new_model.set_weights(new_weights)
         return new_model
 
+
     def init_with_new_models(self):
         """Return a list of newly generated models, one per partner"""
 
@@ -489,6 +508,38 @@ class MultiPartnerLearning:
         for partner in self.partners_list:
             partners_model_list.append(self.build_model_from_weights(self.aggregate_model_weights()))
         return partners_model_list
+    
+    
+    def init_with_previous_learned_model(self):
+        """Return a new model aggregating models from model_list"""
+        
+        previous_model = self.generate_new_model()
+        previous_model.load_weights(self.init_model_from)
+        previous_model.compile(
+            loss=keras.losses.categorical_crossentropy,
+            optimizer="adam",
+            metrics=["accuracy"],
+        )
+
+        return previous_model
+
+
+    def init_with_previous_learned_models(self):
+        """Return a list with the aggregated model duplicated for each partner"""
+
+        previous_model = self.generate_new_model()
+        previous_model.load_weights(self.init_model_from)
+        previous_model.compile(
+            loss=keras.losses.categorical_crossentropy,
+            optimizer="adam",
+            metrics=["accuracy"],
+        )
+        
+        partners_model_list = []
+        for partner in self.partners_list:
+            partners_model_list.append(previous_model)
+        return partners_model_list
+    
 
     @staticmethod
     def collaborative_round_fit(model_to_fit, train_data, val_data, batch_size):
@@ -539,6 +590,7 @@ def init_multi_partner_learning_from_scenario(scenario, is_save_data=True):
         scenario.is_early_stopping,
         is_save_data,
         scenario.save_folder,
+        scenario.init_model_from
     )
 
     return mpl
