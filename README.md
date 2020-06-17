@@ -1,4 +1,6 @@
 [![Build Status](https://travis-ci.org/SubstraFoundation/distributed-learning-contributivity.svg?branch=master)](https://travis-ci.org/SubstraFoundation/distributed-learning-contributivity)
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/SubstraFoundation/distributed-learning-contributivity/blob/collab/run_experiment_on_google_collab.ipynb)
+
 
 # Exploration of dataset contributivity to a model in collaborative ML projects
 
