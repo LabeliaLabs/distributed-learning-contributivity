@@ -302,7 +302,7 @@ class MultiPartnerLearning:
         # Starting model for each partner is the aggregated model from the previous mini-batch iteration
         if is_very_first_minibatch:  # Except for the very first mini-batch where it is a new model
             if os.path.isfile(self.init_model_from):
-                partners_model_list_for_iteration = self.init_with_previous_learned_model()
+                partners_model_list_for_iteration = self.init_with_previous_learned_models()
                 logger.debug(f"(fedavg) Very first minibatch of epoch n°{epoch_index}, init models with previous coalition model for each partner")
             else:
                 partners_model_list_for_iteration = self.init_with_new_models()
