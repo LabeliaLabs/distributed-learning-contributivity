@@ -591,7 +591,7 @@ class Scenario:
         dict_results["train_data_samples_count"] = len(self.dataset.x_train)
         dict_results["test_data_samples_count"] = len(self.dataset.x_test)
         dict_results["partners_count"] = self.partners_count
-        dict_results["amounts_per_partner"] = self.amounts_per_partner
+        dict_results["dataset_fraction_per_partner"] = self.amounts_per_partner
         dict_results["samples_split_description"] = self.samples_split_description
         dict_results["nb_samples_used"] = self.nb_samples_used
         dict_results["final_relative_nb_samples"] = self.final_relative_nb_samples
@@ -624,7 +624,7 @@ class Scenario:
 
                 # Partner-specific data
                 dict_results["partner_id"] = i
-                dict_results["amount_per_partner"] = self.amounts_per_partner[i]
+                dict_results["dataset_fraction_of_partner"] = self.amounts_per_partner[i]
                 dict_results["contributivity_score"] = contrib.contributivity_scores[i]
                 dict_results["contributivity_std"] = contrib.scores_std[i]
 
