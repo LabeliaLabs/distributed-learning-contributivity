@@ -82,9 +82,9 @@ class Scenario:
         # For configuring if data samples are split between partners randomly or in a stratified way...
         # ... so that they cover distinct areas of the samples space
         if "samples_split_option" in params:
-            self.samples_split_option = params["samples_split_option"]
+            (self.samples_split_type, self.samples_split_description) = params["samples_split_option"]
         else:
-            self.samples_split_option = "random"  # default
+            (self.samples_split_type, self.samples_split_description) = ("basic", "random")  # default
 
         # For configuring if the data of the partners are corrupted or not (useful for testing contributivity measures)
         if "corrupted_datasets" in params:
@@ -245,7 +245,7 @@ class Scenario:
             # Describe scenario
             logger.info("### Description of data scenario configured:")
             logger.info(f"   Number of partners defined: {self.partners_count}")
-            logger.info(f"   Data distribution scenario chosen: {self.samples_split_option}")
+            logger.info(f"   Data distribution scenario chosen: {self.samples_split_description}")
             logger.info(f"   Test data distribution scenario chosen: {self.single_partner_test_mode}")
             logger.info(f"   Multi-partner learning approach: {self.multi_partner_learning_approach}")
             logger.info(f"   Weighting option: {self.aggregation_weighting}")
@@ -277,12 +277,12 @@ class Scenario:
         y_test = self.dataset.y_test
         partners_list = self.partners_list
         amounts_per_partner = self.amounts_per_partner
-        advanced_split_option = self.samples_split_option
+        advanced_split_description = self.samples_split_description
 
         # Compose the lists of partners with data samples from shared clusters and those with specific clusters
         for p in partners_list:
-            p.cluster_count = int(advanced_split_option[p.id][0])
-            p.cluster_split_option = advanced_split_option[p.id][1]
+            p.cluster_count = int(advanced_split_description[p.id][0])
+            p.cluster_split_option = advanced_split_description[p.id][1]
         partners_with_shared_clusters = [p for p in partners_list if p.cluster_split_option == 'shared']
         partners_with_specific_clusters = [p for p in partners_list if p.cluster_split_option == 'specific']
         partners_with_shared_clusters.sort(key=operator.attrgetter("cluster_count"), reverse=True)
@@ -432,22 +432,22 @@ class Scenario:
         test_idx = np.arange(len(y_test))
 
         # In the 'stratified' scenario we sort MNIST by labels
-        if self.samples_split_option == "stratified":
+        if self.samples_split_description == "stratified":
             # Sort MNIST by labels
             y_sorted_idx = y_train.argsort()
             y_train = y_train[y_sorted_idx]
             x_train = x_train[y_sorted_idx]
 
         # In the 'random' scenario we shuffle randomly the indexes
-        elif self.samples_split_option == "random":
+        elif self.samples_split_description == "random":
             np.random.seed(42)
             np.random.shuffle(train_idx)
 
         # If neither 'stratified' nor 'random', we raise an exception
         else:
             raise NameError(
-                "This samples_split_option scenario ["
-                + self.samples_split_option
+                "This samples_split option ["
+                + self.samples_split_description
                 + "] is not recognized."
             )
 
@@ -588,7 +588,7 @@ class Scenario:
         dict_results["test_data_samples_count"] = len(self.dataset.x_test)
         dict_results["partners_count"] = self.partners_count
         dict_results["amounts_per_partner"] = self.amounts_per_partner
-        dict_results["samples_split_option"] = self.samples_split_option
+        dict_results["samples_split_description"] = self.samples_split_description
         dict_results["nb_samples_used"] = self.nb_samples_used
         dict_results["final_relative_nb_samples"] = self.final_relative_nb_samples
 

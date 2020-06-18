@@ -137,7 +137,7 @@ def validate_scenario_list(scenario_params_list, experiment_path):
         current_scenario = scenario.Scenario(scenario_params, experiment_path, is_dry_run=True)
         current_scenario.instantiate_scenario_partners()
 
-        if isinstance(current_scenario.samples_split_option, list):
+        if isinstance(current_scenario.samples_split_description, list):
             current_scenario.split_data_advanced(is_logging_enabled=False)
         else:
             current_scenario.split_data(is_logging_enabled=False)        
@@ -150,10 +150,10 @@ def run_scenario(current_scenario):
     current_scenario.instantiate_scenario_partners()
     # Split data according to scenario and then pre-process successively...
     # ... train data, early stopping validation data, test data
-    if isinstance(current_scenario.samples_split_option, list):
-        current_scenario.split_data_advanced()
-    else:
+    if current_scenario.samples_split_type == 'basic':
         current_scenario.split_data()
+    elif current_scenario.samples_split_type == 'advanced':
+        current_scenario.split_data_advanced()
     current_scenario.plot_data_distribution()
     current_scenario.compute_batch_sizes()
     current_scenario.preprocess_scenarios_data()
