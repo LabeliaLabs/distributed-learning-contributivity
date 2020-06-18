@@ -23,6 +23,10 @@ from partner import Partner
 class Scenario:
     def __init__(self, params, experiment_path, scenario_id=1, n_repeat=1, is_dry_run=False):
 
+        # ---------------------------------------------------------------------
+        # Initialization of the dataset defined in the config of the experiment
+        # ---------------------------------------------------------------------
+
         # Get and verify which dataset is configured
         supported_datasets_names = ["mnist", "cifar10"]
         if "dataset_name" in params:
@@ -59,15 +63,12 @@ class Scenario:
         # The train set has to be split into a train set and a validation set for early stopping
         self.dataset.train_val_split()
 
-        # List of all partners defined in the scenario
-        self.partners_list = []
-
-        # List of contributivity measures selected and computed in the scenario
-        self.contributivity_list = []
-
         # --------------------------------------
         #  Definition of collaborative scenarios
         # --------------------------------------
+
+        # List of all partners defined in the scenario
+        self.partners_list = []
 
         # partners mock different partners in a collaborative data science project
         # For defining the number of partners
@@ -160,6 +161,9 @@ class Scenario:
         # -----------------------------------------------------------------
         #  Configuration of contributivity measurement methods to be tested
         # -----------------------------------------------------------------
+
+        # List of contributivity measures selected and computed in the scenario
+        self.contributivity_list = []
 
         # Contributivity methods
         contributivity_methods_list = [

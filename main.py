@@ -56,7 +56,7 @@ def main():
         )
 
         # GPU config
-        init_GPU_config()
+        init_gpu_config()
 
         # Close open figures
         plt.close("all")
@@ -104,7 +104,7 @@ def init_logger():
     return stream, info_logger_id, info_debug_id
 
 
-def init_GPU_config():
+def init_gpu_config():
     gpus = tf.config.experimental.list_physical_devices("GPU")
     if gpus:
         logger.info(f"Found GPU: {gpus[0].name}")
@@ -124,8 +124,8 @@ def move_log_file_to_experiment_folder(logger_id, experiment_path, filename, lev
 
 
 def validate_scenario_list(scenario_params_list, experiment_path):
-    """Instanciate every scenario without running it to check if
-    every scenario is correctly specified"""
+    """Instantiate every scenario without running it to check if
+    every scenario is correctly specified. This prevents scenario initialization errors during the experiment"""
 
     logger.debug("Starting to validate scenarios")
 
@@ -147,6 +147,10 @@ def validate_scenario_list(scenario_params_list, experiment_path):
 
 def run_scenario(current_scenario):
 
+    # -----------------------
+    #  Provision the scenario
+    # -----------------------
+
     current_scenario.instantiate_scenario_partners()
     # Split data according to scenario and then pre-process successively...
     # ... train data, early stopping validation data, test data
@@ -158,12 +162,19 @@ def run_scenario(current_scenario):
     current_scenario.compute_batch_sizes()
     current_scenario.preprocess_scenarios_data()
 
-    # Train and eval on all partners according to scenario
+    # --------------------------------------------
+    # Instantiate and run a multi-partner learning
+    # --------------------------------------------
+
     current_scenario.mpl = multi_partner_learning.init_multi_partner_learning_from_scenario(
         current_scenario,
         is_save_data=True,
     )
     current_scenario.mpl.compute_test_score()
+
+    # ----------------------------------------------------------
+    # Instantiate and run the contributivity measurement methods
+    # ----------------------------------------------------------
 
     for method in current_scenario.methods:
         logger.info(f"{method}")
