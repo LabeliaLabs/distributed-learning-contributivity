@@ -73,7 +73,7 @@ Finally, with given scenarios and multi-partner learning approaches, we can addr
        amounts_per_partner: 
          - [0.4, 0.3, 0.3]
        samples_split_option: 
-         - [[7, 'shared'], [6, 'shared'], [2, 'specific']]
+         - ['advanced', [[7, 'shared'], [6, 'shared'], [2, 'specific']]]
        multi_partner_learning_approach:
          - 'fedavg'
        aggregation_weighting: 
@@ -94,8 +94,8 @@ Finally, with given scenarios and multi-partner learning approaches, we can addr
        amounts_per_partner: 
          - [0.5, 0.5]
        samples_split_option: 
-         - 'random'
-         - 'stratified'
+         - ['basic', 'random']
+         - ['basic', 'stratified']
        multi_partner_learning_approach:
          - 'fedavg'
        aggregation_weighting: 
@@ -148,18 +148,19 @@ Example: `partners_count: 4`
 Fractions of the original dataset each partner receives to mock a collaborative ML scenario where each partner provides data for the ML training.  
 Example: `amounts_per_partner: [0.3, 0.3, 0.1, 0.3]`
 
-`samples_split_option`: `'random'` (default), `'stratified'` or `[[nb of clusters (int), 'shared' or 'specific']]`   
+`samples_split_option`: `['basic', 'random']` (default), `['basic', 'stratified']` or `['advanced', [[nb of clusters (int), 'shared' or 'specific']]]`   
 How the original dataset data samples are split among partners:
 
-- `'random'`: the dataset is shuffled and partners receive data samples selected randomly
-- `'stratified'`: the dataset is stratified per class and each partner receives certain classes only (note: depending on the `amounts_per_partner` specified, there might be small overlaps of classes)
-- `[[nb of clusters (int), 'shared' or 'specific']]`: in certain cases it might be interesting to split the dataset among partners in a more elaborate way. For that we consider the data samples from the initial dataset as split in clusters per data labels. The advanced split is configured by indicating, for each partner in sequence, the following 2 elements:
+- `'basic'` approaches:
+  - `'random'`: the dataset is shuffled and partners receive data samples selected randomly
+  - `'stratified'`: the dataset is stratified per class and each partner receives certain classes only (note: depending on the `amounts_per_partner` specified, there might be small overlaps of classes)
+- `'advanced'` approach `[[nb of clusters (int), 'shared' or 'specific']]`: in certain cases it might be interesting to split the dataset among partners in a more elaborate way. For that we consider the data samples from the initial dataset as split in clusters per data labels. The advanced split is configured by indicating, for each partner in sequence, the following 2 elements:
   - `nb of clusters (int)`: the given partner will receive data samples from that many different clusters (clusters of data samples per labels/classes) 
   - `'shared'` or `'specific'`:
     - `'shared'`: all partners with option `'shared'` receive data samples picked from clusters they all share data samples from
     - `'specific'`: each partner with option `'specific'` receives data samples picked from cluster(s) it is the only one to receive from
 
-Example: `[[7, 'shared'], [6, 'shared'], [2, 'specific'], [1, 'specific']]`
+Example: `['advanced', [[7, 'shared'], [6, 'shared'], [2, 'specific'], [1, 'specific']]]`
 
 ![Example of the advanced split option](img/advanced_split_example.png)
 
@@ -218,13 +219,9 @@ Example: `gradient_updates_per_pass_count: 5`
 
 `is_early_stopping`: `True` (default) or `False`  
 When set to `True`, the training phases (whether multi-partner of single-partner) are stopped when the performance on the validation set reaches a plateau.  
-Example: `is_early_stopping: False`
- 
-`single_partner_test_mode`: `'global'` (default) or `'local'`  
-When training a model on a single partner (this is needed in certain contributivity measurement approaches), defines if the final performance is tested on the central testset or on the partner's local testset. Note: a train-test split is performed on the original dataset, forming a central testset; this testset is also split over each partner (randomly) forming local testsets. This is currently not very useful, but might be interesting with future improvements of this library.  
-Example: `single_partner_test_mode: 'global'`  
+Example: `is_early_stopping: False` 
 
-**Note:** to only launch the distributed learning on the scenarios (and no contributivity measurement methods), omit the `methods` parameter (see section [Configuration of contributivity measurement methods to be tested](#configuration-of-contributivity-measurement-methods-to-be-tested) below).
+**Note:** to only launch the distributed learning on the scenarios (and no contributivity measurement methods), simply omit the `methods` parameter (see section [Configuration of contributivity measurement methods to be tested](#configuration-of-contributivity-measurement-methods-to-be-tested) below).
 
 ##### Configuration of contributivity measurement methods to be tested
 
