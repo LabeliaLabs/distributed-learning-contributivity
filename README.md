@@ -219,13 +219,9 @@ Example: `gradient_updates_per_pass_count: 5`
 
 `is_early_stopping`: `True` (default) or `False`  
 When set to `True`, the training phases (whether multi-partner of single-partner) are stopped when the performance on the validation set reaches a plateau.  
-Example: `is_early_stopping: False`
- 
-`single_partner_test_mode`: `'global'` (default) or `'local'`  
-When training a model on a single partner (this is needed in certain contributivity measurement approaches), defines if the final performance is tested on the central testset or on the partner's local testset. Note: a train-test split is performed on the original dataset, forming a central testset; this testset is also split over each partner (randomly) forming local testsets. This is currently not very useful, but might be interesting with future improvements of this library.  
-Example: `single_partner_test_mode: 'global'`  
+Example: `is_early_stopping: False` 
 
-**Note:** to only launch the distributed learning on the scenarios (and no contributivity measurement methods), omit the `methods` parameter (see section [Configuration of contributivity measurement methods to be tested](#configuration-of-contributivity-measurement-methods-to-be-tested) below).
+**Note:** to only launch the distributed learning on the scenarios (and no contributivity measurement methods), simply omit the `methods` parameter (see section [Configuration of contributivity measurement methods to be tested](#configuration-of-contributivity-measurement-methods-to-be-tested) below).
 
 ##### Configuration of contributivity measurement methods to be tested
 

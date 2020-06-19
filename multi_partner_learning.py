@@ -26,7 +26,6 @@ class MultiPartnerLearning:
                  dataset,
                  multi_partner_learning_approach,
                  aggregation_weighting="uniform",
-                 single_partner_test_mode="global",
                  is_early_stopping=True,
                  is_save_data=False,
                  save_folder="",
@@ -44,7 +43,6 @@ class MultiPartnerLearning:
         # Attributes related to the multi-partner learning approach
         self.learning_approach = multi_partner_learning_approach
         self.aggregation_weighting = aggregation_weighting
-        self.single_partner_test_mode = single_partner_test_mode
 
         # Attributes related to iterating at different levels
         self.epoch_count = epoch_count
@@ -97,13 +95,8 @@ class MultiPartnerLearning:
             callbacks=cb,
         )
 
-        # Reference a testset according to the scenario configuration
-        if self.single_partner_test_mode == "global":
-            x_test, y_test = self.test_data
-        elif self.single_partner_test_mode == "local":
-            x_test, y_test = partner.x_test, partner.y_test
-        else:
-            raise NameError("single_partner_test_mode value '" + self.single_partner_test_mode + "' is not recognized.")
+        # Reference the testset according to the scenario configuration
+        x_test, y_test = self.test_data
 
         # Evaluate trained model
         model_evaluation = model.evaluate(x_test, y_test, batch_size=constants.DEFAULT_BATCH_SIZE, verbose=0)
@@ -534,7 +527,6 @@ def init_multi_partner_learning_from_scenario(scenario, is_save_data=True):
         scenario.dataset,
         scenario.multi_partner_learning_approach,
         scenario.aggregation_weighting,
-        scenario.single_partner_test_mode,
         scenario.is_early_stopping,
         is_save_data,
         scenario.save_folder,
