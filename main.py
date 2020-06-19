@@ -137,10 +137,10 @@ def validate_scenario_list(scenario_params_list, experiment_path):
         current_scenario = scenario.Scenario(scenario_params, experiment_path, is_dry_run=True)
         current_scenario.instantiate_scenario_partners()
 
-        if isinstance(current_scenario.samples_split_description, list):
+        if current_scenario.samples_split_type == 'basic':
+            current_scenario.split_data(is_logging_enabled=False)
+        elif current_scenario.samples_split_type == 'advanced':
             current_scenario.split_data_advanced(is_logging_enabled=False)
-        else:
-            current_scenario.split_data(is_logging_enabled=False)        
 
     logger.debug("All scenario have been validated")
 
