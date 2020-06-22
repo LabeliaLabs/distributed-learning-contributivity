@@ -21,6 +21,7 @@ import constants
 
 
 class MultiPartnerLearning:
+    
     def __init__(
         self,
         partners_list,
