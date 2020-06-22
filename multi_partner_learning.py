@@ -82,7 +82,7 @@ class MultiPartnerLearning:
 
     def train_single_model(self, partner):
         # first check if the model was not already trained
-        if partner.model == None: 
+        if partner.model_weights == None: 
             # Initialize model
             model = self.generate_new_model()
 
@@ -109,7 +109,7 @@ class MultiPartnerLearning:
                 callbacks=cb,
             )
             # store the model
-            partner.model = model
+            partner.model_weights = model.get_weights()
 
             self.nb_epochs_done = (
                 (es.stopped_epoch + 1) if es.stopped_epoch != 0 else self.epoch_count
@@ -117,7 +117,7 @@ class MultiPartnerLearning:
 
             return model
         else:
-            return partner.model
+            return self.build_model_from_weights(partner.model_weights)
 
     def make_stacked_meta_model(self, meta_model_hidden_dim=10):
     
@@ -153,7 +153,8 @@ class MultiPartnerLearning:
         return meta_model
 
     def compute_test_score_with_stacking(self):
-        
+        # Clear Keras' old models
+        clear_session()
         # First, if only one partner, fall back to dedicated single partner function
         if self.partners_count == 1:
             return self.compute_test_score_for_single_partner(self.partners_list[0])
