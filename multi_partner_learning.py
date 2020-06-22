@@ -48,7 +48,6 @@ class MultiPartnerLearning:
         # Attributes related to the multi-partner learning approach
         self.learning_approach = multi_partner_learning_approach
         self.aggregation_weighting = aggregation_weighting
-        self.single_partner_test_mode = single_partner_test_mode
 
         # Attributes related to iterating at different levels
         self.epoch_count = epoch_count
@@ -737,7 +736,6 @@ def init_multi_partner_learning_from_scenario(scenario, is_save_data=True):
         scenario.multi_partner_learning_approach,
         scenario.epoch_count_for_meta_model,
         scenario.aggregation_weighting,
-        scenario.single_partner_test_mode,
         scenario.is_early_stopping,
         is_save_data,
         scenario.save_folder,

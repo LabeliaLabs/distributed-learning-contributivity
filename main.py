@@ -56,7 +56,7 @@ def main():
         )
 
         # GPU config
-        init_GPU_config()
+        init_gpu_config()
 
         # Close open figures
         plt.close("all")
@@ -104,7 +104,7 @@ def init_logger():
     return stream, info_logger_id, info_debug_id
 
 
-def init_GPU_config():
+def init_gpu_config():
     gpus = tf.config.experimental.list_physical_devices("GPU")
     if gpus:
         logger.info(f"Found GPU: {gpus[0].name}")
@@ -124,8 +124,8 @@ def move_log_file_to_experiment_folder(logger_id, experiment_path, filename, lev
 
 
 def validate_scenario_list(scenario_params_list, experiment_path):
-    """Instanciate every scenario without running it to check if
-    every scenario is correctly specified"""
+    """Instantiate every scenario without running it to check if
+    every scenario is correctly specified. This prevents scenario initialization errors during the experiment"""
 
     logger.debug("Starting to validate scenarios")
 
@@ -137,28 +137,35 @@ def validate_scenario_list(scenario_params_list, experiment_path):
         current_scenario = scenario.Scenario(scenario_params, experiment_path, is_dry_run=True)
         current_scenario.instantiate_scenario_partners()
 
-        if isinstance(current_scenario.samples_split_option, list):
+        if current_scenario.samples_split_type == 'basic':
+            current_scenario.split_data(is_logging_enabled=False)
+        elif current_scenario.samples_split_type == 'advanced':
             current_scenario.split_data_advanced(is_logging_enabled=False)
-        else:
-            current_scenario.split_data(is_logging_enabled=False)        
 
     logger.debug("All scenario have been validated")
 
 
 def run_scenario(current_scenario):
 
+    # -----------------------
+    #  Provision the scenario
+    # -----------------------
+
     current_scenario.instantiate_scenario_partners()
     # Split data according to scenario and then pre-process successively...
     # ... train data, early stopping validation data, test data
-    if isinstance(current_scenario.samples_split_option, list):
-        current_scenario.split_data_advanced()
-    else:
+    if current_scenario.samples_split_type == 'basic':
         current_scenario.split_data()
+    elif current_scenario.samples_split_type == 'advanced':
+        current_scenario.split_data_advanced()
     current_scenario.plot_data_distribution()
     current_scenario.compute_batch_sizes()
     current_scenario.preprocess_scenarios_data()
 
-    # Train and eval on all partners according to scenario
+    # --------------------------------------------
+    # Instantiate and run a multi-partner learning
+    # --------------------------------------------
+
     current_scenario.mpl = multi_partner_learning.init_multi_partner_learning_from_scenario(
         current_scenario,
         is_save_data=True,
@@ -169,6 +176,10 @@ def run_scenario(current_scenario):
             partner.model=None #clear the models (in order to compute well the time of the methods used after the computation of the federated score)
     else:
         current_scenario.mpl.compute_federated_test_score()
+
+    # ----------------------------------------------------------
+    # Instantiate and run the contributivity measurement methods
+    # ----------------------------------------------------------
 
     for method in current_scenario.methods:
         logger.info(f"{method}")
