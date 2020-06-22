@@ -82,7 +82,7 @@ class MultiPartnerLearning:
 
     def train_single_model(self, partner):
         # first check if the model was not already trained
-        if partner.model_weights == None: 
+        if not partner.model_weights : 
             # Initialize model
             model = self.generate_new_model()
 
@@ -108,7 +108,7 @@ class MultiPartnerLearning:
                 validation_data=self.val_data,
                 callbacks=cb,
             )
-            # store the model
+            # Store the weights of the model
             partner.model_weights = model.get_weights()
 
             self.nb_epochs_done = (
