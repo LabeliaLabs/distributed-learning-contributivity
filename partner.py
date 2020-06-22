@@ -33,7 +33,7 @@ class Partner:
         self.y_val = None
         self.y_test = None
         
-        self.model = None
+        self.model_weights = None
 
     def get_x_train_len(self):
         return len(self.x_train)
