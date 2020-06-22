@@ -9,7 +9,7 @@ import pickle
 import keras
 from keras.backend.tensorflow_backend import clear_session
 from keras.callbacks import EarlyStopping
-from keras.models import Model 
+from keras.models import Model
 from keras.layers import Dense
 from keras.layers.merge import concatenate
 import numpy as np
@@ -35,7 +35,7 @@ class MultiPartnerLearning:
         is_save_data=False,
         save_folder="",
     ):
- 
+
         # Attributes related to partners
         self.partners_list = partners_list
         self.partners_count = len(partners_list)
@@ -45,7 +45,7 @@ class MultiPartnerLearning:
         self.test_data = (dataset.x_test, dataset.y_test)
         self.generate_new_model = dataset.generate_new_model
         self.num_classes = dataset.num_classes
-        
+
         # Attributes related to the multi-partner learning approach
         self.learning_approach = multi_partner_learning_approach
         self.aggregation_weighting = aggregation_weighting
@@ -57,8 +57,8 @@ class MultiPartnerLearning:
         self.minibatch_count = minibatch_count
         self.minibatch_index = 0
         self.is_early_stopping = is_early_stopping
-        self.epoch_count_for_meta_model=epoch_count_for_meta_model
-        
+        self.epoch_count_for_meta_model = epoch_count_for_meta_model
+
         # Attributes for storing intermediate artefacts and results
         self.minibatched_x_train = [None] * self.partners_count
         self.minibatched_y_train = [None] * self.partners_count
@@ -82,7 +82,7 @@ class MultiPartnerLearning:
 
     def train_single_model(self, partner):
         # first check if the model was not already trained
-        if not partner.model_weights : 
+        if not partner.model_weights:
             # Initialize model
             model = self.generate_new_model()
 
@@ -120,9 +120,9 @@ class MultiPartnerLearning:
             return self.build_model_from_weights(partner.model_weights)
 
     def make_stacked_meta_model(self, meta_model_hidden_dim=10):
-    
+
         logger.info("## Model ensembling approach - Creating the meta-model")
-        
+
         # Create a list with an independently trained model for each partner
         list_of_models = []
         for partner in self.partners_list:
@@ -134,22 +134,22 @@ class MultiPartnerLearning:
             for layer in model.layers:
                 layer.trainable = False  # Make it not trainable
                 layer.name = f"ensemble_{i+1}_{layer.name}"  # Rename it to avoid 'unique layer name' issue
-                
+
         # Define multi-headed input
         ensemble_visible = [model.input for model in list_of_models]
-        
+
         # Concatenate merge output from each model
         ensemble_outputs = [model.output for model in list_of_models]
         merge = concatenate(ensemble_outputs)
         hidden = Dense(meta_model_hidden_dim, activation="relu")(merge)
-        output = Dense(self.num_classes , activation="softmax")(hidden)
+        output = Dense(self.num_classes, activation="softmax")(hidden)
         meta_model = Model(inputs=ensemble_visible, outputs=output)
-        
+
         # Compile the meta-model
         meta_model.compile(
             loss="categorical_crossentropy", optimizer="adam", metrics=["accuracy"]
         )
-        
+
         return meta_model
 
     def compute_test_score_with_stacking(self):
@@ -166,24 +166,26 @@ class MultiPartnerLearning:
         x_val, y_val = self.val_data
         x_test, y_test = self.test_data
         meta_model = self.make_stacked_meta_model(
-            meta_model_hidden_dim=self.num_classes 
+            meta_model_hidden_dim=self.num_classes
         )
         logger.info("## Meta-model compiled.")
-        
+
         # prepare input data
         x_val_extended = [x_val for _ in range(len(meta_model.input))]
-        
+
         # fit model
         logger.info("## Fitting the meta-model...")
-        meta_model.fit(x_val_extended, y_val, epochs=self.epoch_count_for_meta_model, verbose=0)
+        meta_model.fit(
+            x_val_extended, y_val, epochs=self.epoch_count_for_meta_model, verbose=0
+        )
 
         # prepare test data
-        x_test_extended  = [x_test for _ in range(len(meta_model.input))]
-    
+        x_test_extended = [x_test for _ in range(len(meta_model.input))]
+
         # Evaluate trained model
         logger.info("## Evaluating the meta-model...")
         model_evaluation = meta_model.evaluate(
-            x_test_extended , y_test, batch_size=constants.DEFAULT_BATCH_SIZE, verbose=0
+            x_test_extended, y_test, batch_size=constants.DEFAULT_BATCH_SIZE, verbose=0
         )
         logger.info(
             f"   Model evaluation on test data: "
@@ -529,8 +531,12 @@ class MultiPartnerLearning:
         x_val, y_val = self.val_data
 
         # Starting model for each partner is the aggregated model from the previous collaborative round
-        if is_very_first_minibatch:  # Except for the very first mini-batch where it is a new model
-            logger.debug(f"(seqavg) Very first minibatch, init a new model for the round")
+        if (
+            is_very_first_minibatch
+        ):  # Except for the very first mini-batch where it is a new model
+            logger.debug(
+                f"(seqavg) Very first minibatch, init a new model for the round"
+            )
             model_for_round = self.generate_new_model()
         else:
             logger.debug(
@@ -659,7 +665,7 @@ class MultiPartnerLearning:
 
         # For each remaining partner, duplicate the new model and add it to the list
         new_model_weights = new_model.get_weights()
-        for i in range(len(self.partners_list)-1):
+        for i in range(len(self.partners_list) - 1):
             partners_model_list.append(self.build_model_from_weights(new_model_weights))
 
         return partners_model_list
@@ -676,7 +682,9 @@ class MultiPartnerLearning:
         self.prepare_aggregation_weights()
         partners_model_list = []
         for partner in self.partners_list:
-            partners_model_list.append(self.build_model_from_weights(self.aggregate_model_weights()))
+            partners_model_list.append(
+                self.build_model_from_weights(self.aggregate_model_weights())
+            )
         return partners_model_list
 
     @staticmethod
@@ -702,7 +710,9 @@ class MultiPartnerLearning:
 
         epoch_nb_str = f"Epoch {str(self.epoch_index).zfill(2)}/{str(self.epoch_count - 1).zfill(2)}"
         mb_nb_str = f"Minibatch {str(self.minibatch_index).zfill(2)}/{str(self.minibatch_count - 1).zfill(2)}"
-        partner_id_str = f"Partner id #{partner.id} ({partner_index}/{self.partners_count - 1})"
+        partner_id_str = (
+            f"Partner id #{partner.id} ({partner_index}/{self.partners_count - 1})"
+        )
         val_acc_str = f"{round(validation_score, 2)}"
 
         logger.debug(
