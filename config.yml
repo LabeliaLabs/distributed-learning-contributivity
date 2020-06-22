@@ -1,4 +1,4 @@
-experiment_name: stacking_general_check
+experiment_name: my_example
 n_repeats: 5
 scenario_params_list:
  - dataset_name:
@@ -8,20 +8,44 @@ scenario_params_list:
      - 3
    amounts_per_partner: 
      - [0.4, 0.3, 0.3]
-     - [0.85, 0.1, 0.05]
    samples_split_option: 
-     - 'random'
-     - 'stratified'
+     - ['basic', 'random']
+     - ['basic', 'stratified']
+     - ['advanced', [[4, 'shared'], [6, 'shared'], [4, 'specific']]]
    multi_partner_learning_approach:
+     - 'fedavg'
+     - 'seq-pure'
      - 'seq-with-final-agg'
-     - 'stacking'
-   aggregation_weighting:  
+     - 'seqavg'
+   aggregation_weighting: 
+     - 'data_volume' 
      - 'uniform'
    epoch_count: 
-     - 40
+     - 38
    methods:
-     - ["Shapley values"]
+     - ["Shapley values", "Independent scores", "TMCS"]
    minibatch_count: 
-     - 5
+     - 20
    gradient_updates_per_pass_count:
      - 8
+ - dataset_name:
+     - 'mnist'
+   partners_count:
+     - 2
+   amounts_per_partner: 
+     - [0.5, 0.5]
+   samples_split_option:
+     - ['basic', 'stratified']
+   multi_partner_learning_approach:
+     - 'fedavg'
+   aggregation_weighting: 
+     - 'data_volume' 
+     - 'uniform'
+   epoch_count: 
+     - 50
+   methods:
+     - ["Shapley values", "SMCS", "IS_lin_S", "IS_reg_S"]
+   minibatch_count: 
+     - 10
+   gradient_updates_per_pass_count:
+     - 5
