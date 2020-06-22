@@ -170,16 +170,16 @@ class MultiPartnerLearning:
         )
         logger.info("## Meta-model compiled.")
 
-        # prepare input data
+        # Prepare input data
         x_val_extended = [x_val for _ in range(len(meta_model.input))]
 
-        # fit model
+        # Fit model
         logger.info("## Fitting the meta-model...")
         meta_model.fit(
             x_val_extended, y_val, epochs=self.epoch_count_for_meta_model, verbose=0
         )
 
-        # prepare test data
+        # Prepare test data
         x_test_extended = [x_test for _ in range(len(meta_model.input))]
 
         # Evaluate trained model
