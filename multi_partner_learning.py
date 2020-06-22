@@ -21,7 +21,6 @@ import constants
 
 
 class MultiPartnerLearning:
-    
     def __init__(
         self,
         partners_list,
@@ -31,7 +30,6 @@ class MultiPartnerLearning:
         multi_partner_learning_approach,
         epoch_count_for_meta_model=0,
         aggregation_weighting="uniform",
-        single_partner_test_mode="global",
         is_early_stopping=True,
         is_save_data=False,
         save_folder="",
@@ -205,17 +203,11 @@ class MultiPartnerLearning:
         )
 
         model = self.train_single_model(partner)
+        
+        
         # Reference a testset according to the scenario configuration
-        if self.single_partner_test_mode == "global":
-            x_test, y_test = self.test_data
-        elif self.single_partner_test_mode == "local":
-            x_test, y_test = partner.x_test, partner.y_test
-        else:
-            raise NameError(
-                "single_partner_test_mode value '"
-                + self.single_partner_test_mode
-                + "' is not recognized."
-            )
+        x_test, y_test = self.test_data 
+            
 
         # Evaluate trained model
         model_evaluation = model.evaluate(
