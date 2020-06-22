@@ -29,13 +29,14 @@ DEFAULT_CONFIG_FILE = "config.yml"
 @logger.catch
 def main():
 
-    stream, info_logger_id, info_debug_id = init_logger()
+    args = parse_command_line_arguments()
+
+    stream, info_logger_id, info_debug_id = init_logger(args)
 
     with contextlib.redirect_stdout(stream):
         logger.debug("Standard output is sent to added handlers.")
-
-        # Parse config file for scenarios to be experimented
-        config = get_config_from_file()
+        
+        config = get_config_from_file(args)
         scenario_params_list = utils.get_scenario_params_list(
             config["scenario_params_list"])
 
@@ -93,10 +94,15 @@ def main():
     return 0
 
 
-def init_logger():
+def init_logger(args):
     logger.remove()
-    # Forward all logging to standard output
-    logger.add(sys.__stdout__, level="DEBUG")
+
+    # Forward logging to standard output
+    if args.verbose:
+        logger.add(sys.__stdout__, level="DEBUG")
+    else:
+        logger.add(sys.__stdout__, level="INFO")
+
     stream = StreamToLogger()
 
     info_logger_id = logger.add(constants.INFO_LOGGING_FILE_NAME, level="INFO")
@@ -186,10 +192,18 @@ def run_scenario(current_scenario):
     return 0
 
 
-def get_config_from_file():
+def parse_command_line_arguments():
+
     parser = argparse.ArgumentParser()
     parser.add_argument("-f", "--file", help="input config file")
+    parser.add_argument("-v", "--verbose", help="verbose output", action="store_true")
     args = parser.parse_args()
+
+    return args
+
+
+def get_config_from_file(args):
+
     if args.file:
         logger.info(f"Using provided config file: {args.file}")
         config_filepath = args.file

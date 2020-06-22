@@ -1,4 +1,6 @@
 [![Build Status](https://travis-ci.org/SubstraFoundation/distributed-learning-contributivity.svg?branch=master)](https://travis-ci.org/SubstraFoundation/distributed-learning-contributivity)
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/SubstraFoundation/distributed-learning-contributivity/blob/collab/run_experiment_on_google_collab.ipynb)
+
 
 # Exploration of dataset contributivity to a model in collaborative ML projects
 
@@ -113,7 +115,7 @@ Finally, with given scenarios and multi-partner learning approaches, we can addr
 
    Under `scenario_params_list`, enter a list of sets of scenario(s). Each set starts with ` - dataset_name:` and must have only one `partners_count` value. The length of `amount_per_partners`, `corrupted_datasets` (and `samples_split_option` when the advanced definition is used) must match the `partner_counts` value. If for a given parameter multiple values are specified, e.g. like for `agregation_weighting` in the first scenario set of the above example, all possible combinations of parameters will be assembled as separate scenarios and run.
    
-3. Then execute `main.py -f config.yml`
+3. Then execute `main.py -f config.yml`. Add the `-v` argument if you want a more verbose output. 
 
 4. A `results.csv` file will be generated in a new folder for your experiment under `/experiments/<your_experiment>`. You can read this raw `results.csv` file or use the notebooks in `/notebooks`.
 
