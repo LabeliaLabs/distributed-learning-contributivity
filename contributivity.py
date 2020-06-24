@@ -20,6 +20,7 @@ import shapley_value.shapley as sv
 import utils
 import constants
 
+
 class krigingModel:
     def __init__(self, degre, covariance_func):
         self.X = np.array([[]])
@@ -79,7 +80,9 @@ class Contributivity:
             self.increments_values.append(dict())
 
     def __str__(self):
-        computation_time_sec = str(datetime.timedelta(seconds=self.computation_time_sec))
+        computation_time_sec = str(
+            datetime.timedelta(seconds=self.computation_time_sec)
+        )
         output = "\n" + self.name + "\n"
         output += "Computation time: " + computation_time_sec + "\n"
         output += (
@@ -104,7 +107,9 @@ class Contributivity:
             # Characteristic_func(permut) has not been computed yet...
             # ... so we compute, store, and return characteristic_func(permut)
             self.first_charac_fct_calls_count += 1
-            small_partners_list = np.array([the_scenario.partners_list[i] for i in subset])
+            small_partners_list = np.array(
+                [the_scenario.partners_list[i] for i in subset]
+            )
             mpl = multi_partner_learning.MultiPartnerLearning(
                 small_partners_list,
                 the_scenario.epoch_count,
@@ -184,7 +189,9 @@ class Contributivity:
     def compute_independent_scores(self, the_scenario):
         start = timer()
 
-        logger.info("# Launching computation of perf. scores of models trained independently on each partner")
+        logger.info(
+            "# Launching computation of perf. scores of models trained independently on each partner"
+        )
 
         # Initialize a list of performance scores
         performance_scores = []
@@ -242,7 +249,10 @@ class Contributivity:
                 char_partnerlists[-1] = characteristic_all_partners
                 for j in range(n):
                     # here we suppose the characteristic function is 0 for the empty set
-                    if abs(characteristic_all_partners - char_partnerlists[j]) < truncation:
+                    if (
+                        abs(characteristic_all_partners - char_partnerlists[j])
+                        < truncation
+                    ):
                         char_partnerlists[j + 1] = char_partnerlists[j]
                     else:
                         char_partnerlists[j + 1] = self.not_twice_characteristic(
@@ -305,17 +315,24 @@ class Contributivity:
                 first = True
                 for j in range(n):
                     # here we suppose the characteristic function is 0 for the empty set
-                    if abs(characteristic_all_partners - char_partnerlists[j]) < truncation:
+                    if (
+                        abs(characteristic_all_partners - char_partnerlists[j])
+                        < truncation
+                    ):
                         if first:
                             size_of_rest = 0
                             for i in range(j, n):
-                                size_of_rest += len(the_scenario.partners_list[i].y_train)
-                            a=(characteristic_all_partners - char_partnerlists[j])/size_of_rest
+                                size_of_rest += len(
+                                    the_scenario.partners_list[i].y_train
+                                )
+                            a = (
+                                characteristic_all_partners - char_partnerlists[j]
+                            ) / size_of_rest
                             first = False
-                            
+
                         size_of_S = len(the_scenario.partners_list[j].y_train)
-                        char_partnerlists[j + 1] = char_partnerlists[j] + a*size_of_S
-                        
+                        char_partnerlists[j + 1] = char_partnerlists[j] + a * size_of_S
+
                     else:
                         char_partnerlists[j + 1] = self.not_twice_characteristic(
                             permutation[: j + 1], the_scenario
@@ -385,7 +402,9 @@ class Contributivity:
 
             def approx_increment(subset, k):
                 assert k not in subset, "" + str(k) + "is not in " + str(subset) + ""
-                small_partners_list = np.array([the_scenario.partners_list[i] for i in subset])
+                small_partners_list = np.array(
+                    [the_scenario.partners_list[i] for i in subset]
+                )
                 # compute the size of subset : ||subset||
                 size_of_S = 0
                 for partner in small_partners_list:
@@ -464,10 +483,10 @@ class Contributivity:
         n = len(the_scenario.partners_list)
 
         if n < 4:
-          
+
             self.compute_SV(the_scenario)
             self.name = "IS_reg Shapley values"
-            
+
         else:
 
             # definition of the original density
@@ -493,7 +512,9 @@ class Contributivity:
             ###### make the datasets
             def makedata(subset):
                 # compute the size of subset : ||subset||
-                small_partners_list = np.array([the_scenario.partners_list[i] for i in subset])
+                small_partners_list = np.array(
+                    [the_scenario.partners_list[i] for i in subset]
+                )
                 size_of_S = 0
                 for partner in small_partners_list:
                     size_of_S += len(partner.y_train)
@@ -620,7 +641,9 @@ class Contributivity:
             assert k not in subset
             # compute the size of subset : ||subset||
             coordinate = np.zeros(n)
-            small_partners_list = np.array([the_scenario.partners_list[i] for i in subset])
+            small_partners_list = np.array(
+                [the_scenario.partners_list[i] for i in subset]
+            )
             for partner, i in zip(small_partners_list, subset):
                 coordinate[i] = len(partner.y_train)
             coordinate = np.delete(coordinate, k)
@@ -791,7 +814,9 @@ class Contributivity:
                 for k in range(N):
                     # select the strata to add an increment
                     if np.sum(sigma2[k]) == 0:
-                        p = np.repeat(1 / N, N) # alocate uniformly if np.sum(sigma2[k]) == 0
+                        p = np.repeat(
+                            1 / N, N
+                        )  # alocate uniformly if np.sum(sigma2[k]) == 0
                     else:
                         p = (
                             np.repeat(1 / N, N) * (1 - e)
@@ -888,14 +913,16 @@ class Contributivity:
                     continuer[k].append(True)
 
             # Sampling
-            while (
-                np.any(continuer) or (1 - alpha) < v_max / (sv_accuracy ** 2)
+            while np.any(continuer) or (1 - alpha) < v_max / (
+                sv_accuracy ** 2
             ):  # Check if the length of the confidence interval  is below the value of sv_accuracy
                 t += 1
                 for k in range(N):
                     # select the strata to add an increment
                     if np.any(continuer[k]):
-                        p = np.array(continuer[k])/np.sum(continuer[k])  # Allocate uniformly among strata that are not fully explored
+                        p = np.array(continuer[k]) / np.sum(
+                            continuer[k]
+                        )  # Allocate uniformly among strata that are not fully explored
                     elif np.sum(sigma2[k]) == 0:
                         continue
                     else:
@@ -933,9 +960,13 @@ class Contributivity:
                         sigma2[k, strata] /= length - 1
                     else:  # Avoid creating a Nan value when length = 1
                         sigma2[k, strata] = 0
-                    sigma2[k, strata] *= (1/length-   factorial(N - 1 - strata) * factorial(strata)  / factorial(N-1) )
-                    logger.debug(f"t: {t}, k: {k}, strat: {strata}, sigma2: {sigma2[k]}")
-                
+                    sigma2[k, strata] *= 1 / length - factorial(
+                        N - 1 - strata
+                    ) * factorial(strata) / factorial(N - 1)
+                    logger.debug(
+                        f"t: {t}, k: {k}, strat: {strata}, sigma2: {sigma2[k]}"
+                    )
+
                 shap = np.mean(mu, axis=1)
                 var = np.zeros(N)  # variance of the estimator
                 for k in range(N):
@@ -951,7 +982,9 @@ class Contributivity:
                         if n_k_strata > 20:
                             continuer[k][strata] = False
                         ## if a strata as been fully explored we stop allocating to this strata
-                        if  len(increments_generated[k][strata]) ==  factorial(N-1)/ (factorial(N - 1 - strata) * factorial(strata) ) :
+                        if len(increments_generated[k][strata]) == factorial(N - 1) / (
+                            factorial(N - 1 - strata) * factorial(strata)
+                        ):
                             continuer[k][strata] = False
                     var[k] /= N ** 2  # correct the variance of the estimator
                 v_max = np.max(var)
@@ -964,32 +997,30 @@ class Contributivity:
             end = timer()
             self.computation_time_sec = end - start
 
+    def train_DVRL_seq(
+        self,
+        the_scenario,
+        data_valuator_model,
+        main_model,
+        dve_learning_rate=0.001,
+        T=30,
+        epoch_count_init_dvm=40,
+    ):
 
-    def train_DVRL_seq(self, the_scenario, data_valuator_model, main_model, dve_learning_rate=0.001, T=30,epoch_count_init_dvm=40 ):
-    
-        mpl = multi_partner_learning.MultiPartnerLearning(
-                the_scenario.partners_list,
-                the_scenario.epoch_count,
-                the_scenario.minibatch_count,
-                the_scenario.x_val,
-                the_scenario.y_val,
-                the_scenario.x_test,
-                the_scenario.y_test,
-                the_scenario.multi_partner_learning_approach,
-                the_scenario.aggregation_weighting,
-                the_scenario.single_partner_test_mode,
-                is_early_stopping=True,
-                is_save_data=False,
-                save_folder=the_scenario.save_folder,
-            )  
-        
-        main_model.compile(optimizer='SGD', loss='binary_crossentropy', metrics=['accuracy'])
+        mpl = multi_partner_learning.init_multi_partner_learning_from_scenario(
+            the_scenario
+        )
+
+        main_model.compile(
+            optimizer="SGD", loss="binary_crossentropy", metrics=["accuracy"]
+        )
+        data_valuator_model.compile(
+            optimizer="SGD", loss="mse", metrics=["accuracy"]
+        )
         start = timer()
 
-        
-        # first train the data_value estimator to yield 0.5
+        # First, train the data_value estimator to yield 0.5
         logger.debug("initializing the datavaluator model")
-        data_valuator_model.compile(optimizer='SGD', loss='mse', metrics=['accuracy'])
         for epoch_index in range(epoch_count_init_dvm):
             # Split the train dataset in mini-batches
             logger.debug("   Minibatch split")
@@ -998,105 +1029,136 @@ class Contributivity:
             logger.debug("   Iterate over mini-batches for training")
             # Iterate over mini-batches for training
             for minibatch_index in range(mpl.minibatch_count):
-                logger.debug(f"   initializing the datavaluator model: runing at the epoch {epoch_index+1}/{epoch_count_init_dvm} on the  minibatch {minibatch_index+1}/{mpl.minibatch_count} ")
+                logger.debug(
+                    f"   initializing the datavaluator model: runing at the epoch {epoch_index+1}/{epoch_count_init_dvm} on the  minibatch {minibatch_index+1}/{mpl.minibatch_count} "
+                )
                 # Shuffle the order of the partners
                 shuffled_partner_indexes = np.random.permutation(mpl.partners_count)
                 # Iterate over shuffled partners
                 for for_loop_idx, partner_index in enumerate(shuffled_partner_indexes):
-                    logger.debug(f"       partner {for_loop_idx+1}/{mpl.partners_count} ")
-                    x=mpl.minibatched_x_train[partner_index][minibatch_index]
-                    y=mpl.minibatched_y_train[partner_index][minibatch_index]
-                    X=tf.reshape(x, [tf.shape(y)[0],-1])
-                    Xy= tf.concat([X,y], axis=1) 
-                    vector_of_half=tf.ones( shape = ( tf.shape(Xy)[0] ,))/2.0
-                    data_valuator_model.fit(x=Xy,y=vector_of_half,  epochs=1, steps_per_epoch=1 ,verbose=0 )
+                    logger.debug(
+                        f"       partner {for_loop_idx+1}/{mpl.partners_count} "
+                    )
+                    x = mpl.minibatched_x_train[partner_index][minibatch_index]
+                    y = mpl.minibatched_y_train[partner_index][minibatch_index]
+                    X = tf.reshape(x, [tf.shape(y)[0], -1])
+                    Xy = tf.concat([X, y], axis=1)
+                    vector_of_half = tf.ones(shape=(tf.shape(Xy)[0],) ) / 2.0
+                    
+                    data_valuator_model.fit(
+                        x=Xy, y=vector_of_half, epochs=1, steps_per_epoch=1, verbose=0
+                    )
+                    
         logger.debug("initializing the datavaluator model : done.")
+
+ 
         
-        
-        
-        # second  train the dvrl
+        # Second, train the dvrl
         logger.debug("\nTraining the DVRL algorythm")
-        previous_loss_list=[]
-        loss_list=[]
-        for epoch_index in range(mpl.epoch_count*2):
+        previous_loss_list = []
+        loss_list = []
+        for epoch_index in range(mpl.epoch_count * 2):
 
             # Split the train dataset in mini-batches
             logger.debug("   Minibatch split")
             mpl.split_in_minibatches()
-            
+
             # Iterate over mini-batches for training
             logger.debug("   Iterate over mini-batches for training")
             for minibatch_index in range(mpl.minibatch_count):
-                logger.debug(f"   Training DVRL: > epoch {epoch_index+1}/{mpl.epoch_count*2} > minibatch {minibatch_index+1}/{mpl.minibatch_count} ")      
+                logger.debug(
+                    f"   Training DVRL: > epoch {epoch_index+1}/{mpl.epoch_count*2} > minibatch {minibatch_index+1}/{mpl.minibatch_count} "
+                )
                 # Shuffle the order of the partners
                 shuffled_partner_indexes = np.random.permutation(mpl.partners_count)
-                
+
                 # Iterate over shuffled partners
                 for for_loop_idx, partner_index in enumerate(shuffled_partner_indexes):
-                    logger.debug(f"       partner {for_loop_idx+1}/{mpl.partners_count} ")
+                    logger.debug(
+                        f"       partner {for_loop_idx+1}/{mpl.partners_count} "
+                    )
                     # computing the current estimation of the data value
-                    x=mpl.minibatched_x_train[partner_index][minibatch_index]
-                    y=mpl.minibatched_y_train[partner_index][minibatch_index]
-                    X=tf.reshape(x, [tf.shape(y)[0],-1])
-                    Xy= tf.concat([X,y], axis=1)
-                    data_value=data_valuator_model.predict(Xy,steps=1 )
-                    
+                    x = mpl.minibatched_x_train[partner_index][minibatch_index]
+                    y = mpl.minibatched_y_train[partner_index][minibatch_index]
+                    X = np.reshape(x, [tf.shape(y)[0], -1])
+                    Xy = np.concatenate((X, y), axis=1)
+                    data_value = data_valuator_model.predict(Xy, steps=1)
                     # selecting the data that will be used according to the current datavalue
-                    selected_data=np.random.binomial(1, p=data_value, size=len(data_value))
-                    
+                    selected_data = np.random.binomial(
+                        1, p=data_value, size=len(data_value)
+                    )
+
                     # train the main model with the selected data
-                    x,y =x[selected_data==1], y[selected_data==1]
-                    main_model.fit(x, y, epochs=1, steps_per_epoch=1,verbose=0  )
-                    
-                    #get the loss (to build the cost function of the data valuator model)
-                    loss_main_model = main_model.evaluate(mpl.val_data[0], mpl.val_data[1], verbose=0)[0]
-                    
-                    #build the cost function of the data valuator model
-                    def cost_fn(inputs, outputs):
-                        if len(loss_list)==0:
-                            m=tf.constant(0.)
+                    x, y = x[selected_data == 1], y[selected_data == 1]
+                    main_model.fit(x, y, epochs=1, steps_per_epoch=1, verbose=0)
+
+                    # get the loss (to build the cost function of the data valuator model)
+                    loss_main_model = main_model.evaluate(
+                        mpl.val_data[0], mpl.val_data[1], verbose=0
+                    )[0]
+
+                    # build the cost function of the data valuator model
+                    def cost_fn(dv, s):
+                        if len(loss_list) == 0:
+                            m = tf.constant(0.0)
                         else:
-                            m=np.mean(loss_list)
-                        return((loss_main_model-m)*tf.reduce_sum(outputs * tf.math.log(inputs + 1.0e-8) + (1.0-outputs) * tf.math.log(1.0 - inputs - 1.0e-8)))
-                     
-                    selected_data=tf.convert_to_tensor(selected_data, dtype=tf.float32)  
-                    #set the optimizer
+                            m = np.mean(loss_list)
+                        return (loss_main_model - m) * (
+                            s * tf.math.log(dv + 1.0e-8)
+                            + (1.0 - s) * tf.math.log(1.0 - dv - 1.0e-8)
+                        )
+
+                    # set the optimizer
                     optimizer = tf.keras.optimizers.SGD(learning_rate=dve_learning_rate)
-                    #evulate  the gradient of the cost function
-                    with tf.GradientTape() as tape:
-                        tape.watch(data_valuator_model.trainable_weights)
-                        data_value=  data_valuator_model(Xy)
-                        current_cost_fn=cost_fn(data_value,selected_data )
-                    grads=tape.gradient(current_cost_fn,data_valuator_model.trainable_weights) 
-                    #apply  the gradient of the cost function
-                    optimizer.apply_gradients(zip(grads, data_valuator_model.trainable_weights))
+                    # evulate  the gradient of the cost function
+                    Xy = tf.data.Dataset.from_tensor_slices(Xy)
+                    Xy = Xy.batch(1)
+                    selected_data = tf.convert_to_tensor(
+                        selected_data, dtype=tf.float32
+                    )
+                    grads = None
+                    for data in Xy:
+                        with tf.GradientTape() as tape:
+                            tape.watch(data_valuator_model.trainable_weights)
+                            data_value = data_valuator_model(data)
+                            current_cost_fn = cost_fn(data_value, selected_data)
+                        grad = tape.gradient(
+                            current_cost_fn, data_valuator_model.trainable_weights
+                        )
+                        if not grads:
+                            grads = grad
+                        else:
+                            grads += grad
+                    # apply  the gradient of the cost function
+                    optimizer.apply_gradients(
+                        zip(grads, data_valuator_model.trainable_weights)
+                    )
 
                     previous_loss_list.append(loss_main_model)
-                    if len(previous_loss_list)>T:
+                    if len(previous_loss_list) > T:
                         previous_loss_list.pop(0)
-                    loss_list=previous_loss_list
-                    
-        # compute the data values               
-        partners_data_values=[]
+                    loss_list = previous_loss_list
+
+        # compute the data values
+        partners_data_values = []
         for partner_idx, partner in enumerate(mpl.partners_list):
-            x,y = partner.x_train, partner.y_train
-            X=tf.reshape(x, [tf.shape(y)[0],-1])
-            Xy = tf.concat([X,y], axis=1)
+            x, y = partner.x_train, partner.y_train
+            X = tf.reshape(x, [tf.shape(y)[0], -1])
+            Xy = tf.concat([X, y], axis=1)
             partners_data_values.append(data_valuator_model.predict(Xy, steps=1))
-        # compute contributivity for each partners    
+        # compute contributivity for each partners
         contrib = []
         for data_values in partners_data_values:
             contrib.append(np.sum(data_values))
-        contrib/=np.sum(contrib) 
-        
+        contrib /= np.sum(contrib)
+
         self.name = "DVRL"
         self.contributivity_scores = contrib * the_scenario.mpl.test_score
         self.scores_std = np.zeros(mpl.partners_count)
         self.normalized_scores = contrib
         end = timer()
         self.computation_time_sec = end - start
-                
-    
+
     def compute_contributivity(
         self,
         method_to_compute,
@@ -1149,17 +1211,25 @@ class Contributivity:
                 current_scenario, sv_accuracy=sv_accuracy, alpha=alpha
             )
         elif method_to_compute == "DVRL":
-            dvm=utils.a_data_valuator_model(x_length = np.prod(constants.INPUT_SHAPE), 
-                                      y_length = constants.NUM_CLASSES,
-                                      additional_layers=1,
-                                      hidden_dim=100,
-                                      activ_fct="relu"  )
+            current_scenario.mpl = multi_partner_learning.init_multi_partner_learning_from_scenario(
+                current_scenario, is_save_data=True,
+            )
+            dvm = utils.a_data_valuator_model(
+                x_length=np.prod(current_scenario.dataset.input_shape),
+                y_length=current_scenario.dataset.num_classes,
+                additional_layers=1,
+                hidden_dim=100,
+                activ_fct="relu",
+            )
+            current_scenario.mpl.compute_test_score(True)
             # Contributivity 10: Datavaluation by reinforcment learning
-            self.train_DVRL_seq(current_scenario,
-                                data_valuator_model=dvm,
-                                main_model=utils.generate_new_cnn_model(),
-                                dve_learning_rate=0.001,
-                                T=30,
-                                epoch_count_init_dvm=40)
+            self.train_DVRL_seq(
+                current_scenario,
+                data_valuator_model=dvm,
+                main_model=current_scenario.mpl.build_model_from_weights(  current_scenario.mpl.model_weights),
+                dve_learning_rate=0.001,
+                T=30,
+                epoch_count_init_dvm=40,
+            )
         else:
             logger.warning("Unrecognized name of method, statement ignored!")

@@ -61,6 +61,7 @@ class MultiPartnerLearning:
         self.score_matrix_collective_models = np.nan * np.zeros(shape=(self.epoch_count, self.minibatch_count + 1))
         self.loss_collective_models = []
         self.test_score = None
+        self.model_weights = None
         self.nb_epochs_done = int
         self.is_save_data = is_save_data
         self.save_folder = save_folder
@@ -110,7 +111,7 @@ class MultiPartnerLearning:
         end = timer()
         self.learning_computation_time = end - start
 
-    def compute_test_score(self):
+    def compute_test_score(self,store_model_weights=False):
         """Return the score on test data of a final aggregated model trained in a federated way on each partner"""
 
         start = timer()
@@ -204,7 +205,10 @@ class MultiPartnerLearning:
         logger.info(f"   Model metrics values: {['%.3f' % elem for elem in model_evaluation]}")
         self.test_score = model_evaluation[1]  # 0 is for the loss
         self.nb_epochs_done = self.epoch_index + 1
-
+        
+        if store_model_weights:
+            self.model_weights = model_to_evaluate.get_weights()
+        
         # Plot training history # TODO: move the data saving and plotting in dedicated functions
         if self.is_save_data:
             self.save_data()

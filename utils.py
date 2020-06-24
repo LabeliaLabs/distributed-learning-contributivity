@@ -35,13 +35,7 @@ def a_data_valuator_model(x_length,
     for _ in range(additional_layers):
         model.add(Dense(hidden_dim, activation='relu'))
     model.add(Dense(1, activation='sigmoid'))
-
-    model.compile(
-        loss=keras.losses.MeanAbsoluteError(),
-        optimizer="SGD",
-        metrics=["accuracy"],
-    )
-
+ 
     return model
 
 def load_cfg(yaml_filepath):
