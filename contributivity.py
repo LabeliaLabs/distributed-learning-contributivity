@@ -1015,7 +1015,7 @@ class Contributivity:
             optimizer="SGD", loss="binary_crossentropy", metrics=["accuracy"]
         )
         data_valuator_model.compile(
-            optimizer="SGD", loss="mse", metrics=["accuracy"]
+            optimizer="SGD", loss="mae", metrics=["accuracy"]
         )
         start = timer()
 

@@ -31,9 +31,9 @@ def a_data_valuator_model(x_length,
     """Return a CNN model from scratch based on given batch_size"""
 
     model = Sequential()
-    model.add(Dense(hidden_dim, input_dim=x_length+y_length, activation='relu'))
+    model.add(Dense(hidden_dim, input_dim=x_length+y_length, activation=activ_fct))
     for _ in range(additional_layers):
-        model.add(Dense(hidden_dim, activation='relu'))
+        model.add(Dense(hidden_dim, activation=activ_fct))
     model.add(Dense(1, activation='sigmoid'))
  
     return model
