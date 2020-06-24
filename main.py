@@ -170,12 +170,13 @@ def run_scenario(current_scenario):
         current_scenario,
         is_save_data=True,
     )
-    if current_scenario.multi_partner_learning_approach == "stacking":
-        current_scenario.mpl.compute_test_score_with_stacking()
+    current_scenario.mpl.compute_test_score()
+    # if satcking clear the partners' model (in order to compute well the time of the methods used after the computation of the federated score)
+    if current_scenario.multi_partner_learning_approach == "stacking": 
         for partner in current_scenario.partners_list:
-            partner.model=None #clear the models (in order to compute well the time of the methods used after the computation of the federated score)
-    else:
-        current_scenario.mpl.compute_federated_test_score()
+            partner.model=None 
+
+       
 
     # ----------------------------------------------------------
     # Instantiate and run the contributivity measurement methods

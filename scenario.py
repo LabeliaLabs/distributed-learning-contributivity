@@ -130,12 +130,7 @@ class Scenario:
             assert self.epoch_count > 0
         else:
             self.epoch_count = 40  # default
-            
-        if "epoch_count_for_meta_model" in params:
-            self.epoch_count_for_meta_model = params["epoch_count_for_meta_model"]
-            assert self.epoch_count_for_meta_model > 0 
-        else:
-            self.epoch_count_for_meta_model = 100  # default
+
 
         if "minibatch_count" in params:
             self.minibatch_count = params["minibatch_count"]
@@ -207,7 +202,6 @@ class Scenario:
             self.dataset.y_test = self.dataset.y_test[index_test]
             self.epoch_count = 3
             self.minibatch_count = 2
-            self.epoch_count_for_meta_model = 3
 
         # -------
         # Outputs

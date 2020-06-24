@@ -109,16 +109,12 @@ class Contributivity:
                 the_scenario.minibatch_count,
                 the_scenario.dataset,
                 the_scenario.multi_partner_learning_approach,
-                the_scenario.epoch_count_for_meta_model,
                 the_scenario.aggregation_weighting,
                 is_early_stopping=True,
                 is_save_data=False,
                 save_folder=the_scenario.save_folder,
             )
-            if the_scenario.multi_partner_learning_approach == "stacking":
-                mpl.compute_test_score_with_stacking()
-            else:
-                mpl.compute_federated_test_score()
+            mpl.compute_test_score()
             self.charac_fct_values[tuple(subset)] = mpl.test_score
             # we add the new increments
             for i in range(len(the_scenario.partners_list)):

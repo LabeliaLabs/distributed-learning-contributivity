@@ -28,7 +28,6 @@ class MultiPartnerLearning:
         minibatch_count,
         dataset,
         multi_partner_learning_approach,
-        epoch_count_for_meta_model=0,
         aggregation_weighting="uniform",
         is_early_stopping=True,
         is_save_data=False,
@@ -55,7 +54,6 @@ class MultiPartnerLearning:
         self.minibatch_count = minibatch_count
         self.minibatch_index = 0
         self.is_early_stopping = is_early_stopping
-        self.epoch_count_for_meta_model = epoch_count_for_meta_model
 
         # Attributes for storing intermediate artefacts and results
         self.minibatched_x_train = [None] * self.partners_count
@@ -150,48 +148,6 @@ class MultiPartnerLearning:
 
         return meta_model
 
-    def compute_test_score_with_stacking(self):
-        # Clear Keras' old models
-        clear_session()
-        # First, if only one partner, fall back to dedicated single partner function
-        if self.partners_count == 1:
-            return self.compute_test_score_for_single_partner(self.partners_list[0])
-
-        logger.info(
-            f"## Training and evaluating stacked model on partners with ids: {['#' + str(p.id) for p in self.partners_list]}"
-        )
-        start = timer()
-        x_val, y_val = self.val_data
-        x_test, y_test = self.test_data
-        meta_model = self.make_stacked_meta_model(
-            meta_model_hidden_dim=self.num_classes
-        )
-        logger.info("## Meta-model compiled.")
-
-        # Prepare input data
-        x_val_extended = [x_val for _ in range(len(meta_model.input))]
-
-        # Fit model
-        logger.info("## Fitting the meta-model...")
-        meta_model.fit(
-            x_val_extended, y_val, epochs=self.epoch_count_for_meta_model, verbose=0
-        )
-
-        # Prepare test data
-        x_test_extended = [x_test for _ in range(len(meta_model.input))]
-
-        # Evaluate trained model
-        logger.info("## Evaluating the meta-model...")
-        model_evaluation = meta_model.evaluate(
-            x_test_extended, y_test, batch_size=constants.DEFAULT_BATCH_SIZE, verbose=0
-        )
-        logger.info(
-            f"   Model evaluation on test data: "
-            f"{list(zip(meta_model.metrics_names, ['%.3f' % elem for elem in model_evaluation]))}"
-        )
-        self.test_score = model_evaluation[1]  # 0 is for the loss
-        end = timer()
-        self.learning_computation_time = end - start
 
     def compute_test_score_for_single_partner(self, partner):
         """ Compute the score on test data of a model trained on a single partner"""
@@ -223,7 +179,7 @@ class MultiPartnerLearning:
         end = timer()
         self.learning_computation_time = end - start
 
-    def compute_federated_test_score(self):
+    def compute_test_score(self):
         """Return the score on test data of a final aggregated model trained in a federated way on each partner"""
 
         start = timer()
@@ -237,7 +193,13 @@ class MultiPartnerLearning:
 
         x_val, y_val = self.val_data
         x_test, y_test = self.test_data
-
+        # Prepare the input data if the learning approach is stacking
+        if self.learning_approach == "stacking":
+            x_val_extended = [x_val for _ in range(partners_count)]
+            x_val=x_val_extended
+            x_test_extended = [x_test for _ in range(partners_count)] 
+            x_test=x_test_extended
+            
         # First, if only one partner, fall back to dedicated single partner function
         if partners_count == 1:
             return self.compute_test_score_for_single_partner(partners_list[0])
@@ -249,9 +211,13 @@ class MultiPartnerLearning:
         )
 
         # Initialize variables
-        model_to_evaluate, sequentially_trained_model = None, None
+        model_to_evaluate, sequentially_trained_model, stacking_model = None, None, None
         if self.learning_approach in ["seq-pure", "seq-with-final-agg"]:
             sequentially_trained_model = self.generate_new_model()
+        elif self.learning_approach == "stacking":
+            stacking_model=self.make_stacked_meta_model(
+                meta_model_hidden_dim=self.num_classes
+                )
 
         # Train model (iterate for each epoch and mini-batch)
         for epoch_index in range(epoch_count):
@@ -259,7 +225,7 @@ class MultiPartnerLearning:
             self.epoch_index = epoch_index
 
             # Clear Keras' old models (except if the approach is sequential and the model has to persist across epochs)
-            if self.learning_approach not in ["seq-pure", "seq-with-final-agg"]:
+            if self.learning_approach not in ["seq-pure", "seq-with-final-agg","stacking"]:
                 clear_session()
 
             # Split the train dataset in mini-batches
@@ -280,19 +246,25 @@ class MultiPartnerLearning:
 
                 elif self.learning_approach == "seqavg":
                     self.compute_collaborative_round_seqavg()
+                
+                elif self.learning_approach == "stacking":
+                    self.compute_collaborative_round_stacking(stacking_model)
 
             # At the end of each epoch, evaluate the model for early stopping on a global validation set
             self.prepare_aggregation_weights()
             if self.learning_approach == "seq-pure":
                 model_to_evaluate = sequentially_trained_model
+            elif self.learning_approach == "stacking":
+                model_to_evaluate = stacking_model
             elif self.learning_approach in ["fedavg", "seq-with-final-agg", "seqavg"]:
                 model_to_evaluate = self.build_model_from_weights(
                     self.aggregate_model_weights()
                 )
+            
             model_evaluation = model_to_evaluate.evaluate(
                 x_val, y_val, batch_size=constants.DEFAULT_BATCH_SIZE, verbose=0,
             )
-
+            
             current_val_loss = model_evaluation[0]
             current_val_metric = model_evaluation[1]
 
@@ -327,7 +299,8 @@ class MultiPartnerLearning:
         logger.info("### Evaluating model on test data:")
         model_evaluation = model_to_evaluate.evaluate(
             x_test, y_test, batch_size=constants.DEFAULT_BATCH_SIZE, verbose=0
-        )
+            )
+            
         logger.info(f"   Model metrics names: {model_to_evaluate.metrics_names}")
         logger.info(
             f"   Model metrics values: {['%.3f' % elem for elem in model_evaluation]}"
@@ -342,6 +315,8 @@ class MultiPartnerLearning:
         logger.info("Training and evaluation on multiple partners: done.")
         end = timer()
         self.learning_computation_time = end - start
+        # Clear Keras' old models for memory efficiency
+        clear_session()
 
     def save_data(self):
         """Save figures, losses and metrics to disk"""
@@ -391,6 +366,61 @@ class MultiPartnerLearning:
         plt.ylim([0, 1])
         plt.savefig(self.save_folder / "graphs/all_partners.png")
         plt.close()
+        
+    def compute_collaborative_round_stacking(self, meta_model):
+        """Proceed to a collaborative round with a stacking approach"""
+
+        logger.debug("Start new collaborative stacking round ...")
+
+        # Initialize variables
+        epoch_index, minibatch_index = self.epoch_index, self.minibatch_index
+        x_val, y_val = self.val_data
+        
+        # Prepare input data
+        x_val_extended = [x_val for _ in range(len(meta_model.input))]
+
+        # Evaluate and store accuracy of mini-batch start model
+        model_evaluation = meta_model.evaluate(
+            x_val_extended, y_val, batch_size=constants.DEFAULT_BATCH_SIZE, verbose=0
+        )
+        self.score_matrix_collective_models[
+            epoch_index, minibatch_index
+        ] = model_evaluation[1]
+
+        # Iterate over partners for training the model sequentially
+        shuffled_indexes = np.random.permutation(self.partners_count)
+        logger.debug(
+            f"(stacking) Shuffled order for this collaborative stacking round: {shuffled_indexes}"
+        )
+        for for_loop_idx, partner_index in enumerate(shuffled_indexes):
+
+            partner = self.partners_list[partner_index]
+            
+            
+            # Prepare input data
+            x_for_this_round_extended =[self.minibatched_x_train[partner_index][minibatch_index] for _ in range(len(meta_model.input))]
+
+            # Train on partner local data set
+            train_data_for_fit_iteration = (
+                x_for_this_round_extended,
+                self.minibatched_y_train[partner_index][minibatch_index],
+            )
+            history = self.collaborative_round_fit(
+                meta_model,
+                train_data_for_fit_iteration,
+                (x_val_extended, y_val),
+                partner.batch_size,
+            )
+
+            # Log results of the round
+            self.log_collaborative_round_partner_result(
+                partner, for_loop_idx, history.history["val_accuracy"][0]
+            )
+
+            # Update iterative results
+            self.update_iterative_results(partner_index, history)
+
+        logger.debug("End of collaborative stacking round.")
 
     def compute_collaborative_round_fedavg(self):
         """Proceed to a collaborative round with a federated averaging approach"""
@@ -413,7 +443,7 @@ class MultiPartnerLearning:
         else:
             logger.debug(
                 f"(fedavg) Minibatch n°{minibatch_index} of epoch n°{epoch_index}, "
-                f"init aggregated model for each partner with models from previous round"
+                "init aggregated model for each partner with models from previous round"
             )
             partners_model_list_for_iteration = self.init_with_agg_models()
 
@@ -527,13 +557,13 @@ class MultiPartnerLearning:
             is_very_first_minibatch
         ):  # Except for the very first mini-batch where it is a new model
             logger.debug(
-                f"(seqavg) Very first minibatch, init a new model for the round"
+                "(seqavg) Very first minibatch, init a new model for the round"
             )
             model_for_round = self.generate_new_model()
         else:
             logger.debug(
                 f"(seqavg) Minibatch n°{minibatch_index} of epoch n°{epoch_index}, "
-                f"init model by aggregating models from previous round"
+                "init model by aggregating models from previous round"
             )
             model_for_round = self.init_with_agg_model()
 
@@ -734,7 +764,6 @@ def init_multi_partner_learning_from_scenario(scenario, is_save_data=True):
         scenario.minibatch_count,
         scenario.dataset,
         scenario.multi_partner_learning_approach,
-        scenario.epoch_count_for_meta_model,
         scenario.aggregation_weighting,
         scenario.is_early_stopping,
         is_save_data,
