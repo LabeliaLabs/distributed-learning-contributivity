@@ -1,4 +1,6 @@
 [![Build Status](https://travis-ci.org/SubstraFoundation/distributed-learning-contributivity.svg?branch=master)](https://travis-ci.org/SubstraFoundation/distributed-learning-contributivity)
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/SubstraFoundation/distributed-learning-contributivity/blob/master/run_experiment_on_google_collab.ipynb)
+
 
 # Exploration of dataset contributivity to a model in collaborative ML projects
 
@@ -6,9 +8,19 @@
 
 In collaborative data science projects partners sometimes need to train a model on multiple datasets, contributed by different data providing partners. In such cases the partners might have to measure how much each dataset involved contributed to the performance of the model. This is useful for example as a basis to agree on how to share the reward of the ML challenge or the future revenues derived from the predictive model, or to detect possible corrupted datasets or partners not playing by the rules. We explore this question and the opportunity to implement some mechanisms helping partners in such scenarios to measure each dataset's *contributivity* (as *contribution to the performance of the model*).
 
-## Context of this work
+### Context of this work
 
 This work is being carried out in the context of collaborative research projects. It is work in progress. We would like to share it with various interested parties, research and business partners to get their feedback and potential contributions. This is why it is shared as open source content on Substra Foundation’s repositories.
+
+### How to interact with this?
+
+It depends in what capacity you are interested! For example:
+
+- If you'd like to experiment right now by yourself multi-partner learning approaches and contributivity measurement methods, jump to section **[Using the code files](#using-the-code-files)**
+- If you'd like to get in touch with the workgroup, jump to section **[Contacts, contributions, collaborations](#contacts-contributions-collaborations)**. If you are a student or a teacher, we love discussing student projects!
+- If you are very familiar with this type of projects, well you can either have a look at section **[Ongoing work and improvement plan](#ongoing-work-and-improvement-plan)** or head towards [issues](https://github.com/SubstraFoundation/distributed-learning-contributivity/issues) and [PRs](https://github.com/SubstraFoundation/distributed-learning-contributivity/pulls) to see what's going on these days. We use the `help wanted` tag to flag issues on which help is particularly wanted, but other open issues would also very much welcome contributions
+
+Should you have any question, [reach out](#contacts-contributions-collaborations) and we'll be happy to discuss how we could help.
 
 ## About this repository
 
@@ -25,8 +37,7 @@ For a start we made the following choices:
 - What we want to compare (with the Shapley values being the baseline, see section below):
   - Contributivity relative values
   - Computation time
-- Public dataset for experiments: MNIST
-- ML algorithm: CNN adapted to MNIST, not too deep so it can run on CPU
+- Public datasets for experiments currently supported: MNIST, CIFAR10
 
 ### Structure of the library
 
@@ -56,12 +67,15 @@ Finally, with given scenarios and multi-partner learning approaches, we can addr
     experiment_name: my_custom_experiment
     n_repeats: 5
     scenario_params_list:
-     - partners_count: 
+     - dataset_name:
+         - 'mnist'
+         - 'cifar10'
+       partners_count: 
          - 3
        amounts_per_partner: 
-         - [0.4, 0.3, 0.3] 
+         - [0.4, 0.3, 0.3]
        samples_split_option: 
-         - [[7, 'shared'], [6, 'shared'], [2, 'specific']]
+         - ['advanced', [[7, 'shared'], [6, 'shared'], [2, 'specific']]]
        multi_partner_learning_approach:
          - 'fedavg'
        aggregation_weighting: 
@@ -75,13 +89,15 @@ Finally, with given scenarios and multi-partner learning approaches, we can addr
          - 20
        gradient_updates_per_pass_count:
          - 8
-     - partners_count: 
+     - dataset_name:
+         - 'mnist'
+       partners_count: 
          - 2
        amounts_per_partner: 
          - [0.5, 0.5]
        samples_split_option: 
-         - 'random'
-         - 'stratified'
+         - ['basic', 'random']
+         - ['basic', 'stratified']
        multi_partner_learning_approach:
          - 'fedavg'
        aggregation_weighting: 
@@ -90,18 +106,18 @@ Finally, with given scenarios and multi-partner learning approaches, we can addr
        epoch_count: 
          - 38
        methods:
-         - ["Shapley values", "Independent scores", "TMCS"]
+         - ["Shapley values", "SMCS", "IS_lin_S", "IS_reg_S"]
        minibatch_count: 
          - 20
        gradient_updates_per_pass_count:
          - 8
     ```
 
-   Under `scenario_params_list`, enter a list of sets of scenario(s). Each set starts with ` - partners_count:` and must have only one `partners_count` value. The length of `amount_per_partners`, `corrupted_datasets` (and `samples_split_option` when the advanced definition is used) must match the `partner_counts` value. If for a given parameter multiple values are specified, e.g. like for `agregation_weighting` in the first scenario set of the above example, all possible combinations of parameters will be assembled as separate scenarios and run.
+   Under `scenario_params_list`, enter a list of sets of scenario(s). Each set starts with ` - dataset_name:` and must have only one `partners_count` value. The length of `amount_per_partners`, `corrupted_datasets` (and `samples_split_option` when the advanced definition is used) must match the `partner_counts` value. If for a given parameter multiple values are specified, e.g. like for `agregation_weighting` in the first scenario set of the above example, all possible combinations of parameters will be assembled as separate scenarios and run.
    
-3. Then execute `main.py -f config.yml`
+3. Then execute `main.py -f config.yml`. Add the `-v` argument if you want a more verbose output. 
 
-4. A `results.csv` file will be generated in a new folder for your experiment under `/experiments/<your_experiment>`. You can read this raw `results.csv` file or use the `analyse_results.ipynb` generated notebook to quickly generate figures.
+4. A `results.csv` file will be generated in a new folder for your experiment under `/experiments/<your_experiment>`. You can read this raw `results.csv` file or use the notebooks in `/notebooks`.
 
 ### Config file parameters
 
@@ -119,6 +135,11 @@ Example: `n_repeats: 2`
 
 #### Scenario-level parameters
 
+##### Choice of dataset
+
+`dataset_name`: `'mnist'` (default) or `'cifar10'`  
+MNIST and CIFAR10 are currently supported. They come with their associated modules in `/datasets` for loading data, pre-processing inputs, and define a model architecture.
+
 ##### Definition of collaborative scenarios
 
 `partners_count`: `int`  
@@ -129,18 +150,19 @@ Example: `partners_count: 4`
 Fractions of the original dataset each partner receives to mock a collaborative ML scenario where each partner provides data for the ML training.  
 Example: `amounts_per_partner: [0.3, 0.3, 0.1, 0.3]`
 
-`samples_split_option`: `'random'` (default), `'stratified'` or `[[nb of clusters (int), 'shared' or 'specific']]`   
+`samples_split_option`: `['basic', 'random']` (default), `['basic', 'stratified']` or `['advanced', [[nb of clusters (int), 'shared' or 'specific']]]`   
 How the original dataset data samples are split among partners:
 
-- `'random'`: the dataset is shuffled and partners receive data samples selected randomly
-- `'stratified'`: the dataset is stratified per class and each partner receives certain classes only (note: depending on the `amounts_per_partner` specified, there might be small overlaps of classes)
-- `[[nb of clusters (int), 'shared' or 'specific']]`: in certain cases it might be interesting to split the dataset among partners in a more elaborate way. For that we consider the data samples from the initial dataset as split in clusters per data labels. The advanced split is configured by indicating, for each partner in sequence, the following 2 elements:
+- `'basic'` approaches:
+  - `'random'`: the dataset is shuffled and partners receive data samples selected randomly
+  - `'stratified'`: the dataset is stratified per class and each partner receives certain classes only (note: depending on the `amounts_per_partner` specified, there might be small overlaps of classes)
+- `'advanced'` approach `[[nb of clusters (int), 'shared' or 'specific']]`: in certain cases it might be interesting to split the dataset among partners in a more elaborate way. For that we consider the data samples from the initial dataset as split in clusters per data labels. The advanced split is configured by indicating, for each partner in sequence, the following 2 elements:
   - `nb of clusters (int)`: the given partner will receive data samples from that many different clusters (clusters of data samples per labels/classes) 
   - `'shared'` or `'specific'`:
     - `'shared'`: all partners with option `'shared'` receive data samples picked from clusters they all share data samples from
     - `'specific'`: each partner with option `'specific'` receives data samples picked from cluster(s) it is the only one to receive from
 
-Example: `[[7, 'shared'], [6, 'shared'], [2, 'specific'], [1, 'specific']]`
+Example: `['advanced', [[7, 'shared'], [6, 'shared'], [2, 'specific'], [1, 'specific']]]`
 
 ![Example of the advanced split option](img/advanced_split_example.png)
 
@@ -199,13 +221,9 @@ Example: `gradient_updates_per_pass_count: 5`
 
 `is_early_stopping`: `True` (default) or `False`  
 When set to `True`, the training phases (whether multi-partner of single-partner) are stopped when the performance on the validation set reaches a plateau.  
-Example: `is_early_stopping: False`
- 
-`single_partner_test_mode`: `'global'` (default) or `'local'`  
-When training a model on a single partner (this is needed in certain contributivity measurement approaches), defines if the final performance is tested on the central testset or on the partner's local testset. Note: a train-test split is performed on the original dataset, forming a central testset; this testset is also split over each partner (randomly) forming local testsets. This is currently not very useful, but might be interesting with future improvements of this library.  
-Example: `single_partner_test_mode: 'global'`  
+Example: `is_early_stopping: False` 
 
-**Note:** to only launch the distributed learning on the scenarios (and no contributivity measurement methods), omit the `methods` parameter (see section [Configuration of contributivity measurement methods to be tested](#configuration-of-contributivity-measurement-methods-to-be-tested) below).
+**Note:** to only launch the distributed learning on the scenarios (and no contributivity measurement methods), simply omit the `methods` parameter (see section [Configuration of contributivity measurement methods to be tested](#configuration-of-contributivity-measurement-methods-to-be-tested) below).
 
 ##### Configuration of contributivity measurement methods to be tested
 
@@ -239,7 +257,7 @@ Example: `is_quick_demo: True`
 
 - [**Shapley values**](https://arxiv.org/pdf/1902.10275.pdf):  
 
-  These indicators seem to be very good candidates to measure the contributivity of each data providers, because they are usually used in game theory to fairly attributes the gain of a coalition game amongst its players, which is exactly want we are looking for here.
+  These indicators seem to be very good candidates to measure the contributivity of each data providers, because they are usually used in game theory to fairly attributes the gain of a coalition game amongst its players, which is exactly what we are looking for here.
   
   A coalition game is a game where players form coalitions and each coalitions gets a score according to some rules. The winners are the players who manage to be in the coalition with the best score. Here we can consider each data provider is a player, and that forming a coalition is building a federated model using the dataset of each player within the coalition. The score of a coalition is then the performance on a test set of the federated model built by the coalition.
 
@@ -296,12 +314,16 @@ The current work focuses on the following 4 priorities:
 1. Perform **[experiments](https://github.com/SubstraFoundation/distributed-learning-contributivity/projects/1)** and gain experience about best-suited contributivity measurement methods in different situations
 1. Make the library **[agnostic/compatible with other datasets and model architectures](https://github.com/SubstraFoundation/distributed-learning-contributivity/projects/2)**
 
+There is also a transverse, continuous improvement effort on **[code quality, readibility, optimization](https://github.com/SubstraFoundation/distributed-learning-contributivity/projects/5)**.
+
 This work is collaborative, enthusiasts are welcome to comment open issues and PRs or open new ones.
 
-## Contacts
+## Contacts, contributions, collaborations
 
 Should you be interested in this open effort and would like to share any question, suggestion or input, you can use the following channels:
   - This Github repository (issues or PRs)
-  - Substra Foundation's [Slack workspace](https://substra-workspace.slack.com/join/shared_invite/zt-cpyedcab-FHYgpy08efKJ2FCadE2yCA)
+  - Substra Foundation's [Slack workspace](https://substra-workspace.slack.com/join/shared_invite/zt-cpyedcab-FHYgpy08efKJ2FCadE2yCA), channel `#workgroup-mpl-contributivity`
   - Email: hello@substra.org
   - Come meet with us at La Paillasse (Paris, France), Le Palace (Nantes, France) or Studio Iconosquare (Limoges, France)
+  
+ ![logo Substra Foundation](./img/substra_logo_couleur_rvb_w150px.png)
