@@ -14,6 +14,7 @@ from itertools import combinations
 from math import factorial
 from sklearn.linear_model import LinearRegression
 from loguru import logger
+from keras.backend.tensorflow_backend import clear_session
 
 import multi_partner_learning
 import shapley_value.shapley as sv
@@ -1000,27 +1001,34 @@ class Contributivity:
     def train_DVRL_seq(
         self,
         the_scenario,
-        data_valuator_model,
-        main_model,
+        data_valuator_model, 
         dve_learning_rate=0.001,
         T=30,
         epoch_count_init_dvm=40,
     ):
 
+
+        start = timer()
+        
+        # First train the main model
         mpl = multi_partner_learning.init_multi_partner_learning_from_scenario(
-            the_scenario
-        )
+                the_scenario, is_save_data=True,
+            )
+        
+        mpl.compute_test_score(True)
+
+        main_model = mpl.build_model_from_weights( mpl.model_weights )
 
         main_model.compile(
             optimizer="SGD", loss="binary_crossentropy", metrics=["accuracy"]
         )
+
+
+        # Second, train the data_value estimator to yield 0.5
+        logger.debug("initializing the datavaluator model")
         data_valuator_model.compile(
             optimizer="SGD", loss="mae", metrics=["accuracy"]
         )
-        start = timer()
-
-        # First, train the data_value estimator to yield 0.5
-        logger.debug("initializing the datavaluator model")
         for epoch_index in range(epoch_count_init_dvm):
             # Split the train dataset in mini-batches
             logger.debug("   Minibatch split")
@@ -1053,10 +1061,12 @@ class Contributivity:
 
  
         
-        # Second, train the dvrl
+        # Third, train the dvrl
         logger.debug("\nTraining the DVRL algorythm")
         previous_loss_list = []
-        loss_list = []
+        loss_list = [main_model.evaluate(
+                        mpl.val_data[0], mpl.val_data[1], verbose=0
+                    )[0]]
         for epoch_index in range(mpl.epoch_count * 2):
 
             # Split the train dataset in mini-batches
@@ -1077,6 +1087,7 @@ class Contributivity:
                     logger.debug(
                         f"       partner {for_loop_idx+1}/{mpl.partners_count} "
                     )
+                    logger.debug("           data selection")
                     # computing the current estimation of the data value
                     x = mpl.minibatched_x_train[partner_index][minibatch_index]
                     y = mpl.minibatched_y_train[partner_index][minibatch_index]
@@ -1087,22 +1098,21 @@ class Contributivity:
                     selected_data = np.random.binomial(
                         1, p=data_value, size=len(data_value)
                     )
-
+                    logger.debug("           main model fit")
                     # train the main model with the selected data
                     x, y = x[selected_data == 1], y[selected_data == 1]
                     main_model.fit(x, y, epochs=1, steps_per_epoch=1, verbose=0)
-
+                    logger.debug("           loss and cost definition")
                     # get the loss (to build the cost function of the data valuator model)
                     loss_main_model = main_model.evaluate(
                         mpl.val_data[0], mpl.val_data[1], verbose=0
                     )[0]
 
                     # build the cost function of the data valuator model
-                    def cost_fn(dv, s):
-                        if len(loss_list) == 0:
-                            m = tf.constant(0.0)
-                        else:
-                            m = np.mean(loss_list)
+                    @tf.function
+                    def cost_fn(data, s): 
+                        dv = data_valuator_model(data)
+                        m = np.mean(loss_list)
                         return (loss_main_model - m) * (
                             s * tf.math.log(dv + 1.0e-8)
                             + (1.0 - s) * tf.math.log(1.0 - dv - 1.0e-8)
@@ -1111,20 +1121,22 @@ class Contributivity:
                     # set the optimizer
                     optimizer = tf.keras.optimizers.SGD(learning_rate=dve_learning_rate)
                     # evulate  the gradient of the cost function
+                    logger.debug("           evulate  the gradient of the cost function")
                     Xy = tf.data.Dataset.from_tensor_slices(Xy)
                     Xy = Xy.batch(1)
                     selected_data = tf.convert_to_tensor(
                         selected_data, dtype=tf.float32
                     )
                     grads = None
-                    for data in Xy:
+                    for i,data in enumerate(Xy): 
                         with tf.GradientTape() as tape:
                             tape.watch(data_valuator_model.trainable_weights)
-                            data_value = data_valuator_model(data)
-                            current_cost_fn = cost_fn(data_value, selected_data)
+                            current_cost_fn = cost_fn(data, selected_data)
                         grad = tape.gradient(
                             current_cost_fn, data_valuator_model.trainable_weights
                         )
+                        if not grad:
+                            print("hihi je fais rien!")
                         if not grads:
                             grads = grad
                         else:
@@ -1151,13 +1163,14 @@ class Contributivity:
         for data_values in partners_data_values:
             contrib.append(np.sum(data_values))
         contrib /= np.sum(contrib)
-
+        
         self.name = "DVRL"
-        self.contributivity_scores = contrib * the_scenario.mpl.test_score
+        self.contributivity_scores = contrib *  mpl.test_score
         self.scores_std = np.zeros(mpl.partners_count)
         self.normalized_scores = contrib
         end = timer()
         self.computation_time_sec = end - start
+        clear_session()
 
     def compute_contributivity(
         self,
@@ -1211,9 +1224,7 @@ class Contributivity:
                 current_scenario, sv_accuracy=sv_accuracy, alpha=alpha
             )
         elif method_to_compute == "DVRL":
-            current_scenario.mpl = multi_partner_learning.init_multi_partner_learning_from_scenario(
-                current_scenario, is_save_data=True,
-            )
+            
             dvm = utils.a_data_valuator_model(
                 x_length=np.prod(current_scenario.dataset.input_shape),
                 y_length=current_scenario.dataset.num_classes,
@@ -1221,13 +1232,12 @@ class Contributivity:
                 hidden_dim=100,
                 activ_fct="relu",
             )
-            current_scenario.mpl.compute_test_score(True)
+            
             # Contributivity 10: Datavaluation by reinforcment learning
             self.train_DVRL_seq(
                 current_scenario,
                 data_valuator_model=dvm,
-                main_model=current_scenario.mpl.build_model_from_weights(  current_scenario.mpl.model_weights),
-                dve_learning_rate=0.001,
+                dve_learning_rate=0.01,
                 T=30,
                 epoch_count_init_dvm=40,
             )
