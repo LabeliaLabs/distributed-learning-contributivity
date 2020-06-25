@@ -1110,33 +1110,32 @@ class Contributivity:
 
                     # build the cost function of the data valuator model
                     @tf.function
-                    def cost_fn(data, s): 
-                        dv = data_valuator_model(data)
+                    def cost_fn(dv, s): 
                         m = np.mean(loss_list)
-                        return (loss_main_model - m) * (
+                        return((loss_main_model - m) * (
                             s * tf.math.log(dv + 1.0e-8)
                             + (1.0 - s) * tf.math.log(1.0 - dv - 1.0e-8)
-                        )
+                        ))
 
                     # set the optimizer
                     optimizer = tf.keras.optimizers.SGD(learning_rate=dve_learning_rate)
                     # evulate  the gradient of the cost function
                     logger.debug("           evulate  the gradient of the cost function")
-                    Xy = tf.data.Dataset.from_tensor_slices(Xy)
-                    Xy = Xy.batch(1)
                     selected_data = tf.convert_to_tensor(
                         selected_data, dtype=tf.float32
                     )
+                    ds = tf.data.Dataset.from_tensor_slices((Xy,selected_data))
+                    ds = ds.batch(1)
+                    
                     grads = None
-                    for i,data in enumerate(Xy): 
+                    for i,batch in enumerate(ds): 
+                        inputs, outputs = batch
                         with tf.GradientTape() as tape:
                             tape.watch(data_valuator_model.trainable_weights)
-                            current_cost_fn = cost_fn(data, selected_data)
+                            current_cost_fn = cost_fn(data_valuator_model(inputs), outputs)
                         grad = tape.gradient(
                             current_cost_fn, data_valuator_model.trainable_weights
                         )
-                        if not grad:
-                            print("hihi je fais rien!")
                         if not grads:
                             grads = grad
                         else:
