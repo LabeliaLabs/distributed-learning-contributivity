@@ -1002,9 +1002,11 @@ class Contributivity:
         self,
         the_scenario,
         data_valuator_model, 
+        nb_training_loop,
         dve_learning_rate=0.001,
-        T=30,
+        T=10,
         epoch_count_init_dvm=40,
+        inner_epoch=5,
     ):
 
 
@@ -1063,92 +1065,124 @@ class Contributivity:
         
         # Third, train the dvrl
         logger.debug("\nTraining the DVRL algorythm")
-        previous_loss_list = []
-        loss_list = [main_model.evaluate(
+        
+        ## initialisation         
+        loss_list_for_moving_average = [main_model.evaluate(
                         mpl.val_data[0], mpl.val_data[1], verbose=0
                     )[0]]
-        for epoch_index in range(mpl.epoch_count * 2):
+        for loop_idx in range(nb_training_loop): # this for loop should will be replaced by a while(not convergence) loop
+            
+            logger.debug("    data selection")
+            selected_data = []
+            for partner in the_scenario.partners_list:
+                # computing the current estimation of the data value
+                x = partner.x_train
+                y = partner.y_train
+                X = tf.reshape(x, [tf.shape(y)[0], -1])
+                Xy = tf.concat([X, y], axis=1) 
+                data_value = data_valuator_model.predict(Xy, steps=1)
+                selected  = np.random.binomial( 1, p=data_value, size=len(data_value) )
+                selected_x = x[selected]
+                selected_y = y[selected]
+                selected_data.append( (selected_x, selected_y , selected) )
+            
+            
+            for epoch_index in range(inner_epoch):
+    
+                # Split the train dataset in mini-batches
+                logger.debug("   Minibatch split")
+                minibatched_selected_x_train = [None] * mpl.partners_count
+                minibatched_selected_y_train = [None] * mpl.partners_count
+                
+                # Create the indices where to split
+                split_indices = np.arange(1, mpl.minibatch_count + 1) / mpl.minibatch_count
+        
+                # Iterate over all partners and split their datasets
+                for partner_index  in range( mpl.partners_count):
+                    #get the selected data for this partner
+                    x_train, y_train,_ = selected_data[partner_index] 
+                    # Shuffle the dataset
+                    idx = np.random.permutation(len(y_train))
+                    # Split the samples and labels
+                    minibatched_selected_x_train[partner_index] = np.split(x_train[idx], (split_indices[:-1] * len(x_train)).astype(int))
+                    minibatched_selected_y_train[partner_index] = np.split(y_train[idx], (split_indices[:-1] * len(y_train)).astype(int))
 
-            # Split the train dataset in mini-batches
-            logger.debug("   Minibatch split")
-            mpl.split_in_minibatches()
-
-            # Iterate over mini-batches for training
-            logger.debug("   Iterate over mini-batches for training")
-            for minibatch_index in range(mpl.minibatch_count):
-                logger.debug(
-                    f"   Training DVRL: > epoch {epoch_index+1}/{mpl.epoch_count*2} > minibatch {minibatch_index+1}/{mpl.minibatch_count} "
-                )
-                # Shuffle the order of the partners
-                shuffled_partner_indexes = np.random.permutation(mpl.partners_count)
-
-                # Iterate over shuffled partners
-                for for_loop_idx, partner_index in enumerate(shuffled_partner_indexes):
-                    logger.debug(
-                        f"       partner {for_loop_idx+1}/{mpl.partners_count} "
-                    )
-                    logger.debug("           data selection")
-                    # computing the current estimation of the data value
-                    x = mpl.minibatched_x_train[partner_index][minibatch_index]
-                    y = mpl.minibatched_y_train[partner_index][minibatch_index]
-                    X = np.reshape(x, [tf.shape(y)[0], -1])
-                    Xy = np.concatenate((X, y), axis=1)
-                    data_value = data_valuator_model.predict(Xy, steps=1)
-                    # selecting the data that will be used according to the current datavalue
-                    selected_data = np.random.binomial(
-                        1, p=data_value, size=len(data_value)
-                    )
-                    logger.debug("           main model fit")
-                    # train the main model with the selected data
-                    x, y = x[selected_data == 1], y[selected_data == 1]
-                    main_model.fit(x, y, epochs=1, steps_per_epoch=1, verbose=0)
-                    logger.debug("           loss and cost definition")
-                    # get the loss (to build the cost function of the data valuator model)
-                    loss_main_model = main_model.evaluate(
-                        mpl.val_data[0], mpl.val_data[1], verbose=0
-                    )[0]
-
-                    # build the cost function of the data valuator model
-                    @tf.function
-                    def cost_fn(dv, s): 
-                        m = np.mean(loss_list)
-                        return((loss_main_model - m) * (
-                            s * tf.math.log(dv + 1.0e-8)
-                            + (1.0 - s) * tf.math.log(1.0 - dv - 1.0e-8)
-                        ))
-
-                    # set the optimizer
-                    optimizer = tf.keras.optimizers.SGD(learning_rate=dve_learning_rate)
-                    # evulate  the gradient of the cost function
-                    logger.debug("           evulate  the gradient of the cost function")
-                    selected_data = tf.convert_to_tensor(
-                        selected_data, dtype=tf.float32
-                    )
-                    ds = tf.data.Dataset.from_tensor_slices((Xy,selected_data))
-                    ds = ds.batch(1)
+    
+                # Iterate over mini-batches for training the main model
+                logger.debug("   Iterate over mini-batches for training")
+                for minibatch_index in range(mpl.minibatch_count):
                     
-                    grads = None
-                    for i,batch in enumerate(ds): 
-                        inputs, outputs = batch
-                        with tf.GradientTape() as tape:
-                            tape.watch(data_valuator_model.trainable_weights)
-                            current_cost_fn = cost_fn(data_valuator_model(inputs), outputs)
-                        grad = tape.gradient(
-                            current_cost_fn, data_valuator_model.trainable_weights
-                        )
-                        if not grads:
-                            grads = grad
-                        else:
-                            grads += grad
-                    # apply  the gradient of the cost function
-                    optimizer.apply_gradients(
-                        zip(grads, data_valuator_model.trainable_weights)
+                    # Shuffle the order of the partners
+                    shuffled_partner_indexes = np.random.permutation(mpl.partners_count)
+    
+                    # Iterate over shuffled partners
+                    for for_loop_idx, partner_index in enumerate(shuffled_partner_indexes):
+                        logger.debug(
+                            f"   Training DVRL: > main model training loop {loop_idx+1}/{nb_training_loop}> epoch {epoch_index+1}/{inner_epoch} > minibatch {minibatch_index+1}/{mpl.minibatch_count} > partner {for_loop_idx+1}/{mpl.partners_count}  "
+                            ) 
+                        # computing the current estimation of the data value
+                        x =  minibatched_selected_x_train[partner_index][minibatch_index] 
+                        y =  minibatched_selected_y_train[partner_index][minibatch_index] # train the main model with the selected data
+                        main_model.fit(x, y, epochs=1, steps_per_epoch=1, verbose=0) 
+                        # get the loss (will be used as an argument for the cost function of the data valuator model)
+                        
+            x_val, y_val = mpl.val_data
+            loss = main_model.evaluate(x_val, y_val, verbose=0)[0]
+            # get the Moving_average of the losses
+            moving_av = np.mean(loss_list_for_moving_average)
+
+            # set the optimizer
+            optimizer = tf.keras.optimizers.SGD(learning_rate=dve_learning_rate)
+            # build the cost function of the data_valuator_model
+            @tf.function
+            def cost_fn(dv, selection_indcator, loss_main_model, moving_average): 
+                return((loss_main_model - moving_average) * (
+                    selection_indcator * tf.math.log(dv + 1.0e-8)
+                    + (1.0 - selection_indcator) * tf.math.log(1.0 - dv - 1.0e-8)
+                ))
+            grads=None            
+            for partner_index  in range( mpl.partners_count):          
+                logger.debug(
+                    f"   Training DVRL: training the data valuator model  > partner {for_loop_idx+1}/{mpl.partners_count}  "
                     )
 
-                    previous_loss_list.append(loss_main_model)
-                    if len(previous_loss_list) > T:
-                        previous_loss_list.pop(0)
-                    loss_list = previous_loss_list
+                # evulate  the gradient of the cost function
+                logger.debug("      evulate  the gradient of the cost function")
+                 
+                x,y,s = selected_data[partner_index] 
+                X = tf.reshape(x, [tf.shape(y)[0], -1])
+                Xy = tf.concat([X, y], axis=1)
+                s=tf.convert_to_tensor(
+                    s, dtype=tf.float32
+                )
+                ds = tf.data.Dataset.from_tensor_slices((Xy,s))
+                ds = ds.batch(100)
+                 
+                for batch in ds: 
+                    inputs, outputs = batch
+                    with tf.GradientTape() as tape: 
+                        dv = data_valuator_model(inputs)
+                        current_cost_fn = cost_fn(
+                            dv, 
+                            outputs,
+                            tf.constant(loss, dtype=tf.float32),
+                            tf.constant(moving_av, dtype=tf.float32)
+                            )
+                    grad_batch = tape.gradient(
+                        current_cost_fn, data_valuator_model.trainable_weights
+                    )
+                    if not grads:
+                        grads = grad_batch
+                    else:
+                        grads += grad_batch
+     
+            # apply  the gradient of the cost functions
+            optimizer.apply_gradients(
+                zip(grads, data_valuator_model.trainable_weights)
+            )
+            loss_list_for_moving_average.append(loss)
+            if len(loss_list_for_moving_average) > T:
+                loss_list_for_moving_average.pop(0) 
 
         # compute the data values
         partners_data_values = []
@@ -1236,9 +1270,11 @@ class Contributivity:
             self.train_DVRL_seq(
                 current_scenario,
                 data_valuator_model=dvm,
+                nb_training_loop=10,
                 dve_learning_rate=0.01,
                 T=30,
                 epoch_count_init_dvm=40,
+                inner_epoch=5,
             )
         else:
             logger.warning("Unrecognized name of method, statement ignored!")
