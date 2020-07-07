@@ -14,8 +14,8 @@ from keras import models
 from keras import layers
 from keras.datasets import imdb
 
-nb_words = 3000
-(x_train, y_train), (x_test, y_test) = imdb.load_data(num_words=nb_words)
+(x_train, y_train), (x_test, y_test) = imdb.load_data(num_words=10000, skip_top=35, start_char=1, oov_char=2, index_from=3)
+
 # Argument num_words => only the num_words first more frequent words are used
 # The others are replaced by 2
 # A Review start by the number 1
@@ -63,7 +63,7 @@ def generate_new_model_for_dataset():
     model.add(layers.Flatten()) # Adapt shape of output
 
     # Output- Layer
-    model.add(layers.Dense(2, activation = "sigmoid")) # 2 => One-Hot Encoding!! with categorical_crossentropy
+    model.add(layers.Dense(2, activation = "softmax")) # 2 => One-Hot Encoding!! with categorical_crossentropy
 
     # model.summary() # Debugging
 
