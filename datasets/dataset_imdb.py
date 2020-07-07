@@ -62,7 +62,7 @@ def generate_new_model_for_dataset():
     model.add(layers.Flatten()) # Adapt shape of output
 
     # Output- Layer
-    model.add(layers.Dense(2, activation = "sigmoid")) # 2 => One-Hot Encoding!! with categorical_crossentropy
+    model.add(layers.Dense(2, activation = "softmax")) # 2 => One-Hot Encoding!! with categorical_crossentropy
 
     # model.summary() # Debugging
 
