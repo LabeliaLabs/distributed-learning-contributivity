@@ -34,7 +34,6 @@ def preprocess_dataset_inputs(data):
 
 def preprocess_dataset_labels(y): # Do not preprocess labels here! => it's done in another script
     y = keras.utils.to_categorical(y, num_classes)
-    y = y.reshape(y.shape[0], y.shape[1])
 
     return y
 
