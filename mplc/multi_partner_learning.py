@@ -109,7 +109,8 @@ class MultiPartnerLearning:
 
         # Save model score on test data
         self.test_score = model_evaluation_test_data[1]  # 0 is for the loss
-        self.nb_epochs_done = (es.stopped_epoch + 1) if es.stopped_epoch != 0 else self.epoch_count
+        self.loss_collective_models.append(model_evaluation_test_data[0])  # store the loss for PVRL
+        self.nb_epochs_done = (es.stopped_epoch + 1) if self.is_early_stopping else self.epoch_count
 
         end = timer()
         self.learning_computation_time = end - start
