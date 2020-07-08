@@ -14,7 +14,10 @@ from keras import models
 from keras import layers
 from keras.datasets import imdb
 
-(x_train, y_train), (x_test, y_test) = imdb.load_data(num_words=10000, skip_top=35, start_char=1, oov_char=2, index_from=3)
+out_of_vocabulary = 2
+max_nb_words_configured = 3000 # For padding
+
+(x_train, y_train), (x_test, y_test) = imdb.load_data(num_words=10000, skip_top=35, start_char=1, oov_char=out_of_vocabulary, index_from=3)
 
 # Argument num_words => only the num_words first more frequent words are used
 # The others are replaced by 2
@@ -24,7 +27,7 @@ from keras.datasets import imdb
 def preprocess_dataset_inputs(data):
     data_list = []
     for sample in data:
-        sample += [2] * (nb_words - len(sample)) # 2 is the over_of_vocabulary number
+        sample += [out_of_vocabulary] * (max_nb_words_configured - len(sample)) # 2 is the over_of_vocabulary number
         data_list.append(sample)
 
     data_array = np.array(data_list)
@@ -36,9 +39,6 @@ def preprocess_dataset_labels(y): # Do not preprocess labels here! => it's done 
     y = keras.utils.to_categorical(y, num_classes)
 
     return y
-
-# Padding
-nb_words = 3000
 
 input_shape = (nb_words,1)
 
