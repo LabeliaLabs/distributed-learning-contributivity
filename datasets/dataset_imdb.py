@@ -15,8 +15,6 @@ from keras import layers
 from keras.datasets import imdb
 
 out_of_vocabulary = 2
-# For padding
-max_nb_words_configured = 2500 
 # We keep the 10000 first more frequent words in the datasets
 # Also the dimentionality of the input of the Embedding layer
 size_vocabulary = 10000
