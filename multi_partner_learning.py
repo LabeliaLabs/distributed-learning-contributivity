@@ -144,10 +144,10 @@ class MultiPartnerLearning:
         if self.learning_approach in ['seq-pure', 'seq-with-final-agg']:
             if self.use_weights_from_previous_coalition:
                 sequentially_trained_model = self.init_with_model(self.use_weights_from_previous_coalition)
-                logger.debug(f"(seq) Init models with previous coalition model for each partner")
+                logger.info(f"(seq) Init models with previous coalition model for each partner")
             else:
                 sequentially_trained_model = self.init_with_model()
-                logger.debug(f"(seq) Init new models for each partner")
+                logger.info(f"(seq) Init new models for each partner")
 
 
 
@@ -304,12 +304,12 @@ class MultiPartnerLearning:
         if is_very_first_minibatch:  # Except for the very first mini-batch where it is a new model
             if self.use_weights_from_previous_coalition:
                 partners_model_list_for_iteration = self.init_with_models(self.use_weights_from_previous_coalition)
-                logger.debug(f"(fedavg) Very first minibatch of epoch n°{epoch_index}, init models with previous coalition model for each partner")
+                logger.info(f"(fedavg) Very first minibatch of epoch n°{epoch_index}, init models with previous coalition model for each partner")
             else:
                 partners_model_list_for_iteration = self.init_with_models()
-                logger.debug(f"(fedavg) Very first minibatch of epoch n°{epoch_index}, init new models for each partner")
+                logger.info(f"(fedavg) Very first minibatch of epoch n°{epoch_index}, init new models for each partner")
         else:
-            logger.debug(f"(fedavg) Minibatch n°{minibatch_index} of epoch n°{epoch_index}, "
+            logger.info(f"(fedavg) Minibatch n°{minibatch_index} of epoch n°{epoch_index}, "
                          f"init aggregated model for each partner with models from previous round")
             partners_model_list_for_iteration = self.init_with_agg_models()
 
@@ -399,12 +399,12 @@ class MultiPartnerLearning:
         if is_very_first_minibatch:  # Except for the very first mini-batch where it is a new model
             if self.use_weights_from_previous_coalition:
                 model_for_round = self.init_with_model(self.use_weights_from_previous_coalition)
-                logger.debug(f"(fedavg) Very first minibatch of epoch n°{epoch_index}, init model with previous coalition model for each partner")
+                logger.info(f"(seqavg) Very first minibatch of epoch n°{epoch_index}, init model with previous coalition model for each partner")
             else:
                 model_for_round = self.init_with_model()
-                logger.debug(f"(fedavg) Very first minibatch of epoch n°{epoch_index}, init new model for each partner")
+                logger.info(f"(seqavg) Very first minibatch of epoch n°{epoch_index}, init new model for each partner")
         else:
-            logger.debug(f"(seqavg) Minibatch n°{minibatch_index} of epoch n°{epoch_index}, "
+            logger.info(f"(seqavg) Minibatch n°{minibatch_index} of epoch n°{epoch_index}, "
                          f"init model by aggregating models from previous round")
             model_for_round = self.init_with_agg_model()
 
