@@ -40,7 +40,7 @@ def preprocess_dataset_labels(y): # Do not preprocess labels here! => it's done 
 
     return y
 
-input_shape = (nb_words,1)
+input_shape = (max_nb_words_configured,1)
 
 # Number of labels
 num_classes = 2
