@@ -230,12 +230,16 @@ class MultiPartnerLearning:
         if not os.path.isdir(model_folder):
             os.makedirs(model_folder)
             
-        model_weights = []
-        for layer in model_to_save.layers:
-            layer_weights = []
-            for weight in layer.get_weights():
-                layer_weights.append(weight)
-            model_weights.append(layer_weights)
+        model_to_save.save_weights(os.path.join(model_folder, self.dataset_name+'_final_weights.h5'))
+        model_weights = model_to_save.get_weights()
+        
+            
+        # model_weights = []
+        # for layer in model_to_save.layers:
+        #     layer_weights = []
+        #     for weight in layer.get_weights():
+        #         layer_weights.append(weight)
+        #     model_weights.append(layer_weights)
             
         np.save(os.path.join(model_folder, self.dataset_name+'_final_weights.npy'), 
                 model_weights)
@@ -288,16 +292,11 @@ class MultiPartnerLearning:
         # Initialize variables
         epoch_index, minibatch_index = self.epoch_index, self.minibatch_index
         is_very_first_minibatch = (epoch_index == 0 and minibatch_index == 0)
-        x_val, y_val = self.val_data
-
-#TODO: To remove!!!        
-        logger.debug(self.init_model_from)
-        logger.debug(os.path.isfile(self.init_model_from))
-        
+        x_val, y_val = self.val_data        
 
         # Starting model for each partner is the aggregated model from the previous mini-batch iteration
         if is_very_first_minibatch:  # Except for the very first mini-batch where it is a new model
-            if use_weights_from_previous_coalition:
+            if self.use_weights_from_previous_coalition:
                 partners_model_list_for_iteration = self.init_with_models(self.use_weights_from_previous_coalition)
                 logger.debug(f"(fedavg) Very first minibatch of epoch n°{epoch_index}, init models with previous coalition model for each partner")
             else:
@@ -392,8 +391,12 @@ class MultiPartnerLearning:
 
         # Starting model for each partner is the aggregated model from the previous collaborative round
         if is_very_first_minibatch:  # Except for the very first mini-batch where it is a new model
-            logger.debug(f"(seqavg) Very first minibatch, init a new model for the round")
-            model_for_round = self.generate_new_model()
+            if self.use_weights_from_previous_coalition:
+                model_for_round = self.init_with_model(self.use_weights_from_previous_coalition)
+                logger.debug(f"(fedavg) Very first minibatch of epoch n°{epoch_index}, init model with previous coalition model for each partner")
+            else:
+                model_for_round = self.init_with_model()
+                logger.debug(f"(fedavg) Very first minibatch of epoch n°{epoch_index}, init new model for each partner")
         else:
             logger.debug(f"(seqavg) Minibatch n°{minibatch_index} of epoch n°{epoch_index}, "
                          f"init model by aggregating models from previous round")
@@ -548,38 +551,6 @@ class MultiPartnerLearning:
         for partner in self.partners_list:
             partners_model_list.append(self.build_model_from_weights(self.aggregate_model_weights()))
         return partners_model_list
-    
-    
-    # def init_with_previous_learned_model(self):
-    #     """Return a new model aggregating models from model_list"""
-        
-    #     logger.info('HEEEELLLLLLLOOOOOOO')
-    #     previous_model = self.generate_new_model()
-    #     previous_model.load_weights(self.init_model_from)
-    #     previous_model.compile(
-    #         loss=keras.losses.categorical_crossentropy,
-    #         optimizer="adam",
-    #         metrics=["accuracy"],
-    #     )
-
-    #     return previous_model
-
-
-    # def init_with_previous_learned_models(self):
-    #     """Return a list with the aggregated model duplicated for each partner"""
-
-    #     previous_model = self.generate_new_model()
-    #     previous_model.load_weights(self.init_model_from)
-    #     previous_model.compile(
-    #         loss=keras.losses.categorical_crossentropy,
-    #         optimizer="adam",
-    #         metrics=["accuracy"],
-    #     )
-        
-    #     partners_model_list = []
-    #     for partner in self.partners_list:
-    #         partners_model_list.append(previous_model)
-    #     return partners_model_list
     
 
     @staticmethod
