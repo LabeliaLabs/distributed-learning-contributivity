@@ -3,10 +3,10 @@ n_repeats: 1
 scenario_params_list:
  - dataset_name:
     'mnist':
-    - 
+    - 'init'
     - './experiments/debug_config_2020-06-17_11h26/scenario_1_repeat_1_2020-06-17_11h26_85f/model/mnist_final_weights.h5'
-   'cifar10':
-    - 
+    'cifar10':
+    - 'init'
    partners_count:
     - 3
    amounts_per_partner:
@@ -14,7 +14,7 @@ scenario_params_list:
    samples_split_option:
     - ['advanced', [[4, 'shared'], [6, 'shared'], [4, 'specific']]]
    multi_partner_learning_approach:
-    - 'seq-with-final-agg'
+    - 'fedavg'
    aggregation_weighting:
     - 'uniform'
    methods:

@@ -142,7 +142,13 @@ class MultiPartnerLearning:
         # Initialize variables
         model_to_evaluate, sequentially_trained_model = None, None
         if self.learning_approach in ['seq-pure', 'seq-with-final-agg']:
-            sequentially_trained_model = self.init_with_model(self.use_weights_from_previous_coalition)
+            if self.use_weights_from_previous_coalition:
+                sequentially_trained_model = self.init_with_model(self.use_weights_from_previous_coalition)
+                logger.debug(f"(seq) Init models with previous coalition model for each partner")
+            else:
+                sequentially_trained_model = self.init_with_model()
+                logger.debug(f"(seq) Init new models for each partner")
+
 
 
         # Train model (iterate for each epoch and mini-batch)
@@ -292,7 +298,7 @@ class MultiPartnerLearning:
         # Initialize variables
         epoch_index, minibatch_index = self.epoch_index, self.minibatch_index
         is_very_first_minibatch = (epoch_index == 0 and minibatch_index == 0)
-        x_val, y_val = self.val_data        
+        x_val, y_val = self.val_data   
 
         # Starting model for each partner is the aggregated model from the previous mini-batch iteration
         if is_very_first_minibatch:  # Except for the very first mini-batch where it is a new model
@@ -482,24 +488,6 @@ class MultiPartnerLearning:
         new_model = self.generate_new_model()
         new_model.set_weights(new_weights)
         return new_model
-
-
-    # def init_with_new_models(self):
-    #     """Return a list of newly generated models, one per partner"""
-
-    #     # Init a list to receive a new model for each partner
-    #     partners_model_list = []
-
-    #     # Generate a new model and add it to the list
-    #     new_model = self.generate_new_model()
-    #     partners_model_list.append(new_model)
-
-    #     # For each remaining partner, duplicate the new model and add it to the list
-    #     new_model_weights = new_model.get_weights()
-    #     for i in range(len(self.partners_list)-1):
-    #         partners_model_list.append(self.build_model_from_weights(new_model_weights))
-
-    #     return partners_model_list
     
     
     def init_with_models(self, use_weights_from_previous_coalition=False):
