@@ -15,17 +15,20 @@ from keras import layers
 from keras.datasets import imdb
 
 out_of_vocabulary = 2
-max_nb_words_configured = 3000 # For padding
+max_nb_words_configured = 2500 # For padding
 
 (x_train, y_train), (x_test, y_test) = imdb.load_data(num_words=10000, skip_top=35, start_char=1, oov_char=out_of_vocabulary, index_from=3)
 
 # Argument num_words => only the num_words first more frequent words are used
 # The others are replaced by 2
 # A Review start by the number 1
-# The longest review is less than 3000 words long
+# The longest review is less than 2500 words long
 
 def preprocess_dataset_inputs(data):
     data_list = []
+    
+    assert max_nb_words_configured >= max([len(x) for x in data]),"max_nb_words_configured lower than the longest review"
+    
     for sample in data:
         sample += [out_of_vocabulary] * (max_nb_words_configured - len(sample)) # 2 is the over_of_vocabulary number
         data_list.append(sample)
