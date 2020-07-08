@@ -110,6 +110,7 @@ class Contributivity:
                 the_scenario.dataset,
                 the_scenario.multi_partner_learning_approach,
                 the_scenario.aggregation_weighting,
+                the_scenario.folder_for_starting_model,
                 is_early_stopping=True,
                 is_save_data=False,
                 save_folder=the_scenario.save_folder,
@@ -962,6 +963,83 @@ class Contributivity:
             end = timer()
             self.computation_time_sec = end - start
 
+    # %% compute Partner value by reinforocment learning
+
+    def PVRL(self, the_scenario, learning_rate ):
+        start = timer()
+        w = np.zeros(the_scenario.partners_count) 
+        partner_values = np.exp(w) / (1.0 + np.exp(w))
+        previous_partner_values  = np.zeros(the_scenario.partners_count)
+        epsilon = 0.002
+        mpl= multi_partner_learning.MultiPartnerLearning(
+                    the_scenario.partners_list,
+                    1,
+                    the_scenario.minibatch_count,
+                    the_scenario.dataset,
+                    the_scenario.multi_partner_learning_approach,
+                    the_scenario.aggregation_weighting,
+                    None,
+                    the_scenario.is_early_stopping,
+                    is_save_data=False,
+                    save_folder="",
+                    )
+        mpl.compute_test_score()
+        weights_for_starting_model = mpl.federated_model_weights
+        previous_loss = mpl.loss_collective_models[-1]
+        t=0
+        while (t<the_scenario.epoch_count*the_scenario.partners_count or np.sum(np.abs(partner_values -previous_partner_values))/ the_scenario.partners_count > epsilon ):
+            t+=1
+            print("t:",t)
+            print("partner_values:",partner_values)
+            # Select the partner / the action
+            is_partner_in= np.random.binomial(  1, p=partner_values) 
+            while np.sum(is_partner_in)==0 :
+                is_partner_in= np.random.binomial(  1, p=partner_values) 
+            
+            # apply one epoch with the selected partner to the model/ do the action
+            small_partner_list= [partner for partner, is_in in zip(the_scenario.partners_list,is_partner_in) if is_in == 1]
+            mpl= multi_partner_learning.MultiPartnerLearning(
+                small_partner_list,
+                1,
+                the_scenario.minibatch_count,
+                the_scenario.dataset,
+                the_scenario.multi_partner_learning_approach,
+                the_scenario.aggregation_weighting,
+                weights_for_starting_model,
+                the_scenario.is_early_stopping,
+                is_save_data=False,
+                save_folder="",
+                )
+            mpl.compute_test_score()
+            weights_for_starting_model = mpl.federated_model_weights
+            loss = mpl.loss_collective_models[-1]
+            
+            
+            G =- loss + previous_loss
+            dp_dw = np.exp(w) / (1+np.exp(w))**2
+            prodp = np.prod (partner_values)
+            # Update the weight according to the REINFORCE method
+            new_w = np.zeros(the_scenario.partners_count)
+            for i in range(the_scenario.partners_count):
+                new_w[i] = w[i] + learning_rate * G * dp_dw[i] * (is_partner_in[i] / partner_values[i]  - (1.0 - is_partner_in[i])  / (1.0 -partner_values[i])  - prodp / (1.0-prodp) / (1.0 -partner_values[i]) )
+            w=new_w
+            # Update values before the next round
+            previous_partner_values = partner_values
+            partner_values = np.exp(w) / (1.0 + np.exp(w))
+            previous_loss = loss
+            
+        self.name = "PVRL"
+        print(f"PVRL: the final accuracy is  {mpl.test_score}")
+        self.contributivity_scores = partner_values
+        self.scores_std = np.zeros(the_scenario.partners_count)
+        self.normalized_scores = self.contributivity_scores / np.sum(
+            self.contributivity_scores
+        )
+        end = timer()
+        self.computation_time_sec = end - start       
+        
+                
+
     def compute_contributivity(
         self,
         method_to_compute,
@@ -1012,6 +1090,11 @@ class Contributivity:
             # Contributivity 9: Without replacement Stratified Monte Carlo
             self.without_replacment_SMC(
                 current_scenario, sv_accuracy=sv_accuracy, alpha=alpha
+            )
+        elif method_to_compute == "PVRL":
+            # Contributivity 10: Partner valuation by reinforocment learning
+            self.PVRL(
+                current_scenario, learning_rate=0.2
             )
         else:
             logger.warning("Unrecognized name of method, statement ignored!")
