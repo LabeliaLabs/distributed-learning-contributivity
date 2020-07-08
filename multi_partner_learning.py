@@ -26,6 +26,7 @@ class MultiPartnerLearning:
                  dataset,
                  multi_partner_learning_approach,
                  aggregation_weighting="uniform",
+                 folder_for_starting_model=None,
                  is_early_stopping=True,
                  is_save_data=False,
                  save_folder="",
@@ -56,6 +57,12 @@ class MultiPartnerLearning:
         self.minibatched_y_train = [None] * self.partners_count
         self.aggregation_weights = []
         self.models_weights_list = [None] * self.partners_count
+        if not folder_for_starting_model:
+            self.federated_model_weights = None
+        else:
+            model = self.generate_new_model()
+            model.load_weights(folder_for_starting_model) 
+            self.federated_model_weights = model.get_weight()
         self.scores_last_learning_round = [None] * self.partners_count
         self.score_matrix_per_partner = np.nan * np.zeros(shape=(self.epoch_count, self.minibatch_count, self.partners_count))
         self.score_matrix_collective_models = np.nan * np.zeros(shape=(self.epoch_count, self.minibatch_count + 1))
@@ -110,7 +117,7 @@ class MultiPartnerLearning:
         end = timer()
         self.learning_computation_time = end - start
 
-    def compute_test_score(self):
+    def compute_test_score(self, start_from_federated_model=False, ):
         """Return the score on test data of a final aggregated model trained in a federated way on each partner"""
 
         start = timer()
@@ -137,7 +144,18 @@ class MultiPartnerLearning:
         # Initialize variables
         model_to_evaluate, sequentially_trained_model = None, None
         if self.learning_approach in ['seq-pure', 'seq-with-final-agg']:
-            sequentially_trained_model = self.generate_new_model()
+            if start_from_federated_model:
+                sequentially_trained_model = self.build_model_from_weights(self.federated_model_weights)
+            else:
+                sequentially_trained_model = self.generate_new_model()
+        else:
+            if start_from_federated_model:
+                self.models_weights_list = [self.federated_model_weights] * self.partners_count
+            else:
+                new_model = self.generate_new_model()
+                for i in range(self.partners_count):
+                    self.models_weights_list[i] = new_model.get_weights() 
+         
 
         # Train model (iterate for each epoch and mini-batch)
         for epoch_index in range(epoch_count):
@@ -210,6 +228,10 @@ class MultiPartnerLearning:
             self.save_data()
 
         logger.info("Training and evaluation on multiple partners: done.")
+        
+        # saves the federated model weights
+        self.federated_model_weights=model_evaluation.get_weights()
+        
         end = timer()
         self.learning_computation_time = end - start
 
@@ -260,17 +282,12 @@ class MultiPartnerLearning:
 
         # Initialize variables
         epoch_index, minibatch_index = self.epoch_index, self.minibatch_index
-        is_very_first_minibatch = (epoch_index == 0 and minibatch_index == 0)
         x_val, y_val = self.val_data
 
-        # Starting model for each partner is the aggregated model from the previous mini-batch iteration
-        if is_very_first_minibatch:  # Except for the very first mini-batch where it is a new model
-            logger.debug(f"(fedavg) Very first minibatch of epoch n°{epoch_index}, init new models for each partner")
-            partners_model_list_for_iteration = self.init_with_new_models()
-        else:
-            logger.debug(f"(fedavg) Minibatch n°{minibatch_index} of epoch n°{epoch_index}, "
-                         f"init aggregated model for each partner with models from previous round")
-            partners_model_list_for_iteration = self.init_with_agg_models()
+        # Starting model for each partner is the aggregated model  
+        logger.debug(f"(fedavg) Minibatch n°{minibatch_index} of epoch n°{epoch_index}, "
+                     f"init aggregated model for each partner with models from previous round")
+        partners_model_list_for_iteration = self.init_with_agg_models()
 
         # Evaluate and store accuracy of mini-batch start model
         model_to_evaluate = partners_model_list_for_iteration[0]
@@ -351,17 +368,12 @@ class MultiPartnerLearning:
 
         # Initialize variables
         epoch_index, minibatch_index = self.epoch_index, self.minibatch_index
-        is_very_first_minibatch = (epoch_index == 0 and minibatch_index == 0)
         x_val, y_val = self.val_data
 
-        # Starting model for each partner is the aggregated model from the previous collaborative round
-        if is_very_first_minibatch:  # Except for the very first mini-batch where it is a new model
-            logger.debug(f"(seqavg) Very first minibatch, init a new model for the round")
-            model_for_round = self.generate_new_model()
-        else:
-            logger.debug(f"(seqavg) Minibatch n°{minibatch_index} of epoch n°{epoch_index}, "
-                         f"init model by aggregating models from previous round")
-            model_for_round = self.init_with_agg_model()
+        # Starting model for each partner is the aggregated model
+        logger.debug(f"(seqavg) Minibatch n°{minibatch_index} of epoch n°{epoch_index}, "
+                     f"init model by aggregating models from previous round")
+        model_for_round = self.init_with_agg_model()
 
         # Evaluate and store accuracy of mini-batch start model
         model_evaluation = model_for_round.evaluate(x_val, y_val, batch_size=constants.DEFAULT_BATCH_SIZE, verbose=0)
@@ -449,22 +461,6 @@ class MultiPartnerLearning:
 
         return new_model
 
-    def init_with_new_models(self):
-        """Return a list of newly generated models, one per partner"""
-
-        # Init a list to receive a new model for each partner
-        partners_model_list = []
-
-        # Generate a new model and add it to the list
-        new_model = self.generate_new_model()
-        partners_model_list.append(new_model)
-
-        # For each remaining partner, duplicate the new model and add it to the list
-        new_model_weights = new_model.get_weights()
-        for i in range(len(self.partners_list)-1):
-            partners_model_list.append(self.build_model_from_weights(new_model_weights))
-
-        return partners_model_list
 
     def init_with_agg_model(self):
         """Return a new model aggregating models from model_list"""
@@ -526,6 +522,7 @@ def init_multi_partner_learning_from_scenario(scenario, is_save_data=True):
         scenario.minibatch_count,
         scenario.dataset,
         scenario.multi_partner_learning_approach,
+        scenario.folder_of_starting_model,
         scenario.aggregation_weighting,
         scenario.is_early_stopping,
         is_save_data,

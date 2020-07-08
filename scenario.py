@@ -148,6 +148,9 @@ class Scenario:
             self.is_early_stopping = params["is_early_stopping"]
         else:
             self.is_early_stopping = True  # default
+            
+        if "folder_of_starting_model" in params:
+            self.folder_of_starting_model = params["folder_of_starting_model"]
 
         # -----------------------------------------------------------------
         #  Configuration of contributivity measurement methods to be tested
@@ -167,6 +170,7 @@ class Scenario:
             "AIS_Kriging_S",
             "SMCS",
             "WR_SMC",
+            "PVRL",
         ]
 
         self.methods = []
