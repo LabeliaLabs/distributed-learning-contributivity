@@ -145,10 +145,11 @@ Example: `n_repeats: 2`
 MNIST and CIFAR10 are currently supported. They come with their associated modules in `/datasets` for loading data, pre-processing inputs, and define a model architecture.
 
 **Note on validation and test datasets**:  
-- the datasets module must provide separated train and test sets
-- the train set is then further split into separated train and validation sets
-- in the multi-partner learning computations, this global validation set is used for early stopping and the global test set is used for performance evaluation
-- additionally, after the train data samples are split amongst partners according to the scenario configuration, a partner's local train set is split into separated train, validation and test sets. Currently, the local validation and test set are not used, but they are available for further developments of multi-partner learning and contributivity measurement approaches
+- The dataset modules must provide separated train and test sets (referred to as global train set and global test set).
+- The global train set is then further split into a global train set and a global validation set.
+In the multi-partner learning computations, the global validation set is used for early stopping and the global test set is used for performance evaluation.
+- The global train set is split amongst partner (according to the scenario configuration) to populate the partner's local datasets.
+- For each partner, the local dataset is split into separated train, validation and test sets. Currently, the local validation and test set are not used, but they are available for further developments of multi-partner learning and contributivity measurement approaches.
 
 ##### Definition of collaborative scenarios
 
