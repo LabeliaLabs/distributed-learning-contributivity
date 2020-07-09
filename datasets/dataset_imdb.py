@@ -6,12 +6,10 @@ https://keras.io/examples/nlp/text_classification_from_scratch/
 https://builtin.com/data-science/how-build-neural-network-keras
 """
 
-import tensorflow as tf
-import numpy as np
-from tensorflow import keras
+import keras
 from keras.utils import to_categorical
-from keras import models
-from keras import layers
+from keras.preprocessing.sequence import pad_sequences
+from keras import models, layers
 from keras.datasets import imdb
 
 out_of_vocabulary = 2
@@ -30,12 +28,12 @@ num_classes = 2
 # A Review start by the number 1
 
 def preprocess_dataset_labels(y): # Do not preprocess labels here! => it's done in another script
-    y = keras.utils.to_categorical(y, num_classes)
+    y = to_categorical(y, num_classes)
     return y
 
 # Standardize size of review at maxlen words: pre-padding (with 0) and pre-truncating
 def preprocess_dataset_inputs(x):
-    return keras.preprocessing.sequence.pad_sequences(x_train, maxlen=maxlen)
+    return pad_sequences(x_train, maxlen=maxlen)
 
 x_train = preprocess_dataset_inputs(x_train)
 x_test = preprocess_dataset_inputs(x_test)
