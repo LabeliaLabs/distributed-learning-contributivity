@@ -63,7 +63,9 @@ scenario_params_list:
     - 'uniform'
    methods:
     - ["Shapley values", "Independent scores"]
+   epoch_count:
+    - 10
+   minibatch_count:
+    - 8
    gradient_updates_per_pass_count:
     - 5
-   is_quick_demo:
-    - True
