@@ -2,8 +2,7 @@
 """
 IMDB dataset.
 inspired from:
-https://keras.io/examples/nlp/text_classification_from_scratch/
-https://builtin.com/data-science/how-build-neural-network-keras
+https://keras.io/examples/nlp/bidirectional_lstm_imdb/
 """
 
 import keras
