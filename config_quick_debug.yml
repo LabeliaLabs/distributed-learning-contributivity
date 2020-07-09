@@ -3,31 +3,12 @@ n_repeats: 1
 scenario_params_list:
  - dataset_name:
     - 'mnist'
-    - 'cifar10'
    partners_count:
     - 3
    amounts_per_partner: 
     - [0.2, 0.5, 0.3]
    samples_split_option:
     - ['advanced', [[4, 'shared'], [6, 'shared'], [4, 'specific']]]
-   multi_partner_learning_approach:
-    - 'fedavg'
-   aggregation_weighting:
-    - 'uniform'
-   methods:
-    - ["Shapley values", "Independent scores"]
-   gradient_updates_per_pass_count:
-    - 5
-   is_quick_demo:
-    - True
- - dataset_name:
-    - 'imdb'
-   partners_count:
-    - 3
-   amounts_per_partner: 
-    - [0.2, 0.5, 0.3]
-   samples_split_option:
-    - ['basic', 'random']
    multi_partner_learning_approach:
     - 'fedavg'
    aggregation_weighting:
