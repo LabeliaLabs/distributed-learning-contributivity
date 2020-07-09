@@ -15,11 +15,14 @@ from keras.datasets import imdb
 out_of_vocabulary = 2
 # We keep the 10000 first more frequent words in the datasets
 # Also the dimentionality of the input of the Embedding layer
-size_vocabulary = 10000
+size_vocabulary = 20000
 # We only keep the 200 first words of the reviews
 maxlen = 200
 # Number of labels
 num_classes = 2
+
+# Not used here, but important another module
+input_shape = keras.Input(shape=(None,), dtype="int32")
 
 (x_train, y_train), (x_test, y_test) = imdb.load_data(num_words=size_vocabulary, skip_top=35, start_char=1, oov_char=out_of_vocabulary, index_from=3)
 
