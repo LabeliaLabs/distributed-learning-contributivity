@@ -3,7 +3,7 @@
 This enables to parameterize a desired scenario to mock a multi-partner ML project.
 """
 
-from datasets import dataset_mnist, dataset_cifar10
+from datasets import dataset_mnist, dataset_cifar10, dataset_imdb
 from sklearn.model_selection import train_test_split
 import datetime
 import os
@@ -28,7 +28,7 @@ class Scenario:
         # ---------------------------------------------------------------------
 
         # Get and verify which dataset is configured
-        supported_datasets_names = ["mnist", "cifar10"]
+        supported_datasets_names = ["mnist", "cifar10", "imdb"]
         if "dataset_name" in params:
             dataset_name = params["dataset_name"]
             if dataset_name not in supported_datasets_names:
@@ -42,6 +42,8 @@ class Scenario:
             dataset_module = dataset_mnist
         elif dataset_name == "cifar10":
             dataset_module = dataset_cifar10
+        elif dataset_name == "imdb":
+            dataset_module = dataset_imdb
         else:
             raise Exception(f"Dataset named '{dataset_name}' is not supported (yet). You could add it!")
 
@@ -126,19 +128,19 @@ class Scenario:
         # Number of epochs, mini-batches and fit_batches in ML training
         if "epoch_count" in params:
             self.epoch_count = params["epoch_count"]
-            assert self.epoch_count > 0
+            assert self.epoch_count > 0, "Error: in .yml epoch_count should be > 0"
         else:
             self.epoch_count = 40  # default
 
         if "minibatch_count" in params:
             self.minibatch_count = params["minibatch_count"]
-            assert self.minibatch_count > 0
+            assert self.minibatch_count > 0, "Error: in .yml minibatch_count should be > 0"
         else:
             self.minibatch_count = 20  # default
 
         if "gradient_updates_per_pass_count" in params:
             self.gradient_updates_per_pass_count = params["gradient_updates_per_pass_count"]
-            assert self.gradient_updates_per_pass_count > 0
+            assert self.gradient_updates_per_pass_count > 0, "Error: in .yml gradient_updates_per_pass_count should be > 0"
         else:
             self.gradient_updates_per_pass_count = constants.DEFAULT_GRADIENT_UPDATES_PER_PASS_COUNT
 
@@ -292,7 +294,7 @@ class Scenario:
             shared_clusters_count = max([p.cluster_count for p in partners_with_shared_clusters])
         else:
             shared_clusters_count = 0
-        assert specific_clusters_count + shared_clusters_count <= nb_diff_labels
+        assert specific_clusters_count + shared_clusters_count <= nb_diff_labels, "Error: data samples from the initial dataset are split in clusters per data labels - ['advanced', [[7, 'shared'], [6, 'shared'], [2, 'specific'], [1, 'specific']]] means 7 shared clusters and 2 + 1 = 3 specific clusters ==> The dataset need to have >= 10 labels"
 
         # Stratify the dataset into clusters per labels
         x_train_for_cluster, y_train_for_cluster, nb_samples_per_cluster = {}, {}, {}
@@ -407,8 +409,8 @@ class Scenario:
         # ... or receive different amounts?
 
         # Check the percentages of samples per partner and control its coherence
-        assert len(self.amounts_per_partner) == self.partners_count
-        assert np.sum(self.amounts_per_partner) == 1
+        assert len(self.amounts_per_partner) == self.partners_count, "Error: in .yml in amounts_per_partner arguments: the amounts_per_partners arguments (a list) has to contain a proportion per each partner - Here there is too many or not enough proportion"
+        assert np.sum(self.amounts_per_partner) == 1, "Error: in .yml in amounts_per_partner arguments: the proportions you provided don't sum up to exactly 1"
 
         # Then we parameterize this via the splitting_indices to be passed to np.split
         # This is to transform the percentages from the scenario configuration into indices where to split the data
