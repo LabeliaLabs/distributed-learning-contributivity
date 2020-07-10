@@ -3,6 +3,7 @@ n_repeats: 1
 scenario_params_list:
  - dataset_name:
     - 'mnist'
+    - 'cifar10'
    partners_count:
     - 3
    amounts_per_partner: 
