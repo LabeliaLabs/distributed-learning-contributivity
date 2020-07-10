@@ -119,6 +119,8 @@ class MultiPartnerLearning:
 
         start = timer()
 
+        clear_session()
+
         partners_list = self.partners_list
         partners_count = self.partners_count
 
