@@ -294,7 +294,7 @@ class Scenario:
             shared_clusters_count = max([p.cluster_count for p in partners_with_shared_clusters])
         else:
             shared_clusters_count = 0
-        assert specific_clusters_count + shared_clusters_count <= nb_diff_labels, "Error: data samples from the initial dataset are split in clusters per data labels - ['advanced', [[7, 'shared'], [6, 'shared'], [2, 'specific'], [1, 'specific']]] means 7 shared clusters and 2 + 1 = 3 specific clusters ==> The dataset need to have >= 10 labels"
+        assert specific_clusters_count + shared_clusters_count <= nb_diff_labels, "Error: data samples from the initial dataset are split in clusters per data labels - Incompatibility between the split arguments and the dataset provided - Example: ['advanced', [[7, 'shared'], [6, 'shared'], [2, 'specific'], [1, 'specific']]] means 7 shared clusters and 2 + 1 = 3 specific clusters ==> This scenario can't work with a dataset with less than 10 labels"
 
         # Stratify the dataset into clusters per labels
         x_train_for_cluster, y_train_for_cluster, nb_samples_per_cluster = {}, {}, {}
@@ -410,7 +410,7 @@ class Scenario:
 
         # Check the percentages of samples per partner and control its coherence
         assert len(self.amounts_per_partner) == self.partners_count, "Error: in .yml in amounts_per_partner arguments: the amounts_per_partners arguments (a list) has to contain a proportion per each partner - Here there is too many or not enough proportion"
-        assert np.sum(self.amounts_per_partner) == 1, "Error: in .yml in amounts_per_partner arguments: the proportions you provided don't sum up to exactly 1"
+        assert np.sum(self.amounts_per_partner) <= 1, "Error: in .yml in amounts_per_partner arguments: the sum of the proportions you provided is higher than 1"
 
         # Then we parameterize this via the splitting_indices to be passed to np.split
         # This is to transform the percentages from the scenario configuration into indices where to split the data
