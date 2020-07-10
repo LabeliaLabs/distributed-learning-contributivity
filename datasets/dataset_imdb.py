@@ -40,13 +40,12 @@ x_test = preprocess_dataset_inputs(x_test)
 def generate_new_model_for_dataset():
     model = models.Sequential()
 
-    model = models.Sequential()
     model.add(layers.Embedding(size_vocabulary, 128))  # Embed each integer in a 128-dimensional vector
     model.add(layers.Bidirectional(layers.LSTM(64, return_sequences=True)))
     model.add(layers.Bidirectional(layers.LSTM(64)))
 
     model.add(layers.Dense(2, activation="softmax"))
 
-    model.compile(optimizer = "adam", loss = "categorical_crossentropy", metrics = ["accuracy"])
+    model.compile(optimizer="adam", loss="categorical_crossentropy", metrics=["accuracy"])
 
     return model
