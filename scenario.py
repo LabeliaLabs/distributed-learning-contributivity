@@ -26,7 +26,9 @@ class Scenario:
         # ---------------------------------------------------------------------
         # Initialization of the dataset defined in the config of the experiment
         # ---------------------------------------------------------------------
-
+        import ipdb
+        ipdb.set_trace(context=10)
+        params_known = ["dataset_name","partners_count","amounts_per_partner","samples_split_option","multi_partner_learning_approch","aggregation_weighting","methods","gradient_updates_per_pass_count","is_quick_demo"]
         # Get and verify which dataset is configured
         supported_datasets_names = ["mnist", "cifar10", "imdb"]
         if "dataset_name" in params:

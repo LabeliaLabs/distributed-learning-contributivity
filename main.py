@@ -25,6 +25,7 @@ import utils
 
 DEFAULT_CONFIG_FILE = "config.yml"
 
+import ipdb
 
 @logger.catch
 def main():
@@ -35,7 +36,7 @@ def main():
 
     with contextlib.redirect_stdout(stream):
         logger.debug("Standard output is sent to added handlers.")
-        
+
         config = get_config_from_file(args)
         scenario_params_list = utils.get_scenario_params_list(
             config["scenario_params_list"])
@@ -43,6 +44,7 @@ def main():
         experiment_path = config["experiment_path"]
         n_repeats = config["n_repeats"]
 
+        ipdb.set_trace(context=5)
         validate_scenario_list(scenario_params_list, experiment_path)
 
         for scenario_id, scenario_params in enumerate(scenario_params_list):
@@ -73,6 +75,7 @@ def main():
                 logger.info("Current params:")
                 logger.info(scenario_params)
 
+                ipdb.set_trace(context=10)
                 current_scenario = scenario.Scenario(
                     scenario_params,
                     experiment_path,
@@ -138,7 +141,7 @@ def validate_scenario_list(scenario_params_list, experiment_path):
     for scenario_id, scenario_params in enumerate(scenario_params_list):
 
         logger.debug(f"Validation scenario {scenario_id + 1}/{len(scenario_params_list)}")
-        
+
         # TODO: we should not create scenario folder at this point
         current_scenario = scenario.Scenario(scenario_params, experiment_path, is_dry_run=True)
         current_scenario.instantiate_scenario_partners()
