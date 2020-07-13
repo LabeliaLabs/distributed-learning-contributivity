@@ -63,7 +63,7 @@ def load_data():
 def generate_new_model_for_dataset():
 
     """
-    Return a model from scratch based on given batch_size
+    Return a deep learning model from scratch
     """
 
     model = Sequential()
