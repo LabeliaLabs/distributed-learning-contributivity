@@ -3,7 +3,7 @@
 This enables to parameterize a desired scenario to mock a multi-partner ML project.
 """
 
-from datasets import dataset_mnist, dataset_cifar10
+from datasets import dataset_mnist, dataset_cifar10, dataset_titanic
 from sklearn.model_selection import train_test_split
 import datetime
 import os
@@ -28,7 +28,7 @@ class Scenario:
         # ---------------------------------------------------------------------
 
         # Get and verify which dataset is configured
-        supported_datasets_names = ["mnist", "cifar10"]
+        supported_datasets_names = ["mnist", "cifar10","titanic"]
         if "dataset_name" in params:
             dataset_name = params["dataset_name"]
             if dataset_name not in supported_datasets_names:
@@ -42,6 +42,8 @@ class Scenario:
             dataset_module = dataset_mnist
         elif dataset_name == "cifar10":
             dataset_module = dataset_cifar10
+        elif dataset_name == "titanic":
+            dataset_module = dataset_titanic
         else:
             raise Exception(f"Dataset named '{dataset_name}' is not supported (yet). You could add it!")
 
