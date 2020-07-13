@@ -383,7 +383,7 @@ class Scenario:
             )
 
         # Check coherence of number of mini-batches versus partner with small dataset
-        assert self.minibatch_count <= min([len(p.x_train) for p in self.partners_list])
+        assert self.minibatch_count <= min([len(p.x_train) for p in self.partners_list]), "Error: in .yml and the dataset provided, a partner doesn't have enough data samples to create the minibatches "
 
         if is_logging_enabled:
             logger.info("### Splitting data among partners:")
@@ -409,7 +409,7 @@ class Scenario:
         # ... or receive different amounts?
 
         # Check the percentages of samples per partner and control its coherence
-        assert len(self.amounts_per_partner) == self.partners_count, "Error: in .yml in amounts_per_partner arguments: the amounts_per_partners arguments (a list) has to contain a proportion per each partner - Here there is too many or not enough proportion"
+        assert len(self.amounts_per_partner) == self.partners_count, "Error: in .yml in amounts_per_partner arguments: the amounts_per_partners arguments (a list) has to contain a proportion per each partner - Here there is too many or not enough proportions"
         assert np.sum(self.amounts_per_partner) <= 1, "Error: in .yml in amounts_per_partner arguments: the sum of the proportions you provided is higher than 1"
 
         # Then we parameterize this via the splitting_indices to be passed to np.split
@@ -485,7 +485,7 @@ class Scenario:
             partner_idx += 1
 
         # Check coherence of number of mini-batches versus smaller partner
-        assert self.minibatch_count <= (min(self.amounts_per_partner) * len(x_train))
+        assert self.minibatch_count <= (min(self.amounts_per_partner) * len(x_train)), "Error: in .yml and the dataset provided, a partner doesn't have enough data samples to create the minibatches"
 
         self.nb_samples_used = sum([len(p.x_train) for p in self.partners_list])
         self.final_relative_nb_samples = [p.final_nb_samples / self.nb_samples_used for p in self.partners_list]
