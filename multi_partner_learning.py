@@ -13,6 +13,11 @@ import numpy as np
 import matplotlib.pyplot as plt
 import operator
 from loguru import logger
+from keras.models import Sequential
+import sklearn
+from sklearn.ensemble import RandomForestClassifier
+
+
 
 import constants
 
@@ -274,7 +279,14 @@ class MultiPartnerLearning:
 
         # Evaluate and store accuracy of mini-batch start model
         model_to_evaluate = partners_model_list_for_iteration[0]
-        model_evaluation = model_to_evaluate.evaluate(x_val, y_val, batch_size=constants.DEFAULT_BATCH_SIZE, verbose=0)
+
+        if (type(model_to_evaluate) is type(Sequential())):
+            model_evaluation = model_to_evaluate.evaluate(x_val, y_val, batch_size=constants.DEFAULT_BATCH_SIZE, verbose=0)
+
+        elif(type(model_to_evaluate) is type(RandomForestClassifier())):
+            model_evaluation = model_to_evaluate.score(x_val, y_val)
+
+
         self.score_matrix_collective_models[epoch_index, minibatch_index] = model_evaluation[1]
 
         # Iterate over partners for training each individual model
@@ -460,9 +472,17 @@ class MultiPartnerLearning:
         partners_model_list.append(new_model)
 
         # For each remaining partner, duplicate the new model and add it to the list
-        new_model_weights = new_model.get_weights()
+
+        if (type(new_model) is type(Sequential())):
+            new_model_weights = new_model.get_weights()
+
+
         for i in range(len(self.partners_list)-1):
-            partners_model_list.append(self.build_model_from_weights(new_model_weights))
+            if (type(new_model) is type(Sequential())):
+                partners_model_list.append(self.build_model_from_weights(new_model_weights))
+
+            elif(type(new_model) is type(RandomForestClassifier())):
+                partners_model_list.append(sklearn.base.clone(new_model))
 
         return partners_model_list
 
