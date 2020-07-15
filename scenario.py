@@ -26,9 +26,13 @@ class Scenario:
         # ---------------------------------------------------------------------
         # Initialization of the dataset defined in the config of the experiment
         # ---------------------------------------------------------------------
-        import ipdb
-        ipdb.set_trace(context=10)
-        params_known = ["dataset_name","partners_count","amounts_per_partner","samples_split_option","multi_partner_learning_approch","aggregation_weighting","methods","gradient_updates_per_pass_count","is_quick_demo"]
+        params_known = ["dataset_name","partners_count","amounts_per_partner","samples_split_option","multi_partner_learning_approach","aggregation_weighting","methods","gradient_updates_per_pass_count","is_quick_demo"]
+        if not all([x in params_known for x in params]):
+            for x in params:
+                if not x in params_known:
+                    logger.debug(f"Unrecognised parameter: {x}")
+            raise Exception(f"Unrecognised parameters, check your .yml file")
+
         # Get and verify which dataset is configured
         supported_datasets_names = ["mnist", "cifar10", "imdb"]
         if "dataset_name" in params:
