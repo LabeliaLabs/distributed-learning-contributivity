@@ -43,19 +43,13 @@ def load_data():
     Return a usable dataset
     """
 
-    url = 'https://web.stanford.edu/class/archive/cs/cs109/cs109.1166/stuff/titanic.csv'
-    r = requests.get(url, allow_redirects=True)
-    open('train.csv', 'wb').write(r.content)
-
-    raw_dataset = pd.read_csv('./train.csv', index_col=False )
+    raw_dataset = pd.read_csv('https://web.stanford.edu/class/archive/cs/cs109/cs109.1166/stuff/titanic.csv', index_col=False )
     x = raw_dataset.drop(['Name','Survived'], axis=1)
     x = preprocess_dataset_inputs(x)
     y = raw_dataset['Survived']
     y = y.to_numpy()
 
     x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.33, random_state=42)
-
-    os.remove("train.csv") # not the cleanest way to deal with temp file
 
     return (x_train, y_train), (x_test, y_test)
 
@@ -64,6 +58,7 @@ def generate_new_model_for_dataset():
 
     """
     Return a deep learning model from scratch
+    Source : https://www.kaggle.com/bananachips/titanic-with-keras
     """
 
     model = Sequential()

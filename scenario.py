@@ -28,7 +28,7 @@ class Scenario:
         # ---------------------------------------------------------------------
 
         # Get and verify which dataset is configured
-        supported_datasets_names = ["mnist", "cifar10","titanic"]
+        supported_datasets_names = ["mnist", "cifar10", "titanic"]
         if "dataset_name" in params:
             dataset_name = params["dataset_name"]
             if dataset_name not in supported_datasets_names:
