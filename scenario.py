@@ -189,17 +189,18 @@ class Scenario:
 
         # The quick demo parameters overwrites previously defined parameters to make the scenario faster to compute
         if "is_quick_demo" in params and params["is_quick_demo"]:
-            # Use less data and less epochs to speed up the computations
+            # Use less data and/or less epochs to speed up the computations
             logger.info("Quick demo: limit number of data and number of epochs.")
-            index_train = np.random.choice(self.dataset.x_train.shape[0], 1000, replace=False)
-            index_val = np.random.choice(self.dataset.x_val.shape[0], 500, replace=False)
-            index_test = np.random.choice(self.dataset.x_test.shape[0], 500, replace=False)
-            self.dataset.x_train = self.dataset.x_train[index_train]
-            self.dataset.y_train = self.dataset.y_train[index_train]
-            self.dataset.x_val = self.dataset.x_val[index_val]
-            self.dataset.y_val = self.dataset.y_val[index_val]
-            self.dataset.x_test = self.dataset.x_test[index_test]
-            self.dataset.y_test = self.dataset.y_test[index_test]
+            if (len(self.dataset.x_train) > 1000):
+                index_train = np.random.choice(self.dataset.x_train.shape[0], 1000, replace=False)
+                index_val = np.random.choice(self.dataset.x_val.shape[0], 500, replace=False)
+                index_test = np.random.choice(self.dataset.x_test.shape[0], 500, replace=False)
+                self.dataset.x_train = self.dataset.x_train[index_train]
+                self.dataset.y_train = self.dataset.y_train[index_train]
+                self.dataset.x_val = self.dataset.x_val[index_val]
+                self.dataset.y_val = self.dataset.y_val[index_val]
+                self.dataset.x_test = self.dataset.x_test[index_test]
+                self.dataset.y_test = self.dataset.y_test[index_test]
             self.epoch_count = 3
             self.minibatch_count = 2
 
