@@ -3,7 +3,7 @@
 This enables to parameterize a desired scenario to mock a multi-partner ML project.
 """
 
-from datasets import dataset_mnist, dataset_cifar10, dataset_imdb
+from datasets import dataset_mnist, dataset_cifar10
 from sklearn.model_selection import train_test_split
 import datetime
 import os
@@ -34,7 +34,7 @@ class Scenario:
             raise Exception(f"Unrecognised parameters, check your .yml file")
 
         # Get and verify which dataset is configured
-        supported_datasets_names = ["mnist", "cifar10", "imdb"]
+        supported_datasets_names = ["mnist", "cifar10"]
         if "dataset_name" in params:
             dataset_name = params["dataset_name"]
             if dataset_name not in supported_datasets_names:
