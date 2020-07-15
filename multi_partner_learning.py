@@ -284,8 +284,8 @@ class MultiPartnerLearning:
             model_evaluation = model_to_evaluate.evaluate(x_val, y_val, batch_size=constants.DEFAULT_BATCH_SIZE, verbose=0)
 
         elif(type(model_to_evaluate) is type(RandomForestClassifier())):
-            model_evaluation = model_to_evaluate.score(x_val, y_val)
-
+            #model_evaluation = model_to_evaluate.score(x_val, y_val)
+            model_evaluation = (0,0)  # bypass try
 
         self.score_matrix_collective_models[epoch_index, minibatch_index] = model_evaluation[1]
 
@@ -303,14 +303,28 @@ class MultiPartnerLearning:
             history = self.collaborative_round_fit(
                 partner_model, train_data_for_fit_iteration, self.val_data, partner.batch_size)
 
-            # Log results of the round
-            self.log_collaborative_round_partner_result(partner, partner_index, history.history["val_accuracy"][0])
 
-            # Update the partner's model in the models' list
-            self.models_weights_list[partner_index] = partner_model.get_weights()
+            if (type(model_to_evaluate) is type(Sequential())):
+                # Log results of the round
+                self.log_collaborative_round_partner_result(partner, partner_index, history.history["val_accuracy"][0])
 
-            # Update iterative results
-            self.update_iterative_results(partner_index, history)
+                # Update the partner's model in the models' list
+                self.models_weights_list[partner_index] = partner_model.get_weights()
+
+                # Update iterative results
+                self.update_iterative_results(partner_index, history)
+
+            elif(type(model_to_evaluate) is type(RandomForestClassifier())):
+                # Log results of the round
+                self.log_collaborative_round_partner_result(partner, partner_index, history.score(x_val, y_val))
+
+                # Update the partner's model in the models' list
+                self.models_weights_list[partner_index] = partner_model.get_params()
+
+                # Update iterative results
+                self.update_iterative_results(partner_index, history)
+
+
 
         logger.debug("End of fedavg collaborative round.")
 
@@ -441,8 +455,17 @@ class MultiPartnerLearning:
         new_weights = list()
 
         for weights_for_layer in weights_per_layer:
+            print("-----------------------")
+            print("weights_for_layer")
+            print(weights_for_layer)
+            print("np.array(weights_for_layer)")
+            print(np.array(weights_for_layer))
+            print("self.aggregation_weights")
+            print(self.aggregation_weights)
             avg_weights_for_layer = np.average(
-                np.array(weights_for_layer), axis=0, weights=self.aggregation_weights
+                np.array(weights_for_layer),
+                axis=0,
+                weights=self.aggregation_weights
             )
             new_weights.append(list(avg_weights_for_layer))
 
@@ -506,14 +529,22 @@ class MultiPartnerLearning:
         """Fit the model with arguments passed as parameters and returns the history object"""
 
         x_train, y_train = train_data
-        history = model_to_fit.fit(
-            x_train,
-            y_train,
-            batch_size=batch_size,
-            epochs=1,
-            verbose=0,
-            validation_data=val_data,
-        )
+
+        if (type(model_to_fit) is type(Sequential())):
+            history = model_to_fit.fit(
+                x_train,
+                y_train,
+                batch_size=batch_size,
+                epochs=1,
+                verbose=0,
+                validation_data=val_data,
+            )
+
+        elif(type(model_to_fit) is type(RandomForestClassifier())):
+            history = model_to_fit.fit(
+                x_train,
+                y_train
+            )  # for random forest, we might need this : https://scikit-learn.org/stable/modules/model_evaluation.html#implementing-your-own-scoring-object
 
         return history
 
@@ -530,7 +561,20 @@ class MultiPartnerLearning:
     def update_iterative_results(self, partner_index, fit_history):
         """Update the results arrays with results from the collaboration round"""
 
-        validation_score = fit_history.history["val_accuracy"][0]
+
+
+        x_val, y_val = self.val_data
+
+
+        if (type(fit_history) is type(Sequential())):
+            validation_score = fit_history.history["val_accuracy"][0]
+
+        elif(type(fit_history) is type(RandomForestClassifier())):
+            validation_score = fit_history.score(x_val, y_val)
+
+
+
+
 
         self.scores_last_learning_round[partner_index] = validation_score  # TO DO check if coherent
 
