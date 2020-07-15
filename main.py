@@ -171,7 +171,7 @@ def run_scenario(current_scenario):
         is_save_data=True,
     )
     current_scenario.mpl.compute_test_score()
-    # if satcking clear the partners' model (in order to compute well the time of the methods used after the computation of the federated score)
+    # if stacking clear the partners' model (in order to compute well the time of the methods used after the computation of the federated score)
     if current_scenario.multi_partner_learning_approach == "stacking": 
         current_scenario.clear_partners_model_weights()
 
