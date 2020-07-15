@@ -131,15 +131,13 @@ class MultiPartnerLearning:
                 layer.trainable = False  # Make it not trainable
                 layer.name = f"ensemble_{i+1}_{layer.name}"  # Rename it to avoid 'unique layer name' issue
 
-        # Define multi-headed input
-        ensemble_visible = [model.input for model in list_of_models]
-
+        # Define multi-headed input 
+        ensemble_inputs = [keras.Input(shape=(self.num_classes,))for model in list_of_models]
         # Concatenate merge output from each model
-        ensemble_outputs = [model.output for model in list_of_models]
-        merge = concatenate(ensemble_outputs)
+        merge = concatenate(ensemble_inputs)
         hidden = Dense(meta_model_hidden_dim, activation="relu")(merge)
         output = Dense(self.num_classes, activation="softmax")(hidden)
-        meta_model = Model(inputs=ensemble_visible, outputs=output)
+        meta_model = Model(inputs=ensemble_inputs, outputs=output)
 
         # Compile the meta-model
         meta_model.compile(
@@ -193,12 +191,7 @@ class MultiPartnerLearning:
 
         x_val, y_val = self.val_data
         x_test, y_test = self.test_data
-        # Prepare the input data if the learning approach is stacking
-        if self.learning_approach == "stacking":
-            x_val_extended = [x_val for _ in range(partners_count)]
-            x_val=x_val_extended
-            x_test_extended = [x_test for _ in range(partners_count)] 
-            x_test=x_test_extended
+
             
         # First, if only one partner, fall back to dedicated single partner function
         if partners_count == 1:
@@ -218,6 +211,10 @@ class MultiPartnerLearning:
             stacking_model=self.make_stacked_meta_model(
                 meta_model_hidden_dim=self.num_classes
                 )
+            # Prepare the input data if the learning approach is stacking
+            x_val_extended = [self.build_model_from_weights(partner.model_weights).predict(x_val) for partner in self.partners_list]
+            x_test_extended = [self.build_model_from_weights(partner.model_weights).predict(x_test) for partner in self.partners_list]
+            x_val, x_test = x_val_extended, x_test_extended
 
         # Train model (iterate for each epoch and mini-batch)
         for epoch_index in range(epoch_count):
@@ -377,7 +374,7 @@ class MultiPartnerLearning:
         x_val, y_val = self.val_data
         
         # Prepare input data
-        x_val_extended = [x_val for _ in range(len(meta_model.input))]
+        x_val_extended = [self.build_model_from_weights(partner.model_weights).predict(x_val) for partner in self.partners_list]
 
         # Evaluate and store accuracy of mini-batch start model
         model_evaluation = meta_model.evaluate(
@@ -398,7 +395,8 @@ class MultiPartnerLearning:
             
             
             # Prepare input data
-            x_for_this_round_extended =[self.minibatched_x_train[partner_index][minibatch_index] for _ in range(len(meta_model.input))]
+            x = self.minibatched_x_train[partner_index][minibatch_index] 
+            x_for_this_round_extended =[self.build_model_from_weights(partner.model_weights).predict(x) for partner in self.partners_list]
 
             # Train on partner local data set
             train_data_for_fit_iteration = (

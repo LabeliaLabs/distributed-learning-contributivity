@@ -200,8 +200,8 @@ class Scenario:
             self.dataset.y_val = self.dataset.y_val[index_val]
             self.dataset.x_test = self.dataset.x_test[index_test]
             self.dataset.y_test = self.dataset.y_test[index_test]
-            self.epoch_count = 3
-            self.minibatch_count = 2
+            self.epoch_count = 20
+            self.minibatch_count = 1
 
         # -------
         # Outputs
@@ -263,6 +263,10 @@ class Scenario:
     def instantiate_scenario_partners(self):
 
         self.partners_list = [Partner(i) for i in range(self.partners_count)]
+        
+    def clear_partners_model_weights(self):
+        for partner in self.partners_list:
+            partner.model_weights = None 
 
     def split_data_advanced(self, is_logging_enabled=True):
         """Advanced split: Populates the partners with their train and test data (not pre-processed)"""
