@@ -74,7 +74,7 @@ def generate_new_model_for_dataset():
         optimizer="adam",
         metrics=["accuracy"]
     )
-    return (model, RandomForestClassifier(max_depth=2, random_state=0))[0]
+    return (model, RandomForestClassifier(max_depth=2, random_state=0))[1]
 
 # Load data
 (x_train, y_train), (x_test, y_test) = load_data()
