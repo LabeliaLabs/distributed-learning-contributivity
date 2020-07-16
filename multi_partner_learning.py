@@ -238,14 +238,6 @@ class MultiPartnerLearning:
             
         model_to_save.save_weights(os.path.join(model_folder, self.dataset_name+'_final_weights.h5'))
         model_weights = model_to_save.get_weights()
-        
-            
-        # model_weights = []
-        # for layer in model_to_save.layers:
-        #     layer_weights = []
-        #     for weight in layer.get_weights():
-        #         layer_weights.append(weight)
-        #     model_weights.append(layer_weights)
             
         np.save(os.path.join(model_folder, self.dataset_name+'_final_weights.npy'), 
                 model_weights)
@@ -487,6 +479,7 @@ class MultiPartnerLearning:
 
         new_model = self.generate_new_model()
         new_model.set_weights(new_weights)
+
         return new_model
     
     
