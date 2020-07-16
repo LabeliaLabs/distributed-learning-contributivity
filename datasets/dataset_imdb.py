@@ -21,7 +21,7 @@ skip_top_review = 35  # We skip the 35 most frequent words
 size_vocabulary = 20000  # We keep the 20000 first more frequent words in the datasets - Also the dimentionality of the input of the Embedding layer
 # The others are replaced by out_of_vocabulary - A Review start by the number 1 (start_char)
 
-# Not used here, but important in another module
+# Not used here, dataset.py need this in the constructor of the class Dataset, it's unused in the whole project
 input_shape = keras.Input(shape=(None,), dtype="int32")
 
 (x_train, y_train), (x_test, y_test) = imdb.load_data(num_words=size_vocabulary, skip_top=35, start_char=1, oov_char=out_of_vocabulary, index_from=3)
