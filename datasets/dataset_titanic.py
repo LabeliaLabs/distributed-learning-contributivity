@@ -13,6 +13,9 @@ import pandas as pd
 import keras
 import os
 
+from sklearn.ensemble import RandomForestClassifier
+
+
 # Init dataset-specific variables
 num_classes = 2
 input_shape = (6,)
@@ -73,7 +76,8 @@ def generate_new_model_for_dataset():
         optimizer="adam",
         metrics=["accuracy"]
     )
-    return model
+    clf = RandomForestClassifier(n_estimators=10)
+    return (model, clf)[1]
 
 # Load data
 (x_train, y_train), (x_test, y_test) = load_data()

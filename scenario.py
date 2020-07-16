@@ -107,6 +107,7 @@ class Scenario:
             "seq-pure",
             "seq-with-final-agg",
             "seqavg",
+            "fed-forest"
         ]
 
         if "multi_partner_learning_approach" in params:

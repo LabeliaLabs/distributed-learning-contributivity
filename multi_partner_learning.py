@@ -9,6 +9,7 @@ import pickle
 import keras
 from keras.backend.tensorflow_backend import clear_session
 from keras.callbacks import EarlyStopping
+from keras.models import Sequential
 import numpy as np
 import matplotlib.pyplot as plt
 import operator
@@ -26,7 +27,7 @@ class MultiPartnerLearning:
                  dataset,
                  multi_partner_learning_approach,
                  aggregation_weighting="uniform",
-                 is_early_stopping=True,
+                 is_early_stopping=True ,
                  is_save_data=False,
                  save_folder="",
                  ):
@@ -85,26 +86,35 @@ class MultiPartnerLearning:
 
         # Train model
         logger.info("   Training model...")
-        history = model.fit(
-            partner.x_train,
-            partner.y_train,
-            batch_size=partner.batch_size,
-            epochs=self.epoch_count,
-            verbose=0,
-            validation_data=self.val_data,
-            callbacks=cb,
-        )
+        if self.learning_approach == 'fed-forest':
+            history = model.fit(partner.x_train, partner.y_train)  # maybe add warm start to simulate epoch for random forest
+        else:
+            history = model.fit(
+                partner.x_train,
+                partner.y_train,
+                batch_size=partner.batch_size,
+                epochs=self.epoch_count,
+                verbose=0,
+                validation_data=self.val_data,
+                callbacks=cb,
+            )
 
         # Reference the testset according to the scenario configuration
         x_test, y_test = self.test_data
 
         # Evaluate trained model
-        model_evaluation = model.evaluate(x_test, y_test, batch_size=constants.DEFAULT_BATCH_SIZE, verbose=0)
-        logger.info(f"   Model evaluation on test data: "
-                    f"{list(zip(model.metrics_names, ['%.3f' % elem for elem in model_evaluation]))}")
+
+        if self.learning_approach == 'fed-forest':
+            model_evaluation = model.score(x_test, y_test)
+            logger.info(f"   Model Accuracy on test data: " + str(model_evaluation))
+            self.test_score = model_evaluation
+        else:
+            model_evaluation = model.evaluate(x_test, y_test, batch_size=constants.DEFAULT_BATCH_SIZE, verbose=0)
+            logger.info(f"   Model evaluation on test data: "
+                        f"{list(zip(model.metrics_names, ['%.3f' % elem for elem in model_evaluation]))}")
+            self.test_score = model_evaluation[1]  # 0 is for the loss
 
         # Save model score on test data
-        self.test_score = model_evaluation[1]  # 0 is for the loss
         self.nb_epochs_done = (es.stopped_epoch + 1) if es.stopped_epoch != 0 else self.epoch_count
 
         end = timer()
@@ -138,6 +148,8 @@ class MultiPartnerLearning:
         model_to_evaluate, sequentially_trained_model = None, None
         if self.learning_approach in ['seq-pure', 'seq-with-final-agg']:
             sequentially_trained_model = self.generate_new_model()
+        elif self.learning_approach == 'fed-forest':
+            random_forest_model = self.generate_new_model()
 
         # Train model (iterate for each epoch and mini-batch)
         for epoch_index in range(epoch_count):
@@ -164,6 +176,8 @@ class MultiPartnerLearning:
 
                 elif self.learning_approach == 'seqavg':
                     self.compute_collaborative_round_seqavg()
+                elif self.learning_approach == 'fed-forest':
+                    self.compute_collaborative_round_forest(random_forest_model)
 
             # At the end of each epoch, evaluate the model for early stopping on a global validation set
             self.prepare_aggregation_weights()
@@ -171,18 +185,33 @@ class MultiPartnerLearning:
                 model_to_evaluate = sequentially_trained_model
             elif self.learning_approach in ['fedavg', 'seq-with-final-agg', 'seqavg']:
                 model_to_evaluate = self.build_model_from_weights(self.aggregate_model_weights())
-            model_evaluation = model_to_evaluate.evaluate(
-                x_val, y_val, batch_size=constants.DEFAULT_BATCH_SIZE, verbose=0,
-            )
+            elif self.learning_approach == "fed-forest":
+                model_to_evaluate = random_forest_model
 
-            current_val_loss = model_evaluation[0]
-            current_val_metric = model_evaluation[1]
+            if self.learning_approach == 'fed-forest':
+                model_evaluation = model_to_evaluate.score(x_val, y_val)
+                current_val_loss = 0  # bricollage
+                current_val_metric = model_evaluation
+            else :
+                model_evaluation = model_to_evaluate.evaluate(
+                    x_val, y_val, batch_size=constants.DEFAULT_BATCH_SIZE, verbose=0,
+                )
+                current_val_loss = model_evaluation[0]
+                current_val_metric = model_evaluation[1]
+
+
 
             self.score_matrix_collective_models[epoch_index, minibatch_count] = current_val_metric
             self.loss_collective_models.append(current_val_loss)
 
-            logger.info(f"   Model evaluation at the end of the epoch: "
-                        f"{['%.3f' % elem for elem in model_evaluation]}")
+
+            if self.learning_approach == 'fed-forest':
+                logger.info(f"   Model evaluation at the end of the epoch: "
+                + str(model_evaluation))
+            else :
+                logger.info(f"   Model evaluation at the end of the epoch: "
+                f"{['%.3f' % elem for elem in model_evaluation]}")
+
 
             logger.debug("      Checking if early stopping criteria are met:")
             if is_early_stopping:
@@ -198,11 +227,23 @@ class MultiPartnerLearning:
 
         # After last epoch or if early stopping was triggered, evaluate model on the global testset
         logger.info("### Evaluating model on test data:")
-        model_evaluation = model_to_evaluate.evaluate(
+
+        if self.learning_approach == 'fed-forest':
+            model_evaluation = model_to_evaluate.score(x_test, y_test)
+            logger.info(f"   Model Accuracy values: " + str(model_evaluation))
+
+        else :
+            model_evaluation = model_to_evaluate.evaluate(
             x_test, y_test, batch_size=constants.DEFAULT_BATCH_SIZE, verbose=0)
-        logger.info(f"   Model metrics names: {model_to_evaluate.metrics_names}")
-        logger.info(f"   Model metrics values: {['%.3f' % elem for elem in model_evaluation]}")
-        self.test_score = model_evaluation[1]  # 0 is for the loss
+            logger.info(f"   Model metrics names: {model_to_evaluate.metrics_names}")
+            logger.info(f"   Model metrics values: {['%.3f' % elem for elem in model_evaluation]}")
+            self.test_score = model_evaluation[1]  # 0 is for the loss
+
+
+
+
+
+
         self.nb_epochs_done = self.epoch_index + 1
 
         # Plot training history # TODO: move the data saving and plotting in dedicated functions
@@ -393,6 +434,49 @@ class MultiPartnerLearning:
 
         logger.debug("End of seqavg collaborative round.")
 
+    def compute_collaborative_round_forest(self, random_forest_model):
+        """Proceed to a collaborative round with a random forest approach"""  # basé sur compute_collaborative_round_sequential
+        logger.debug("Start new random forest collaborative round ...")
+
+        # Initialize variables
+        epoch_index, minibatch_index = self.epoch_index, self.minibatch_index
+        is_last_round = minibatch_index == self.minibatch_count - 1
+        x_val, y_val = self.val_data
+
+
+
+        # Iterate over partners for training the model sequentially
+        shuffled_indexes = np.random.permutation(self.partners_count)
+        logger.debug(f"(seq) Shuffled order for this random forest collaborative round: {shuffled_indexes}")
+        for for_loop_idx, partner_index in enumerate(shuffled_indexes):
+
+            partner = self.partners_list[partner_index]
+
+            # Train on partner local data set
+            train_data_for_fit_iteration = (
+                self.minibatched_x_train[partner_index][minibatch_index],
+                self.minibatched_y_train[partner_index][minibatch_index],
+            )
+            history = self.collaborative_round_fit(random_forest_model, train_data_for_fit_iteration)
+
+            # Log results of the round
+            x_val, y_val = self.val_data
+            self.log_collaborative_round_partner_result(partner, for_loop_idx, history.score(x_val, y_val))
+
+            # On final collaborative round, save the partner's model in the models' list
+            if is_last_round:
+                self.models_weights_list[partner_index] = random_forest_model.get_params()
+
+            # Update iterative results
+            self.update_iterative_results(partner_index, history)
+
+        # Evaluate and store accuracy of mini-batch start model
+        # A l'origine c'était avant la boucle for
+        model_evaluation = random_forest_model.score(x_val, y_val)
+        self.score_matrix_collective_models[epoch_index, minibatch_index] = model_evaluation  # aucune idée de a quoi ca sert
+
+        logger.debug("End of random forest collaborative round.")
+
     def split_in_minibatches(self):
         """Split the dataset passed as argument in mini-batches"""
 
@@ -482,19 +566,25 @@ class MultiPartnerLearning:
         return partners_model_list
 
     @staticmethod
-    def collaborative_round_fit(model_to_fit, train_data, val_data, batch_size):
+    def collaborative_round_fit(model_to_fit, train_data, val_data = None, batch_size = None):
         """Fit the model with arguments passed as parameters and returns the history object"""
 
         x_train, y_train = train_data
-        history = model_to_fit.fit(
+
+        if type(model_to_fit) is Sequential():
+            history = model_to_fit.fit(
             x_train,
             y_train,
             batch_size=batch_size,
             epochs=1,
             verbose=0,
             validation_data=val_data,
-        )
-
+            )
+        else :
+            history = model_to_fit.fit(
+                x_train,
+                y_train
+            )
         return history
 
     def log_collaborative_round_partner_result(self, partner, partner_index, validation_score):
@@ -510,7 +600,13 @@ class MultiPartnerLearning:
     def update_iterative_results(self, partner_index, fit_history):
         """Update the results arrays with results from the collaboration round"""
 
-        validation_score = fit_history.history["val_accuracy"][0]
+        if self.learning_approach == "fed-forest":
+            x_val, y_val = self.val_data
+            validation_score = fit_history.score(x_val, y_val)
+        else :
+            validation_score = fit_history.history["val_accuracy"][0]
+
+
 
         self.scores_last_learning_round[partner_index] = validation_score  # TO DO check if coherent
 
