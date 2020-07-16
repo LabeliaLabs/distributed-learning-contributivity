@@ -26,7 +26,11 @@ class Scenario:
         # ---------------------------------------------------------------------
         # Initialization of the dataset defined in the config of the experiment
         # ---------------------------------------------------------------------
+
+        # Raise Exception if unknown parameters in the .yml file
+
         params_known = ["dataset_name","partners_count","amounts_per_partner","samples_split_option","multi_partner_learning_approach","aggregation_weighting","methods","gradient_updates_per_pass_count","is_quick_demo"]
+
         if not all([x in params_known for x in params]):
             for x in params:
                 if not x in params_known:
@@ -421,6 +425,7 @@ class Scenario:
         # Then we parameterize this via the splitting_indices to be passed to np.split
         # This is to transform the percentages from the scenario configuration into indices where to split the data
         if self.partners_count == 1:
+            splitting_indices = self.amounts_per_partner[0]
             splitting_indices_train = 1
         else:
             splitting_indices = np.empty((self.partners_count - 1,))
@@ -431,14 +436,32 @@ class Scenario:
                 )
             splitting_indices_train = (splitting_indices * len(y_train)).astype(int)
 
+        # If partners don't use the full dataset we only keep the amount of data targeted and then normalize proportions
+
+        proportion_of_dataset = np.sum(self.amounts_per_partner)
+
+        if proportion_of_dataset < 1:
+            skip_idx = int(round(len(x_train) * proportion_of_dataset))
+            train_idx = np.arange(len(x_train))
+            np.random.seed(42)
+            np.random.shuffle(train_idx)
+            x_train = x_train[train_idx[0:skip_idx]]
+            y_train = y_train[train_idx[0:skip_idx]]
+
+            splitting_indices = splitting_indices / proportion_of_dataset  # Normalize proportions
+            if self.partners_count == 1:
+                splitting_indices_train = 1  # Read Documentation of np.split
+            else :
+                splitting_indices_train = (splitting_indices * len(x_train)).astype(int)
+
         # Configure the desired data distribution scenario
 
         # Create a list of indexes of the samples
         train_idx = np.arange(len(y_train))
 
-        # In the 'stratified' scenario we sort MNIST by labels
+        # In the 'stratified' scenario we sort by labels
         if self.samples_split_description == "stratified":
-            # Sort MNIST by labels
+            # Sort by labels
             y_sorted_idx = y_train.argsort()
             y_train = y_train[y_sorted_idx]
             x_train = x_train[y_sorted_idx]
