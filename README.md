@@ -87,59 +87,61 @@ Finally, with given scenarios and multi-partner learning approaches, we can addr
 
 1. Define your mock scenario(s) in `config.yml` by changing the values of the suggested parameters of the 2 example scenarios (you can browse more available parameters in section [Config file parameters](#config-file-parameters) below). For example:
 
-```yaml
-experiment_name: my_custom_experiment
-n_repeats: 5
-scenario_params_list:
-  - dataset_name:
-      - 'mnist'
-      - 'cifar10'
-    partners_count:
-      - 3
-    amounts_per_partner:
-      - [0.4, 0.3, 0.3]
-    samples_split_option:
-      - ['advanced', [[7, 'shared'], [6, 'shared'], [2, 'specific']]]
-    multi_partner_learning_approach:
-      - 'fedavg'
-    aggregation_weighting:
-      - 'data_volume'
-      - 'uniform'
-    epoch_count:
-      - 38
-    methods:
-      - ["Shapley values", "Independent scores", "TMCS"]
-    minibatch_count:
-      - 20
-    gradient_updates_per_pass_count:
-      - 8
-    dataset_proportion:
-      - 1
-  - dataset_name:
-      - 'mnist'
-    partners_count:
-      - 2
-    amounts_per_partner:
-      - [0.5, 0.5]
-    samples_split_option:
-      - ['basic', 'random']
-      - ['basic', 'stratified']
-    multi_partner_learning_approach:
-      - 'fedavg'
-    aggregation_weighting:
-      - 'data_volume'
-      - 'uniform'
-    epoch_count:
-      - 38
-    methods:
-      - ["Shapley values", "SMCS", "IS_lin_S", "IS_reg_S"]
-    minibatch_count:
-      - 20
-    gradient_updates_per_pass_count:
-      - 8
-    dataset_proportion:
-      - 1
-```
+    ```yaml
+    experiment_name: my_custom_experiment
+    n_repeats: 5
+    scenario_params_list:
+     - dataset_name:
+       'mnist':
+        - 'init'
+       'cifar10':
+        - 'init'
+       partners_count: 
+         - 3
+       amounts_per_partner:
+         - [0.4, 0.3, 0.3]
+       samples_split_option:
+         - ['advanced', [[7, 'shared'], [6, 'shared'], [2, 'specific']]]
+       multi_partner_learning_approach:
+         - 'fedavg'
+       aggregation_weighting:
+         - 'data_volume'
+         - 'uniform'
+       epoch_count:
+         - 38
+       methods:
+         - ["Shapley values", "Independent scores", "TMCS"]
+       minibatch_count:
+         - 20
+       gradient_updates_per_pass_count:
+         - 8
+       dataset_proportion:
+	 - 1
+     - dataset_name:
+         - 'mnist'
+       partners_count:
+         - 2
+       amounts_per_partner:
+         - [0.5, 0.5]
+       samples_split_option:
+         - ['basic', 'random']
+         - ['basic', 'stratified']
+       multi_partner_learning_approach:
+         - 'fedavg'
+       aggregation_weighting:
+         - 'data_volume'
+         - 'uniform'
+       epoch_count:
+         - 38
+       methods:
+         - ["Shapley values", "SMCS", "IS_lin_S", "IS_reg_S"]
+       minibatch_count:
+         - 20
+       gradient_updates_per_pass_count:
+         - 8
+       dataset_proportion:
+	 - 1
+    ```
 
    Under `scenario_params_list`, enter a list of sets of scenario(s). Each set starts with ` - dataset_name:` and must have only one `partners_count` value. The length of `amount_per_partners`, `corrupted_datasets` (and `samples_split_option` when the advanced definition is used) must match the `partner_counts` value. If for a given parameter multiple values are specified, e.g. like for `agregation_weighting` in the first scenario set of the above example, all possible combinations of parameters will be assembled as separate scenarios and run.
 
@@ -167,9 +169,9 @@ Example: `n_repeats: 2`
 #### Scenario-level parameters
 
 ##### Choice of dataset
-
 `dataset_name`: `'mnist'` (default), `'cifar10'` or `'titanic'`
-MNIST, CIFAR10 and Titanic are currently supported. They come with their associated modules in `/datasets` for loading data, pre-processing inputs, and define a model architecture.
+MNIST, CIFAR10 and Titanic are currently supported. They come with their associated modules in `/datasets` for loading data, pre-processing inputs, and define a model architecture.\
+For each dataset, it is possible to provide a path to model weights learned from a previous coalition. Use `'random_initialization'` if you want a random initialization. 
 
 **Note on validation and test datasets**:
 
