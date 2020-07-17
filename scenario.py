@@ -138,19 +138,19 @@ class Scenario:
         # Number of epochs, mini-batches and fit_batches in ML training
         if "epoch_count" in params:
             self.epoch_count = params["epoch_count"]
-            assert self.epoch_count > 0, "Error: in .yml epoch_count should be > 0"
+            assert self.epoch_count > 0, "Error: in the provided config file, epoch_count should be > 0"
         else:
             self.epoch_count = 40  # default
 
         if "minibatch_count" in params:
             self.minibatch_count = params["minibatch_count"]
-            assert self.minibatch_count > 0, "Error: in .yml minibatch_count should be > 0"
+            assert self.minibatch_count > 0, "Error: in the provided config file, minibatch_count should be > 0"
         else:
             self.minibatch_count = 20  # default
 
         if "gradient_updates_per_pass_count" in params:
             self.gradient_updates_per_pass_count = params["gradient_updates_per_pass_count"]
-            assert self.gradient_updates_per_pass_count > 0, "Error: in .yml gradient_updates_per_pass_count should be > 0"
+            assert self.gradient_updates_per_pass_count > 0, "Error: in the provided config file, gradient_updates_per_pass_count should be > 0"
         else:
             self.gradient_updates_per_pass_count = constants.DEFAULT_GRADIENT_UPDATES_PER_PASS_COUNT
 
@@ -393,7 +393,7 @@ class Scenario:
             )
 
         # Check coherence of number of mini-batches versus partner with small dataset
-        assert self.minibatch_count <= min([len(p.x_train) for p in self.partners_list]), "Error: in .yml and the dataset provided, a partner doesn't have enough data samples to create the minibatches "
+        assert self.minibatch_count <= min([len(p.x_train) for p in self.partners_list]), "Error: in the provided config file and the provided dataset, a partner doesn't have enough data samples to create the minibatches "
 
         if is_logging_enabled:
             logger.info("### Splitting data among partners:")
@@ -419,8 +419,8 @@ class Scenario:
         # ... or receive different amounts?
 
         # Check the percentages of samples per partner and control its coherence
-        assert len(self.amounts_per_partner) == self.partners_count, "Error: in .yml in amounts_per_partner arguments: the amounts_per_partners arguments (a list) has to contain a proportion per each partner - Here there is too many or not enough proportions"
-        assert np.sum(self.amounts_per_partner) <= 1, "Error: in .yml in amounts_per_partner arguments: the sum of the proportions you provided is higher than 1"
+        assert len(self.amounts_per_partner) == self.partners_count, "Error: in the provided config file, amounts_per_partner list should have a size equals to partners_count"
+        assert np.sum(self.amounts_per_partner) <= 1, "Error: in the provided config file, in amounts_per_partner arguments: the sum of the proportions you provided is higher than 1"
 
         # Then we parameterize this via the splitting_indices to be passed to np.split
         # This is to transform the percentages from the scenario configuration into indices where to split the data
@@ -438,17 +438,21 @@ class Scenario:
 
         # If partners don't use the full dataset we only keep the amount of data targeted and then normalize proportions
 
-        proportion_of_dataset = np.sum(self.amounts_per_partner)
+        dataset_fraction_used = np.sum(self.amounts_per_partner)
 
-        if proportion_of_dataset < 1:
-            skip_idx = int(round(len(x_train) * proportion_of_dataset))
+        if dataset_fraction_used < 1:
+            logger.info(f"We don't use the full dataset: only {dataset_fraction_used*100}%")
+
+            skip_idx = int(round(len(x_train) * dataset_fraction_used))
             train_idx = np.arange(len(x_train))
+
             np.random.seed(42)
             np.random.shuffle(train_idx)
             x_train = x_train[train_idx[0:skip_idx]]
             y_train = y_train[train_idx[0:skip_idx]]
 
-            splitting_indices = splitting_indices / proportion_of_dataset  # Normalize proportions
+            splitting_indices = splitting_indices / dataset_fraction_used  # Normalize proportions
+
             if self.partners_count == 1:
                 splitting_indices_train = 1  # Read Documentation of np.split
             else :
@@ -514,7 +518,7 @@ class Scenario:
             partner_idx += 1
 
         # Check coherence of number of mini-batches versus smaller partner
-        assert self.minibatch_count <= (min(self.amounts_per_partner) * len(x_train)), "Error: in .yml and the dataset provided, a partner doesn't have enough data samples to create the minibatches"
+        assert self.minibatch_count <= (min(self.amounts_per_partner) * len(x_train)), "Error: in the provided config file and dataset, a partner doesn't have enough data samples to create the minibatches"
 
         self.nb_samples_used = sum([len(p.x_train) for p in self.partners_list])
         self.final_relative_nb_samples = [p.final_nb_samples / self.nb_samples_used for p in self.partners_list]
