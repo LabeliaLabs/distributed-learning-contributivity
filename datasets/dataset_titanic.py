@@ -1,15 +1,14 @@
 # -*- coding: utf-8 -*-
 """
 Titanic dataset.
-(inspired from: https://web.stanford.edu/class/archive/cs/cs109/cs109.1166/problem12.html)
+(inspired from: https://web.stanford.edu/class/archive/cs/cs109/cs109.1166/problem12.html
+and https://www.kaggle.com/mukultiwari/titanic-top-14-with-random-forest)
 """
 
 from sklearn.model_selection import train_test_split
 import pandas as pd
 import keras
-
 from sklearn.ensemble import RandomForestClassifier
-
 
 # Init dataset-specific variables
 num_classes = 2
@@ -28,7 +27,7 @@ def preprocess_dataset_labels(y):
 def preprocess_dataset_inputs(x):
 
     """
-    Return usable boolean values for 'Sex' atribute
+    feature engineering
     """
 
     x["Sex"] = [i=="Male" for i in x["Sex"]]
@@ -66,10 +65,9 @@ def generate_new_model_for_dataset():
 
     """
     Return a deep learning model from scratch
-    Source : https://www.kaggle.com/bananachips/titanic-with-keras
+    https://www.kaggle.com/mukultiwari/titanic-top-14-with-random-forest
     """
-
-
+    
     return RandomForestClassifier(criterion='gini',
                                  n_estimators=700,
                                  min_samples_leaf=1,

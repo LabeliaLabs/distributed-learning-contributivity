@@ -9,7 +9,6 @@ import pickle
 import keras
 from keras.backend.tensorflow_backend import clear_session
 from keras.callbacks import EarlyStopping
-from keras.models import Sequential
 import numpy as np
 import matplotlib.pyplot as plt
 import operator
@@ -290,7 +289,6 @@ class MultiPartnerLearning:
         plt.savefig(self.save_folder / "graphs/all_partners.png")
         plt.close()
 
-
     def compute_collaborative_round_fedavg(self):
         """Proceed to a collaborative round with a federated averaging approach"""
 
@@ -439,8 +437,6 @@ class MultiPartnerLearning:
         epoch_index, minibatch_index = self.epoch_index, self.minibatch_index
         is_last_round = minibatch_index == self.minibatch_count - 1
         x_val, y_val = self.val_data
-
-
 
         # Iterate over partners for training the model sequentially
         shuffled_indexes = np.random.permutation(self.partners_count)
@@ -602,8 +598,6 @@ class MultiPartnerLearning:
             validation_score = fit_history.score(x_val, y_val)
         else :
             validation_score = fit_history.history["val_accuracy"][0]
-
-
 
         self.scores_last_learning_round[partner_index] = validation_score  # TO DO check if coherent
 
