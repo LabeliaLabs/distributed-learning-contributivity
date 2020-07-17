@@ -12,6 +12,7 @@ import pytest
 
 import numpy as np
 
+from tensorflow.keras.datasets import cifar10
 from datasets import dataset_cifar10 as cf10
 from partner import Partner
 # ici rassembler bouts de code pour creer une liste
@@ -32,18 +33,20 @@ class Test_partner:
             part.y_train = part.y_train.astype("float64")
             part.corrupt_labels(part)
 
+(x_train, y_train), (x_test, y_test) = cifar10.load_data()
+x_train = cf10.preprocess_dataset_inputs(x_train)
+
 class Test_dataset_cifar10:
 
     def test_preprocess_dataset_inputs_type(self):
-        x = cf10.preprocess_dataset_inputs(np.arange(20.))
-        assert x.dtype == "float32"
+        assert x_train.dtype == "float32"
 
     def test_preprocess_dataset_inputs_activation(self):
-        x= cf10.preprocess_dataset_inputs(np.arange(20.))
-        assert all( c <= 1 and c >= 0 for c in x)
+        greater_than_0 = not False in np.greater_equal(x_train, 0)
+        lower_than_1 = not True in np.greater(x_train, 1)
+        assert (greater_than_0 and lower_than_1)
 
     def test_inputs_shape(self):
-        (x_train, y_train), (x_test, y_test) = cf10.cifar10.load_data()
         assert x_train.shape[1:] == cf10.input_shape
 
 class TestDemoClass:
