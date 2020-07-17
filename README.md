@@ -1,5 +1,6 @@
 [![Build Status](https://travis-ci.org/SubstraFoundation/distributed-learning-contributivity.svg?branch=master)](https://travis-ci.org/SubstraFoundation/distributed-learning-contributivity)
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/SubstraFoundation/distributed-learning-contributivity/blob/master/run_experiment_on_google_collab.ipynb)
+[![Discuss on Slack](https://img.shields.io/badge/chat-on%20slack-orange)](https://substra.us18.list-manage.com/track/click?e=2effed55c9&id=fa49875322&u=385fa3f9736ea94a1fcca969f)
 
 
 # Exploration of dataset contributivity to a model in collaborative ML projects
@@ -115,9 +116,12 @@ Finally, with given scenarios and multi-partner learning approaches, we can addr
 
    Under `scenario_params_list`, enter a list of sets of scenario(s). Each set starts with ` - dataset_name:` and must have only one `partners_count` value. The length of `amount_per_partners`, `corrupted_datasets` (and `samples_split_option` when the advanced definition is used) must match the `partner_counts` value. If for a given parameter multiple values are specified, e.g. like for `agregation_weighting` in the first scenario set of the above example, all possible combinations of parameters will be assembled as separate scenarios and run.
    
-3. Then execute `main.py -f config.yml`. Add the `-v` argument if you want a more verbose output. 
+1. Then execute `main.py -f config.yml`. Add the `-v` argument if you want a more verbose output. 
 
-4. A `results.csv` file will be generated in a new folder for your experiment under `/experiments/<your_experiment>`. You can read this raw `results.csv` file or use the notebooks in `/notebooks`.
+1. A `results.csv` file will be generated in a new folder for your experiment under `/experiments/<your_experiment>`. You can read this raw `results.csv` file or use the notebooks in `/notebooks`.  
+
+   **Note**: example experiment(s) are stored in folder `/saved_experiments` to illustrate the use of the library. The notebooks include graphs, like for example the following:  
+   ![Example graphs](./img/results_graphs_example.png)
 
 ### Config file parameters
 
@@ -139,6 +143,13 @@ Example: `n_repeats: 2`
 
 `dataset_name`: `'mnist'` (default) or `'cifar10'`  
 MNIST and CIFAR10 are currently supported. They come with their associated modules in `/datasets` for loading data, pre-processing inputs, and define a model architecture.
+
+**Note on validation and test datasets**:  
+- The dataset modules must provide separated train and test sets (referred to as global train set and global test set).
+- The global train set is then further split into a global train set and a global validation set.
+In the multi-partner learning computations, the global validation set is used for early stopping and the global test set is used for performance evaluation.
+- The global train set is split amongst partner (according to the scenario configuration) to populate the partner's local datasets.
+- For each partner, the local dataset is split into separated train, validation and test sets. Currently, the local validation and test set are not used, but they are available for further developments of multi-partner learning and contributivity measurement approaches.
 
 ##### Definition of collaborative scenarios
 
