@@ -6,22 +6,7 @@
 
 import utils
 import yaml
-from datasets import dataset_cifar10 as cf10
-import numpy as np
 
-class Test_dataset_cifar10:
-
-    def test_preprocess_dataset_inputs_type(self):
-        x = cf10.preprocess_dataset_inputs(np.arange(20.))
-        assert x.dtype == "float32"
-
-    def test_preprocess_dataset_inputs_activation(self):
-        x= cf10.preprocess_dataset_inputs(np.arange(20.))
-        assert all( c <= 1 and c >= 0 for c in x)
-
-    def test_inputs_shape(self):
-        (x_train, y_train), (x_test, y_test) = cf10.cifar10.load_data()
-        assert x_train.shape[1:] == cf10.input_shape
 
 class TestDemoClass:
 
