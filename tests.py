@@ -33,6 +33,20 @@ class Test_partner:
             part.y_train = part.y_train.astype("float64")
             part.corrupt_labels(part)
 
+    def test_shuffle_labels_type(self):
+        with pytest.raises(TypeError):
+            part = Partner(partner_id=0)
+            part.shuffle_labels(part)
+
+    def test_shuffle_labels_type_elem(self):
+        with pytest.raises(TypeError):
+            part = Partner(partner_id=0)
+            (x_train, y_train), (x_test, y_test) = cf10.cifar10.load_data()
+            part.y_train = cf10.preprocess_dataset_labels(y_train)
+            part.y_train = part.y_train.astype("float64")
+            part.shuffle_labels(part)
+
+
 (x_train, y_train), (x_test, y_test) = cifar10.load_data()
 x_train = cf10.preprocess_dataset_inputs(x_train)
 
