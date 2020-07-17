@@ -581,6 +581,7 @@ class MultiPartnerLearning:
             verbose=0,
             validation_data=val_data,
             )
+
         return history
 
     def log_collaborative_round_partner_result(self, partner, partner_index, validation_score):
