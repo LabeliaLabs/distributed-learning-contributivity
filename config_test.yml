@@ -8,7 +8,7 @@ scenario_params_list:
    amounts_per_partner:
      - [0.4, 0.3, 0.3]
    samples_split_option:
-     - ['basic', 'stratified']
+     - ['basic', 'random']  # must go random for binary output 
    multi_partner_learning_approach:
      - 'fed-forest'
    aggregation_weighting:
@@ -16,6 +16,6 @@ scenario_params_list:
    methods:
      - ["Independent scores"]
    minibatch_count:
-     - 1  # low minibatch count seems to avoid model going 100% yes/no when not sufficient data is provided
+     - 10
    gradient_updates_per_pass_count:
      - 8

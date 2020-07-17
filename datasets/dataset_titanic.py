@@ -7,21 +7,19 @@ and https://www.kaggle.com/mukultiwari/titanic-top-14-with-random-forest)
 
 from sklearn.model_selection import train_test_split
 import pandas as pd
-import keras
 from sklearn.ensemble import RandomForestClassifier
 
 # Init dataset-specific variables
-num_classes = 2
-input_shape = (6,)
+num_classes = 2     # legacy
+input_shape = (1,)  # legacy
 
 # Init dataset-specific functions
 def preprocess_dataset_labels(y):
 
     """
-    Change label to categorical values
+    legacy
     """
 
-    y = keras.utils.to_categorical(y,num_classes=num_classes)
     return y
 
 def preprocess_dataset_inputs(x):
@@ -56,7 +54,7 @@ def load_data():
     y = raw_dataset['Survived']
     y = y.to_numpy()
 
-    x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.33, random_state=42)
+    x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.33, shuffle=True)
 
     return (x_train, y_train), (x_test, y_test)
 
@@ -67,7 +65,7 @@ def generate_new_model_for_dataset():
     Return a deep learning model from scratch
     https://www.kaggle.com/mukultiwari/titanic-top-14-with-random-forest
     """
-    
+
     return RandomForestClassifier(criterion='gini',
                                  n_estimators=700,
                                  min_samples_leaf=1,
