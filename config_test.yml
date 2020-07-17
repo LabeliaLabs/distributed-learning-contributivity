@@ -1,5 +1,5 @@
 experiment_name: my_example
-n_repeats: 5
+n_repeats: 1
 scenario_params_list:
  - dataset_name:
      - 'titanic'
@@ -16,6 +16,6 @@ scenario_params_list:
    methods:
      - ["Independent scores"]
    minibatch_count:
-     - 20
+     - 1  # low minibatch count seems to avoid model going 100% yes/no when not sufficient data is provided
    gradient_updates_per_pass_count:
      - 8
