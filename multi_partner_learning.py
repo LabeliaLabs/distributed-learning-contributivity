@@ -17,6 +17,8 @@ from loguru import logger
 
 import constants
 
+from sklearn.ensemble import RandomForestClassifier
+
 
 class MultiPartnerLearning:
 
@@ -27,7 +29,7 @@ class MultiPartnerLearning:
                  dataset,
                  multi_partner_learning_approach,
                  aggregation_weighting="uniform",
-                 is_early_stopping=True ,
+                 is_early_stopping=True,
                  is_save_data=False,
                  save_folder="",
                  ):
@@ -238,11 +240,6 @@ class MultiPartnerLearning:
             logger.info(f"   Model metrics names: {model_to_evaluate.metrics_names}")
             logger.info(f"   Model metrics values: {['%.3f' % elem for elem in model_evaluation]}")
             self.test_score = model_evaluation[1]  # 0 is for the loss
-
-
-
-
-
 
         self.nb_epochs_done = self.epoch_index + 1
 
@@ -457,7 +454,7 @@ class MultiPartnerLearning:
                 self.minibatched_x_train[partner_index][minibatch_index],
                 self.minibatched_y_train[partner_index][minibatch_index],
             )
-            history = self.collaborative_round_fit(random_forest_model, train_data_for_fit_iteration)
+            history = self.collaborative_round_fit(random_forest_model, train_data_for_fit_iteration, val_data = None, batch_size = None)
 
             # Log results of the round
             x_val, y_val = self.val_data
@@ -566,12 +563,16 @@ class MultiPartnerLearning:
         return partners_model_list
 
     @staticmethod
-    def collaborative_round_fit(model_to_fit, train_data, val_data = None, batch_size = None):
+    def collaborative_round_fit(model_to_fit, train_data, val_data, batch_size):
         """Fit the model with arguments passed as parameters and returns the history object"""
 
         x_train, y_train = train_data
-
-        if type(model_to_fit) is Sequential():
+        if isinstance(model_to_fit, type(RandomForestClassifier())) :
+            history = model_to_fit.fit(
+                x_train,
+                y_train
+            )
+        else:
             history = model_to_fit.fit(
             x_train,
             y_train,
@@ -579,11 +580,6 @@ class MultiPartnerLearning:
             epochs=1,
             verbose=0,
             validation_data=val_data,
-            )
-        else :
-            history = model_to_fit.fit(
-                x_train,
-                y_train
             )
         return history
 
