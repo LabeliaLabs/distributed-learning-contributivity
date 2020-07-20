@@ -10,11 +10,16 @@ from keras.layers import Dense, Flatten
 from keras.layers import Conv2D, MaxPooling2D
 import keras
 
+# Init dataset-specific variables
+img_rows = 28
+img_cols = 28
+input_shape = (img_rows, img_cols, 1)
+num_classes = 10
 
 # Data samples pre-processing method for inputs
-def preprocess_dataset_inputs(x, rows, cols):
+def preprocess_dataset_inputs(x):
 
-    x = x.reshape(x.shape[0], rows, cols, 1)
+    x = x.reshape(x.shape[0], img_rows, img_cols, 1)
     x = x.astype("float32")
     x /= 255
 
@@ -32,15 +37,10 @@ def preprocess_dataset_labels(y):
 # Load data
 (x_train, y_train), (x_test, y_test) = mnist.load_data()
 
-# Init dataset-specific variables
-img_rows = 28
-img_cols = 28
-input_shape = (img_rows, img_cols, 1)
-num_classes = 10
 
 # Pre-process inputs
-x_train = preprocess_dataset_inputs(x_train, img_rows, img_cols)
-x_test = preprocess_dataset_inputs(x_test, img_rows, img_cols)
+x_train = preprocess_dataset_inputs(x_train)
+x_test = preprocess_dataset_inputs(x_test)
 
 
 # Model structure and generation
