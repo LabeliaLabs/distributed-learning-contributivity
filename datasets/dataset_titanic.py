@@ -6,12 +6,10 @@ Titanic dataset.
 
 from sklearn.model_selection import train_test_split
 from keras.models import Sequential
-from keras.layers import Dense, Flatten, Dropout
-from keras.layers import Conv2D, MaxPooling2D
+from keras.layers import Dense, Dropout
 import requests
 import pandas as pd
 import keras
-import os
 
 # Init dataset-specific variables
 num_classes = 1
@@ -21,10 +19,9 @@ input_shape = (24,)
 def preprocess_dataset_labels(y):
 
     """
-    Change label to categorical values
+    Legacy
     """
 
-    #y = keras.utils.to_categorical(y,num_classes=num_classes)
     return y
 
 def preprocess_dataset_inputs(x):
@@ -43,7 +40,6 @@ def preprocess_dataset_inputs(x):
     x['Fam_size'] = x['Siblings/Spouses Aboard'] +x['Parents/Children Aboard']
 
     x['Is_alone'] = [i==0 for i in x["Fam_size"]]
-
 
     # Dropping the useless features
     x.drop('Name', axis=1, inplace=True)
@@ -88,7 +84,6 @@ def generate_new_model_for_dataset():
     model.add(Dense(16, kernel_initializer='uniform', activation='relu'))
     model.add(Dense(8, kernel_initializer='uniform', activation='relu'))
     model.add(Dense(1, kernel_initializer='uniform', activation='sigmoid'))
-
 
     model.compile(optimizer = 'adam',
                    loss = 'binary_crossentropy',
