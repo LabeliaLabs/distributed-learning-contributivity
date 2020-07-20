@@ -14,8 +14,8 @@ import keras
 import os
 
 # Init dataset-specific variables
-num_classes = 2
-input_shape = (6,)
+num_classes = 1
+input_shape = (24,)
 
 # Init dataset-specific functions
 def preprocess_dataset_labels(y):
@@ -24,16 +24,32 @@ def preprocess_dataset_labels(y):
     Change label to categorical values
     """
 
-    y = keras.utils.to_categorical(y,num_classes=num_classes)
+    #y = keras.utils.to_categorical(y,num_classes=num_classes)
     return y
 
 def preprocess_dataset_inputs(x):
 
     """
-    Return usable boolean values for 'Sex' atribute
+    feature engineering
     """
 
     x["Sex"] = [i=="Male" for i in x["Sex"]]
+
+    x['Title'] = [i.split()[0] for i in x["Name"]]
+    x = pd.concat([x, pd.get_dummies(x['Title'])], axis=1)
+
+    x['Name_Len'] = [len(i) for i in x["Name"]]
+
+    x['Fam_size'] = x['Siblings/Spouses Aboard'] +x['Parents/Children Aboard']
+
+    x['Is_alone'] = [i==0 for i in x["Fam_size"]]
+
+
+    # Dropping the useless features
+    x.drop('Name', axis=1, inplace=True)
+    x.drop('Siblings/Spouses Aboard', axis=1, inplace=True)
+    x.drop('Parents/Children Aboard', axis=1, inplace=True)
+    x.drop('Title', axis=1, inplace=True)
     return x.to_numpy()
 
 # download train and test sets
@@ -44,7 +60,7 @@ def load_data():
     """
 
     raw_dataset = pd.read_csv('https://web.stanford.edu/class/archive/cs/cs109/cs109.1166/stuff/titanic.csv', index_col=False )
-    x = raw_dataset.drop(['Name','Survived'], axis=1)
+    x = raw_dataset.drop('Survived', axis=1)
     x = preprocess_dataset_inputs(x)
     y = raw_dataset['Survived']
     y = y.to_numpy()
@@ -58,21 +74,26 @@ def generate_new_model_for_dataset():
 
     """
     Return a deep learning model from scratch
-    Source : https://www.kaggle.com/bananachips/titanic-with-keras
+    https://www.kaggle.com/kabure/titanic-eda-model-pipeline-keras-nn
     """
 
     model = Sequential()
-    model.add(Dense(256,activation="relu", input_shape=input_shape))
-    model.add(keras.layers.core.Dropout(0.3))
-    model.add(Dense(128,activation="relu"))
-    model.add(keras.layers.core.Dropout(0.2))
-    model.add(Dense(64,activation="relu"))
-    model.add(Dense(2,activation="softmax"))
-    model.compile(
-        loss="categorical_crossentropy",
-        optimizer="adam",
-        metrics=["accuracy"]
-    )
+
+    model.add(Dense(64, activation='relu', input_dim=24, kernel_initializer='uniform'))
+    model.add(Dense(64, activation='relu', kernel_initializer='uniform'))
+    model.add(Dropout(0.50))
+    model.add(Dense(32, kernel_initializer='uniform', activation='relu'))
+    model.add(Dense(32, kernel_initializer='uniform', activation='relu'))
+    model.add(Dropout(0.50))
+    model.add(Dense(16, kernel_initializer='uniform', activation='relu'))
+    model.add(Dense(8, kernel_initializer='uniform', activation='relu'))
+    model.add(Dense(1, kernel_initializer='uniform', activation='sigmoid'))
+
+
+    model.compile(optimizer = 'adam',
+                   loss = 'binary_crossentropy',
+                   metrics = ['accuracy'])
+
     return model
 
 # Load data
