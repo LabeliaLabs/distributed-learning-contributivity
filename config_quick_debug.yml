@@ -18,7 +18,7 @@ scenario_params_list:
    aggregation_weighting:
     - 'uniform'
    methods:
-    - ["Federated SBS"]
+    - ["Federated SBS constant"]
    gradient_updates_per_pass_count:
     - 5
    is_quick_demo:
