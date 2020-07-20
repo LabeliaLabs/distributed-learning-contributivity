@@ -17,6 +17,8 @@ from datasets import dataset_cifar10 as data_cf
 from datasets import dataset_mnist as data_mn
 from partner import Partner
 from dataset import Dataset
+from scenario import Scenario
+from multi_partner_learning import MultiPartnerLearning
 # ici rassembler bouts de code pour creer une liste
 # de scenario (config!) dont on se servira dans les tests
 
@@ -74,7 +76,7 @@ class Test_partner:
             part.shuffle_labels(part)
 
 @pytest.fixture(scope="class", params=["cifar10","mnist"])
-def create_dataset(request):
+def create_Dataset(request):
     """"""
     name = request.param
     if name == "cifar10":
@@ -103,10 +105,59 @@ def create_dataset(request):
             )
     yield dataset
 
+
 class Test_Dataset:
 
-    def test_generate_new_model(self, create_dataset):
-        assert create_dataset.name in {"cifar10","mnist"}
+    def test_generate_new_model(self, create_Dataset):
+        assert create_Dataset.name in {"cifar10","mnist"}
+
+@pytest.fixture
+def create_partner_list(create_partner):
+    yield [create_partner] * 3
+
+
+@pytest.fixture
+def create_MultiPartnerLearning(create_Dataset, create_partner_list):
+    data = create_Dataset
+    part_list = create_partner_list
+    mpl = MultiPartnerLearning(
+            partners_list=part_list,
+            epoch_count=2,
+            minibatch_count=2,
+            dataset=data,
+            multi_partner_learning_approach="fedavg",
+            aggregation_weighting="uniform",
+            is_early_stopping=True,
+            is_save_data=False,
+            save_folder="",
+            )
+    yield mpl
+
+def test_mpl(create_MultiPartnerLearning):
+    assert type(create_MultiPartnerLearning) == MultiPartnerLearning
+
+from pathlib import Path
+
+@pytest.fixture
+def create_scenario(create_MultiPartnerLearning, create_Dataset, create_partner_list):
+    params = {"dataset_name": "cifar10", "partners_count":3, "amounts_per_partner": [0.2, 0.5, 0.3], "samples_split_option": ["basic","random"], "multi_partner_learning_aproach":"fedavg", "aggregation_weighting": "uniform", "methods": ["Shapley values", "Independent scores"], "gradient_updates_per_pass_count": 5}
+
+    experiment_path = Path('/home/garibou/Documents/distributed-learning-contributivity/experiments/test_unitaire')
+
+    scenar = Scenario(
+            params=params,
+            experiment_path=experiment_path,
+            scenario_id=0,
+            n_repeat=1
+            )
+
+    scenar.mpl = create_MultiPartnerLearning
+    scenar.dataset
+
+    yield scenar
+
+def test_scenar(create_scenario):
+    assert type(create_scenario) == Scenario
 
 @pytest.fixture(scope="class")
 def create_cifar10_x_train():
