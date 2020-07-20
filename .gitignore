@@ -113,3 +113,5 @@ nohup.out
 
 trash/
 experiments/
+
+.DS_Store
