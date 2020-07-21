@@ -454,7 +454,8 @@ class Scenario:
             splitting_indices = splitting_indices / dataset_fraction_used  # Normalize proportions
 
             if self.partners_count == 1:
-                splitting_indices_train = 1  # np.split(train_idx, splitting_indices_train=1) returns train_idx
+                splitting_indices_train = 1
+                # np.split(train_idx, splitting_indices_train=1) returns train_idx
             else :
                 # splitting_indices_train (argument of np.split) can be an integer or a np.array
                 splitting_indices_train = (splitting_indices * len(x_train)).astype(int)
