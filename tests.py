@@ -136,9 +136,11 @@ def test_mpl(create_MultiPartnerLearning):
     assert type(create_MultiPartnerLearning) == MultiPartnerLearning
 
 
-@pytest.fixture
-def create_scenario(create_MultiPartnerLearning, create_Dataset, create_partner_list):
-    params = {"dataset_name": "cifar10", "partners_count":3, "amounts_per_partner": [0.2, 0.5, 0.3], "samples_split_option": ["basic","random"], "multi_partner_learning_aproach":"fedavg", "aggregation_weighting": "uniform", "methods": ["Shapley values", "Independent scores"], "gradient_updates_per_pass_count": 5}
+
+@pytest.fixture(params=["cifar10", "mnist"])
+def create_scenario(request, create_MultiPartnerLearning, create_Dataset, create_partner_list):
+    dataset_name = request.param
+    params = {"dataset_name": dataset_name, "partners_count":3, "amounts_per_partner": [0.2, 0.5, 0.3], "samples_split_option": ["basic","random"], "multi_partner_learning_aproach":"fedavg", "aggregation_weighting": "uniform", "methods": ["Shapley values", "Independent scores"], "gradient_updates_per_pass_count": 5}
 
     full_experiment_name = "unit-test-pytest"
     experiment_path = Path.cwd() / "experiments" / full_experiment_name
