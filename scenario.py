@@ -29,7 +29,7 @@ class Scenario:
 
         # Raise Exception if unknown parameters in the .yml file
 
-        params_known = ["dataset_name","partners_count","amounts_per_partner","samples_split_option","multi_partner_learning_approach","aggregation_weighting","methods","gradient_updates_per_pass_count","is_quick_demo"]
+        params_known = ["dataset_name","partners_count","amounts_per_partner","samples_split_option","multi_partner_learning_approach","aggregation_weighting","methods","gradient_updates_per_pass_count","is_quick_demo", "corrupted_datasets", "epoch_count", "minibatch_count", "is_early_stopping"]
 
         if not all([x in params_known for x in params]):
             for x in params:
@@ -423,7 +423,6 @@ class Scenario:
         # Then we parameterize this via the splitting_indices to be passed to np.split
         # This is to transform the percentages from the scenario configuration into indices where to split the data
         if self.partners_count == 1:
-            splitting_indices = self.amounts_per_partner[0]
             splitting_indices_train = 1
         else:
             splitting_indices = np.empty((self.partners_count - 1,))
