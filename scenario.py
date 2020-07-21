@@ -269,6 +269,10 @@ class Scenario:
         self.contributivity_list.append(contributivity)
 
     def instantiate_scenario_partners(self):
+        """Create the partners_list - should be []"""
+
+        if self.partners_list != []:
+            raise Exception
 
         self.partners_list = [Partner(i) for i in range(self.partners_count)]
 
@@ -407,6 +411,9 @@ class Scenario:
 
     def split_data(self, is_logging_enabled=True):
         """Populates the partners with their train and test data (not pre-processed)"""
+
+        # self.partners_list wasn't change since the initializati
+        assert all([type(self.partners_list[i].x_train) == None for i in range(len(self.partners_list))])
 
         # Fetch parameters of scenario
         x_train = self.dataset.x_train
