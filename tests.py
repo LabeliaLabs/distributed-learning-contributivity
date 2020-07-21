@@ -19,8 +19,8 @@ from partner import Partner
 from dataset import Dataset
 from scenario import Scenario
 from multi_partner_learning import MultiPartnerLearning
-# ici rassembler bouts de code pour creer une liste
-# de scenario (config!) dont on se servira dans les tests
+from pathlib import Path
+
 
 @pytest.fixture(scope="module", params=["a","b"])
 def ab(request):
@@ -32,7 +32,6 @@ def cd(request,ab):
 
 def test(cd):
     assert cd in {"ac","ad","bc","bd"}
-
 
 
 @pytest.fixture(scope="class", params=["cifar10","mnist"])
@@ -136,13 +135,13 @@ def create_MultiPartnerLearning(create_Dataset, create_partner_list):
 def test_mpl(create_MultiPartnerLearning):
     assert type(create_MultiPartnerLearning) == MultiPartnerLearning
 
-from pathlib import Path
 
 @pytest.fixture
 def create_scenario(create_MultiPartnerLearning, create_Dataset, create_partner_list):
     params = {"dataset_name": "cifar10", "partners_count":3, "amounts_per_partner": [0.2, 0.5, 0.3], "samples_split_option": ["basic","random"], "multi_partner_learning_aproach":"fedavg", "aggregation_weighting": "uniform", "methods": ["Shapley values", "Independent scores"], "gradient_updates_per_pass_count": 5}
 
-    experiment_path = Path('/home/garibou/Documents/distributed-learning-contributivity/experiments/test_unitaire')
+    full_experiment_name = "unit-test-pytest"
+    experiment_path = Path.cwd() / "experiments" / full_experiment_name
 
     scenar = Scenario(
             params=params,
