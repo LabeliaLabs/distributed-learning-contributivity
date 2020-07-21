@@ -23,7 +23,7 @@ import scenario
 import utils
 
 
-DEFAULT_CONFIG_FILE = "config.yml"
+DEFAULT_CONFIG_FILE = "config_quick_debug.yml"
 
 
 @logger.catch

@@ -1,4 +1,4 @@
-experiment_name: my_example
+experiment_name: test_score_matrices
 n_repeats: 5
 scenario_params_list:
  - dataset_name:
@@ -14,16 +14,11 @@ scenario_params_list:
      - ['advanced', [[4, 'shared'], [6, 'shared'], [4, 'specific']]]
    multi_partner_learning_approach:
      - 'fedavg'
-     - 'seq-pure'
-     - 'seq-with-final-agg'
-     - 'seqavg'
    aggregation_weighting: 
      - 'data_volume' 
      - 'uniform'
    epoch_count: 
      - 38
-   methods:
-     - ["Shapley values", "Independent scores", "TMCS"]
    minibatch_count: 
      - 20
    gradient_updates_per_pass_count:
@@ -32,16 +27,16 @@ scenario_params_list:
      - 'mnist'
    partners_count:
      - 2
-   amounts_per_partner: 
+   amounts_per_partner:
      - [0.5, 0.5]
    samples_split_option:
      - ['basic', 'stratified']
    multi_partner_learning_approach:
      - 'fedavg'
-   aggregation_weighting: 
-     - 'data_volume' 
+   aggregation_weighting:
+     - 'data_volume'
      - 'uniform'
-   epoch_count: 
+   epoch_count:
      - 50
    methods:
      - ["Shapley values", "SMCS", "IS_lin_S", "IS_reg_S"]

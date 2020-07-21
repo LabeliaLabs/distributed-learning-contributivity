@@ -167,6 +167,7 @@ class Scenario:
             "AIS_Kriging_S",
             "SMCS",
             "WR_SMC",
+            "Federated SBS"
         ]
 
         self.methods = []
