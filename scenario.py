@@ -52,8 +52,6 @@ class Scenario:
             dataset_module = dataset_mnist
         elif dataset_name == "cifar10":
             dataset_module = dataset_cifar10
-        elif dataset_name == "imdb":
-            dataset_module = dataset_imdb
         else:
             raise Exception(f"Dataset named '{dataset_name}' is not supported (yet). You could add it!")
 
@@ -423,7 +421,7 @@ class Scenario:
 
         # Check the percentages of samples per partner and control its coherence
         assert len(self.amounts_per_partner) == self.partners_count, "Error: in the provided config file, amounts_per_partner list should have a size equals to partners_count"
-        assert np.sum(self.amounts_per_partner) <= 1, "Error: in the provided config file, in amounts_per_partner arguments: the sum of the proportions you provided is higher than 1"
+        assert np.sum(self.amounts_per_partner) == 1, "Error: in the provided config file, amounts_per_partner argument: the sum of the proportions you provided isn't equal to 1"
 
         # Then we parameterize this via the splitting_indices to be passed to np.split
         # This is to transform the percentages from the scenario configuration into indices where to split the data
@@ -438,30 +436,6 @@ class Scenario:
                         splitting_indices[i] + self.amounts_per_partner[i + 1]
                 )
             splitting_indices_train = (splitting_indices * len(y_train)).astype(int)
-
-        # If partners don't use the full dataset we only keep the amount of data targeted and then normalize proportions
-
-        dataset_fraction_used = np.sum(self.amounts_per_partner)
-
-        if dataset_fraction_used < 1:
-            logger.info(f"We don't use the full dataset: only {dataset_fraction_used*100}%")
-
-            skip_idx = int(round(len(x_train) * dataset_fraction_used))
-            train_idx = np.arange(len(x_train))
-
-            np.random.seed(42)
-            np.random.shuffle(train_idx)
-            x_train = x_train[train_idx[0:skip_idx]]
-            y_train = y_train[train_idx[0:skip_idx]]
-
-            splitting_indices = splitting_indices / dataset_fraction_used  # Normalize proportions
-
-            if self.partners_count == 1:
-                splitting_indices_train = 1
-                # np.split(train_idx, splitting_indices_train=1) returns train_idx
-            else :
-                # splitting_indices_train (argument of np.split) can be an integer or a np.array
-                splitting_indices_train = (splitting_indices * len(x_train)).astype(int)
 
         # Configure the desired data distribution scenario
 
