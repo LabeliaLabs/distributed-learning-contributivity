@@ -4,9 +4,9 @@ scenario_params_list:
  - dataset_name:
      - 'titanic'
    partners_count:
-     - 3
+     - 2
    amounts_per_partner:
-     - [0.4, 0.3, 0.3]
+     - [0.4, 0.6]
    samples_split_option:
      - ['basic', 'random']
    multi_partner_learning_approach:
@@ -15,7 +15,7 @@ scenario_params_list:
      - 'data_volume'
      - 'uniform'
    epoch_count:
-     - 20
+     - 30
    methods:
      - ["Shapley values", "Independent scores", "TMCS"]
    minibatch_count:

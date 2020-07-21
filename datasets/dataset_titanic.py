@@ -13,7 +13,7 @@ import keras
 
 # Init dataset-specific variables
 num_classes = 1
-input_shape = (24,)
+input_shape = (26,)
 
 # Init dataset-specific functions
 def preprocess_dataset_labels(y):
@@ -78,7 +78,7 @@ def generate_new_model_for_dataset():
 
     model = Sequential()
 
-    model.add(Dense(64, activation='relu', input_dim=24, kernel_initializer='uniform'))
+    model.add(Dense(64, activation='relu', input_dim=26, kernel_initializer='uniform'))
     model.add(Dense(64, activation='relu', kernel_initializer='uniform'))
     model.add(Dropout(0.50))
     model.add(Dense(32, kernel_initializer='uniform', activation='relu'))
