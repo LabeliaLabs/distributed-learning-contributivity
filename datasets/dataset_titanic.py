@@ -35,6 +35,8 @@ def preprocess_dataset_inputs(x):
     x['Title'] = [i.split()[0] for i in x["Name"]]
     x = pd.concat([x, pd.get_dummies(x['Title'])], axis=1)
 
+    x = pd.concat([x, pd.get_dummies(x['Pclass'])], axis=1)
+
     x['Name_Len'] = [len(i) for i in x["Name"]]
 
     x['Fam_size'] = x['Siblings/Spouses Aboard'] +x['Parents/Children Aboard']
@@ -43,6 +45,7 @@ def preprocess_dataset_inputs(x):
 
     # Dropping the useless features
     x.drop('Name', axis=1, inplace=True)
+    x.drop('Pclass', axis=1, inplace=True)
     x.drop('Siblings/Spouses Aboard', axis=1, inplace=True)
     x.drop('Parents/Children Aboard', axis=1, inplace=True)
     x.drop('Title', axis=1, inplace=True)
