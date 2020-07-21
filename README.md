@@ -251,6 +251,9 @@ All methods available are:
 - "AIS_Kriging_S"
 - "SMCS"
 - "WR_SMC"
+- "Federated SBS linear"
+- "Federated SBS quadratic",
+- "Federated SBS constant"
 ```
 See below section [Contributivity measurement approaches studied and implemented](#contributivity-measurement-approaches-studied-and-implemented) for explanation of the different methods.  
 **Note:** When `methods` is omitted in the config file only the distributed learning is run.  
@@ -312,9 +315,17 @@ Example: `is_quick_demo: True`
 
   With DVRL, we modify the learning process of the main model so it includes a data valuation part. Namely we use a small neural network to assign weight to each data, and at each learning step these weights are used to sample the learning batch. These weight are updated at each learning iteration of the main model using the REINFORCE method.
   
-- [future prospect] **Federated step-by-step increments**:
+- **Federated step-by-step increments**:
+  Measures the performance increments on the global validation dataset after every minibatch training - Gives an estimation on how the model improved on every node
+  The Method suited only for federated averaging (for now)
+  For each computation round, the contributivity for each partner is calculated as the ratio between the validation score of the newly trained model for each partner and the validation score from the previously trained collective model
 
-  See open [issue #105](https://github.com/SubstraFoundation/distributed-learning-contributivity/issues/105).
+  Initial rounds (10%) and final rounds (10%) are discarded from calculation as performance increments from the first minibatches might be huge and increments form the last minibatches might be very noisy. Discarded proportions are for now set in the code.
+
+  3 contributivity methods are proposed to adjust the importance of last computation rounds compared to the first ones:
+   - ["Federated SBS linear"] - Linear importance increase between computation rounds (1000th round weights 1000 times first round)
+   - ["Federated SBS quadratic"] - Quadratic importance increase between computation rounds (1000th round weights 10e6 times first round)
+   - ["Federated SBS constant"] - Constant importance increase between computation rounds (1000th round weights same as first round)
   
 ### Ongoing work and improvement plan
 
