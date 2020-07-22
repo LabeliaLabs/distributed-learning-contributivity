@@ -16,18 +16,12 @@ input_shape = (26,)
 
 # Init dataset-specific functions
 def preprocess_dataset_labels(y):
-
-    """
-    Legacy
-    """
+    """Legacy"""
 
     return y
 
 def preprocess_dataset_inputs(x):
-
-    """
-    Feature engineering
-    """
+    """Feature engineering"""
 
     x['Fam_size'] = x['Siblings/Spouses Aboard'] + x['Parents/Children Aboard']
 
@@ -52,10 +46,7 @@ def preprocess_dataset_inputs(x):
 
 # download train and test sets
 def load_data():
-
-    """
-    Return a usable dataset
-    """
+    """Return a usable dataset"""
 
     raw_dataset = pd.read_csv('https://web.stanford.edu/class/archive/cs/cs109/cs109.1166/stuff/titanic.csv', index_col=False )
     x = raw_dataset.drop('Survived', axis=1)
@@ -63,17 +54,14 @@ def load_data():
     y = raw_dataset['Survived']
     y = y.to_numpy()
 
-    x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.33, random_state=42)
+    x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.1, random_state=42)
 
     return (x_train, y_train), (x_test, y_test)
 
 # Model structure and generation
 def generate_new_model_for_dataset():
-
-    """
-    Return a feed forward model from scratch
-    https://www.kaggle.com/kabure/titanic-eda-model-pipeline-keras-nn
-    """
+    """Return a feed forward model from scratch
+    https://www.kaggle.com/kabure/titanic-eda-model-pipeline-keras-nn"""
 
     model = Sequential()
 

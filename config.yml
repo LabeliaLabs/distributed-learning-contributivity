@@ -4,16 +4,16 @@ scenario_params_list:
  - dataset_name:
      - 'titanic'
    partners_count:
-     - 2
+     - 3
    amounts_per_partner:
-     - [0.4, 0.6]
+     - [0.4, 0.3, 0.3]
    samples_split_option:
      - ['basic', 'random']
    multi_partner_learning_approach:
+     #- 'fedavg'  # DOES NOT WORK CURRENTLY, NEED FIX
      - 'seq-pure'
    aggregation_weighting:
      - 'data_volume'
-     - 'uniform'
    epoch_count:
      - 30
    methods:
