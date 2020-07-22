@@ -10,7 +10,6 @@ scenario_params_list:
    samples_split_option:
      - ['basic', 'random']
    multi_partner_learning_approach:
-     #- 'fedavg'  # DOES NOT WORK CURRENTLY, NEED FIX
      - 'seq-pure'
    aggregation_weighting:
      - 'data_volume'
