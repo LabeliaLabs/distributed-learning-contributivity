@@ -37,7 +37,7 @@ def load_cfg(yaml_filepath):
 def get_scenario_params_list(config):
     """
     Create parameter list for each scenario from the config.
-    
+
     Parameters
     ----------
     config : dict
@@ -51,11 +51,11 @@ def get_scenario_params_list(config):
     """
 
     scenario_params_list = []
-    
+
     for list_scenario in config:
         params_name = list_scenario.keys()
         params_list = list(list_scenario.values())
-        
+
         for el in product(*params_list):
             scenario = dict(zip(params_name, el))
 
