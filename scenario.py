@@ -180,10 +180,10 @@ class Scenario:
             self.is_early_stopping = True  # default
 
         # Model from previous coalition used to initialise model
-        self.use_weights_from_previous_coalition = False
+        self.use_saved_weights = False
         try:
             self.init_model_from = params["init_model_from"]
-            self.use_weights_from_previous_coalition = True
+            self.use_saved_weights = True
         except:
             self.init_model_from= ""
 

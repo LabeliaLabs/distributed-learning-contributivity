@@ -30,7 +30,7 @@ class MultiPartnerLearning:
                  is_save_data=False,
                  save_folder="",
                  init_model_from="",
-                 use_weights_from_previous_coalition=False,
+                 use_saved_weights=False,
                  ):
 
         # Attributes related to partners
@@ -43,7 +43,7 @@ class MultiPartnerLearning:
         self.dataset_name = dataset.name
         self.generate_new_model = dataset.generate_new_model
         self.init_model_from = init_model_from
-        self.use_weights_from_previous_coalition = use_weights_from_previous_coalition
+        self.use_saved_weights = use_saved_weights
 
         # Attributes related to the multi-partner learning approach
         self.learning_approach = multi_partner_learning_approach
@@ -80,7 +80,7 @@ class MultiPartnerLearning:
         logger.info(f"## Training and evaluating model on partner with id #{partner.id}")
 
         # Initialize model
-        model = self.init_with_model(self.use_weights_from_previous_coalition)
+        model = self.init_with_model(self.use_saved_weights)
 
         # Set if early stopping if needed
         cb = []
@@ -142,8 +142,8 @@ class MultiPartnerLearning:
         # Initialize variables
         model_to_evaluate, sequentially_trained_model = None, None
         if self.learning_approach in ['seq-pure', 'seq-with-final-agg']:
-            if self.use_weights_from_previous_coalition:
-                sequentially_trained_model = self.init_with_model(self.use_weights_from_previous_coalition)
+            if self.use_saved_weights:
+                sequentially_trained_model = self.init_with_model(self.use_saved_weights)
                 logger.info(f"(seq) Init models with previous coalition model for each partner")
             else:
                 sequentially_trained_model = self.init_with_model()
@@ -294,8 +294,8 @@ class MultiPartnerLearning:
 
         # Starting model for each partner is the aggregated model from the previous mini-batch iteration
         if is_very_first_minibatch:  # Except for the very first mini-batch where it is a new model
-            if self.use_weights_from_previous_coalition:
-                partners_model_list_for_iteration = self.init_with_models(self.use_weights_from_previous_coalition)
+            if self.use_saved_weights:
+                partners_model_list_for_iteration = self.init_with_models(self.use_saved_weights)
                 logger.info(f"(fedavg) Very first minibatch of epoch n°{epoch_index}, init models with previous coalition model for each partner")
             else:
                 partners_model_list_for_iteration = self.init_with_models()
@@ -389,8 +389,8 @@ class MultiPartnerLearning:
 
         # Starting model for each partner is the aggregated model from the previous collaborative round
         if is_very_first_minibatch:  # Except for the very first mini-batch where it is a new model
-            if self.use_weights_from_previous_coalition:
-                model_for_round = self.init_with_model(self.use_weights_from_previous_coalition)
+            if self.use_saved_weights:
+                model_for_round = self.init_with_model(self.use_saved_weights)
                 logger.info(f"(seqavg) Very first minibatch of epoch n°{epoch_index}, init model with previous coalition model for each partner")
             else:
                 model_for_round = self.init_with_model()
@@ -483,14 +483,14 @@ class MultiPartnerLearning:
         return new_model
     
     
-    def init_with_models(self, use_weights_from_previous_coalition=False):
+    def init_with_models(self, use_saved_weights=False):
         """Return a list of newly generated models, one per partner"""
 
         # Init a list to receive a new model for each partner
         partners_model_list = []
 
         # Generate a new model and add it to the list
-        if use_weights_from_previous_coalition:
+        if use_saved_weights:
             new_model = self.generate_new_model()
             new_model.load_weights(self.init_model_from)
             model_weights = new_model.get_weights()
@@ -508,10 +508,10 @@ class MultiPartnerLearning:
         return partners_model_list
     
     
-    def init_with_model(self, use_weights_from_previous_coalition=False):
+    def init_with_model(self, use_saved_weights=False):
         new_model = self.generate_new_model()
         
-        if use_weights_from_previous_coalition:
+        if use_saved_weights:
             new_model.load_weights(self.init_model_from)
             
         return new_model
@@ -584,7 +584,7 @@ def init_multi_partner_learning_from_scenario(scenario, is_save_data=True):
         is_save_data,
         scenario.save_folder,
         scenario.init_model_from,
-        scenario.use_weights_from_previous_coalition, 
+        scenario.use_saved_weights, 
     )
 
     return mpl
