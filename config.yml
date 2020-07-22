@@ -3,9 +3,9 @@ n_repeats: 5
 scenario_params_list:
  - dataset_name:
     'mnist':
-    - 'init'
+    - 'random_initialization'
     'cifar10':
-    - 'init'
+    - 'random_initialization'
    partners_count:
      - 3
    amounts_per_partner: 

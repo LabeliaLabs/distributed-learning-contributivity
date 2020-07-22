@@ -93,9 +93,9 @@ Finally, with given scenarios and multi-partner learning approaches, we can addr
     scenario_params_list:
      - dataset_name:
        'mnist':
-        - 'init'
+        - 'random_initialization'
        'cifar10':
-        - 'init'
+        - 'random_initialization'
        partners_count: 
          - 3
        amounts_per_partner:

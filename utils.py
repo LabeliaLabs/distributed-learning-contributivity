@@ -87,7 +87,7 @@ def get_scenario_params_list(config):
             
             # keep only init_model_from if a path is given.
             try:
-                if scenario['init_model_from'] == 'init':
+                if scenario['init_model_from'] == 'random_initialization':
                     del scenario['init_model_from']
             except KeyError:
                 pass
