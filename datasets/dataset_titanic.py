@@ -27,8 +27,14 @@ def preprocess_dataset_labels(y):
 def preprocess_dataset_inputs(x):
 
     """
-    feature engineering
+    Feature engineering
     """
+
+    x['Name_Len'] = [len(i) for i in x["Name"]]
+
+    x['Fam_size'] = x['Siblings/Spouses Aboard'] + x['Parents/Children Aboard']
+
+    x['Is_alone'] = [i==0 for i in x["Fam_size"]]
 
     x["Sex"] = [i=="Male" for i in x["Sex"]]
 
@@ -36,12 +42,6 @@ def preprocess_dataset_inputs(x):
     x = pd.concat([x, pd.get_dummies(x['Title'])], axis=1)
 
     x = pd.concat([x, pd.get_dummies(x['Pclass'])], axis=1)
-
-    x['Name_Len'] = [len(i) for i in x["Name"]]
-
-    x['Fam_size'] = x['Siblings/Spouses Aboard'] +x['Parents/Children Aboard']
-
-    x['Is_alone'] = [i==0 for i in x["Fam_size"]]
 
     # Dropping the useless features
     x.drop('Name', axis=1, inplace=True)
@@ -72,7 +72,7 @@ def load_data():
 def generate_new_model_for_dataset():
 
     """
-    Return a deep learning model from scratch
+    Return a feed forward model from scratch
     https://www.kaggle.com/kabure/titanic-eda-model-pipeline-keras-nn
     """
 
