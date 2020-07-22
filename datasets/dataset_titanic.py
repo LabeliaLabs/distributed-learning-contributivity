@@ -7,7 +7,6 @@ Titanic dataset.
 from sklearn.model_selection import train_test_split
 from keras.models import Sequential
 from keras.layers import Dense, Dropout
-import requests
 import pandas as pd
 import keras
 
@@ -30,15 +29,15 @@ def preprocess_dataset_inputs(x):
     Feature engineering
     """
 
-    x['Name_Len'] = [len(i) for i in x["Name"]]
-
     x['Fam_size'] = x['Siblings/Spouses Aboard'] + x['Parents/Children Aboard']
 
-    x['Is_alone'] = [i==0 for i in x["Fam_size"]]
+    x['Name_Len'] = [ len(i) for i in x["Name"] ]
 
-    x["Sex"] = [i=="Male" for i in x["Sex"]]
+    x['Is_alone'] = [ i == 0 for i in x["Fam_size"] ]
 
-    x['Title'] = [i.split()[0] for i in x["Name"]]
+    x["Sex"] = [ i == "Male" for i in x["Sex"] ]
+
+    x['Title'] = [ i.split()[0] for i in x["Name"]]
     x = pd.concat([x, pd.get_dummies(x['Title'])], axis=1)
 
     x = pd.concat([x, pd.get_dummies(x['Pclass'])], axis=1)
