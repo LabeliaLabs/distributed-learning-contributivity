@@ -8,6 +8,7 @@ from sklearn.model_selection import train_test_split
 from keras.models import Sequential
 from keras.layers import Dense, Dropout
 import pandas as pd
+import numpy as np
 import keras
 
 from sklearn.linear_model import LogisticRegression
@@ -83,7 +84,7 @@ def generate_new_model_for_dataset():
                    metrics = ['accuracy'])
 
     clf = LogisticRegression(max_iter=10000, warm_start=1, random_state = 0)
-
+    clf.classes_ = np.array([0,1])
     return clf
 
 # Load data

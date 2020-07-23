@@ -57,6 +57,7 @@ class MultiPartnerLearning:
         self.minibatched_y_train = [None] * self.partners_count
         self.aggregation_weights = []
         self.models_weights_list = [None] * self.partners_count
+        self.models_intercepts_list = [None] * self.partners_count
         self.scores_last_learning_round = [None] * self.partners_count
         self.score_matrix_per_partner = np.nan * np.zeros(shape=(self.epoch_count, self.minibatch_count, self.partners_count))
         self.score_matrix_collective_models = np.nan * np.zeros(shape=(self.epoch_count, self.minibatch_count + 1))
@@ -293,7 +294,14 @@ class MultiPartnerLearning:
 
         # Evaluate and store accuracy of mini-batch start model
         model_to_evaluate = partners_model_list_for_iteration[0]
-        model_evaluation = model_to_evaluate.evaluate(x_val, y_val, batch_size=constants.DEFAULT_BATCH_SIZE, verbose=0)
+        if isinstance(model_to_evaluate, type(LogisticRegression())):
+            if hasattr(model_to_evaluate, 'coef_') and hasattr(model_to_evaluate, 'intercept_') :
+                eval = model_to_evaluate.score(x_val, y_val)
+                model_evaluation = [0, eval]
+            else:
+                model_evaluation = [0]*2
+        else:
+            model_evaluation = model_to_evaluate.evaluate(x_val, y_val, batch_size=constants.DEFAULT_BATCH_SIZE, verbose=0)
         self.score_matrix_collective_models[epoch_index, minibatch_index] = model_evaluation[1]
 
         # Iterate over partners for training each individual model
@@ -311,10 +319,17 @@ class MultiPartnerLearning:
                 partner_model, train_data_for_fit_iteration, self.val_data, partner.batch_size)
 
             # Log results of the round
-            self.log_collaborative_round_partner_result(partner, partner_index, history.history["val_accuracy"][0])
+            if isinstance(partner_model, type(LogisticRegression())):
+                self.log_collaborative_round_partner_result(partner, partner_index, history.score(x_val, y_val))
+            else:
+                self.log_collaborative_round_partner_result(partner, partner_index, history.history["val_accuracy"][0])
 
             # Update the partner's model in the models' list
-            self.models_weights_list[partner_index] = partner_model.get_weights()
+            if isinstance(partner_model, type(LogisticRegression())):
+                self.models_weights_list[partner_index] = partner_model.coef_
+                self.models_intercepts_list[partner_index] = partner_model.intercept_
+            else:
+                self.models_weights_list[partner_index] = partner_model.get_weights()
 
             # Update iterative results
             self.update_iterative_results(partner_index, history)
@@ -367,6 +382,7 @@ class MultiPartnerLearning:
             if is_last_round:
                 if isinstance(sequentially_trained_model, type(LogisticRegression())):
                     self.models_weights_list[partner_index] = sequentially_trained_model.coef_
+                    self.models_intercepts_list[partner_index] = sequentially_trained_model.intercept_
 
                 else:
                     self.models_weights_list[partner_index] = sequentially_trained_model.get_weights()
@@ -457,22 +473,53 @@ class MultiPartnerLearning:
     def aggregate_model_weights(self):
         """Aggregate model weights from the list of models, with a weighted average"""
 
-        weights_per_layer = list(zip(*self.models_weights_list))
-        new_weights = list()
 
-        for weights_for_layer in weights_per_layer:
-            avg_weights_for_layer = np.average(
-                np.array(weights_for_layer), axis=0, weights=self.aggregation_weights
-            )
-            new_weights.append(list(avg_weights_for_layer))
+        if isinstance(self.generate_new_model(), type(LogisticRegression())):
+
+            coefs = self.models_weights_list
+            intercepts = self.models_intercepts_list
+
+            sum_coefs = coefs[0]*0
+            sum_intercepts = intercepts[0]*0
+
+            for i in range(self.partners_count):
+                sum_coefs = sum_coefs + coefs[i]
+                sum_intercepts = sum_intercepts + intercepts[i]
+
+
+            #averaging
+            agg_coef = sum_coefs/self.partners_count
+            agg_intercepts = sum_intercepts/self.partners_count
+
+
+            new_weights = (agg_coef, agg_intercepts)
+        else :
+
+            weights_per_layer = list(zip(*self.models_weights_list))
+            new_weights = list()
+
+            for weights_for_layer in weights_per_layer:
+                avg_weights_for_layer = np.average(
+                    np.array(weights_for_layer), axis=0, weights=self.aggregation_weights
+                )
+                new_weights.append(list(avg_weights_for_layer))
 
         return new_weights
+
+
 
     def build_model_from_weights(self, new_weights):
         """Generate a new model initialized with weights passed as arguments"""
 
         new_model = self.generate_new_model()
-        new_model.set_weights(new_weights)
+
+        if isinstance(new_model, type(LogisticRegression())):
+            coef, intercept = new_weights
+            new_model.coef_ = coef
+            new_model.n_iter_ = 0
+            new_model.intercept_ = intercept  # faisable en une ligne ?
+        else:
+            new_model.set_weights(new_weights)
         return new_model
 
     def init_with_new_models(self):
@@ -483,15 +530,20 @@ class MultiPartnerLearning:
 
         # Generate a new model and add it to the list
         new_model = self.generate_new_model()
-        partners_model_list.append(new_model)
 
-        # For each remaining partner, duplicate the new model and add it to the list
+        # For each partner, create a new model and add it to the list
         if isinstance(new_model, type(LogisticRegression())):
-            new_model_weights = new_model.coef_
+            partners_model_list.append(new_model)
+            # For each remaining partner, create a new model and add it to the list
+            for i in range(len(self.partners_list)-1):
+                partners_model_list.append(self.generate_new_model())
         else:
+            partners_model_list.append(new_model)
+
+            # For each remaining partner, duplicate the new model and add it to the list
             new_model_weights = new_model.get_weights()
-        for i in range(len(self.partners_list)-1):
-            partners_model_list.append(self.build_model_from_weights(new_model_weights))
+            for i in range(len(self.partners_list)-1):
+                partners_model_list.append(self.build_model_from_weights(new_model_weights))  # is it really necessary to build it from weight instead of scratch ?
 
         return partners_model_list
 

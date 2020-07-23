@@ -11,14 +11,14 @@ scenario_params_list:
      - ['basic', 'random']
    multi_partner_learning_approach:
      - 'seq-pure'
-     #- 'fedavg'
+     - 'fedavg'
    aggregation_weighting:
      - 'data_volume'
    epoch_count:
-     - 30
+     - 10
    methods:
      - ["Shapley values", "Independent scores", "TMCS"]
    minibatch_count:
-     - 10
+     - 5
    gradient_updates_per_pass_count:
      - 8
