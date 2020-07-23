@@ -20,3 +20,5 @@ scenario_params_list:
     - 5
    is_quick_demo:
     - True
+   proportion_dataset:
+    - 1
