@@ -49,12 +49,8 @@ def main():
             logger.info(f"Scenario {scenario_id+1}/{len(scenario_params_list)}: {scenario_params}")
 
         # Move log files to experiment folder
-        move_log_file_to_experiment_folder(
-            info_logger_id, experiment_path, constants.INFO_LOGGING_FILE_NAME, "INFO"
-        )
-        move_log_file_to_experiment_folder(
-            info_debug_id, experiment_path, constants.DEBUG_LOGGING_FILE_NAME, "DEBUG"
-        )
+        move_log_file_to_experiment_folder(info_logger_id, experiment_path, constants.INFO_LOGGING_FILE_NAME, "INFO")
+        move_log_file_to_experiment_folder(info_debug_id, experiment_path, constants.DEBUG_LOGGING_FILE_NAME, "DEBUG")
 
         # GPU config
         init_gpu_config()
