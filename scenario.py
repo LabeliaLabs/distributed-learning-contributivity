@@ -428,9 +428,6 @@ class Scenario:
     def split_data(self, is_logging_enabled=True):
         """Populates the partners with their train and test data (not pre-processed)"""
 
-        # self.partners_list wasn't change since the initializati
-        assert all([type(self.partners_list[i].x_train) == None for i in range(len(self.partners_list))])
-
         # Fetch parameters of scenario
         x_train = self.dataset.x_train
         y_train = self.dataset.y_train
