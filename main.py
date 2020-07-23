@@ -132,6 +132,7 @@ def validate_scenario_list(scenario_params_list, experiment_path):
 
         logger.debug(f"Validation scenario {scenario_id + 1}/{len(scenario_params_list)}")
 
+
         # TODO: we should not create scenario folder at this point
         current_scenario = scenario.Scenario(scenario_params, experiment_path, is_dry_run=True)
         current_scenario.instantiate_scenario_partners()
