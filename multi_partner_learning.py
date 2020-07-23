@@ -13,6 +13,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import operator
 from loguru import logger
+from sklearn.linear_model import LogisticRegression
 
 import constants
 
@@ -85,23 +86,31 @@ class MultiPartnerLearning:
 
         # Train model
         logger.info("   Training model...")
-        history = model.fit(
-            partner.x_train,
-            partner.y_train,
-            batch_size=partner.batch_size,
-            epochs=self.epoch_count,
-            verbose=0,
-            validation_data=self.val_data,
-            callbacks=cb,
-        )
+        if isinstance(model, type(LogisticRegression())):
+            history = model.fit(partner.x_train, partner.y_train)
+        else:
+            history = model.fit(
+                partner.x_train,
+                partner.y_train,
+                batch_size=partner.batch_size,
+                epochs=self.epoch_count,
+                verbose=0,
+                validation_data=self.val_data,
+                callbacks=cb,
+            )
 
         # Reference the testset according to the scenario configuration
         x_test, y_test = self.test_data
 
         # Evaluate trained model
-        model_evaluation = model.evaluate(x_test, y_test, batch_size=constants.DEFAULT_BATCH_SIZE, verbose=0)
-        logger.info(f"   Model evaluation on test data: "
-                    f"{list(zip(model.metrics_names, ['%.3f' % elem for elem in model_evaluation]))}")
+        if isinstance(model, type(LogisticRegression())):
+            model_evaluation = [0,model.score(x_test, y_test)]
+            logger.info(f"   Model evaluation on test data: "
+                        f"{model_evaluation[1]}")
+        else:
+            model_evaluation = model.evaluate(x_test, y_test, batch_size=constants.DEFAULT_BATCH_SIZE, verbose=0)
+            logger.info(f"   Model evaluation on test data: "
+                        f"{list(zip(model.metrics_names, ['%.3f' % elem for elem in model_evaluation]))}")
 
         # Save model score on test data
         self.test_score = model_evaluation[1]  # 0 is for the loss
@@ -171,9 +180,13 @@ class MultiPartnerLearning:
                 model_to_evaluate = sequentially_trained_model
             elif self.learning_approach in ['fedavg', 'seq-with-final-agg', 'seqavg']:
                 model_to_evaluate = self.build_model_from_weights(self.aggregate_model_weights())
-            model_evaluation = model_to_evaluate.evaluate(
-                x_val, y_val, batch_size=constants.DEFAULT_BATCH_SIZE, verbose=0,
-            )
+
+            if isinstance(model_to_evaluate, type(LogisticRegression())):
+                model_evaluation = [0, model_to_evaluate.score(x_val, y_val)]  # sets loss to 0 for sklearn logit
+            else:
+                model_evaluation = model_to_evaluate.evaluate(
+                    x_val, y_val, batch_size=constants.DEFAULT_BATCH_SIZE, verbose=0,
+                )
 
             current_val_loss = model_evaluation[0]
             current_val_metric = model_evaluation[1]
@@ -198,10 +211,16 @@ class MultiPartnerLearning:
 
         # After last epoch or if early stopping was triggered, evaluate model on the global testset
         logger.info("### Evaluating model on test data:")
-        model_evaluation = model_to_evaluate.evaluate(
-            x_test, y_test, batch_size=constants.DEFAULT_BATCH_SIZE, verbose=0)
-        logger.info(f"   Model metrics names: {model_to_evaluate.metrics_names}")
-        logger.info(f"   Model metrics values: {['%.3f' % elem for elem in model_evaluation]}")
+
+        if isinstance(model_to_evaluate, type(LogisticRegression())):
+            model_evaluation = [0, model_to_evaluate.score(x_test, y_test)]  # sets loss to 0 for sklearn logit
+            logger.info(f"   Model accuracy on test set: {model_evaluation[1]}")
+        else:
+            model_evaluation = model_to_evaluate.evaluate(
+                x_test, y_test, batch_size=constants.DEFAULT_BATCH_SIZE, verbose=0)
+            logger.info(f"   Model metrics names: {model_to_evaluate.metrics_names}")
+            logger.info(f"   Model metrics values: {['%.3f' % elem for elem in model_evaluation]}")
+
         self.test_score = model_evaluation[1]  # 0 is for the loss
         self.nb_epochs_done = self.epoch_index + 1
 
@@ -313,8 +332,14 @@ class MultiPartnerLearning:
         x_val, y_val = self.val_data
 
         # Evaluate and store accuracy of mini-batch start model
-        model_evaluation = sequentially_trained_model.evaluate(
-            x_val, y_val, batch_size=constants.DEFAULT_BATCH_SIZE, verbose=0)
+        if isinstance(sequentially_trained_model, type(LogisticRegression())):
+            if hasattr(sequentially_trained_model, 'n_iter_'):
+                model_evaluation = [sequentially_trained_model.score(x_val, y_val)]*2
+            else :
+                model_evaluation = [0]*2
+        else:
+            model_evaluation = sequentially_trained_model.evaluate(
+                x_val, y_val, batch_size=constants.DEFAULT_BATCH_SIZE, verbose=0)
         self.score_matrix_collective_models[epoch_index, minibatch_index] = model_evaluation[1]
 
         # Iterate over partners for training the model sequentially
@@ -333,11 +358,18 @@ class MultiPartnerLearning:
                 sequentially_trained_model, train_data_for_fit_iteration, self.val_data, partner.batch_size)
 
             # Log results of the round
-            self.log_collaborative_round_partner_result(partner, for_loop_idx, history.history["val_accuracy"][0])
+            if isinstance(history, type(LogisticRegression())):
+                self.log_collaborative_round_partner_result(partner, for_loop_idx, history.score(x_val, y_val))
+            else :
+                self.log_collaborative_round_partner_result(partner, for_loop_idx, history.history["val_accuracy"][0])
 
             # On final collaborative round, save the partner's model in the models' list
             if is_last_round:
-                self.models_weights_list[partner_index] = sequentially_trained_model.get_weights()
+                if isinstance(sequentially_trained_model, type(LogisticRegression())):
+                    self.models_weights_list[partner_index] = sequentially_trained_model.coef_
+
+                else:
+                    self.models_weights_list[partner_index] = sequentially_trained_model.get_weights()
 
             # Update iterative results
             self.update_iterative_results(partner_index, history)
@@ -454,7 +486,10 @@ class MultiPartnerLearning:
         partners_model_list.append(new_model)
 
         # For each remaining partner, duplicate the new model and add it to the list
-        new_model_weights = new_model.get_weights()
+        if isinstance(new_model, type(LogisticRegression())):
+            new_model_weights = new_model.coef_
+        else:
+            new_model_weights = new_model.get_weights()
         for i in range(len(self.partners_list)-1):
             partners_model_list.append(self.build_model_from_weights(new_model_weights))
 
@@ -480,15 +515,17 @@ class MultiPartnerLearning:
         """Fit the model with arguments passed as parameters and returns the history object"""
 
         x_train, y_train = train_data
-        history = model_to_fit.fit(
-            x_train,
-            y_train,
-            batch_size=batch_size,
-            epochs=1,
-            verbose=0,
-            validation_data=val_data,
-        )
-
+        if isinstance(model_to_fit, type(LogisticRegression())):
+            history = model_to_fit.fit(x_train, y_train)
+        else :
+            history = model_to_fit.fit(
+                x_train,
+                y_train,
+                batch_size=batch_size,
+                epochs=1,
+                verbose=0,
+                validation_data=val_data,
+            )
         return history
 
     def log_collaborative_round_partner_result(self, partner, partner_index, validation_score):
@@ -504,7 +541,12 @@ class MultiPartnerLearning:
     def update_iterative_results(self, partner_index, fit_history):
         """Update the results arrays with results from the collaboration round"""
 
-        validation_score = fit_history.history["val_accuracy"][0]
+
+        if isinstance(fit_history, type(LogisticRegression())):
+            x_val, y_val = self.val_data
+            validation_score = fit_history.score(x_val, y_val)  # might be done in 1 line ? need to be tested later.
+        else :
+            validation_score = fit_history.history["val_accuracy"][0]
 
         self.scores_last_learning_round[partner_index] = validation_score  # TO DO check if coherent
 

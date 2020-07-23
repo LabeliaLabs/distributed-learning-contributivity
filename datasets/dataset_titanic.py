@@ -10,6 +10,9 @@ from keras.layers import Dense, Dropout
 import pandas as pd
 import keras
 
+from sklearn.linear_model import LogisticRegression
+
+
 # Init dataset-specific variables
 num_classes = 1
 input_shape = (26,)
@@ -79,7 +82,9 @@ def generate_new_model_for_dataset():
                    loss = 'binary_crossentropy',
                    metrics = ['accuracy'])
 
-    return model
+    clf = LogisticRegression(max_iter=10000, warm_start=1, random_state = 0)
+
+    return clf
 
 # Load data
 (x_train, y_train), (x_test, y_test) = load_data()
