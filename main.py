@@ -22,9 +22,7 @@ import multi_partner_learning
 import scenario
 import utils
 
-
 DEFAULT_CONFIG_FILE = "config.yml"
-
 
 @logger.catch
 def main():
@@ -105,7 +103,6 @@ def init_logger(args):
     info_debug_id = logger.add(constants.DEBUG_LOGGING_FILE_NAME, level="DEBUG")
     return stream, info_logger_id, info_debug_id
 
-
 def init_gpu_config():
     gpus = tf.config.experimental.list_physical_devices("GPU")
     if gpus:
@@ -134,7 +131,7 @@ def validate_scenario_list(scenario_params_list, experiment_path):
     for scenario_id, scenario_params in enumerate(scenario_params_list):
 
         logger.debug(f"Validation scenario {scenario_id + 1}/{len(scenario_params_list)}")
- 
+
         # TODO: we should not create scenario folder at this point
         current_scenario = scenario.Scenario(scenario_params, experiment_path, is_dry_run=True)
         current_scenario.instantiate_scenario_partners()
