@@ -29,7 +29,11 @@ class Scenario:
 
         # Raise Exception if unknown parameters in the .yml file
 
-        params_known = ["dataset_name","partners_count","amounts_per_partner","samples_split_option","multi_partner_learning_approach","aggregation_weighting","methods","gradient_updates_per_pass_count","is_quick_demo", "corrupted_datasets", "epoch_count", "minibatch_count", "is_early_stopping", "proportion_dataset"]
+        params_known = ["dataset_name", "dataset_proportion"]  # Dataset related
+        params_known += ["methods", "multi_partner_learning_approach", "aggregation_weighting"]  # federated learning related
+        params_known += ["partners_count", "amounts_per_partner", "corrupted_datasets", "samples_split_option"]  # Partners related
+        params_known += ["gradient_updates_per_pass_count", "epoch_count", "minibatch_count", "is_early_stopping"]  # Computation related
+        params_known += ["is_quick_demo"]
 
         if not all([x in params_known for x in params]):
             for x in params:
@@ -55,6 +59,14 @@ class Scenario:
         else:
             raise Exception(f"Dataset named '{dataset_name}' is not supported (yet). You could add it!")
 
+        # The proportion of the dataset the computation will used
+        if "dataset_proportion" in params:
+            self.dataset_proportion = params["dataset_proportion"]
+            assert self.dataset_proportion > 0, "Error in the config file, dataset_proportion should be > 0"
+            assert self.dataset_proportion <= 1, "Error in the config file, dataset_proportion should be <= 1"
+        else:
+            self.dataset_proportion = 1  # default
+
         self.dataset = Dataset(
             dataset_name,
             dataset_module.x_train,
@@ -66,6 +78,12 @@ class Scenario:
             dataset_module.preprocess_dataset_labels,
             dataset_module.generate_new_model_for_dataset,
         )
+
+        if self.dataset_proportion < 1:
+            self.shorten_dataset_proportion()
+        else:
+            logger.info("Computation use the full dataset")
+
 
         self.nb_samples_used = len(self.dataset.x_train)
         self.final_relative_nb_samples = []
@@ -89,14 +107,6 @@ class Scenario:
         # Define the percentages of samples per partner
         # Sum has to equal 1 and number of items has to equal partners_count
         self.amounts_per_partner = params["amounts_per_partner"]
-
-        # The proportion of the dataset the computation will used
-        if "proportion_dataset" in params:
-            self.proportion_dataset = params["proportion_dataset"]
-            assert self.proportion_dataset > 0, "Error in the config file, proportion_dataset should be > 0"
-            assert self.proportion_dataset <=1, "Error in the config file, proportion_dataset should be <= 1"
-        else:
-            self.proportion_dataset = 1  # default
 
         # For configuring if data samples are split between partners randomly or in a stratified way...
         # ... so that they cover distinct areas of the samples space
@@ -205,11 +215,10 @@ class Scenario:
 
         if "is_quick_demo" in params:
             self.is_quick_demo = params["is_quick_demo"]
+            if self.is_quick_demo and self.dataset_proportion < 1:
+                raise Exception("Don't start a quick_demo without the full dataset")
         else:
             self.is_quick_demo = False  # default
-
-        if self.is_quick_demo and self.proportion_dataset < 1:
-            raise Exception("Don't start a quick_demo without the full dataset")
 
         # The quick demo parameters overwrites previously defined parameters to make the scenario faster to compute
         if "is_quick_demo" in params and params["is_quick_demo"]:
@@ -227,10 +236,6 @@ class Scenario:
             self.epoch_count = 3
             self.minibatch_count = 2
 
-        if self.proportion_dataset < 1:
-            self.shorten_dataset_proportion()
-        else:
-            logger.info("Computation use the full dataset")
         # -------
         # Outputs
         # -------
@@ -655,19 +660,17 @@ class Scenario:
         return df
 
     def shorten_dataset_proportion(self):
-        """Truncate the dataset depending on self.proportion_dataset"""
+        """Truncate the dataset depending on self.dataset_proportion"""
 
-        fraction = self.proportion_dataset
-
-        if fraction == 1:
+        if self.dataset_proportion == 1:
             raise Exception("shorten_dataset_proportion shouldn't be called on this scenario, the user targets the full dataset")
 
         x_train = self.dataset.x_train
         y_train = self.dataset.y_train
 
-        logger.info(f"We don't use the full dataset: only {fraction*100}%")
+        logger.info(f"We don't use the full dataset: only {self.dataset_proportion*100}%")
 
-        skip_idx = int(round(len(x_train) * fraction))
+        skip_idx = int(round(len(x_train) * self.dataset_proportion))
         train_idx = np.arange(len(x_train))
 
         np.random.seed(42)

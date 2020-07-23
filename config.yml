@@ -28,7 +28,7 @@ scenario_params_list:
      - 20
    gradient_updates_per_pass_count:
      - 8
-   proportion_dataset:
+   dataset_proportion:
      - 1
  - dataset_name:
      - 'mnist'
@@ -51,5 +51,5 @@ scenario_params_list:
      - 10
    gradient_updates_per_pass_count:
      - 5
-   proportion_dataset:
+   dataset_proportion:
      - 1
