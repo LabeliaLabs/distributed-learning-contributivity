@@ -1,4 +1,5 @@
 # Pytest doc: https://docs.pytest.org/en/latest/getting-started.html#create-your-first-test
+
 # pytest tests.py
 # pytest -k TestDemoClass tests.py
 # pytest -k "test_ok" tests.py
@@ -6,7 +7,6 @@
 
 import utils
 import yaml
-
 
 class TestDemoClass:
 
