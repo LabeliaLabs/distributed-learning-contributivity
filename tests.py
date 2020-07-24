@@ -1,9 +1,40 @@
-# Pytest doc: https://docs.pytest.org/en/latest/getting-started.html#create-your-first-test
+# -*- coding: utf-8 -*-
+"""
+This enables to parameterize unit tests - the tests are run by Travis each you commit to the github repo
+"""
 
+#########
+#
+# Help on Tests:
+#
+##########
+
+# Some usefull commands:
+#
 # pytest tests.py
 # pytest -k TestDemoClass tests.py
 # pytest -k "test_ok" tests.py
+
+# Start the interactive Python debugger on errors or KeyboardInterrupt.
 # pytest tests.py --pdb
+
+# --collect-only, --co  only collect tests, don't execute them.
+# pytest tests.py --co
+
+# Main documentation:
+# https://docs.pytest.org/en/latest/contents.html
+
+# Gettig Started
+# https://docs.pytest.org/en/latest/getting-started.html#group-multiple-tests-in-a-class
+
+# Parametrize to generate parameters combinations
+# https://docs.pytest.org/en/latest/example/parametrize.html#paramexamples
+
+# Fixture to initialize test functions
+#https://docs.pytest.org/en/latest/fixture.html
+
+# Test architecture
+#https://docs.pytest.org/en/latest/goodpractices.html#test-discovery
 
 import utils
 import yaml
@@ -160,6 +191,13 @@ def create_Contributivity(create_Scenario):
     contri = Contributivity(scenario=scenar)
 
     yield contri
+
+
+######
+#
+# Tests modules with Objects
+#
+#####
 
 
 class Test_Partner:
