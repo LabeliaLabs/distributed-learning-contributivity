@@ -247,60 +247,72 @@ class Test_Contributivity:
 ####
 
 @pytest.fixture(scope='class')
-def create_cifar10_x_train():
+def create_cifar10_x():
     (x_train, y_train), (x_test, y_test) = cifar10.load_data()
     x_train = data_cf.preprocess_dataset_inputs(x_train)
-    return x_train
+    x_test = data_cf.preprocess_dataset_inputs(x_test)
+    return x_train, x_test
 
 
 @pytest.fixture(scope='class')
-def create_mnist_x_train():
+def create_mnist_x():
     (x_train, y_train), (x_test, y_test) = mnist.load_data()
     x_train = data_mn.preprocess_dataset_inputs(x_train)
-    return x_train
+    x_test = data_mn.preprocess_dataset_inputs(x_test)
+    return x_train, x_test
 
 
 class Test_dataset_cifar10:
 
-    def test_preprocess_dataset_inputs_type(self, create_cifar10_x_train):
-        """x_train type should be float32"""
-        assert create_cifar10_x_train.dtype == "float32"
+    def test_preprocess_dataset_inputs_type(self, create_cifar10_x):
+        """x_train and x_test type should be float32"""
+        x_train, x_test = create_cifar10_x
+        assert x_train.dtype == "float32"
+        assert x_test.dtype == "float32"
 
-
-    def test_preprocess_dataset_inputs_activation(self, create_cifar10_x_train):
-        """x_train activation should be >=0 and <=1"""
-        x_train = create_cifar10_x_train
+    def test_preprocess_dataset_inputs_activation(self, create_cifar10_x):
+        """x_train and x_test activation should be >=0 and <=1"""
+        x_train, x_test = create_cifar10_x
         greater_than_0 = not False in np.greater_equal(x_train, 0)
         lower_than_1 = not True in np.greater(x_train, 1)
         assert (greater_than_0 and lower_than_1)
 
+        greater_than_0 = not False in np.greater_equal(x_test, 0)
+        lower_than_1 = not True in np.greater(x_test, 1)
+        assert (greater_than_0 and lower_than_1)
 
-    def test_inputs_shape(self, create_cifar10_x_train):
-        """the shape of the elements of x_train is input_shape"""
-        x_train = create_cifar10_x_train
+    def test_inputs_shape(self, create_cifar10_x):
+        """the shape of the elements of x_train and x_test should be equal to input_shape"""
+        x_train, x_test = create_cifar10_x
         assert x_train.shape[1:] == data_cf.input_shape
+        assert x_test.shape[1:] == data_cf.input_shape
 
 
 class Test_dataset_mnist:
 
-    def test_preprocess_dataset_inputs_type(self, create_mnist_x_train):
-        """x_train type should be float32"""
-        assert create_mnist_x_train.dtype == "float32"
+    def test_preprocess_dataset_inputs_type(self, create_mnist_x):
+        """x_train and x_test type should be float32"""
+        x_train, x_test = create_mnist_x
+        assert x_train.dtype == "float32"
+        assert x_test.dtype == "float32"
 
-
-    def test_preprocess_dataset_inputs_activation(self, create_mnist_x_train):
-        """x_train activation should be >=0 and <=1"""
-        x_train = create_mnist_x_train
+    def test_preprocess_dataset_inputs_activation(self, create_mnist_x):
+        """x_train and x_test activation should be >=0 and <=1"""
+        x_train, x_test = create_mnist_x
         greater_than_0 = not False in np.greater_equal(x_train, 0)
         lower_than_1 = not True in np.greater(x_train, 1)
         assert (greater_than_0 and lower_than_1)
 
+        greater_than_0 = not False in np.greater_equal(x_test, 0)
+        lower_than_1 = not True in np.greater(x_test, 1)
+        assert (greater_than_0 and lower_than_1)
 
-    def test_inputs_shape(self, create_mnist_x_train):
-        """the shape of the elements of x_train is input_shape"""
-        x_train = create_mnist_x_train
+
+    def test_inputs_shape(self, create_mnist_x):
+        """the shape of the elements of x_train and x_test should be equal to input_shape"""
+        x_train, x_test = create_mnist_x
         assert x_train.shape[1:] == data_mn.input_shape
-
+        assert x_test.shape[1:] == data_mn.input_shape
 
 class TestDemoClass:
 
