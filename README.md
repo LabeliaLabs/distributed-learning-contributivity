@@ -90,7 +90,7 @@ Finally, with given scenarios and multi-partner learning approaches, we can addr
          - 20
        gradient_updates_per_pass_count:
          - 8
-       proportion_dataset:
+       dataset_proportion:
 	 - 1
      - dataset_name:
          - 'mnist'
@@ -114,7 +114,7 @@ Finally, with given scenarios and multi-partner learning approaches, we can addr
          - 20
        gradient_updates_per_pass_count:
          - 8
-       proportion_dataset:
+       dataset_proportion:
 	 - 1
     ```
 
@@ -156,11 +156,11 @@ In the multi-partner learning computations, the global validation set is used fo
 - For each partner, the local dataset is split into separated train, validation and test sets. Currently, the local validation and test set are not used, but they are available for further developments of multi-partner learning and contributivity measurement approaches.
 - 
 
-`proportion_dataset`: `float` (default: `1`)
+`dataset_proportion`: `float` (default: `1`)
 This argument allows you to make computation on a sub-dataset of the provided datasets.
 This is the proportion of the dataset (initialy the train and test sets) which is randomly selected to create a sub-dataset,
 it's done before the creation of the global validation set. 
-You have to ensure that `0 < proportion_dataset <= 1`
+You have to ensure that `0 < dataset_proportion <= 1`
 
 
 ##### Definition of collaborative scenarios
