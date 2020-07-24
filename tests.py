@@ -10,29 +10,39 @@ import yaml
 import pytest
 import numpy as np
 
+from pathlib import Path
+
 from tensorflow.keras.datasets import cifar10,mnist
+
 from datasets import dataset_cifar10 as data_cf
 from datasets import dataset_mnist as data_mn
+import multi_partner_learning
 
 from partner import Partner
 from dataset import Dataset
 from scenario import Scenario
-from pathlib import Path
 from contributivity import Contributivity
 from multi_partner_learning import MultiPartnerLearning
-import multi_partner_learning
 
+####
+# Fixture Iterate: to generate the combination of parameters
+# of the Scenario Partner MPL Dataset Objects
+####
 
 @pytest.fixture(scope='class', params=['cifar10', 'mnist'])
-def iterate_over_dataset_name(request):
+def iterate_dataset_name(request):
+    yield request.param
+
+@pytest.fixture(scope='class', params=[['basic', 'random'], ['advanced', [[4, 'shared'], [6, 'shared'], [4, 'specific']]]], ids=['basic','advanced'])
+def iterate_samples_split_option(request):
     yield request.param
 
 
 @pytest.fixture(scope='class')
-def create_Partner(request, iterate_over_dataset_name):
+def create_Partner(request, iterate_dataset_name):
     """Instantiate partner object"""
     part = Partner(partner_id=0)
-    dataset_name = iterate_over_dataset_name
+    dataset_name = iterate_dataset_name
 
     if dataset_name == "cifar10":
         (x_train, y_train), (x_test, y_test) = cifar10.load_data()
@@ -42,9 +52,25 @@ def create_Partner(request, iterate_over_dataset_name):
         part.y_train = data_mn.preprocess_dataset_labels(y_train)
     yield part
 
+# This is not a fixture!
+def create_partners_list(dataset_name, partners_count):
+    partners_list = []
+
+    for i in range(partners_count):
+        part = Partner(partner_id=i)
+
+        if dataset_name == "cifar10":
+            (x_train, y_train), (x_test, y_test) = cifar10.load_data()
+            part.y_train = data_cf.preprocess_dataset_labels(y_train)
+        if dataset_name == "mnist":
+            (x_train, y_train), (x_test, y_test) = mnist.load_data()
+            part.y_train = data_mn.preprocess_dataset_labels(y_train)
+        partners_list.append(part)
+
+    return partners_list
+
 
 class Test_Partner:
-
 
     def test_corrupt_labels_type(self):
         """partner.y_train should be a numpy.ndarray"""
@@ -76,10 +102,10 @@ class Test_Partner:
             part.shuffle_labels(part)
 
 
-@pytest.fixture(scope="class")
-def create_Dataset(request, iterate_over_dataset_name):
-    """"""
-    dataset_name = iterate_over_dataset_name
+@pytest.fixture(scope='class')
+def create_Dataset(request, iterate_dataset_name):
+    dataset_name = iterate_dataset_name
+
     if dataset_name == "cifar10":
         (x_train, y_train), (x_test, y_test) = cifar10.load_data()
         input_shape = data_cf.input_shape
@@ -120,15 +146,14 @@ class Test_Dataset:
         with pytest.raises(Exception):
             data.train_val_split()
 
-@pytest.fixture(scope='class')
-def create_partner_list(create_Partner):
-    yield [create_Partner] * 3
-
 
 @pytest.fixture(scope='class')
-def create_MultiPartnerLearning(create_Dataset, create_partner_list):
+def create_MultiPartnerLearning(create_Dataset):
     data = create_Dataset
-    part_list = create_partner_list
+
+    # Create partners_list (this is not a fixture):
+    part_list = create_partners_list(data.name, 3)
+
     mpl = MultiPartnerLearning(
             partners_list=part_list,
             epoch_count=2,
@@ -149,13 +174,22 @@ def test_mpl(create_MultiPartnerLearning):
 
 
 @pytest.fixture(scope='class')
-def create_Scenario(iterate_over_dataset_name, create_partner_list):
-    dataset_name = iterate_over_dataset_name
-    params = {"dataset_name": dataset_name, "partners_count": 3, "amounts_per_partner": [0.2, 0.5, 0.3], "samples_split_option": ["basic","random"], "multi_partner_learning_aproach":"fedavg", "aggregation_weighting": "uniform", "methods": ["Shapley values", "Independent scores"], "gradient_updates_per_pass_count": 5}
+def create_Scenario(iterate_dataset_name, iterate_samples_split_option):
+
+    dataset_name = iterate_dataset_name
+    samples_split_option = iterate_samples_split_option
+
+    params = {"dataset_name": dataset_name, "dataset_proportion": 1}
+    params.update({"partners_count": 3, "amounts_per_partner": [0.2, 0.5, 0.3], "samples_split_option": samples_split_option, "corrupted_dataset": ["not_corrupted"]*3})
+    params.update({"methods":["Shapley values", "Independent scores"], "multi_partner_learning_aproach":"fedavg", "aggregation_weighting": "uniform"})
+    params.update({"gradient_updates_per_pass_count": 5, "epoch_count": 2, "minibatch_count": 2, "is_early_stopping": True})
+    params.update({"is_quick_demo": False})
+
 
     full_experiment_name = "unit-test-pytest"
     experiment_path = Path.cwd() / "experiments" / full_experiment_name
 
+    # scenar.dataset object is created inside the Scenario constructor
     scenar = Scenario(
             params=params,
             experiment_path=experiment_path,
@@ -163,12 +197,12 @@ def create_Scenario(iterate_over_dataset_name, create_partner_list):
             n_repeat=1
             )
 
-    scenar.partners_list = create_partner_list
+    scenar.partners_list = create_partners_list(scenar.dataset.name, scenar.partners_count)
 
     scenar.mpl = multi_partner_learning.init_multi_partner_learning_from_scenario(scenario=scenar, is_save_data=True)
 
-
     yield scenar
+
 
 class Test_Scenario:
 
@@ -186,7 +220,6 @@ class Test_Scenario:
         def test_raiseException(self, create_Scenario):
             scenar = create_Scenario
             scenar.partners_list[0].x_train = scenar.dataset.x_train
-
             with pytest.raises(AssertionError):
                 scenar.split_data()
 
