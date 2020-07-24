@@ -31,10 +31,10 @@ This enables to parameterize unit tests - the tests are run by Travis each you c
 # https://docs.pytest.org/en/latest/example/parametrize.html#paramexamples
 
 # Fixture to initialize test functions
-#https://docs.pytest.org/en/latest/fixture.html
+# https://docs.pytest.org/en/latest/fixture.html
 
 # Test architecture
-#https://docs.pytest.org/en/latest/goodpractices.html#test-discovery
+# https://docs.pytest.org/en/latest/goodpractices.html#test-discovery
 
 import utils
 import yaml
