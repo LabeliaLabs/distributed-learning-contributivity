@@ -44,11 +44,6 @@ class Dataset:
             self.x_train, self.y_train, test_size=0.2, random_state=42
         )
 
-    def preprocess_labels(self):
-
-        self.y_train = self.preprocess_dataset_labels(self.y_train)
-        self.y_val = self.preprocess_dataset_labels(self.y_val)
-        self.y_test = self.preprocess_dataset_labels(self.y_test)
 
     def generate_new_model(self):
 

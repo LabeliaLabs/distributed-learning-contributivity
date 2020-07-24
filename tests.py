@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-This enables to parameterize unit tests - the tests are run by Travis each you commit to the github repo
+This enables to parameterize unit tests - the tests are run by Travis each time you commit to the github repo
 """
 
 #########
@@ -55,10 +55,10 @@ from scenario import Scenario
 from contributivity import Contributivity
 from multi_partner_learning import MultiPartnerLearning
 
-####
+######
 # Fixture Iterate: to generate the combination of parameters
 # of the Scenario Partner MPL Dataset Objects
-####
+######
 
 @pytest.fixture(scope='class', params=['cifar10', 'mnist'])
 def iterate_dataset_name(request):
@@ -69,8 +69,15 @@ def iterate_samples_split_option(request):
     yield request.param
 
 
+######
+# Fixture Create: to generate the objects that are used in the test functions - use the 'iterate' fixtures to generate their parameters
+# It's probably better to maintain their independence in order to be free to create weird objects, then give them to the test functions
+######
+
+# create_Mpl uses create_Dataset and create_Contributivity uses create_Scenario
+
 @pytest.fixture(scope='class')
-def create_Partner(request, iterate_dataset_name):
+def create_Partner(iterate_dataset_name):
     """Instantiate partner object"""
     part = Partner(partner_id=0)
     dataset_name = iterate_dataset_name
@@ -83,26 +90,9 @@ def create_Partner(request, iterate_dataset_name):
         part.y_train = data_mn.preprocess_dataset_labels(y_train)
     yield part
 
-# This is not a fixture!
-def create_partners_list(dataset_name, partners_count):
-    partners_list = []
-
-    for i in range(partners_count):
-        part = Partner(partner_id=i)
-
-        if dataset_name == "cifar10":
-            (x_train, y_train), (x_test, y_test) = cifar10.load_data()
-            part.y_train = data_cf.preprocess_dataset_labels(y_train)
-        if dataset_name == "mnist":
-            (x_train, y_train), (x_test, y_test) = mnist.load_data()
-            part.y_train = data_mn.preprocess_dataset_labels(y_train)
-        partners_list.append(part)
-
-    return partners_list
-
 
 @pytest.fixture(scope='class')
-def create_Dataset(request, iterate_dataset_name):
+def create_Dataset(iterate_dataset_name):
     dataset_name = iterate_dataset_name
 
     if dataset_name == "cifar10":
@@ -195,9 +185,33 @@ def create_Contributivity(create_Scenario):
 
 ######
 #
+# Sub-function of fixture create to generate a sub-object without a call to another fixture create
+#
+######
+
+# This is not a pytest.fixture!
+def create_partners_list(dataset_name, partners_count):
+    partners_list = []
+
+    for i in range(partners_count):
+        part = Partner(partner_id=i)
+
+        if dataset_name == "cifar10":
+            (x_train, y_train), (x_test, y_test) = cifar10.load_data()
+            part.y_train = data_cf.preprocess_dataset_labels(y_train)
+        if dataset_name == "mnist":
+            (x_train, y_train), (x_test, y_test) = mnist.load_data()
+            part.y_train = data_mn.preprocess_dataset_labels(y_train)
+        partners_list.append(part)
+
+    return partners_list
+
+
+######
+#
 # Tests modules with Objects
 #
-#####
+######
 
 
 class Test_Partner:
@@ -280,9 +294,11 @@ class Test_Contributivity:
         assert type(contri) == Contributivity
 
 
-####
+######
+#
 # Test supported datasets
-####
+#
+######
 
 @pytest.fixture(scope='class')
 def create_cifar10_x():
@@ -351,6 +367,14 @@ class Test_dataset_mnist:
         x_train, x_test = create_mnist_x
         assert x_train.shape[1:] == data_mn.input_shape
         assert x_test.shape[1:] == data_mn.input_shape
+
+
+#####
+#
+# Test Demo and config files
+#
+######
+
 
 class TestDemoClass:
 

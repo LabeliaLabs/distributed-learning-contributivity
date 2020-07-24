@@ -33,9 +33,6 @@ class Partner:
         self.y_val = None
         self.y_test = None
 
-    def get_x_train_len(self):  # not used
-        return len(self.x_train)
-
 
     def corrupt_labels(self):
         if type(self.y_train) != np.ndarray:
