@@ -36,7 +36,7 @@ class Dataset:
         self.generate_new_model_for_dataset = generate_new_model_for_dataset
 
     def train_val_split(self):
-        # this could be add in the constructor??
+        """Called once, after Dataset's constructor"""
         if self.x_val != None or self.y_val != None:
             raise Exception
 
@@ -45,7 +45,7 @@ class Dataset:
         )
 
     def preprocess_labels(self):
-        # should be removed
+
         self.y_train = self.preprocess_dataset_labels(self.y_train)
         self.y_val = self.preprocess_dataset_labels(self.y_val)
         self.y_test = self.preprocess_dataset_labels(self.y_test)

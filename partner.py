@@ -33,13 +33,9 @@ class Partner:
         self.y_val = None
         self.y_test = None
 
-    def get_x_train_len(self):  # useless
+    def get_x_train_len(self):  # not used
         return len(self.x_train)
 
-# bizarre?: corrupt_labels suppose que les labels ne sont
-# qu'un tableau d'entier composé de 0 ou 1
-# Donc pas possible de faire autre chose que du categorical-CE
-# Rendre Agnostic du model/dataset!
 
     def corrupt_labels(self):
         if type(self.y_train) != np.ndarray:
