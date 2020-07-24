@@ -27,6 +27,16 @@ class Scenario:
         # Initialization of the dataset defined in the config of the experiment
         # ---------------------------------------------------------------------
 
+        # Raise Exception if unknown parameters in the .yml file
+
+        params_known = ["dataset_name","partners_count","amounts_per_partner","samples_split_option","multi_partner_learning_approach","aggregation_weighting","methods","gradient_updates_per_pass_count","is_quick_demo", "corrupted_datasets", "epoch_count", "minibatch_count", "is_early_stopping"]
+
+        if not all([x in params_known for x in params]):
+            for x in params:
+                if not x in params_known:
+                    logger.debug(f"Unrecognised parameter: {x}")
+            raise Exception(f"Unrecognised parameters, check your .yml file")
+
         # Get and verify which dataset is configured
         supported_datasets_names = ["mnist", "cifar10"]
         if "dataset_name" in params:
@@ -126,19 +136,19 @@ class Scenario:
         # Number of epochs, mini-batches and fit_batches in ML training
         if "epoch_count" in params:
             self.epoch_count = params["epoch_count"]
-            assert self.epoch_count > 0
+            assert self.epoch_count > 0, "Error: in the provided config file, epoch_count should be > 0"
         else:
             self.epoch_count = 40  # default
 
         if "minibatch_count" in params:
             self.minibatch_count = params["minibatch_count"]
-            assert self.minibatch_count > 0
+            assert self.minibatch_count > 0, "Error: in the provided config file, minibatch_count should be > 0"
         else:
             self.minibatch_count = 20  # default
 
         if "gradient_updates_per_pass_count" in params:
             self.gradient_updates_per_pass_count = params["gradient_updates_per_pass_count"]
-            assert self.gradient_updates_per_pass_count > 0
+            assert self.gradient_updates_per_pass_count > 0, "Error: in the provided config file, gradient_updates_per_pass_count should be > 0"
         else:
             self.gradient_updates_per_pass_count = constants.DEFAULT_GRADIENT_UPDATES_PER_PASS_COUNT
 
@@ -296,7 +306,7 @@ class Scenario:
             shared_clusters_count = max([p.cluster_count for p in partners_with_shared_clusters])
         else:
             shared_clusters_count = 0
-        assert specific_clusters_count + shared_clusters_count <= nb_diff_labels
+        assert specific_clusters_count + shared_clusters_count <= nb_diff_labels, "Error: data samples from the initial dataset are split in clusters per data labels - Incompatibility between the split arguments and the dataset provided - Example: ['advanced', [[7, 'shared'], [6, 'shared'], [2, 'specific'], [1, 'specific']]] means 7 shared clusters and 2 + 1 = 3 specific clusters ==> This scenario can't work with a dataset with less than 10 labels"
 
         # Stratify the dataset into clusters per labels
         x_train_for_cluster, y_train_for_cluster, nb_samples_per_cluster = {}, {}, {}
@@ -385,7 +395,7 @@ class Scenario:
             )
 
         # Check coherence of number of mini-batches versus partner with small dataset
-        assert self.minibatch_count <= min([len(p.x_train) for p in self.partners_list])
+        assert self.minibatch_count <= min([len(p.x_train) for p in self.partners_list]), "Error: in the provided config file and the provided dataset, a partner doesn't have enough data samples to create the minibatches "
 
         if is_logging_enabled:
             logger.info("### Splitting data among partners:")
@@ -414,8 +424,8 @@ class Scenario:
         # ... or receive different amounts?
 
         # Check the percentages of samples per partner and control its coherence
-        assert len(self.amounts_per_partner) == self.partners_count
-        assert np.sum(self.amounts_per_partner) == 1
+        assert len(self.amounts_per_partner) == self.partners_count, "Error: in the provided config file, amounts_per_partner list should have a size equals to partners_count"
+        assert np.sum(self.amounts_per_partner) == 1, "Error: in the provided config file, amounts_per_partner argument: the sum of the proportions you provided isn't equal to 1"
 
         # Then we parameterize this via the splitting_indices to be passed to np.split
         # This is to transform the percentages from the scenario configuration into indices where to split the data
@@ -435,9 +445,9 @@ class Scenario:
         # Create a list of indexes of the samples
         train_idx = np.arange(len(y_train))
 
-        # In the 'stratified' scenario we sort MNIST by labels
+        # In the 'stratified' scenario we sort by labels
         if self.samples_split_description == "stratified":
-            # Sort MNIST by labels
+            # Sort by labels
             y_sorted_idx = y_train.argsort()
             y_train = y_train[y_sorted_idx]
             x_train = x_train[y_sorted_idx]
@@ -490,7 +500,7 @@ class Scenario:
             partner_idx += 1
 
         # Check coherence of number of mini-batches versus smaller partner
-        assert self.minibatch_count <= (min(self.amounts_per_partner) * len(x_train))
+        assert self.minibatch_count <= (min(self.amounts_per_partner) * len(x_train)), "Error: in the provided config file and dataset, a partner doesn't have enough data samples to create the minibatches"
 
         self.nb_samples_used = sum([len(p.x_train) for p in self.partners_list])
         self.final_relative_nb_samples = [p.final_nb_samples / self.nb_samples_used for p in self.partners_list]
