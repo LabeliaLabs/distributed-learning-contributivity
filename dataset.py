@@ -40,10 +40,8 @@ class Dataset:
         if self.x_val or self.y_val:
             raise Exception("x_val and y_val should be of NoneType")
 
-        self.x_train, self.x_val, self.y_train, self.y_val = train_test_split(
-            self.x_train, self.y_train, test_size=0.2, random_state=42
-        )
-
+        self.x_train, self.x_val, self.y_train, self.y_val = train_test_split(self.x_train, self.y_train,
+                                                                              test_size=0.2, random_state=42)
 
     def generate_new_model(self):
 

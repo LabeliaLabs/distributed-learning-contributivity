@@ -20,3 +20,9 @@ scenario_params_list:
     - 5
    is_quick_demo:
     - True
+   dataset_proportion:
+    - 1
+   epoch_count:
+    - 2
+   minibatch_count:
+    - 2

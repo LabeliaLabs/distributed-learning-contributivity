@@ -375,7 +375,6 @@ class Test_dataset_mnist:
 #
 ######
 
-
 class TestDemoClass:
 
     def test_ok(self):

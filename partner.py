@@ -33,25 +33,12 @@ class Partner:
         self.y_val = None
         self.y_test = None
 
-
     def corrupt_labels(self):
-        if type(self.y_train) != np.ndarray:
-            raise TypeError("partner.y_train should be a numpy.ndarray")
-        if self.y_train.shape == (0,):
-            raise ValueError("partner.y_train shouldn't be an empty array")
-        if self.y_train.dtype != "float32":
-            raise TypeError("partner.y_train.dtype should be float32")
         for label in self.y_train:
             idx_max = np.argmax(label)
             label[idx_max] = 0.0
             label[idx_max - 1] = 1.0
 
     def shuffle_labels(self):
-        if type(self.y_train) != np.ndarray:
-            raise TypeError("partner.y_train should be a numpy.ndarray")
-        if self.y_train.shape == (0,):
-            raise ValueError("partner.y_train shouldn't be an empty array")
-        if self.y_train.dtype != "float32":
-            raise TypeError("partner.y_train.dtype should be float32")
         for label in self.y_train:
             label = shuffle(label)

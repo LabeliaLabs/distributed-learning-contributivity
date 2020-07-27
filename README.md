@@ -90,6 +90,8 @@ Finally, with given scenarios and multi-partner learning approaches, we can addr
          - 20
        gradient_updates_per_pass_count:
          - 8
+       dataset_proportion:
+	 - 1
      - dataset_name:
          - 'mnist'
        partners_count: 
@@ -112,6 +114,8 @@ Finally, with given scenarios and multi-partner learning approaches, we can addr
          - 20
        gradient_updates_per_pass_count:
          - 8
+       dataset_proportion:
+	 - 1
     ```
 
    Under `scenario_params_list`, enter a list of sets of scenario(s). Each set starts with ` - dataset_name:` and must have only one `partners_count` value. The length of `amount_per_partners`, `corrupted_datasets` (and `samples_split_option` when the advanced definition is used) must match the `partner_counts` value. If for a given parameter multiple values are specified, e.g. like for `agregation_weighting` in the first scenario set of the above example, all possible combinations of parameters will be assembled as separate scenarios and run.
@@ -150,6 +154,14 @@ MNIST and CIFAR10 are currently supported. They come with their associated modul
 In the multi-partner learning computations, the global validation set is used for early stopping and the global test set is used for performance evaluation.
 - The global train set is split amongst partner (according to the scenario configuration) to populate the partner's local datasets.
 - For each partner, the local dataset is split into separated train, validation and test sets. Currently, the local validation and test set are not used, but they are available for further developments of multi-partner learning and contributivity measurement approaches.
+- 
+
+`dataset_proportion`: `float` (default: `1`)
+This argument allows you to make computation on a sub-dataset of the provided datasets.
+This is the proportion of the dataset (initialy the train and test sets) which is randomly selected to create a sub-dataset,
+it's done before the creation of the global validation set. 
+You have to ensure that `0 < dataset_proportion <= 1`
+
 
 ##### Definition of collaborative scenarios
 
@@ -159,6 +171,7 @@ Example: `partners_count: 4`
 
 `amounts_per_partner`: `[float]`  
 Fractions of the original dataset each partner receives to mock a collaborative ML scenario where each partner provides data for the ML training.  
+You have to ensure the fractions sum up to 1.
 Example: `amounts_per_partner: [0.3, 0.3, 0.1, 0.3]`
 
 `samples_split_option`: `['basic', 'random']` (default), `['basic', 'stratified']` or `['advanced', [[nb of clusters (int), 'shared' or 'specific']]]`   
