@@ -335,17 +335,6 @@ class MultiPartnerLearning:
             model_evaluation = [0]*2
         else :
             model_evaluation = self.collaborative_round_evaluation(sequentially_trained_model, self.val_data)
-        '''
-        if isinstance(sequentially_trained_model, type(LogisticRegression())):
-            if hasattr(sequentially_trained_model, 'n_iter_'):
-                model_evaluation = [sequentially_trained_model.score(x_val, y_val)]*2
-            else :
-                model_evaluation = [0]*2
-        else:
-            model_evaluation = sequentially_trained_model.evaluate(
-                x_val, y_val, batch_size=constants.DEFAULT_BATCH_SIZE, verbose=0)
-        '''
-
         self.score_matrix_collective_models[epoch_index, minibatch_index] = model_evaluation[1]
 
         # Iterate over partners for training the model sequentially
@@ -407,10 +396,6 @@ class MultiPartnerLearning:
             model_evaluation = [0]*2
         else :
             model_evaluation = self.collaborative_round_evaluation(model_for_round, self.val_data)
-
-        """
-        model_evaluation = model_for_round.evaluate(x_val, y_val, batch_size=constants.DEFAULT_BATCH_SIZE, verbose=0)
-        """
         self.score_matrix_collective_models[epoch_index, minibatch_index] = model_evaluation[1]
 
         # Iterate over partners for training each individual model
