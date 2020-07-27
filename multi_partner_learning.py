@@ -100,9 +100,6 @@ class MultiPartnerLearning:
                 callbacks=cb,
             )
 
-        # Reference the testset according to the scenario configuration
-        x_test, y_test = self.test_data
-
         # Evaluate trained model
         model_evaluation = self.collaborative_round_evaluation(model, self.test_data)
         logger.info(f"   Model evaluation on test data: "
@@ -126,9 +123,6 @@ class MultiPartnerLearning:
         epoch_count = self.epoch_count
         minibatch_count = self.minibatch_count
         is_early_stopping = self.is_early_stopping
-
-        x_val, y_val = self.val_data
-        x_test, y_test = self.test_data
 
         # First, if only one partner, fall back to dedicated single partner function
         if partners_count == 1:
@@ -267,7 +261,6 @@ class MultiPartnerLearning:
         # Initialize variables
         epoch_index, minibatch_index = self.epoch_index, self.minibatch_index
         is_very_first_minibatch = (epoch_index == 0 and minibatch_index == 0)
-        x_val, y_val = self.val_data
 
         # Starting model for each partner is the aggregated model from the previous mini-batch iteration
         if is_very_first_minibatch:  # Except for the very first mini-batch where it is a new model
@@ -303,10 +296,8 @@ class MultiPartnerLearning:
                 partner_model, train_data_for_fit_iteration, self.val_data, partner.batch_size)
 
             # Log results of the round
-            if isinstance(partner_model, type(LogisticRegression())):
-                self.log_collaborative_round_partner_result(partner, partner_index, history.score(x_val, y_val))
-            else:
-                self.log_collaborative_round_partner_result(partner, partner_index, history.history["val_accuracy"][0])
+            model_evaluation = self.collaborative_round_evaluation(history, self.val_data)[1]
+            self.log_collaborative_round_partner_result(partner, partner_index, model_evaluation)
 
             # Update the partner's model in the models' list
             if isinstance(partner_model, type(LogisticRegression())):
@@ -328,7 +319,6 @@ class MultiPartnerLearning:
         # Initialize variables
         epoch_index, minibatch_index = self.epoch_index, self.minibatch_index
         is_last_round = minibatch_index == self.minibatch_count - 1
-        x_val, y_val = self.val_data
 
         # Evaluate and store accuracy of mini-batch start model
         if not hasattr(sequentially_trained_model, 'coef_'):
@@ -353,10 +343,8 @@ class MultiPartnerLearning:
                 sequentially_trained_model, train_data_for_fit_iteration, self.val_data, partner.batch_size)
 
             # Log results of the round
-            if isinstance(history, type(LogisticRegression())):
-                self.log_collaborative_round_partner_result(partner, for_loop_idx, history.score(x_val, y_val))
-            else :
-                self.log_collaborative_round_partner_result(partner, for_loop_idx, history.history["val_accuracy"][0])
+            model_evaluation = self.collaborative_round_evaluation(history, self.val_data)[1]
+            self.log_collaborative_round_partner_result(partner, for_loop_idx, model_evaluation)
 
             # On final collaborative round, save the partner's model in the models' list
             if is_last_round:
@@ -380,7 +368,6 @@ class MultiPartnerLearning:
         # Initialize variables
         epoch_index, minibatch_index = self.epoch_index, self.minibatch_index
         is_very_first_minibatch = (epoch_index == 0 and minibatch_index == 0)
-        x_val, y_val = self.val_data
 
         # Starting model for each partner is the aggregated model from the previous collaborative round
         if is_very_first_minibatch:  # Except for the very first mini-batch where it is a new model
@@ -585,12 +572,7 @@ class MultiPartnerLearning:
     def update_iterative_results(self, partner_index, fit_history):
         """Update the results arrays with results from the collaboration round"""
 
-
-        if isinstance(fit_history, type(LogisticRegression())):
-            x_val, y_val = self.val_data
-            validation_score = fit_history.score(x_val, y_val)  # might be done in 1 line ? need to be tested later.
-        else :
-            validation_score = fit_history.history["val_accuracy"][0]
+        validation_score = self.collaborative_round_evaluation(fit_history, self.val_data)[1]
 
         self.scores_last_learning_round[partner_index] = validation_score  # TO DO check if coherent
 
