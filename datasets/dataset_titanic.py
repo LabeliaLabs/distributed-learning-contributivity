@@ -10,9 +10,7 @@ from keras.layers import Dense, Dropout
 import pandas as pd
 import numpy as np
 import keras
-
 from sklearn.linear_model import LogisticRegression
-
 
 # Init dataset-specific variables
 num_classes = 1
@@ -48,7 +46,7 @@ def preprocess_dataset_inputs(x):
     x.drop('Title', axis=1, inplace=True)
     return x.to_numpy()
 
-# download train and test sets
+# Download train and test sets
 def load_data():
     """Return a usable dataset"""
 
@@ -64,7 +62,7 @@ def load_data():
 
 # Model structure and generation
 def generate_new_model_for_dataset():
-    """Return a feed forward model from scratch
+    """Return either a feed forward model from scratch or a LogisticRegression Classifier
     https://www.kaggle.com/kabure/titanic-eda-model-pipeline-keras-nn"""
 
     model = Sequential()
@@ -85,7 +83,8 @@ def generate_new_model_for_dataset():
 
     clf = LogisticRegression(max_iter=10000, warm_start=1, random_state = 0)
     clf.classes_ = np.array([0,1])
-    return clf
+    clf.metrics_names = ["None", "Accuracy"]  # to enable the use of collaborative_round_evaluation(), None is placeholder for loss
+    return clf  # you can also use "model"
 
 # Load data
 (x_train, y_train), (x_test, y_test) = load_data()

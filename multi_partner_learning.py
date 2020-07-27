@@ -104,14 +104,9 @@ class MultiPartnerLearning:
         x_test, y_test = self.test_data
 
         # Evaluate trained model
-        if isinstance(model, type(LogisticRegression())):
-            model_evaluation = [0,model.score(x_test, y_test)]
-            logger.info(f"   Model evaluation on test data: "
-                        f"{model_evaluation[1]}")
-        else:
-            model_evaluation = model.evaluate(x_test, y_test, batch_size=constants.DEFAULT_BATCH_SIZE, verbose=0)
-            logger.info(f"   Model evaluation on test data: "
-                        f"{list(zip(model.metrics_names, ['%.3f' % elem for elem in model_evaluation]))}")
+        model_evaluation = self.collaborative_round_evaluation(model, self.test_data)
+        logger.info(f"   Model evaluation on test data: "
+                    f"{list(zip(model.metrics_names, ['%.3f' % elem for elem in model_evaluation]))}")
 
         # Save model score on test data
         self.test_score = model_evaluation[1]  # 0 is for the loss
@@ -182,12 +177,8 @@ class MultiPartnerLearning:
             elif self.learning_approach in ['fedavg', 'seq-with-final-agg', 'seqavg']:
                 model_to_evaluate = self.build_model_from_weights(self.aggregate_model_weights())
 
-            if isinstance(model_to_evaluate, type(LogisticRegression())):
-                model_evaluation = [0, model_to_evaluate.score(x_val, y_val)]  # sets loss to 0 for sklearn logit
-            else:
-                model_evaluation = model_to_evaluate.evaluate(
-                    x_val, y_val, batch_size=constants.DEFAULT_BATCH_SIZE, verbose=0,
-                )
+
+            model_evaluation = self.collaborative_round_evaluation(model_to_evaluate, self.val_data)
 
             current_val_loss = model_evaluation[0]
             current_val_metric = model_evaluation[1]
@@ -213,14 +204,9 @@ class MultiPartnerLearning:
         # After last epoch or if early stopping was triggered, evaluate model on the global testset
         logger.info("### Evaluating model on test data:")
 
-        if isinstance(model_to_evaluate, type(LogisticRegression())):
-            model_evaluation = [0, model_to_evaluate.score(x_test, y_test)]  # sets loss to 0 for sklearn logit
-            logger.info(f"   Model accuracy on test set: {model_evaluation[1]}")
-        else:
-            model_evaluation = model_to_evaluate.evaluate(
-                x_test, y_test, batch_size=constants.DEFAULT_BATCH_SIZE, verbose=0)
-            logger.info(f"   Model metrics names: {model_to_evaluate.metrics_names}")
-            logger.info(f"   Model metrics values: {['%.3f' % elem for elem in model_evaluation]}")
+        model_evaluation = self.collaborative_round_evaluation(model_to_evaluate, self.test_data)
+        logger.info(f"   Model metrics names: {model_to_evaluate.metrics_names}")
+        logger.info(f"   Model metrics values: {['%.3f' % elem for elem in model_evaluation]}")
 
         self.test_score = model_evaluation[1]  # 0 is for the loss
         self.nb_epochs_done = self.epoch_index + 1
@@ -294,14 +280,12 @@ class MultiPartnerLearning:
 
         # Evaluate and store accuracy of mini-batch start model
         model_to_evaluate = partners_model_list_for_iteration[0]
-        if isinstance(model_to_evaluate, type(LogisticRegression())):
-            if hasattr(model_to_evaluate, 'coef_') and hasattr(model_to_evaluate, 'intercept_') :
-                eval = model_to_evaluate.score(x_val, y_val)
-                model_evaluation = [0, eval]
-            else:
-                model_evaluation = [0]*2
-        else:
-            model_evaluation = model_to_evaluate.evaluate(x_val, y_val, batch_size=constants.DEFAULT_BATCH_SIZE, verbose=0)
+
+        if not hasattr(model_to_evaluate, 'coef_'):
+            model_evaluation = [0]*2
+        else :
+            model_evaluation = self.collaborative_round_evaluation(model_to_evaluate, self.val_data)
+
         self.score_matrix_collective_models[epoch_index, minibatch_index] = model_evaluation[1]
 
         # Iterate over partners for training each individual model
@@ -347,6 +331,11 @@ class MultiPartnerLearning:
         x_val, y_val = self.val_data
 
         # Evaluate and store accuracy of mini-batch start model
+        if not hasattr(sequentially_trained_model, 'coef_'):
+            model_evaluation = [0]*2
+        else :
+            model_evaluation = self.collaborative_round_evaluation(sequentially_trained_model, self.val_data)
+        '''
         if isinstance(sequentially_trained_model, type(LogisticRegression())):
             if hasattr(sequentially_trained_model, 'n_iter_'):
                 model_evaluation = [sequentially_trained_model.score(x_val, y_val)]*2
@@ -355,6 +344,8 @@ class MultiPartnerLearning:
         else:
             model_evaluation = sequentially_trained_model.evaluate(
                 x_val, y_val, batch_size=constants.DEFAULT_BATCH_SIZE, verbose=0)
+        '''
+
         self.score_matrix_collective_models[epoch_index, minibatch_index] = model_evaluation[1]
 
         # Iterate over partners for training the model sequentially
@@ -412,7 +403,14 @@ class MultiPartnerLearning:
             model_for_round = self.init_with_agg_model()
 
         # Evaluate and store accuracy of mini-batch start model
+        if not hasattr(model_for_round, 'coef_'):
+            model_evaluation = [0]*2
+        else :
+            model_evaluation = self.collaborative_round_evaluation(model_for_round, self.val_data)
+
+        """
         model_evaluation = model_for_round.evaluate(x_val, y_val, batch_size=constants.DEFAULT_BATCH_SIZE, verbose=0)
+        """
         self.score_matrix_collective_models[epoch_index, minibatch_index] = model_evaluation[1]
 
         # Iterate over partners for training each individual model
@@ -486,11 +484,8 @@ class MultiPartnerLearning:
                 sum_coefs = sum_coefs + coefs[i]
                 sum_intercepts = sum_intercepts + intercepts[i]
 
-
-            #averaging
             agg_coef = sum_coefs/self.partners_count
             agg_intercepts = sum_intercepts/self.partners_count
-
 
             new_weights = (agg_coef, agg_intercepts)
         else :
@@ -579,6 +574,18 @@ class MultiPartnerLearning:
                 validation_data=val_data,
             )
         return history
+
+    @staticmethod
+    def collaborative_round_evaluation(model_to_evaluate, evaluation_data):
+        """Evaluate the model with arguments passed as parameters and returns the history object"""
+
+        x_eval, y_eval = evaluation_data
+
+        if isinstance(model_to_evaluate, type(LogisticRegression())):
+            model_evaluation = [0, model_to_evaluate.score(x_eval, y_eval)]
+        else :
+            model_evaluation = model_to_evaluate.evaluate(x_eval, y_eval, batch_size=constants.DEFAULT_BATCH_SIZE, verbose=0)
+        return model_evaluation
 
     def log_collaborative_round_partner_result(self, partner, partner_index, validation_score):
         """Print the validation accuracy of the collaborative round"""
