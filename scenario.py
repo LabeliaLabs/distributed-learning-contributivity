@@ -294,6 +294,10 @@ class Scenario:
         self.contributivity_list.append(contributivity)
 
     def instantiate_scenario_partners(self):
+        """Create the partners_list - self.partners_list should be []"""
+
+        if self.partners_list != []:
+            raise Exception("self.partners_list should be []")
 
         self.partners_list = [Partner(i) for i in range(self.partners_count)]
 
@@ -432,6 +436,9 @@ class Scenario:
 
     def split_data(self, is_logging_enabled=True):
         """Populates the partners with their train and test data (not pre-processed)"""
+
+        # self.partners_list wasn't change since the initialization
+        assert all([not type(self.partners_list[i].x_train) for i in range(len(self.partners_list))]), "Error: partners_list.x_train (for all partners) shouldn't be modified between it's initialization and the call to split_data"
 
         # Fetch parameters of scenario
         x_train = self.dataset.x_train
