@@ -435,25 +435,16 @@ class MultiPartnerLearning:
     def aggregate_model_weights(self):
         """Aggregate model weights from the list of models, with a weighted average"""
 
-
         if isinstance(self.generate_new_model(), type(LogisticRegression())):
 
             coefs = self.models_weights_list
             intercepts = self.models_intercepts_list
 
-            sum_coefs = coefs[0]*0
-            sum_intercepts = intercepts[0]*0
-
-            for i in range(self.partners_count):
-                sum_coefs = sum_coefs + coefs[i]
-                sum_intercepts = sum_intercepts + intercepts[i]
-
-            agg_coef = sum_coefs/self.partners_count
-            agg_intercepts = sum_intercepts/self.partners_count
+            agg_coef = np.average(np.array(coefs), axis=0, weights=self.aggregation_weights)
+            agg_intercepts = np.average(np.array(intercepts), axis=0, weights=self.aggregation_weights)
 
             new_weights = (agg_coef, agg_intercepts)
         else :
-
             weights_per_layer = list(zip(*self.models_weights_list))
             new_weights = list()
 
