@@ -300,11 +300,7 @@ class MultiPartnerLearning:
             self.log_collaborative_round_partner_result(partner, partner_index, model_evaluation)
 
             # Update the partner's model in the models' list
-            if isinstance(partner_model, type(LogisticRegression())):
-                self.models_weights_list[partner_index] = partner_model.coef_
-                self.models_intercepts_list[partner_index] = partner_model.intercept_
-            else:
-                self.models_weights_list[partner_index] = partner_model.get_weights()
+            self.save_model_for_partner(partner_model, partner_index)
 
             # Update iterative results
             self.update_iterative_results(partner_index, history)
@@ -348,12 +344,7 @@ class MultiPartnerLearning:
 
             # On final collaborative round, save the partner's model in the models' list
             if is_last_round:
-                if isinstance(sequentially_trained_model, type(LogisticRegression())):
-                    self.models_weights_list[partner_index] = sequentially_trained_model.coef_
-                    self.models_intercepts_list[partner_index] = sequentially_trained_model.intercept_
-
-                else:
-                    self.models_weights_list[partner_index] = sequentially_trained_model.get_weights()
+                self.save_model_for_partner(sequentially_trained_model, partner_index)
 
             # Update iterative results
             self.update_iterative_results(partner_index, history)
@@ -401,10 +392,11 @@ class MultiPartnerLearning:
                 model_for_round, train_data_for_fit_iteration, self.val_data, partner.batch_size)
 
             # Log results
-            self.log_collaborative_round_partner_result(partner, for_loop_idx, history.history["val_accuracy"][0])
+            evaluation = self.collaborative_round_evaluation(history, self.val_data)
+            self.log_collaborative_round_partner_result(partner, for_loop_idx, evaluation[0])
 
             # Save the partner's model in the models' list
-            self.models_weights_list[partner_index] = model_for_round.get_weights()
+            self.save_model_for_partner(model_for_round, partner_index)
 
             # Update iterative results
             self.update_iterative_results(partner_index, history)
@@ -473,6 +465,13 @@ class MultiPartnerLearning:
 
         return new_weights
 
+    def save_model_for_partner(self, model, partner_index):
+        """save a model with weight"""
+        if isinstance(model, type(LogisticRegression())):
+            self.models_weights_list[partner_index] = model.coef_
+            self.models_intercepts_list[partner_index] = model.intercept_
+        else:
+            self.models_weights_list[partner_index] = model.get_weights()
 
 
     def build_model_from_weights(self, new_weights):
