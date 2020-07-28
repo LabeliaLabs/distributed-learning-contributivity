@@ -14,6 +14,7 @@ import matplotlib.pyplot as plt
 import operator
 from loguru import logger
 from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import log_loss
 
 import constants
 
@@ -543,7 +544,9 @@ class MultiPartnerLearning:
         x_eval, y_eval = evaluation_data
 
         if isinstance(model_to_evaluate, type(LogisticRegression())):
-            model_evaluation = [0, model_to_evaluate.score(x_eval, y_eval)]
+            loss = log_loss(y_eval, model_to_evaluate.predict(x_eval))
+            accuracy = model_to_evaluate.score(x_eval, y_eval)
+            model_evaluation = [loss, accuracy]
         else :
             model_evaluation = model_to_evaluate.evaluate(x_eval, y_eval, batch_size=constants.DEFAULT_BATCH_SIZE, verbose=0)
         return model_evaluation
