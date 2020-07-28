@@ -57,7 +57,6 @@ class MultiPartnerLearning:
         self.minibatched_y_train = [None] * self.partners_count
         self.aggregation_weights = []
         self.models_weights_list = [None] * self.partners_count
-        self.models_intercepts_list = [None] * self.partners_count
         self.scores_last_learning_round = [None] * self.partners_count
         self.score_matrix_per_partner = np.nan * np.zeros(shape=(self.epoch_count, self.minibatch_count, self.partners_count))
         self.score_matrix_collective_models = np.nan * np.zeros(shape=(self.epoch_count, self.minibatch_count + 1))
@@ -437,8 +436,9 @@ class MultiPartnerLearning:
 
         if isinstance(self.generate_new_model(), type(LogisticRegression())):
 
-            coefs = self.models_weights_list
-            intercepts = self.models_intercepts_list
+            # Unpack values
+            coefs = [weights[0] for weights in self.models_weights_list]
+            intercepts = [weights[1] for weights in self.models_weights_list]
 
             agg_coef = np.average(np.array(coefs), axis=0, weights=self.aggregation_weights)
             agg_intercepts = np.average(np.array(intercepts), axis=0, weights=self.aggregation_weights)
@@ -459,8 +459,7 @@ class MultiPartnerLearning:
     def save_model_for_partner(self, model, partner_index):
         """save a model with weight"""
         if isinstance(model, type(LogisticRegression())):
-            self.models_weights_list[partner_index] = model.coef_
-            self.models_intercepts_list[partner_index] = model.intercept_
+            self.models_weights_list[partner_index] = (model.coef_ , model.intercept_)
         else:
             self.models_weights_list[partner_index] = model.get_weights()
 
