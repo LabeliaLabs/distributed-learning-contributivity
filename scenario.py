@@ -81,8 +81,8 @@ class Scenario:
 
         if self.dataset_proportion < 1:
             self.shorten_dataset_proportion()
-        #else:
-            #logger.info("Computation use the full dataset")
+        else:
+            logger.info("Computation use the full dataset")
 
 
         self.nb_samples_used = len(self.dataset.x_train)
