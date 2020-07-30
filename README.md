@@ -171,7 +171,32 @@ Example: `n_repeats: 2`
 ##### Choice of dataset
 `dataset_name`: `'mnist'` (default), `'cifar10'` or `'titanic'`
 MNIST, CIFAR10 and Titanic are currently supported. They come with their associated modules in `/datasets` for loading data, pre-processing inputs, and define a model architecture.\
-For each dataset, it is possible to provide a path to model weights learned from a previous coalition. Use `'random_initialization'` if you want a random initialization. 
+For each dataset, it is possible to provide a path to model weights learned from a previous coalition. Use `'random_initialization'` if you want a random initialization or an empty value as in one of the two following syntaxes:
+
+```
+scenario_params_list:
+ - dataset_name:
+    'mnist':
+    'cifar10':
+```
+
+``` 
+scenario_params_list:
+ - dataset_name:
+    - 'mnist'
+    - 'cifar10'
+```
+
+Please, note that if you want to specify a path to saved weights and launch the same scenario with a random initialization, you must specify it in the list of initialization.
+
+```
+scenario_params_list:
+ - dataset_name:
+    'mnist':
+     - 'random_initialization'
+     - path_to_saved_weights
+    'cifar10':
+```
 
 **Note on validation and test datasets**:
 
