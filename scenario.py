@@ -325,6 +325,15 @@ class Scenario:
         random.shuffle(labels)
 
         # Check coherence of the split option:
+        for option in self.samples_split_description:
+            print(option[1])
+            if not option[1] == "shared" or not option[1] == "specific"  :
+                raise NameError(
+                    "This samples_split option ["
+                    + option[1]
+                    + "] is not recognized."
+                )
+
         nb_diff_labels = len(labels)
         specific_clusters_count = sum([p.cluster_count for p in partners_with_specific_clusters])
         if partners_with_shared_clusters:
