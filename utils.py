@@ -61,7 +61,10 @@ def get_scenario_params_list(config):
                 # Add path to init model from an existing model
                 dataset_scenario = list_scenario.copy()
                 dataset_scenario['dataset_name'] = [dataset_name]
-                dataset_scenario['init_model_from'] = list_scenario['dataset_name'][dataset_name]
+                if list_scenario['dataset_name'][dataset_name] is None:
+                    dataset_scenario['init_model_from'] = ['random_initialization']
+                else:
+                    dataset_scenario['init_model_from'] = list_scenario['dataset_name'][dataset_name]
                 
                 config_dataset.append(dataset_scenario)
         else:

@@ -4,7 +4,6 @@ scenario_params_list:
  - dataset_name:
     'mnist':
     - 'random_initialization'
-    - './experiments/debug_config_2020-06-17_11h26/scenario_1_repeat_1_2020-06-17_11h26_85f/model/mnist_final_weights.h5'
     'cifar10':
     - 'random_initialization'
    partners_count:
