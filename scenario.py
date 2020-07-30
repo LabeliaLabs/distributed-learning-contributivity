@@ -326,9 +326,8 @@ class Scenario:
 
         # Check coherence of the split option:
         for option in self.samples_split_description:
-            print(option[1])
-            if not option[1] == "shared" or not option[1] == "specific"  :
-                raise NameError(
+            if not option[1] == "shared" and not option[1] == "specific":
+                raise Exception(
                     "This samples_split option ["
                     + option[1]
                     + "] is not recognized."
@@ -447,7 +446,8 @@ class Scenario:
         """Populates the partners with their train and test data (not pre-processed)"""
 
         # self.partners_list wasn't change since the initialization
-        assert all([not type(self.partners_list[i].x_train) is None for i in range(len(self.partners_list))]), "Error: partners_list.x_train (for all partners) shouldn't be modified between it's initialization and the call to split_data"
+        #assert all([partner.x_train is None for partner in self.partners_list]), "Error: partners_list.x_train (for all partners) shouldn't be modified between it's initialization and the call to split_data"
+
 
         # Fetch parameters of scenario
         x_train = self.dataset.x_train
@@ -493,7 +493,7 @@ class Scenario:
 
         # If neither 'stratified' nor 'random', we raise an exception
         else:
-            raise NameError(
+            raise Exception(
                 "This samples_split option ["
                 + self.samples_split_description
                 + "] is not recognized."

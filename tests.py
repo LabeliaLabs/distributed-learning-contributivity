@@ -286,10 +286,10 @@ class Test_Scenario:
         def test_raiseException(self, create_Scenario):
             scenar = create_Scenario
             scenar.partners_list[0].x_train = scenar.dataset.x_train
-            with pytest.raises(AssertionError):
+            with pytest.raises(Exception):
                 if scenar.samples_split_option[0] == 'basic':
                     scenar.split_data()
-                else :
+                else:
                     scenar.split_data_advanced()
 
 
