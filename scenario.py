@@ -325,14 +325,6 @@ class Scenario:
         random.shuffle(labels)
 
         # Check coherence of the split option:
-        for option in self.samples_split_description:
-            if not option[1] == "shared" and not option[1] == "specific":
-                raise Exception(
-                    "This samples_split option ["
-                    + option[1]
-                    + "] is not recognized."
-                )
-
         nb_diff_labels = len(labels)
         specific_clusters_count = sum([p.cluster_count for p in partners_with_specific_clusters])
         if partners_with_shared_clusters:
@@ -445,10 +437,6 @@ class Scenario:
     def split_data(self, is_logging_enabled=True):
         """Populates the partners with their train and test data (not pre-processed)"""
 
-        # self.partners_list wasn't change since the initialization
-        #assert all([partner.x_train is None for partner in self.partners_list]), "Error: partners_list.x_train (for all partners) shouldn't be modified between it's initialization and the call to split_data"
-
-
         # Fetch parameters of scenario
         x_train = self.dataset.x_train
         y_train = self.dataset.y_train
@@ -493,7 +481,7 @@ class Scenario:
 
         # If neither 'stratified' nor 'random', we raise an exception
         else:
-            raise Exception(
+            raise NameError(
                 "This samples_split option ["
                 + self.samples_split_description
                 + "] is not recognized."
