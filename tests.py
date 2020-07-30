@@ -172,8 +172,6 @@ def create_Scenario(iterate_dataset_name, iterate_samples_split_option):
 
     scenar.mpl = multi_partner_learning.init_multi_partner_learning_from_scenario(scenario=scenar, is_save_data=True)
 
-    scenar.samples_split_option = samples_split_option
-
     yield scenar
 
 
