@@ -172,6 +172,8 @@ def create_Scenario(iterate_dataset_name, iterate_samples_split_option):
 
     scenar.mpl = multi_partner_learning.init_multi_partner_learning_from_scenario(scenario=scenar, is_save_data=True)
 
+    scenar.samples_split_option = samples_split_option
+
     yield scenar
 
 
@@ -284,7 +286,7 @@ class Test_Scenario:
             scenar = create_Scenario
             scenar.partners_list[0].x_train = scenar.dataset.x_train
             with pytest.raises(AssertionError):
-                if scenar.mpl.samples_split_option == 'advanced':
+                if scenar.samples_split_option == 'advanced':
                     scenar.split_data_advanced()
                 else :
                     scenar.split_data()
