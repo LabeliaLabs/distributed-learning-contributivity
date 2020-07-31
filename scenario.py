@@ -3,7 +3,7 @@
 This enables to parameterize a desired scenario to mock a multi-partner ML project.
 """
 
-from datasets import dataset_mnist, dataset_cifar10
+from datasets import dataset_mnist, dataset_cifar10, dataset_titanic
 from sklearn.model_selection import train_test_split
 import datetime
 import os
@@ -42,7 +42,7 @@ class Scenario:
             raise Exception(f"Unrecognised parameters, check your .yml file")
 
         # Get and verify which dataset is configured
-        supported_datasets_names = ["mnist", "cifar10"]
+        supported_datasets_names = ["mnist", "cifar10", "titanic"]
         if "dataset_name" in params:
             dataset_name = params["dataset_name"]
             if dataset_name not in supported_datasets_names:
@@ -56,6 +56,8 @@ class Scenario:
             dataset_module = dataset_mnist
         elif dataset_name == "cifar10":
             dataset_module = dataset_cifar10
+        elif dataset_name == "titanic":
+            dataset_module = dataset_titanic
         else:
             raise Exception(f"Dataset named '{dataset_name}' is not supported (yet). You could add it!")
 
@@ -222,17 +224,18 @@ class Scenario:
 
         # The quick demo parameters overwrites previously defined parameters to make the scenario faster to compute
         if "is_quick_demo" in params and params["is_quick_demo"]:
-            # Use less data and less epochs to speed up the computations
+            # Use less data and/or less epochs to speed up the computations
             logger.info("Quick demo: limit number of data and number of epochs.")
-            index_train = np.random.choice(self.dataset.x_train.shape[0], 1000, replace=False)
-            index_val = np.random.choice(self.dataset.x_val.shape[0], 500, replace=False)
-            index_test = np.random.choice(self.dataset.x_test.shape[0], 500, replace=False)
-            self.dataset.x_train = self.dataset.x_train[index_train]
-            self.dataset.y_train = self.dataset.y_train[index_train]
-            self.dataset.x_val = self.dataset.x_val[index_val]
-            self.dataset.y_val = self.dataset.y_val[index_val]
-            self.dataset.x_test = self.dataset.x_test[index_test]
-            self.dataset.y_test = self.dataset.y_test[index_test]
+            if (len(self.dataset.x_train) > 1000):
+                index_train = np.random.choice(self.dataset.x_train.shape[0], 1000, replace=False)
+                index_val = np.random.choice(self.dataset.x_val.shape[0], 500, replace=False)
+                index_test = np.random.choice(self.dataset.x_test.shape[0], 500, replace=False)
+                self.dataset.x_train = self.dataset.x_train[index_train]
+                self.dataset.y_train = self.dataset.y_train[index_train]
+                self.dataset.x_val = self.dataset.x_val[index_val]
+                self.dataset.y_val = self.dataset.y_val[index_val]
+                self.dataset.x_test = self.dataset.x_test[index_test]
+                self.dataset.y_test = self.dataset.y_test[index_test]
             self.epoch_count = 3
             self.minibatch_count = 2
 

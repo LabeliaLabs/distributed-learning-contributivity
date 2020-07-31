@@ -441,12 +441,6 @@ class MultiPartnerLearning:
 
         new_model = self.generate_new_model()
         new_model.set_weights(new_weights)
-        new_model.compile(
-            loss=keras.losses.categorical_crossentropy,
-            optimizer="adam",
-            metrics=["accuracy"],
-        )
-
         return new_model
 
     def init_with_new_models(self):
