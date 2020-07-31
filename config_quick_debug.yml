@@ -20,24 +20,9 @@ scenario_params_list:
     - 5
    is_quick_demo:
     - True
-
- - dataset_name:
-     - 'titanic'
-   partners_count:
-     - 3
-   amounts_per_partner:
-     - [0.4, 0.3, 0.3]
-   samples_split_option:
-     - ['basic', 'random']
-   multi_partner_learning_approach:
-     - 'seq-pure'
-   aggregation_weighting:
-     - 'data_volume'
+   dataset_proportion:
+    - 1
    epoch_count:
-     - 30
-   methods:
-     - ["Shapley values", "Independent scores", "TMCS"]
+    - 2
    minibatch_count:
-     - 10
-   gradient_updates_per_pass_count:
-     - 8
+    - 2
