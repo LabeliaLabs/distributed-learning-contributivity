@@ -296,7 +296,7 @@ class MultiPartnerLearning:
                 partner_model, train_data_for_fit_iteration, self.val_data, partner.batch_size)
 
             # Log results of the round
-            model_evaluation = self.collaborative_round_evaluation(history, self.val_data)[1]
+            model_evaluation = self.collaborative_round_evaluation(partner_model, self.val_data)[1]
             self.log_collaborative_round_partner_result(partner, partner_index, model_evaluation)
 
             # Update the partner's model in the models' list
@@ -339,7 +339,7 @@ class MultiPartnerLearning:
                 sequentially_trained_model, train_data_for_fit_iteration, self.val_data, partner.batch_size)
 
             # Log results of the round
-            model_evaluation = self.collaborative_round_evaluation(history, self.val_data)[1]
+            model_evaluation = self.collaborative_round_evaluation(sequentially_trained_model, self.val_data)[1]
             self.log_collaborative_round_partner_result(partner, for_loop_idx, model_evaluation)
 
             # On final collaborative round, save the partner's model in the models' list
@@ -392,7 +392,7 @@ class MultiPartnerLearning:
                 model_for_round, train_data_for_fit_iteration, self.val_data, partner.batch_size)
 
             # Log results
-            evaluation = self.collaborative_round_evaluation(history, self.val_data)
+            evaluation = self.collaborative_round_evaluation(model_for_round, self.val_data)
             self.log_collaborative_round_partner_result(partner, for_loop_idx, evaluation[0])
 
             # Save the partner's model in the models' list
@@ -564,7 +564,12 @@ class MultiPartnerLearning:
     def update_iterative_results(self, partner_index, fit_history):
         """Update the results arrays with results from the collaboration round"""
 
-        validation_score = self.collaborative_round_evaluation(fit_history, self.val_data)[1]
+        if isinstance(fit_history, type(LogisticRegression())):
+            validation_score = self.collaborative_round_evaluation(fit_history, self.val_data)[0]
+        else :
+            validation_score = fit_history.history["val_accuracy"][0]
+
+
 
         self.scores_last_learning_round[partner_index] = validation_score  # TO DO check if coherent
 
