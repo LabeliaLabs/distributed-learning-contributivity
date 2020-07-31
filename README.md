@@ -38,7 +38,7 @@ For a start we made the following choices:
 - What we want to compare (with the Shapley values being the baseline, see section below):
   - Contributivity relative values
   - Computation time
-- Public datasets for experiments currently supported: MNIST, CIFAR10
+- Public datasets for experiments currently supported: MNIST, CIFAR10, TITANIC
 
 ### Structure of the library
 
@@ -142,7 +142,7 @@ Example: `n_repeats: 2`
 ##### Choice of dataset
 
 `dataset_name`: `'mnist'` (default), `'cifar10'` or `'titanic'`
-MNIST and CIFAR10 are currently supported. They come with their associated modules in `/datasets` for loading data, pre-processing inputs, and define a model architecture.
+MNIST, CIFAR10 and Titanic are currently supported. They come with their associated modules in `/datasets` for loading data, pre-processing inputs, and define a model architecture.
 
 **Note on validation and test datasets**:  
 - The dataset modules must provide separated train and test sets (referred to as global train set and global test set).
