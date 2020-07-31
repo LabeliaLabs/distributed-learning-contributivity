@@ -29,7 +29,11 @@ class Scenario:
 
         # Raise Exception if unknown parameters in the .yml file
 
-        params_known = ["dataset_name","partners_count","amounts_per_partner","samples_split_option","multi_partner_learning_approach","aggregation_weighting","methods","gradient_updates_per_pass_count","is_quick_demo", "corrupted_datasets", "epoch_count", "minibatch_count", "is_early_stopping"]
+        params_known = ["dataset_name", "dataset_proportion"]  # Dataset related
+        params_known += ["methods", "multi_partner_learning_approach", "aggregation_weighting"]  # federated learning related
+        params_known += ["partners_count", "amounts_per_partner", "corrupted_datasets", "samples_split_option"]  # Partners related
+        params_known += ["gradient_updates_per_pass_count", "epoch_count", "minibatch_count", "is_early_stopping"]  # Computation related
+        params_known += ["is_quick_demo"]
 
         if not all([x in params_known for x in params]):
             for x in params:
@@ -57,6 +61,14 @@ class Scenario:
         else:
             raise Exception(f"Dataset named '{dataset_name}' is not supported (yet). You could add it!")
 
+        # The proportion of the dataset the computation will used
+        if "dataset_proportion" in params:
+            self.dataset_proportion = params["dataset_proportion"]
+            assert self.dataset_proportion > 0, "Error in the config file, dataset_proportion should be > 0"
+            assert self.dataset_proportion <= 1, "Error in the config file, dataset_proportion should be <= 1"
+        else:
+            self.dataset_proportion = 1  # default
+
         self.dataset = Dataset(
             dataset_name,
             dataset_module.x_train,
@@ -68,6 +80,12 @@ class Scenario:
             dataset_module.preprocess_dataset_labels,
             dataset_module.generate_new_model_for_dataset,
         )
+
+        if self.dataset_proportion < 1:
+            self.shorten_dataset_proportion()
+        else:
+            logger.debug(f"Computation use the full dataset for scenario #{scenario_id}")
+
 
         self.nb_samples_used = len(self.dataset.x_train)
         self.final_relative_nb_samples = []
@@ -197,6 +215,13 @@ class Scenario:
         self.scenario_id = scenario_id
         self.n_repeat = n_repeat
 
+        if "is_quick_demo" in params:
+            self.is_quick_demo = params["is_quick_demo"]
+            if self.is_quick_demo and self.dataset_proportion < 1:
+                raise Exception("Don't start a quick_demo without the full dataset")
+        else:
+            self.is_quick_demo = False  # default
+
         # The quick demo parameters overwrites previously defined parameters to make the scenario faster to compute
         if "is_quick_demo" in params and params["is_quick_demo"]:
             # Use less data and/or less epochs to speed up the computations
@@ -272,6 +297,10 @@ class Scenario:
         self.contributivity_list.append(contributivity)
 
     def instantiate_scenario_partners(self):
+        """Create the partners_list - self.partners_list should be []"""
+
+        if self.partners_list != []:
+            raise Exception("self.partners_list should be []")
 
         self.partners_list = [Partner(i) for i in range(self.partners_count)]
 
@@ -636,3 +665,23 @@ class Scenario:
                 df = df.append(dict_results, ignore_index=True)
 
         return df
+
+    def shorten_dataset_proportion(self):
+        """Truncate the dataset depending on self.dataset_proportion"""
+
+        if self.dataset_proportion == 1:
+            raise Exception("shorten_dataset_proportion shouldn't be called on this scenario, the user targets the full dataset")
+
+        x_train = self.dataset.x_train
+        y_train = self.dataset.y_train
+
+        logger.info(f"We don't use the full dataset: only {self.dataset_proportion*100}%")
+
+        skip_idx = int(round(len(x_train) * self.dataset_proportion))
+        train_idx = np.arange(len(x_train))
+
+        np.random.seed(42)
+        np.random.shuffle(train_idx)
+
+        self.dataset.x_train = x_train[train_idx[0:skip_idx]]
+        self.dataset.y_train = y_train[train_idx[0:skip_idx]]
