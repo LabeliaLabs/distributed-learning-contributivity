@@ -279,13 +279,6 @@ class Test_Scenario:
             with pytest.raises(Exception):
                 scenar.instantiate_scenario_partners()
 
-    class Test_split_data:
-        def test_raiseException(self, create_Scenario):
-            scenar = create_Scenario
-            scenar.partners_list[0].x_train = scenar.dataset.x_train
-            with pytest.raises(AssertionError):
-                scenar.split_data()
-
 
 class Test_Contributivity:
 

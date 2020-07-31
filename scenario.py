@@ -82,7 +82,7 @@ class Scenario:
         if self.dataset_proportion < 1:
             self.shorten_dataset_proportion()
         else:
-            logger.info("Computation use the full dataset")
+            logger.debug(f"Computation use the full dataset for scenario #{scenario_id}")
 
 
         self.nb_samples_used = len(self.dataset.x_train)
@@ -436,9 +436,6 @@ class Scenario:
 
     def split_data(self, is_logging_enabled=True):
         """Populates the partners with their train and test data (not pre-processed)"""
-
-        # self.partners_list wasn't change since the initialization
-        assert all([not type(self.partners_list[i].x_train) for i in range(len(self.partners_list))]), "Error: partners_list.x_train (for all partners) shouldn't be modified between it's initialization and the call to split_data"
 
         # Fetch parameters of scenario
         x_train = self.dataset.x_train
