@@ -1,0 +1,28 @@
+experiment_name: my_example
+n_repeats: 5
+scenario_params_list:
+ - dataset_name:
+     - 'titanic'
+   partners_count:
+     - 3
+   amounts_per_partner:
+     - [0.4, 0.3, 0.3]
+   samples_split_option:
+     - ['basic', 'random']
+   multi_partner_learning_approach:
+     - 'fedavg'
+     - 'seq-pure'
+     - 'seq-with-final-agg'
+     - 'seqavg'
+   aggregation_weighting:
+     - 'uniform'
+   epoch_count:
+     - 10
+   methods:
+     - ["Independent scores"]
+   minibatch_count:
+     - 10
+   gradient_updates_per_pass_count:
+     - 3
+   dataset_proportion:
+     - 1
