@@ -475,6 +475,17 @@ class MultiPartnerLearning:
             partners_model_list.append(self.build_model_from_weights(self.aggregate_model_weights()))
         return partners_model_list
 
+    def get_model(self):
+        """Return a model corresponding to the current learning approach"""
+
+        model = None
+        self.prepare_aggregation_weights()
+        if self.learning_approach == 'seq-pure':
+            model =  self.build_model_from_weights(self.models_weights_list[self.partners_count-1])
+        elif self.learning_approach in ['fedavg', 'seq-with-final-agg', 'seqavg']:
+            model = self.build_model_from_weights(self.aggregate_model_weights())
+        return model
+
     @staticmethod
     def collaborative_round_fit(model_to_fit, train_data, val_data, batch_size):
         """Fit the model with arguments passed as parameters and returns the history object"""
