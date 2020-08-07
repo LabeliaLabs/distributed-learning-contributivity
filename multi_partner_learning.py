@@ -29,7 +29,7 @@ class MultiPartnerLearning:
                  is_early_stopping=True,
                  is_save_data=False,
                  save_folder="",
-                 init_model_from="",
+                 init_model_from="random_initialization",
                  use_saved_weights=False,
                  ):
 

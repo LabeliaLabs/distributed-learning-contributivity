@@ -33,6 +33,7 @@ class Scenario:
         params_known += ["methods", "multi_partner_learning_approach", "aggregation_weighting"]  # federated learning related
         params_known += ["partners_count", "amounts_per_partner", "corrupted_datasets", "samples_split_option"]  # Partners related
         params_known += ["gradient_updates_per_pass_count", "epoch_count", "minibatch_count", "is_early_stopping"]  # Computation related
+        params_known += ["init_model_from"] # Model related
         params_known += ["is_quick_demo"]
 
         if not all([x in params_known for x in params]):
@@ -179,13 +180,13 @@ class Scenario:
         else:
             self.is_early_stopping = True  # default
 
-        # Model from previous coalition used to initialise model
-        self.use_saved_weights = False
-        try:
+        # Model used to initialise model
+        if params["init_model_from"] == "random_initialization":
+            self.init_model_from = params["init_model_from"]
+            self.use_saved_weights = False
+        else:
             self.init_model_from = params["init_model_from"]
             self.use_saved_weights = True
-        except:
-            self.init_model_from= ""
 
         # -----------------------------------------------------------------
         #  Configuration of contributivity measurement methods to be tested
