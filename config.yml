@@ -34,7 +34,7 @@ scenario_params_list:
      - 1
  - dataset_name:
     'mnist':
-    - 'init'
+    - 'random_initialization'
    partners_count:
      - 2
    amounts_per_partner: 
