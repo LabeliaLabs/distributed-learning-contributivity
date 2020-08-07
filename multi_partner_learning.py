@@ -80,7 +80,7 @@ class MultiPartnerLearning:
         logger.info(f"## Training and evaluating model on partner with id #{partner.id}")
 
         # Initialize model
-        model = self.init_with_model(self.use_saved_weights)
+        model = self.init_with_model()
 
         # Set if early stopping if needed
         cb = []
@@ -143,11 +143,10 @@ class MultiPartnerLearning:
         model_to_evaluate, sequentially_trained_model = None, None
         if self.learning_approach in ['seq-pure', 'seq-with-final-agg']:
             if self.use_saved_weights:
-                sequentially_trained_model = self.init_with_model(self.use_saved_weights)
                 logger.info(f"(seq) Init models with previous coalition model for each partner")
             else:
-                sequentially_trained_model = self.init_with_model()
                 logger.info(f"(seq) Init new models for each partner")
+            sequentially_trained_model = self.init_with_model()
 
 
 
@@ -229,7 +228,6 @@ class MultiPartnerLearning:
         
     def save_final_model_weights(self, model_to_save):
         """Save final model weights"""
-        #TODO: Have the last metrics in the model filename? 
         
         model_folder = os.path.join(self.save_folder, 'model')
 
@@ -295,11 +293,10 @@ class MultiPartnerLearning:
         # Starting model for each partner is the aggregated model from the previous mini-batch iteration
         if is_very_first_minibatch:  # Except for the very first mini-batch where it is a new model
             if self.use_saved_weights:
-                partners_model_list_for_iteration = self.init_with_models(self.use_saved_weights)
                 logger.info(f"(fedavg) Very first minibatch of epoch n°{epoch_index}, init models with previous coalition model for each partner")
             else:
-                partners_model_list_for_iteration = self.init_with_models()
                 logger.info(f"(fedavg) Very first minibatch of epoch n°{epoch_index}, init new models for each partner")
+            partners_model_list_for_iteration = self.init_with_models()
         else:
             logger.info(f"(fedavg) Minibatch n°{minibatch_index} of epoch n°{epoch_index}, "
                          f"init aggregated model for each partner with models from previous round")
@@ -390,11 +387,10 @@ class MultiPartnerLearning:
         # Starting model for each partner is the aggregated model from the previous collaborative round
         if is_very_first_minibatch:  # Except for the very first mini-batch where it is a new model
             if self.use_saved_weights:
-                model_for_round = self.init_with_model(self.use_saved_weights)
                 logger.info(f"(seqavg) Very first minibatch of epoch n°{epoch_index}, init model with previous coalition model for each partner")
             else:
-                model_for_round = self.init_with_model()
                 logger.info(f"(seqavg) Very first minibatch of epoch n°{epoch_index}, init new model for each partner")
+            model_for_round = self.init_with_model()
         else:
             logger.info(f"(seqavg) Minibatch n°{minibatch_index} of epoch n°{epoch_index}, "
                          f"init model by aggregating models from previous round")
@@ -483,14 +479,14 @@ class MultiPartnerLearning:
         return new_model
     
     
-    def init_with_models(self, use_saved_weights=False):
+    def init_with_models(self):
         """Return a list of newly generated models, one per partner"""
 
         # Init a list to receive a new model for each partner
         partners_model_list = []
 
         # Generate a new model and add it to the list
-        if use_saved_weights:
+        if self.use_saved_weights:
             new_model = self.generate_new_model()
             new_model.load_weights(self.init_model_from)
             model_weights = new_model.get_weights()
@@ -508,10 +504,10 @@ class MultiPartnerLearning:
         return partners_model_list
     
     
-    def init_with_model(self, use_saved_weights=False):
+    def init_with_model(self):
         new_model = self.generate_new_model()
         
-        if use_saved_weights:
+        if self.use_saved_weights:
             new_model.load_weights(self.init_model_from)
             
         return new_model
