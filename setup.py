@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="pkg-test-distributed-learning-contributivity", # Replace with your own username
-    version="0.0.3",
+    version="0.0.4",
     author="Aygalic",
     author_email="aygalic.jara-mikolajczak@substra.org",
     description="A small example package",
