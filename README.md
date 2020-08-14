@@ -2,8 +2,32 @@
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/SubstraFoundation/distributed-learning-contributivity/blob/master/run_experiment_on_google_collab.ipynb)
 [![Discuss on Slack](https://img.shields.io/badge/chat-on%20slack-orange)](https://substra.us18.list-manage.com/track/click?e=2effed55c9&id=fa49875322&u=385fa3f9736ea94a1fcca969f)
 
-
 # Exploration of dataset contributivity to a model in collaborative ML projects
+
+- [Exploration of dataset contributivity to a model in collaborative ML projects](#exploration-of-dataset-contributivity-to-a-model-in-collaborative-ml-projects)
+  - [Introduction](#introduction)
+    - [Context of this work](#context-of-this-work)
+    - [How to interact with this?](#how-to-interact-with-this)
+  - [About this repository](#about-this-repository)
+    - [Experimental approach](#experimental-approach)
+    - [Structure of the library](#structure-of-the-library)
+      - [Scenarios](#scenarios)
+      - [Multi-partner learning approaches](#multi-partner-learning-approaches)
+      - [Contributivity measurement approaches](#contributivity-measurement-approaches)
+    - [Using the code files](#using-the-code-files)
+    - [Config file parameters](#config-file-parameters)
+      - [Experiment-level parameters](#experiment-level-parameters)
+      - [Scenario-level parameters](#scenario-level-parameters)
+        - [Choice of dataset](#choice-of-dataset)
+        - [Definition of collaborative scenarios](#definition-of-collaborative-scenarios)
+        - [Configuration of the collaborative and distributed learning](#configuration-of-the-collaborative-and-distributed-learning)
+        - [Configuration of contributivity measurement methods to be tested](#configuration-of-contributivity-measurement-methods-to-be-tested)
+        - [Miscellaneous](#miscellaneous)
+    - [Contributivity measurement approaches studied and implemented](#contributivity-measurement-approaches-studied-and-implemented)
+    - [Ongoing work and improvement plan](#ongoing-work-and-improvement-plan)
+  - [Contacts, contributions, collaborations](#contacts-contributions-collaborations)
+
+___
 
 ## Introduction
 
@@ -64,59 +88,59 @@ Finally, with given scenarios and multi-partner learning approaches, we can addr
 
 1. Define your mock scenario(s) in `config.yml` by changing the values of the suggested parameters of the 2 example scenarios (you can browse more available parameters in section [Config file parameters](#config-file-parameters) below). For example:
 
-    ```yaml
-    experiment_name: my_custom_experiment
-    n_repeats: 5
-    scenario_params_list:
-     - dataset_name:
-         - 'mnist'
-         - 'cifar10'
-       partners_count:
-         - 3
-       amounts_per_partner:
-         - [0.4, 0.3, 0.3]
-       samples_split_option:
-         - ['advanced', [[7, 'shared'], [6, 'shared'], [2, 'specific']]]
-       multi_partner_learning_approach:
-         - 'fedavg'
-       aggregation_weighting:
-         - 'data_volume'
-         - 'uniform'
-       epoch_count:
-         - 38
-       methods:
-         - ["Shapley values", "Independent scores", "TMCS"]
-       minibatch_count:
-         - 20
-       gradient_updates_per_pass_count:
-         - 8
-       dataset_proportion:
-	 - 1
-     - dataset_name:
-         - 'mnist'
-       partners_count:
-         - 2
-       amounts_per_partner:
-         - [0.5, 0.5]
-       samples_split_option:
-         - ['basic', 'random']
-         - ['basic', 'stratified']
-       multi_partner_learning_approach:
-         - 'fedavg'
-       aggregation_weighting:
-         - 'data_volume'
-         - 'uniform'
-       epoch_count:
-         - 38
-       methods:
-         - ["Shapley values", "SMCS", "IS_lin_S", "IS_reg_S"]
-       minibatch_count:
-         - 20
-       gradient_updates_per_pass_count:
-         - 8
-       dataset_proportion:
-	 - 1
-    ```
+```yaml
+experiment_name: my_custom_experiment
+n_repeats: 5
+scenario_params_list:
+  - dataset_name:
+      - 'mnist'
+      - 'cifar10'
+    partners_count:
+      - 3
+    amounts_per_partner:
+      - [0.4, 0.3, 0.3]
+    samples_split_option:
+      - ['advanced', [[7, 'shared'], [6, 'shared'], [2, 'specific']]]
+    multi_partner_learning_approach:
+      - 'fedavg'
+    aggregation_weighting:
+      - 'data_volume'
+      - 'uniform'
+    epoch_count:
+      - 38
+    methods:
+      - ["Shapley values", "Independent scores", "TMCS"]
+    minibatch_count:
+      - 20
+    gradient_updates_per_pass_count:
+      - 8
+    dataset_proportion:
+      - 1
+  - dataset_name:
+      - 'mnist'
+    partners_count:
+      - 2
+    amounts_per_partner:
+      - [0.5, 0.5]
+    samples_split_option:
+      - ['basic', 'random']
+      - ['basic', 'stratified']
+    multi_partner_learning_approach:
+      - 'fedavg'
+    aggregation_weighting:
+      - 'data_volume'
+      - 'uniform'
+    epoch_count:
+      - 38
+    methods:
+      - ["Shapley values", "SMCS", "IS_lin_S", "IS_reg_S"]
+    minibatch_count:
+      - 20
+    gradient_updates_per_pass_count:
+      - 8
+    dataset_proportion:
+      - 1
+```
 
    Under `scenario_params_list`, enter a list of sets of scenario(s). Each set starts with ` - dataset_name:` and must have only one `partners_count` value. The length of `amount_per_partners`, `corrupted_datasets` (and `samples_split_option` when the advanced definition is used) must match the `partner_counts` value. If for a given parameter multiple values are specified, e.g. like for `agregation_weighting` in the first scenario set of the above example, all possible combinations of parameters will be assembled as separate scenarios and run.
 
@@ -148,20 +172,19 @@ Example: `n_repeats: 2`
 `dataset_name`: `'mnist'` (default), `'cifar10'` or `'titanic'`
 MNIST, CIFAR10 and Titanic are currently supported. They come with their associated modules in `/datasets` for loading data, pre-processing inputs, and define a model architecture.
 
-**Note on validation and test datasets**:  
+**Note on validation and test datasets**:
+
 - The dataset modules must provide separated train and test sets (referred to as global train set and global test set).
 - The global train set is then further split into a global train set and a global validation set.
 In the multi-partner learning computations, the global validation set is used for early stopping and the global test set is used for performance evaluation.
 - The global train set is split amongst partner (according to the scenario configuration) to populate the partner's local datasets.
 - For each partner, the local dataset is split into separated train, validation and test sets. Currently, the local validation and test set are not used, but they are available for further developments of multi-partner learning and contributivity measurement approaches.
-- 
 
 `dataset_proportion`: `float` (default: `1`)
 This argument allows you to make computation on a sub-dataset of the provided datasets.
 This is the proportion of the dataset (initialy the train and test sets) which is randomly selected to create a sub-dataset,
-it's done before the creation of the global validation set. 
+it's done before the creation of the global validation set.
 You have to ensure that `0 < dataset_proportion <= 1`
-
 
 ##### Definition of collaborative scenarios
 
@@ -254,6 +277,7 @@ Example: `is_early_stopping: False`
 `methods`:  
 A declarative list `[]` of the contributivity measurement methods to be executed.
 All methods available are:
+
 ```
 - "Shapley values"
 - "Independent scores"
@@ -265,6 +289,7 @@ All methods available are:
 - "SMCS"
 - "WR_SMC"
 ```
+
 See below section [Contributivity measurement approaches studied and implemented](#contributivity-measurement-approaches-studied-and-implemented) for explanation of the different methods.  
 **Note:** When `methods` is omitted in the config file only the distributed learning is run.  
 Example: `["Shapley values", "Independent scores", "TMCS"]`
@@ -345,9 +370,10 @@ This work is collaborative, enthusiasts are welcome to comment open issues and P
 ## Contacts, contributions, collaborations
 
 Should you be interested in this open effort and would like to share any question, suggestion or input, you can use the following channels:
-  - This Github repository (issues or PRs)
-  - Substra Foundation's [Slack workspace](https://substra-workspace.slack.com/join/shared_invite/zt-cpyedcab-FHYgpy08efKJ2FCadE2yCA), channel `#workgroup-mpl-contributivity`
-  - Email: hello@substra.org
-  - Come meet with us at La Paillasse (Paris, France), Le Palace (Nantes, France) or Studio Iconosquare (Limoges, France)
+
+- This Github repository (issues or PRs)
+- Substra Foundation's [Slack workspace](https://substra-workspace.slack.com/join/shared_invite/zt-cpyedcab-FHYgpy08efKJ2FCadE2yCA), channel `#workgroup-mpl-contributivity`
+- Email: hello@substra.org
+- Come meet with us at La Paillasse (Paris, France), Le Palace (Nantes, France) or Studio Iconosquare (Limoges, France)
 
  ![logo Substra Foundation](./img/substra_logo_couleur_rvb_w150px.png)
