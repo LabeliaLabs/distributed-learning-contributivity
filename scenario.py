@@ -18,6 +18,8 @@ import random
 from dataset import Dataset
 import constants
 from partner import Partner
+import multi_partner_learning
+import contributivity
 
 
 class Scenario:
@@ -685,3 +687,44 @@ class Scenario:
 
         self.dataset.x_train = x_train[train_idx[0:skip_idx]]
         self.dataset.y_train = y_train[train_idx[0:skip_idx]]
+
+
+def run_scenario(current_scenario):
+
+    # -----------------------
+    #  Provision the scenario
+    # -----------------------
+
+    current_scenario.instantiate_scenario_partners()
+    # Split data according to scenario and then pre-process successively...
+    # ... train data, early stopping validation data, test data
+    if current_scenario.samples_split_type == 'basic':
+        current_scenario.split_data()
+    elif current_scenario.samples_split_type == 'advanced':
+        current_scenario.split_data_advanced()
+    current_scenario.plot_data_distribution()
+    current_scenario.compute_batch_sizes()
+    current_scenario.preprocess_scenarios_data()
+
+    # --------------------------------------------
+    # Instantiate and run a multi-partner learning
+    # --------------------------------------------
+
+    current_scenario.mpl = multi_partner_learning.init_multi_partner_learning_from_scenario(
+        current_scenario,
+        is_save_data=True,
+    )
+    current_scenario.mpl.compute_test_score()
+
+    # ----------------------------------------------------------
+    # Instantiate and run the contributivity measurement methods
+    # ----------------------------------------------------------
+
+    for method in current_scenario.methods:
+        logger.info(f"{method}")
+        contrib = contributivity.Contributivity(scenario=current_scenario)
+        contrib.compute_contributivity(method, current_scenario)
+        current_scenario.append_contributivity(contrib)
+        logger.info(f"## Evaluating contributivity with {method}: {contrib}")
+
+    return 0
