@@ -3,12 +3,15 @@ import setuptools
 with open("README.md", "r") as fh:
     long_description = fh.read()
 
+with open("requirements.txt", "r") as fh:
+    requirements = fh.read()
+
 setuptools.setup(
-    name="pkg-test-distributed-learning-contributivity", # Replace with your own username
+    name="pkg-test-distributed-learning-contributivity",
     version="0.0.4",
     author="Aygalic",
     author_email="aygalic.jara-mikolajczak@substra.org",
-    description="A small example package",
+    description="A distributed learning contributivity package",
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/SubstraFoundation/distributed-learning-contributivity",
@@ -18,5 +21,6 @@ setuptools.setup(
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
     ],
+    install_requires = requirements,
     python_requires='>=3.6',
 )
