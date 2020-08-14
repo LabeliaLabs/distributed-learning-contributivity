@@ -8,7 +8,7 @@ with open("requirements.txt", "r") as fh:
 
 setuptools.setup(
     name="pkg-test-distributed-learning-contributivity",
-    version="0.0.4",
+    version="0.0.5",
     author="Aygalic",
     author_email="aygalic.jara-mikolajczak@substra.org",
     description="A distributed learning contributivity package",
