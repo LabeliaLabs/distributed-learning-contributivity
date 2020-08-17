@@ -22,7 +22,7 @@ import multi_partner_learning
 import scenario
 import utils
 
-DEFAULT_CONFIG_FILE = "config.yml"
+DEFAULT_CONFIG_FILE = "./config.yml"
 
 @logger.catch
 def main():
