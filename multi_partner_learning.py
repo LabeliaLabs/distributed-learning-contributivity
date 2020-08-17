@@ -515,6 +515,15 @@ class MultiPartnerLearning:
         x_train, y_train = train_data
         if isinstance(model_to_fit, type(LogisticRegression())):
             history = model_to_fit.fit(x_train, y_train)
+            [loss, acc] = MultiPartnerLearning.evaluate_model(model_to_fit, train_data)
+            [val_loss, val_acc] = MultiPartnerLearning.evaluate_model(model_to_fit, val_data)
+            # Mimic keras history
+            history.history = {
+                'loss' : [loss],
+                'accuracy' : [acc],
+                'val_loss' : [val_loss],
+                'val_accuracy' : [val_acc]
+            }
         else :
             history = model_to_fit.fit(
                 x_train,
@@ -556,10 +565,7 @@ class MultiPartnerLearning:
     def update_iterative_results(self, partner_index, fit_history):
         """Update the results arrays with results from the collaboration round"""
 
-        if isinstance(fit_history, type(LogisticRegression())):
-            validation_score = self.evaluate_model(fit_history, self.val_data)[0]
-        else :
-            validation_score = fit_history.history["val_accuracy"][0]
+        validation_score = fit_history.history["val_accuracy"][0]
 
 
         self.scores_last_learning_round[partner_index] = validation_score  # TO DO check if coherent
