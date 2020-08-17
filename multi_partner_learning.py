@@ -539,7 +539,7 @@ class MultiPartnerLearning:
 
     @staticmethod
     def evaluate_model(model_to_evaluate, evaluation_data):
-        """Evaluate the model with arguments passed as parameters and returns the history object"""
+        """Evaluate the model with arguments passed as parameters and returns [loss, accuracy]"""
 
         x_eval, y_eval = evaluation_data
 
