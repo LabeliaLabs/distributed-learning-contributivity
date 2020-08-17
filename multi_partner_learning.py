@@ -564,12 +564,10 @@ class MultiPartnerLearning:
             validation_score = fit_history.history["val_accuracy"][0]
 
 
-
         self.scores_last_learning_round[partner_index] = validation_score  # TO DO check if coherent
 
         # At the end of each mini-batch, for each partner, populate the score matrix per partner
         self.score_matrix_per_partner[self.epoch_index, self.minibatch_index, partner_index] = validation_score
-
 
 def init_multi_partner_learning_from_scenario(scenario, is_save_data=True):
 
