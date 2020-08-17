@@ -101,12 +101,12 @@ class MultiPartnerLearning:
             )
 
         # Evaluate trained model
-        model_evaluation = self.collaborative_round_evaluation(model, self.test_data)
+        test_score = self.evaluate_model(model, self.test_data)
         logger.info(f"   Model evaluation on test data: "
-                    f"{list(zip(model.metrics_names, ['%.3f' % elem for elem in model_evaluation]))}")
+                    f"{list(zip(model.metrics_names, ['%.3f' % elem for elem in test_score]))}")
 
         # Save model score on test data
-        self.test_score = model_evaluation[1]  # 0 is for the loss
+        self.test_score = test_score[1]  # 0 is for the loss
         self.nb_epochs_done = (es.stopped_epoch + 1) if es.stopped_epoch != 0 else self.epoch_count
 
         end = timer()
@@ -172,16 +172,16 @@ class MultiPartnerLearning:
                 model_to_evaluate = self.build_model_from_weights(self.aggregate_model_weights())
 
 
-            model_evaluation = self.collaborative_round_evaluation(model_to_evaluate, self.val_data)
+            val_score = self.evaluate_model(model_to_evaluate, self.val_data)
 
-            current_val_loss = model_evaluation[0]
-            current_val_metric = model_evaluation[1]
+            current_val_loss = val_score[0]
+            current_val_metric = val_score[1]
 
             self.score_matrix_collective_models[epoch_index, minibatch_count] = current_val_metric
             self.loss_collective_models.append(current_val_loss)
 
             logger.info(f"   Model evaluation at the end of the epoch: "
-                        f"{['%.3f' % elem for elem in model_evaluation]}")
+                        f"{['%.3f' % elem for elem in val_score]}")
 
             logger.debug("      Checking if early stopping criteria are met:")
             if is_early_stopping:
@@ -198,11 +198,11 @@ class MultiPartnerLearning:
         # After last epoch or if early stopping was triggered, evaluate model on the global testset
         logger.info("### Evaluating model on test data:")
 
-        model_evaluation = self.collaborative_round_evaluation(model_to_evaluate, self.test_data)
+        test_score = self.evaluate_model(model_to_evaluate, self.test_data)
         logger.info(f"   Model metrics names: {model_to_evaluate.metrics_names}")
-        logger.info(f"   Model metrics values: {['%.3f' % elem for elem in model_evaluation]}")
+        logger.info(f"   Model metrics values: {['%.3f' % elem for elem in test_score]}")
 
-        self.test_score = model_evaluation[1]  # 0 is for the loss
+        self.test_score = test_score[1]  # 0 is for the loss
         self.nb_epochs_done = self.epoch_index + 1
 
         # Plot training history # TODO: move the data saving and plotting in dedicated functions
@@ -275,11 +275,11 @@ class MultiPartnerLearning:
         model_to_evaluate = partners_model_list_for_iteration[0]
 
         if not hasattr(model_to_evaluate, 'coef_'):
-            model_evaluation = [0]*2
+            val_score = [0]*2
         else :
-            model_evaluation = self.collaborative_round_evaluation(model_to_evaluate, self.val_data)
+            val_score = self.evaluate_model(model_to_evaluate, self.val_data)
 
-        self.score_matrix_collective_models[epoch_index, minibatch_index] = model_evaluation[1]
+        self.score_matrix_collective_models[epoch_index, minibatch_index] = val_score[1]
 
         # Iterate over partners for training each individual model
         for partner_index, partner in enumerate(self.partners_list):
@@ -292,12 +292,12 @@ class MultiPartnerLearning:
                 self.minibatched_x_train[partner_index][minibatch_index],
                 self.minibatched_y_train[partner_index][minibatch_index],
             )
-            history = self.collaborative_round_fit(
+            history = self.fit_model(
                 partner_model, train_data_for_fit_iteration, self.val_data, partner.batch_size)
 
             # Log results of the round
-            model_evaluation = self.collaborative_round_evaluation(partner_model, self.val_data)[1]
-            self.log_collaborative_round_partner_result(partner, partner_index, model_evaluation)
+            val_score = self.evaluate_model(partner_model, self.val_data)[1]
+            self.log_collaborative_round_partner_result(partner, partner_index, val_score)
 
             # Update the partner's model in the models' list
             self.save_model_for_partner(partner_model, partner_index)
@@ -318,10 +318,10 @@ class MultiPartnerLearning:
 
         # Evaluate and store accuracy of mini-batch start model
         if not hasattr(sequentially_trained_model, 'coef_'):
-            model_evaluation = [0]*2
+            val_score = [0]*2
         else :
-            model_evaluation = self.collaborative_round_evaluation(sequentially_trained_model, self.val_data)
-        self.score_matrix_collective_models[epoch_index, minibatch_index] = model_evaluation[1]
+            val_score = self.evaluate_model(sequentially_trained_model, self.val_data)
+        self.score_matrix_collective_models[epoch_index, minibatch_index] = val_score[1]
 
         # Iterate over partners for training the model sequentially
         shuffled_indexes = np.random.permutation(self.partners_count)
@@ -335,12 +335,12 @@ class MultiPartnerLearning:
                 self.minibatched_x_train[partner_index][minibatch_index],
                 self.minibatched_y_train[partner_index][minibatch_index],
             )
-            history = self.collaborative_round_fit(
+            history = self.fit_model(
                 sequentially_trained_model, train_data_for_fit_iteration, self.val_data, partner.batch_size)
 
             # Log results of the round
-            model_evaluation = self.collaborative_round_evaluation(sequentially_trained_model, self.val_data)[1]
-            self.log_collaborative_round_partner_result(partner, for_loop_idx, model_evaluation)
+            val_score = self.evaluate_model(sequentially_trained_model, self.val_data)[1]
+            self.log_collaborative_round_partner_result(partner, for_loop_idx, val_score)
 
             # On final collaborative round, save the partner's model in the models' list
             if is_last_round:
@@ -371,10 +371,10 @@ class MultiPartnerLearning:
 
         # Evaluate and store accuracy of mini-batch start model
         if not hasattr(model_for_round, 'coef_'):
-            model_evaluation = [0]*2
+            val_score = [0]*2
         else :
-            model_evaluation = self.collaborative_round_evaluation(model_for_round, self.val_data)
-        self.score_matrix_collective_models[epoch_index, minibatch_index] = model_evaluation[1]
+            val_score = self.evaluate_model(model_for_round, self.val_data)
+        self.score_matrix_collective_models[epoch_index, minibatch_index] = val_score[1]
 
         # Iterate over partners for training each individual model
         shuffled_indexes = np.random.permutation(self.partners_count)
@@ -388,11 +388,11 @@ class MultiPartnerLearning:
                 self.minibatched_x_train[partner_index][minibatch_index],
                 self.minibatched_y_train[partner_index][minibatch_index],
             )
-            history = self.collaborative_round_fit(
+            history = self.fit_model(
                 model_for_round, train_data_for_fit_iteration, self.val_data, partner.batch_size)
 
             # Log results
-            evaluation = self.collaborative_round_evaluation(model_for_round, self.val_data)
+            evaluation = self.evaluate_model(model_for_round, self.val_data)
             self.log_collaborative_round_partner_result(partner, for_loop_idx, evaluation[0])
 
             # Save the partner's model in the models' list
@@ -520,7 +520,7 @@ class MultiPartnerLearning:
         return partners_model_list
 
     @staticmethod
-    def collaborative_round_fit(model_to_fit, train_data, val_data, batch_size):
+    def fit_model(model_to_fit, train_data, val_data, batch_size):
         """Fit the model with arguments passed as parameters and returns the history object"""
 
         x_train, y_train = train_data
@@ -538,7 +538,7 @@ class MultiPartnerLearning:
         return history
 
     @staticmethod
-    def collaborative_round_evaluation(model_to_evaluate, evaluation_data):
+    def evaluate_model(model_to_evaluate, evaluation_data):
         """Evaluate the model with arguments passed as parameters and returns the history object"""
 
         x_eval, y_eval = evaluation_data
@@ -565,7 +565,7 @@ class MultiPartnerLearning:
         """Update the results arrays with results from the collaboration round"""
 
         if isinstance(fit_history, type(LogisticRegression())):
-            validation_score = self.collaborative_round_evaluation(fit_history, self.val_data)[0]
+            validation_score = self.evaluate_model(fit_history, self.val_data)[0]
         else :
             validation_score = fit_history.history["val_accuracy"][0]
 
