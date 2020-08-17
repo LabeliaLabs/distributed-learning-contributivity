@@ -426,8 +426,7 @@ class MultiPartnerLearning:
     def aggregate_model_weights(self):
         """Aggregate model weights from the list of models, with a weighted average"""
 
-        if isinstance(self.generate_new_model(), type(LogisticRegression())):
-
+        if type(self.models_weights_list[0]) is tuple:  # Check weights type for aggregation
             # Unpack values
             coefs = [weights[0] for weights in self.models_weights_list]
             intercepts = [weights[1] for weights in self.models_weights_list]
@@ -454,7 +453,6 @@ class MultiPartnerLearning:
             self.models_weights_list[partner_index] = (model.coef_ , model.intercept_)
         else:
             self.models_weights_list[partner_index] = model.get_weights()
-
 
     def build_model_from_weights(self, new_weights):
         """Generate a new model initialized with weights passed as arguments"""
