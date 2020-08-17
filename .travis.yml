@@ -1,7 +1,7 @@
 language: python
 
 python:
-  - "3.7"     
+  - "3.7"
 
 cache: pip
 
@@ -11,5 +11,5 @@ install:
 
 # command to run tests
 script:
-  - pytest tests.py
-  - python main.py -f config_quick_debug.yml
+  - pytest tests/tests.py
+  - python distributed-learning-contributivity/main.py -f config_quick_debug.yml
