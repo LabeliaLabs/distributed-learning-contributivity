@@ -274,10 +274,7 @@ class MultiPartnerLearning:
         # Evaluate and store accuracy of mini-batch start model
         model_to_evaluate = partners_model_list_for_iteration[0]
 
-        if not hasattr(model_to_evaluate, 'coef_'):
-            val_evaluation = [0]*2
-        else :
-            val_evaluation = self.evaluate_model(model_to_evaluate, self.val_data)
+        val_evaluation = self.evaluate_model(model_to_evaluate, self.val_data)
 
         self.score_matrix_collective_models[epoch_index, minibatch_index] = val_evaluation[1]
 
@@ -317,10 +314,7 @@ class MultiPartnerLearning:
         is_last_round = minibatch_index == self.minibatch_count - 1
 
         # Evaluate and store accuracy of mini-batch start model
-        if not hasattr(sequentially_trained_model, 'coef_'):
-            val_evaluation = [0]*2
-        else :
-            val_evaluation = self.evaluate_model(sequentially_trained_model, self.val_data)
+        val_evaluation = self.evaluate_model(sequentially_trained_model, self.val_data)
         self.score_matrix_collective_models[epoch_index, minibatch_index] = val_evaluation[1]
 
         # Iterate over partners for training the model sequentially
@@ -370,10 +364,7 @@ class MultiPartnerLearning:
             model_for_round = self.init_with_agg_model()
 
         # Evaluate and store accuracy of mini-batch start model
-        if not hasattr(model_for_round, 'coef_'):
-            val_evaluation = [0]*2
-        else :
-            val_evaluation = self.evaluate_model(model_for_round, self.val_data)
+        val_evaluation = self.evaluate_model(model_for_round, self.val_data)
         self.score_matrix_collective_models[epoch_index, minibatch_index] = val_evaluation[1]
 
         # Iterate over partners for training each individual model
@@ -544,9 +535,12 @@ class MultiPartnerLearning:
         x_eval, y_eval = evaluation_data
 
         if isinstance(model_to_evaluate, type(LogisticRegression())):
-            loss = log_loss(y_eval, model_to_evaluate.predict(x_eval))
-            accuracy = model_to_evaluate.score(x_eval, y_eval)
-            model_evaluation = [loss, accuracy]
+            if not hasattr(model_to_evaluate, 'coef_'):
+                model_evaluation = [0]*2
+            else :
+                loss = log_loss(y_eval, model_to_evaluate.predict(x_eval))  # mimic keras model evaluation
+                accuracy = model_to_evaluate.score(x_eval, y_eval)
+                model_evaluation = [loss, accuracy]
         else :
             model_evaluation = model_to_evaluate.evaluate(x_eval, y_eval, batch_size=constants.DEFAULT_BATCH_SIZE, verbose=0)
         return model_evaluation
