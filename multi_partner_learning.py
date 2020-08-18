@@ -293,7 +293,7 @@ class MultiPartnerLearning:
                 partner_model, train_data_for_fit_iteration, self.val_data, partner.batch_size)
 
             # Log results of the round
-            val_evaluation = self.evaluate_model(partner_model, self.val_data)[1]
+            val_evaluation = history.history['val_accuracy'][0]
             self.log_collaborative_round_partner_result(partner, partner_index, val_evaluation)
 
             # Update the partner's model in the models' list
@@ -333,7 +333,7 @@ class MultiPartnerLearning:
                 sequentially_trained_model, train_data_for_fit_iteration, self.val_data, partner.batch_size)
 
             # Log results of the round
-            val_evaluation = self.evaluate_model(sequentially_trained_model, self.val_data)[1]
+            val_evaluation = history.history['val_accuracy'][0]
             self.log_collaborative_round_partner_result(partner, for_loop_idx, val_evaluation)
 
             # On final collaborative round, save the partner's model in the models' list
@@ -383,8 +383,8 @@ class MultiPartnerLearning:
                 model_for_round, train_data_for_fit_iteration, self.val_data, partner.batch_size)
 
             # Log results
-            evaluation = self.evaluate_model(model_for_round, self.val_data)
-            self.log_collaborative_round_partner_result(partner, for_loop_idx, evaluation[0])
+            val_evaluation = history.history['val_accuracy'][0]
+            self.log_collaborative_round_partner_result(partner, for_loop_idx, val_evaluation)
 
             # Save the partner's model in the models' list
             self.save_model_for_partner(model_for_round, partner_index)
