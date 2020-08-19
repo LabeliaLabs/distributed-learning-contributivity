@@ -42,7 +42,7 @@ This enables to parameterize unit tests - the tests are run by Travis each time 
 # https://docs.pytest.org/en/latest/goodpractices.html#test-discovery
 
 import sys
-sys.path.append("../distributed-learning-contributivity/")
+sys.path.append("../subtest/")
 
 
 import utils
