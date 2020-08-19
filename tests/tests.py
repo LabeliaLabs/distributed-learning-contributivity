@@ -36,11 +36,7 @@ This enables to parameterize unit tests - the tests are run by Travis each time 
 # Test architecture
 # https://docs.pytest.org/en/latest/goodpractices.html#test-discovery
 
-import sys
-sys.path.append("../subtest/")
-
-
-import utils
+from subtest import utils
 import yaml
 import pytest
 import numpy as np
@@ -51,14 +47,14 @@ from tensorflow.keras.datasets import cifar10,mnist
 
 from datasets import dataset_cifar10 as data_cf
 from datasets import dataset_mnist as data_mn
-import multi_partner_learning
+from subtest import multi_partner_learning
 
 
-from partner import Partner
-from dataset import Dataset
-from scenario import Scenario
-from contributivity import Contributivity
-from multi_partner_learning import MultiPartnerLearning
+from subtest.partner import Partner
+from subtest.dataset import Dataset
+from subtest.scenario import Scenario
+from subtest.contributivity import Contributivity
+from subtest.multi_partner_learning import MultiPartnerLearning
 
 ######
 # Fixture Iterate: to generate the combination of parameters
@@ -394,8 +390,8 @@ class TestDemoClass:
         Check if the two config files are present
         and loaded with the load_cfg method
         """
-        config_file = utils.load_cfg("../config.yml")
-        config_quick_debug_file = utils.load_cfg("../config_quick_debug.yml")
+        config_file = utils.load_cfg("config.yml")
+        config_quick_debug_file = utils.load_cfg("config_quick_debug.yml")
         assert config_file and config_quick_debug_file
 
     def test_load_config_files(self):
@@ -403,7 +399,7 @@ class TestDemoClass:
         Check if the two config files are present
         and loaded with the load method
         """
-        with open("../config.yml", "r") as config_file:
+        with open("config.yml", "r") as config_file:
             assert yaml.load(config_file, Loader=yaml.FullLoader)
-        with open("../config_quick_debug.yml", "r") as config_quick_debug_file:
+        with open("config_quick_debug.yml", "r") as config_quick_debug_file:
             assert yaml.load(config_quick_debug_file, Loader=yaml.FullLoader)
