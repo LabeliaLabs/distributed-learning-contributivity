@@ -16,11 +16,11 @@ import os
 import shutil
 import sys
 
-from . import constants
-from . import contributivity
-from . import multi_partner_learning
-from . import scenario
-from . import utils
+from subtest import constants
+from subtest import contributivity
+from subtest import multi_partner_learning
+from subtest import scenario
+from subtest import utils
 
 DEFAULT_CONFIG_FILE = "./config.yml"
 
