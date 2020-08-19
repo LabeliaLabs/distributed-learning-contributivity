@@ -524,7 +524,7 @@ class MultiPartnerLearning:
                 'val_loss' : [val_loss],
                 'val_accuracy' : [val_acc]
             }
-        else :
+        else:
             history = model_to_fit.fit(
                 x_train,
                 y_train,
@@ -544,11 +544,11 @@ class MultiPartnerLearning:
         if isinstance(model_to_evaluate, type(LogisticRegression())):
             if not hasattr(model_to_evaluate, 'coef_'):
                 model_evaluation = [0]*2
-            else :
+            else:
                 loss = log_loss(y_eval, model_to_evaluate.predict(x_eval))  # mimic keras model evaluation
                 accuracy = model_to_evaluate.score(x_eval, y_eval)
                 model_evaluation = [loss, accuracy]
-        else :
+        else:
             model_evaluation = model_to_evaluate.evaluate(x_eval, y_eval, batch_size=constants.DEFAULT_BATCH_SIZE, verbose=0)
         return model_evaluation
 
