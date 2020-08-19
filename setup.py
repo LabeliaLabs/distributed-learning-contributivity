@@ -20,7 +20,7 @@ setup(
         "Programming Language :: Python :: 3",
         "Operating System :: OS Independent",
     ],
-    keywords=['library', 'substra'],
+    keywords=['library', 'substra', 'machine learning', 'contributivity', 'multipartner'],
     license='Apache 2.0',
     install_requires=requirements,
     python_requires='>=3.6',
