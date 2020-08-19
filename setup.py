@@ -8,7 +8,7 @@ with open("requirements.txt", "r") as fh:
 
 setuptools.setup(
     name="subtest",
-    version="0.0.3",
+    version="0.0.0.6",
     author="SubstraFoundation",
     author_email="hello@substra.org",
     description="A distributed learning contributivity package",
@@ -18,7 +18,6 @@ setuptools.setup(
     packages=setuptools.find_packages(),
     classifiers=[
         "Programming Language :: Python :: 3",
-        "License :: OSI Approved :: Apache License",
         "Operating System :: OS Independent",
     ],
     install_requires=requirements,
