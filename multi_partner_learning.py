@@ -4,6 +4,8 @@ Functions for model training and evaluation (single-partner and multi-partner ca
 """
 
 import os
+
+import utils
 from timeit import default_timer as timer
 import pickle
 import keras
@@ -29,6 +31,8 @@ class MultiPartnerLearning:
                  is_early_stopping=True,
                  is_save_data=False,
                  save_folder="",
+                 evaluation_partner_numbers=0,
+                 sequential_weighting_ponderation=0.5
                  ):
 
         # Attributes related to partners
@@ -43,6 +47,10 @@ class MultiPartnerLearning:
         # Attributes related to the multi-partner learning approach
         self.learning_approach = multi_partner_learning_approach
         self.aggregation_weighting = aggregation_weighting
+        self.evaluation_partner_numbers = evaluation_partner_numbers
+
+        #Attributes related to weighting aproach
+        self.sequential_weighting_ponderation = sequential_weighting_ponderation
 
         # Attributes related to iterating at different levels
         self.epoch_count = epoch_count
@@ -65,6 +73,7 @@ class MultiPartnerLearning:
         self.is_save_data = is_save_data
         self.save_folder = save_folder
         self.learning_computation_time = None
+
 
         logger.debug("MultiPartnerLearning object instantiated.")
 
@@ -164,6 +173,10 @@ class MultiPartnerLearning:
 
                 elif self.learning_approach == 'seqavg':
                     self.compute_collaborative_round_seqavg()
+
+                elif self.learning_approach == 'qavg':
+                    self.compute_collaborative_round_qavg()
+                
 
             # At the end of each epoch, evaluate the model for early stopping on a global validation set
             self.prepare_aggregation_weights()
@@ -302,6 +315,112 @@ class MultiPartnerLearning:
 
         logger.debug("End of fedavg collaborative round.")
 
+
+    def compute_collaborative_round_qavg(self):
+            """Proceed to a collaborative round with a quality aware federated averaging approach"""
+
+            logger.debug("Start new qavg collaborative round ...")
+
+            # Initialize variables
+            epoch_index, minibatch_index = self.epoch_index, self.minibatch_index
+            is_very_first_minibatch = (epoch_index == 0 and minibatch_index == 0)
+            x_val, y_val = self.val_data
+            partners_list = self.partners_list
+
+            # Starting model for each partner is the aggregated model from the previous mini-batch iteration
+            if is_very_first_minibatch:  # Except for the very first mini-batch where it is a new model
+                logger.debug(f"(fedavg) Very first minibatch of epoch n°{epoch_index}, init new models for each partner")
+                partners_model_list_for_iteration = self.init_with_new_models()
+            else:
+                logger.debug(f"(fedavg) Minibatch n°{minibatch_index} of epoch n°{epoch_index}, "
+                            f"init aggregated model for each partner with models from previous round")
+                partners_model_list_for_iteration = self.init_with_agg_models()
+
+            # model_to_evaluate = partners_model_list_for_iteration[0]
+            # model_evaluation = model_to_evaluate.evaluate(x_val, y_val, batch_size=constants.DEFAULT_BATCH_SIZE, verbose=0)
+            # self.score_matrix_collective_models[epoch_index, minibatch_index] = model_evaluation[1]
+            
+
+            # Select partners for model testing
+            # We use a method of divergence between two partners based on label distribution difference between them.
+            # We select k points which are closest from all label repartition vectors barycenter
+            labels = list(set(y_val))
+            
+            mean_label_repartion = {label:0 for label in labels}
+
+            for p in partners_list:
+                
+                for label,size in zip(p.label_repartition):
+                    
+                    mean_label_repartion[label] += size
+
+            for label,size in zip(mean_label_repartion):
+
+                mean_label_repartion[label]/= len(partners_list)
+
+
+            testing_partner_list = []
+
+            for i,p in enumerate(partners_list):
+                
+                distance = utils.distance_vector_dictionnary(mean_label_repartion,p.label_repartition,batch_size=constants.DEFAULT_BATCH_SIZE, verbose=0)
+                testing_partner_list.append((distance,i))
+
+            sorted_partners_list = sorted(testing_partner_list, key=lambda tup: tup[0])   
+
+            # TODO : include parameter for node number in parsing 
+            final_partners_list = sorted_partners_list[:self.evaluation_partner_numbers] 
+
+            partners_test_list = [partners_list[i] for (d,i) in final_partners_list]
+
+            # Iterate over partners for training each individual model
+            for partner_index, partner in enumerate(self.partners_list):
+
+                # Reference the partner's model
+                partner_model = partners_model_list_for_iteration[partner_index]
+
+                # Train on partner local data set
+                train_data_for_fit_iteration = (
+                    self.minibatched_x_train[partner_index][minibatch_index],
+                    self.minibatched_y_train[partner_index][minibatch_index],
+                )
+
+
+                history = self.collaborative_round_fit(
+                    partner_model, train_data_for_fit_iteration, self.val_data, partner.batch_size)
+
+                reference_accuracy = partner_model.evaluate(x = x_val, y = y_val)
+                computed_accuracy = 0
+
+                full_test_size = sum([len(partner.y_test) for partner in partners_test_list])
+
+                for partner_test in partners_test_list:
+                    
+                    size_coefficient = len( partner_test.y_test ) / full_test_size
+                    computed_accuracy += size_coefficient * partner_model.evaluate(x=partner_test.x_test, y=partner_test.y_test)[1]
+
+                computed_accuracy /= len(partners_test_list)
+
+                p.computed_accuracy_list.append(computed_accuracy)
+                p.refference_accuracy_list.append(reference_accuracy)
+
+                # Log results of the round
+                self.log_collaborative_round_partner_result(partner, partner_index, history.history["val_accuracy"][0])
+
+                # Update the partner's model in the models' list
+                self.models_weights_list[partner_index] = partner_model.get_weights()
+                
+                # Update iterative results
+                self.update_iterative_results(partner_index, history)
+
+                #Update it
+                self.scores_last_learning_round[partner_index] = computed_accuracy
+
+            logger.debug("End of qdavg collaborative round.")
+
+
+
+
     def compute_collaborative_round_sequential(self, sequentially_trained_model):
         """Proceed to a collaborative round with a sequential approach"""
 
@@ -419,6 +538,11 @@ class MultiPartnerLearning:
             self.aggregation_weights = partners_sizes / np.sum(partners_sizes)
         elif self.aggregation_weighting == "local_score":
             self.aggregation_weights = self.scores_last_learning_round / np.sum(self.scores_last_learning_round)
+        elif self.aggregation_weighting == "sequential":        
+            alpha = self.sequential_weighting_ponderation
+            self.aggregation_weights = (alpha)*self.scores_last_learning_round + (1-alpha)*self.aggregation_weights
+            
+
         else:
             raise NameError("The aggregation_weighting value [" + self.aggregation_weighting + "] is not recognized.")
 
@@ -508,6 +632,7 @@ class MultiPartnerLearning:
 
         self.scores_last_learning_round[partner_index] = validation_score  # TO DO check if coherent
 
+
         # At the end of each mini-batch, for each partner, populate the score matrix per partner
         self.score_matrix_per_partner[self.epoch_index, self.minibatch_index, partner_index] = validation_score
 
@@ -524,6 +649,8 @@ def init_multi_partner_learning_from_scenario(scenario, is_save_data=True):
         scenario.is_early_stopping,
         is_save_data,
         scenario.save_folder,
+        scenario.evaluation_partner_number,
+        scenario.sequential_weighting_ponderation
     )
 
     return mpl

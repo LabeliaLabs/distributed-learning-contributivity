@@ -139,7 +139,9 @@ def validate_scenario_list(scenario_params_list, experiment_path):
         if current_scenario.samples_split_type == 'basic':
             current_scenario.split_data(is_logging_enabled=False)
         elif current_scenario.samples_split_type == 'advanced':
-            current_scenario.split_data_advanced(is_logging_enabled=False)
+            current_scenario.split_data_advanced(is_logging_enabled=False)   
+        elif current_scenario.samples_split_type == 'fully_specified':
+            current_scenario.split_data_fully_specified(is_logging_enabled=False)
 
     logger.debug("All scenario have been validated")
 
@@ -155,8 +157,13 @@ def run_scenario(current_scenario):
     # ... train data, early stopping validation data, test data
     if current_scenario.samples_split_type == 'basic':
         current_scenario.split_data()
+    
     elif current_scenario.samples_split_type == 'advanced':
         current_scenario.split_data_advanced()
+    
+    elif current_scenario.samples_split_type == 'fully_specified':
+        current_scenario.split_data_fully_specified()
+
     current_scenario.plot_data_distribution()
     current_scenario.compute_batch_sizes()
     current_scenario.preprocess_scenarios_data()

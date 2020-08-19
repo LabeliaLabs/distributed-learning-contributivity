@@ -10,7 +10,8 @@ from loguru import logger
 from shutil import copyfile
 from itertools import product
 import datetime
-
+import random
+import numpy as np
 
 def load_cfg(yaml_filepath):
     """
@@ -113,3 +114,53 @@ def init_result_folder(yaml_filepath, cfg):
 
     logger.info("Result folder initiated")
     return cfg
+
+
+"""
+function : get_random_index_from_weighted_list
+args => weighted_list:list
+Take a increasing positive number list as arguments and return a random index of the list 
+which probability is weighted:
+ex : [0.1,O.4,0.4,0.1] can be cumulate as l = [0.1,0.5,0.9,1]
+we then generate a random number r in range [0:1],
+and return the first row that satisfy  r<l[i]
+"""
+def get_random_index_from_weighted_list(weighted_list):
+
+    # Check if list satisfy cumulative constraint
+    # 
+    for i in range(1,len(weighted_list)):
+
+        if( weighted_list[i-1] > weighted_list[i]  ):
+
+            return None
+
+
+    # Check positivity constraint
+    for i in range(len(weighted_list)):
+
+        if( weighted_list[i] < 0 ):
+
+            return None
+            
+    #Genration of random index between 0 and max(weighted_list)
+    random_value = random.random()
+
+    for i in range(len(weighted_list)):
+
+        if(weighted_list[i] >= random_value):
+
+            return i
+
+    return None
+
+
+def distance_vector_dictionnary(a,b):
+
+    dist = 0
+
+    for label in a.keys():
+
+        dist += (a[label] - b[label])**2
+
+    return np.sqrt(dist)

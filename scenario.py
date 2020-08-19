@@ -14,6 +14,7 @@ import pandas as pd
 from loguru import logger
 import operator
 import random
+import utils
 
 from dataset import Dataset
 import constants
@@ -33,6 +34,7 @@ class Scenario:
         params_known += ["methods", "multi_partner_learning_approach", "aggregation_weighting"]  # federated learning related
         params_known += ["partners_count", "amounts_per_partner", "corrupted_datasets", "samples_split_option"]  # Partners related
         params_known += ["gradient_updates_per_pass_count", "epoch_count", "minibatch_count", "is_early_stopping"]  # Computation related
+        params_known += ["evaluation_partner_numbers","sequential_weighting_ponderation"]
         params_known += ["is_quick_demo"]
 
         if not all([x in params_known for x in params]):
@@ -128,6 +130,8 @@ class Scenario:
         # ---------------------------------------------------
 
         self.mpl = None
+        self.evaluation_partner_number = None
+        self.sequential_weighting_ponderation = None
 
         # Multi-partner learning approach
         multi_partner_learning_approaches_list = [
@@ -135,12 +139,24 @@ class Scenario:
             "seq-pure",
             "seq-with-final-agg",
             "seqavg",
+            "qavg"
         ]
 
         if "multi_partner_learning_approach" in params:
             approach = params["multi_partner_learning_approach"]
             if approach in multi_partner_learning_approaches_list:
                 self.multi_partner_learning_approach = approach
+
+                if self.multi_partner_learning_approach == "qavg":
+                    
+                    # for specifiying evaluation on subpart of ther dataset 
+                    if "evaluation_partner_number" in params:
+                        
+                        self.evaluation_partner_number = params['evaluation_partner_numbers']
+
+                    else:
+                        self.evaluation_partner_number = len(self.partners_list)
+
             else:
                 raise Exception(f"Multi-partner learning approach '{approach}' is not a valid approach.")
         else:
@@ -150,9 +166,17 @@ class Scenario:
         # Default is 'uniform'
         if "aggregation_weighting" in params:
             self.aggregation_weighting = params["aggregation_weighting"]
+
+            if self.aggregation_weighting == 'sequential':
+                
+                if 'sequential_weighting_ponderation' in params:
+                    self.sequential_weighting_ponderation = params['sequential_weighting_ponderation']
+                else:
+                    self.sequential_weighting_ponderation = 0.5
         else:
             self.aggregation_weighting = "uniform"  # default
 
+   
         # Number of epochs, mini-batches and fit_batches in ML training
         if "epoch_count" in params:
             self.epoch_count = params["epoch_count"]
@@ -303,6 +327,156 @@ class Scenario:
             raise Exception("self.partners_list should be []")
 
         self.partners_list = [Partner(i) for i in range(self.partners_count)]
+
+
+    def split_data_fully_specified(self,is_logging_enabled=True):
+        """Fully specified split: Populates the partners with trained and test data 
+
+        The following partition system is needed for each cluster:
+            - nb_train : number of data used for training
+            - nb_test : number of data used for testing
+            - repartition : list of proportion for each class
+
+        example : 
+        [
+            [
+                1000,
+                500,
+                [ 0.1 ,0.6 ,0.3 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ]
+            ]
+        ]
+
+        # Added following fields :
+            partners:
+                - train_data_size => initialised while parsing config.yml
+                - test_data_size  => initialised while parsing config.yml
+                - label_repartition => initialised in this function, it is a dictionnary where :
+                    label_repartition[lab] = number of data with label lab in partner train and test dataset 
+        """
+        x_train = self.dataset.x_train
+        y_train = self.dataset.y_train
+        x_test = self.dataset.x_test
+        y_test = self.dataset.y_test
+
+        partners_list = self.partners_list
+        amounts_per_partner = self.amounts_per_partner
+        sample_split_data = self.samples_split_description
+
+        for p,partner_params in zip(partners_list,sample_split_data):
+            
+            train_size,test_size,repartition = partner_params[0],partner_params[1],partner_params[2]
+            p.repartition_list = repartition
+
+            p.train_data_size = train_size
+            p.test_data_size = test_size
+
+
+        labels = list(set(y_train))
+
+        # Stratify the dataset into clusters per labels
+        x_train_for_cluster, y_train_for_cluster = {}, {}
+        x_test_for_cluster , y_test_for_cluster  = {}, {}
+
+        for label in labels:
+            
+            idx_in_full_trainset = np.where(y_train == label)
+
+            x_train_for_cluster[label] = x_train[idx_in_full_trainset]
+            y_train_for_cluster[label] = y_train[idx_in_full_trainset]
+            
+            idx_in_test_dataset = np.where(y_test == label)
+
+            x_test_for_cluster[label] = x_test[idx_in_test_dataset]
+            y_test_for_cluster[label] = y_test[idx_in_test_dataset]
+
+
+        for p in partners_list:
+            
+            p.computed_accuracy_list = []
+            p.refference_accuracy_list = []
+
+            #Generation of cumulative histogram for random selection
+            total = sum(p.repartition_list)
+            p_cumulative_list = [p.repartition_list[0]]
+
+            for i in range(1,len(labels)):
+
+                p_cumulative_list.append(p_cumulative_list[-1] + p.repartition_list[i]/total )
+            
+            p_index_train = {labels[i]:0 for i in range(len(labels))}            
+            p_index_test  = {labels[i]:0 for i in range(len(labels))}
+            
+
+            for i in range(p.train_data_size):
+                
+                random_label = utils.get_random_index_from_weighted_list(p_cumulative_list)
+                p_index_train[random_label] += 1
+
+            for i in range(p.test_data_size):
+                
+                random_label = utils.get_random_index_from_weighted_list(p_cumulative_list)
+                p_index_test[random_label] += 1
+
+            
+            list_arrays_x_train, list_arrays_y_train = [], []
+
+            for label,size in enumerate(p_index_train):
+                
+                random_raw = np.random.choice(np.arange(len(x_train_for_cluster[label])), size=size, replace=True)
+
+                list_arrays_x_train.append(x_train_for_cluster[label][random_raw])
+                list_arrays_y_train.append(y_train_for_cluster[label][random_raw])
+                
+            
+            list_arrays_x_test, list_arrays_y_test = [], []
+
+            for label,size in enumerate(p_index_test):
+                
+                random_raw = np.random.choice(np.arange(len(x_train_for_cluster[label])), size=size, replace=True)
+
+                list_arrays_x_test.append(x_train_for_cluster[label][random_raw])
+                list_arrays_y_test.append(y_train_for_cluster[label][random_raw])
+              
+            
+            p.x_train = np.concatenate(list_arrays_x_train)
+            p.y_train = np.concatenate(list_arrays_y_train)
+
+            p.x_test = np.concatenate(list_arrays_x_test)
+            p.y_test = np.concatenate(list_arrays_y_test)
+
+            p.x_val = np.concatenate(list_arrays_x_train)
+            p.y_val = np.concatenate(list_arrays_y_train)
+
+
+        for p in partners_list: 
+            
+            p_repartition = {}
+
+            for label in labels:
+
+                idx_train = np.where(p.y_train == label)
+                idx_test  = np.where(p.y_test  == label)
+
+                total = np.size(p.y_train[idx_train]) + np.size(p.y_test[idx_test])
+
+                p_repartition[label] = total
+
+            p.label_repartition = p_repartition
+
+        
+        if is_logging_enabled:
+            logger.info("### Splitting data among partners:")
+            logger.info(f"   Fully defined split performed.")
+            logger.info(f"   Nb of samples split amongst partners: {self.nb_samples_used}")
+            logger.info(f"   Partners' relative nb of samples: {[round(p, 2) for p in self.final_relative_nb_samples]} "
+                        f"   (versus initially configured: {amounts_per_partner})")
+            for partner in self.partners_list:
+                logger.info(f"   Partner #{partner.id}: {len(partner.x_train)} "
+                            f"samples with labels {partner.clusters_list}")
+
+        return 0
+
+
 
     def split_data_advanced(self, is_logging_enabled=True):
         """Advanced split: Populates the partners with their train and test data (not pre-processed)"""
