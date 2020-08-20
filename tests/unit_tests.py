@@ -42,10 +42,9 @@ This enables to parameterize unit tests - the tests are run by Travis each time 
 # https://docs.pytest.org/en/latest/goodpractices.html#test-discovery
 
 import sys
-sys.path.append("../subtest/")
 
+sys.path.append("../")
 
-import utils
 import yaml
 import pytest
 import numpy as np
@@ -54,21 +53,14 @@ from pathlib import Path
 
 from tensorflow.keras.datasets import cifar10, mnist
 
-from datasets import dataset_cifar10 as data_cf
-from datasets import dataset_mnist as data_mn
-import multi_partner_learning
+from subtest.datasets import dataset_cifar10 as data_cf
+from subtest.datasets import dataset_mnist as data_mn
+from subtest import multi_partner_learning
+from subtest.partner import Partner
+from subtest.scenario import Scenario
+from subtest.contributivity import Contributivity
+from subtest.multi_partner_learning import MultiPartnerLearning
 
-
-from partner import Partner
-
-from scenario import Scenario
-from contributivity import Contributivity
-from multi_partner_learning import MultiPartnerLearning
-
-import sys
-
-sys.path.append("..")
-import constants  # noqa: E402
 
 ######
 # Fixture Iterate: to generate the combination of parameters
@@ -154,7 +146,6 @@ def create_MultiPartnerLearning(create_Dataset):
 
 @pytest.fixture(scope="class")
 def create_Scenario(iterate_dataset_name, iterate_samples_split_option):
-
     dataset_name = iterate_dataset_name
     samples_split_option = iterate_samples_split_option
 
@@ -187,7 +178,7 @@ def create_Scenario(iterate_dataset_name, iterate_samples_split_option):
 
     full_experiment_name = "unit-test-pytest"
     experiment_path = (
-        Path.cwd() / constants.EXPERIMENTS_FOLDER_NAME / full_experiment_name
+            Path.cwd() / constants.EXPERIMENTS_FOLDER_NAME / full_experiment_name
     )
 
     # scenar.dataset object is created inside the Scenario constructor
