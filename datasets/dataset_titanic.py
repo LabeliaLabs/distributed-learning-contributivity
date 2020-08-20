@@ -62,26 +62,8 @@ def load_data():
 
 # Model structure and generation
 def generate_new_model_for_dataset():
-    """Return either a feed forward model from scratch or a LogisticRegression Classifier
-    https://www.kaggle.com/kabure/titanic-eda-model-pipeline-keras-nn"""
+    """Return a LogisticRegression Classifier"""
 
-    """
-    # This section provide an alternative model to LogisticRegression.
-
-    model = Sequential()
-    model.add(Dense(64, activation='relu', input_dim=26))
-    model.add(Dense(64, activation='relu'))
-    model.add(Dropout(0.50))
-    model.add(Dense(32, activation='relu'))
-    model.add(Dense(32, activation='relu'))
-    model.add(Dropout(0.50))
-    model.add(Dense(16, activation='relu'))
-    model.add(Dense(8, activation='relu'))
-    model.add(Dense(1, activation='sigmoid'))
-    model.compile(optimizer = 'adam',
-                   loss = 'binary_crossentropy',
-                   metrics = ['accuracy'])
-    """
 
     clf = LogisticRegression(max_iter=10000, warm_start=1, random_state = 0)
     clf.classes_ = np.array([0,1])
