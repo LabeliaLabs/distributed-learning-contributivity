@@ -197,11 +197,9 @@ class MultiPartnerLearning:
 
         # After last epoch or if early stopping was triggered, evaluate model on the global testset
         logger.info("### Evaluating model on test data:")
-
         test_evaluation = self.evaluate_model(model_to_evaluate, self.test_data)
         logger.info(f"   Model metrics names: {model_to_evaluate.metrics_names}")
         logger.info(f"   Model metrics values: {['%.3f' % elem for elem in test_evaluation]}")
-
         self.test_score = test_evaluation[1]  # 0 is for the loss
         self.nb_epochs_done = self.epoch_index + 1
 
@@ -273,9 +271,7 @@ class MultiPartnerLearning:
 
         # Evaluate and store accuracy of mini-batch start model
         model_to_evaluate = partners_model_list_for_iteration[0]
-
         val_evaluation = self.evaluate_model(model_to_evaluate, self.val_data)
-
         self.score_matrix_collective_models[epoch_index, minibatch_index] = val_evaluation[1]
 
         # Iterate over partners for training each individual model
@@ -426,6 +422,7 @@ class MultiPartnerLearning:
     def aggregate_model_weights(self):
         """Aggregate model weights from the list of models, with a weighted average"""
 
+        # Sklearn models weigths are tuples while keras model's weights are list
         if type(self.models_weights_list[0]) is tuple:  # Check weights type for aggregation
             # Unpack values
             coefs = [weights[0] for weights in self.models_weights_list]
@@ -566,7 +563,6 @@ class MultiPartnerLearning:
         """Update the results arrays with results from the collaboration round"""
 
         validation_score = fit_history.history["val_accuracy"][0]
-
 
         self.scores_last_learning_round[partner_index] = validation_score  # TO DO check if coherent
 

@@ -67,8 +67,8 @@ def generate_new_model_for_dataset():
 
     clf = LogisticRegression(max_iter=10000, warm_start=1, random_state = 0)
     clf.classes_ = np.array([0,1])
-    clf.metrics_names = ["log_loss", "Accuracy"]
-    return clf  # you can also use "model"
+    clf.metrics_names = ["log_loss", "Accuracy"]  # Mimic Keras's 
+    return clf
 
 # Load data
 (x_train, y_train), (x_test, y_test) = load_data()
