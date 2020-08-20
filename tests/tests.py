@@ -36,6 +36,9 @@ This enables to parameterize unit tests - the tests are run by Travis each time 
 # Test architecture
 # https://docs.pytest.org/en/latest/goodpractices.html#test-discovery
 
+import sys
+sys.path.append("..")
+
 from subtest import utils
 import yaml
 import pytest
@@ -48,7 +51,6 @@ from tensorflow.keras.datasets import cifar10,mnist
 from datasets import dataset_cifar10 as data_cf
 from datasets import dataset_mnist as data_mn
 from subtest import multi_partner_learning
-
 
 from subtest.partner import Partner
 from subtest.dataset import Dataset
