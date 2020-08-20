@@ -422,7 +422,7 @@ class MultiPartnerLearning:
     def aggregate_model_weights(self):
         """Aggregate model weights from the list of models, with a weighted average"""
 
-        # Sklearn models weigths are tuples while keras model's weights are list
+        # Sklearn models weigths are tuples while keras model's weights are list, this differentiate keras vs sk-learn models
         if type(self.models_weights_list[0]) is tuple:  # Check weights type for aggregation
             # Unpack values
             coefs = [weights[0] for weights in self.models_weights_list]
