@@ -432,7 +432,7 @@ class MultiPartnerLearning:
             agg_intercepts = np.average(np.array(intercepts), axis=0, weights=self.aggregation_weights)
 
             new_weights = (agg_coef, agg_intercepts)
-        else :
+        else:
             weights_per_layer = list(zip(*self.models_weights_list))
             new_weights = list()
 
