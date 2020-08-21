@@ -457,10 +457,8 @@ class MultiPartnerLearning:
         new_model = self.generate_new_model()
 
         if isinstance(new_model, type(LogisticRegression())):
-            coef, intercept = new_weights
-            new_model.coef_ = coef
+            new_model.coef_, new_model.intercept_ = new_weights
             new_model.n_iter_ = 0
-            new_model.intercept_ = intercept  # faisable en une ligne ?
         else:
             new_model.set_weights(new_weights)
         return new_model
