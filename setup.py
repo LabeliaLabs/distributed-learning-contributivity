@@ -20,7 +20,7 @@ setup(
         "Programming Language :: Python :: 3",
         "Operating System :: OS Independent",
     ],
-    keywords=['library', 'substra', 'machine learning', 'contributivity', 'multipartner', 'federated learning'],
+    keywords=['library', 'substra', 'machine learning', 'contributivity', 'multipartner learning', 'federated learning', 'distributed learning'],
     license='Apache 2.0',
     install_requires=requirements,
     python_requires='>=3.6',
