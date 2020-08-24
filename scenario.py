@@ -397,6 +397,7 @@ class Scenario:
 
             #Generation of cumulative histogram for random selection
             total = sum(p.repartition_list)
+
             p_cumulative_list = [p.repartition_list[0]]
 
             for i in range(1,len(labels)):
@@ -412,6 +413,7 @@ class Scenario:
                 random_label = utils.get_random_index_from_weighted_list(p_cumulative_list)
                 p_index_train[random_label] += 1
 
+
             for i in range(p.test_data_size):
                 
                 random_label = utils.get_random_index_from_weighted_list(p_cumulative_list)
@@ -420,24 +422,25 @@ class Scenario:
             
             list_arrays_x_train, list_arrays_y_train = [], []
 
-            for label,size in enumerate(p_index_train):
+            for label,size in p_index_train.items():
                 
                 random_raw = np.random.choice(np.arange(len(x_train_for_cluster[label])), size=size, replace=True)
 
                 list_arrays_x_train.append(x_train_for_cluster[label][random_raw])
                 list_arrays_y_train.append(y_train_for_cluster[label][random_raw])
-                
             
+
             list_arrays_x_test, list_arrays_y_test = [], []
 
-            for label,size in enumerate(p_index_test):
+            for label,size in p_index_test.items():
                 
                 random_raw = np.random.choice(np.arange(len(x_train_for_cluster[label])), size=size, replace=True)
-
+                
                 list_arrays_x_test.append(x_train_for_cluster[label][random_raw])
                 list_arrays_y_test.append(y_train_for_cluster[label][random_raw])
               
-            
+                            
+
             p.x_train = np.concatenate(list_arrays_x_train)
             p.y_train = np.concatenate(list_arrays_y_train)
 
@@ -446,6 +449,7 @@ class Scenario:
 
             p.x_val = np.concatenate(list_arrays_x_train)
             p.y_val = np.concatenate(list_arrays_y_train)
+
 
 
         for p in partners_list: 
