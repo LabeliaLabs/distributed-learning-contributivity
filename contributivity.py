@@ -996,7 +996,8 @@ class Contributivity:
         comp_rounds_count = score_matrix_performance_rel.shape[0]
 
         # Calculate contributivity score with linear importance function
-        contributivity_scores = np.array(np.arange(comp_rounds_count)).dot(score_matrix_performance_rel.fillna(0))
+        contributivity_scores = np.array(np.arange(comp_rounds_count))\
+            .dot(np.nan_to_num(score_matrix_performance_rel))
 
         # Return contributivity scores
         self.name = "Federated step by step linear scores"
@@ -1042,7 +1043,7 @@ class Contributivity:
 
         # Calculate contributivity score with linear importance function
         contributivity_scores = np.array(np.square(np.arange(comp_rounds_count)))\
-            .dot(score_matrix_performance_rel.fillna(0))
+            .dot(np.nan_to_num(score_matrix_performance_rel))
 
         # Return contributivity scores
         self.name = "Federated step by step quadratic scores"
@@ -1083,11 +1084,11 @@ class Contributivity:
         score_matrix_performance_rel = np.divide(score_matrix_per_partner_reshape,
                                                  scores_matrix_collective_reshape[:, None])
 
-        comp_rounds_count = score_matrix_performance_rel.shape[0]
         score_matrix_performance_rel = score_matrix_performance_rel [first_comp_round_kept: last_comp_round_kept , :]
+        comp_rounds_count = score_matrix_performance_rel.shape[0]
 
         # Calculate contributivity score with linear importance function
-        contributivity_scores = np.nanmean(score_matrix_performance_rel,axis=1)
+        contributivity_scores = np.nanmean(score_matrix_performance_rel, axis=0)
 
         # Return contributivity scores
         self.name = "Federated step by step constant scores"
