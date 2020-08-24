@@ -8,7 +8,7 @@ with open("requirements.txt", "r") as fh:
 
 setup(
     name="subtest",
-    version="0.0.0.6",
+    version="0.0.0.7",
     author="SubstraFoundation",
     author_email="contact@substra.org",
     description="A distributed learning contributivity package",
