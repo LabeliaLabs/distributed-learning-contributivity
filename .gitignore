@@ -110,3 +110,6 @@ nohup.out
 
 trash/
 experiments/
+
+*.zip
+
