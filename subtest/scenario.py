@@ -5,26 +5,26 @@ This enables to parameterize a desired scenario to mock a multi-partner ML proje
 
 import datetime
 import operator
-import random
 import os
+import random
 import uuid
+from pathlib import Path
 
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-
 from loguru import logger
 from sklearn.model_selection import train_test_split
 
-from .datasets import dataset_mnist, dataset_titanic, dataset_esc50, dataset_cifar10
 from . import constants
-from .partner import Partner
-from . import multi_partner_learning
 from . import contributivity
+from . import multi_partner_learning
+from .datasets import dataset_mnist, dataset_titanic, dataset_esc50, dataset_cifar10
+from .partner import Partner
 
 
 class Scenario:
-    def __init__(self, params, experiment_path, scenario_id=1, n_repeat=1, is_dry_run=False):
+    def __init__(self, params, experiment_path=Path(r"./experiments/nlp"), scenario_id=1, n_repeat=1, is_dry_run=False):
 
         # ---------------------------------------------------------------------
         # Initialization of the dataset defined in the config of the experiment
@@ -512,7 +512,6 @@ class Scenario:
         # Populate partners
         partner_idx = 0
         for train_idx in train_idx_idx_list:
-
             p = self.partners_list[partner_idx]
 
             # Finalize selection of train data
@@ -666,7 +665,6 @@ class Scenario:
             dict_results["first_characteristic_calls_count"] = contrib.first_charac_fct_calls_count
 
             for i in range(self.partners_count):
-
                 # Partner-specific data
                 dict_results["partner_id"] = i
                 dict_results["dataset_fraction_of_partner"] = self.amounts_per_partner[i]
@@ -687,7 +685,7 @@ class Scenario:
         x_train = self.dataset.x_train
         y_train = self.dataset.y_train
 
-        logger.info(f"We don't use the full dataset: only {self.dataset_proportion*100}%")
+        logger.info(f"We don't use the full dataset: only {self.dataset_proportion * 100}%")
 
         skip_idx = int(round(len(x_train) * self.dataset_proportion))
         train_idx = np.arange(len(x_train))
@@ -700,7 +698,6 @@ class Scenario:
 
 
 def run_scenario(current_scenario):
-
     # -----------------------
     #  Provision the scenario
     # -----------------------

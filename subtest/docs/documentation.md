@@ -91,20 +91,12 @@ The first partner will have 20% of the total dataset, the second 50% and the thi
 
 - Create scenario:
 ```python
-experiment_path = Path(r"your_path")
-current_scenario = Scenario(
-        scenario_params,
-        experiment_path
-    )
+current_scenario = Scenario(scenario_params)
 ```
 
 - Asignate your `dataset` object to the `current_scenario`:
 ```
 current_scenario.dataset = dataset
-```
-- Initiate the partner list:
-```
-current_scenario.partners_list = []
 ```
 - Split the validation and train sets:
 ```
