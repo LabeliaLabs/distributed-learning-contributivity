@@ -116,7 +116,7 @@ Finally, with given scenarios and multi-partner learning approaches, we can addr
        gradient_updates_per_pass_count:
          - 8
        dataset_proportion:
-	 - 1
+	     - 1
      - dataset_name:
          - 'mnist'
        partners_count:
@@ -140,7 +140,7 @@ Finally, with given scenarios and multi-partner learning approaches, we can addr
        gradient_updates_per_pass_count:
          - 8
        dataset_proportion:
-	 - 1
+	     - 1
     ```
 
    Under `scenario_params_list`, enter a list of sets of scenario(s). Each set starts with ` - dataset_name:` and must have only one `partners_count` value. The length of `amount_per_partners`, `corrupted_datasets` (and `samples_split_option` when the advanced definition is used) must match the `partner_counts` value. If for a given parameter multiple values are specified, e.g. like for `agregation_weighting` in the first scenario set of the above example, all possible combinations of parameters will be assembled as separate scenarios and run.
