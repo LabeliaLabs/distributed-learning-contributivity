@@ -29,6 +29,8 @@ class MultiPartnerLearning:
                  is_early_stopping=True,
                  is_save_data=False,
                  save_folder="",
+                 init_model_from="random_initialization",
+                 use_saved_weights=False,
                  ):
 
         # Attributes related to partners
@@ -38,7 +40,10 @@ class MultiPartnerLearning:
         # Attributes related to the data and the model
         self.val_data = (dataset.x_val, dataset.y_val)
         self.test_data = (dataset.x_test, dataset.y_test)
+        self.dataset_name = dataset.name
         self.generate_new_model = dataset.generate_new_model
+        self.init_model_from = init_model_from
+        self.use_saved_weights = use_saved_weights
 
         # Attributes related to the multi-partner learning approach
         self.learning_approach = multi_partner_learning_approach
@@ -75,7 +80,7 @@ class MultiPartnerLearning:
         logger.info(f"## Training and evaluating model on partner with id #{partner.id}")
 
         # Initialize model
-        model = self.generate_new_model()
+        model = self.init_with_model()
 
         # Set if early stopping if needed
         cb = []
@@ -137,7 +142,13 @@ class MultiPartnerLearning:
         # Initialize variables
         model_to_evaluate, sequentially_trained_model = None, None
         if self.learning_approach in ['seq-pure', 'seq-with-final-agg']:
-            sequentially_trained_model = self.generate_new_model()
+            if self.use_saved_weights:
+                logger.info(f"(seq) Init models with previous coalition model for each partner")
+            else:
+                logger.info(f"(seq) Init new models for each partner")
+            sequentially_trained_model = self.init_with_model()
+
+
 
         # Train model (iterate for each epoch and mini-batch)
         for epoch_index in range(epoch_count):
@@ -208,10 +219,26 @@ class MultiPartnerLearning:
         # Plot training history # TODO: move the data saving and plotting in dedicated functions
         if self.is_save_data:
             self.save_data()
+        
+        self.save_final_model_weights(model_to_evaluate)
 
         logger.info("Training and evaluation on multiple partners: done.")
         end = timer()
         self.learning_computation_time = end - start
+        
+    def save_final_model_weights(self, model_to_save):
+        """Save final model weights"""
+        
+        model_folder = os.path.join(self.save_folder, 'model')
+
+        if not os.path.isdir(model_folder):
+            os.makedirs(model_folder)
+            
+        model_to_save.save_weights(os.path.join(model_folder, self.dataset_name+'_final_weights.h5'))
+        model_weights = model_to_save.get_weights()
+            
+        np.save(os.path.join(model_folder, self.dataset_name+'_final_weights.npy'), 
+                model_weights)
 
     def save_data(self):
         """Save figures, losses and metrics to disk"""
@@ -261,14 +288,17 @@ class MultiPartnerLearning:
         # Initialize variables
         epoch_index, minibatch_index = self.epoch_index, self.minibatch_index
         is_very_first_minibatch = (epoch_index == 0 and minibatch_index == 0)
-        x_val, y_val = self.val_data
+        x_val, y_val = self.val_data   
 
         # Starting model for each partner is the aggregated model from the previous mini-batch iteration
         if is_very_first_minibatch:  # Except for the very first mini-batch where it is a new model
-            logger.debug(f"(fedavg) Very first minibatch of epoch n°{epoch_index}, init new models for each partner")
-            partners_model_list_for_iteration = self.init_with_new_models()
+            if self.use_saved_weights:
+                logger.info(f"(fedavg) Very first minibatch of epoch n°{epoch_index}, init models with previous coalition model for each partner")
+            else:
+                logger.info(f"(fedavg) Very first minibatch of epoch n°{epoch_index}, init new models for each partner")
+            partners_model_list_for_iteration = self.init_with_models()
         else:
-            logger.debug(f"(fedavg) Minibatch n°{minibatch_index} of epoch n°{epoch_index}, "
+            logger.info(f"(fedavg) Minibatch n°{minibatch_index} of epoch n°{epoch_index}, "
                          f"init aggregated model for each partner with models from previous round")
             partners_model_list_for_iteration = self.init_with_agg_models()
 
@@ -356,10 +386,13 @@ class MultiPartnerLearning:
 
         # Starting model for each partner is the aggregated model from the previous collaborative round
         if is_very_first_minibatch:  # Except for the very first mini-batch where it is a new model
-            logger.debug(f"(seqavg) Very first minibatch, init a new model for the round")
-            model_for_round = self.generate_new_model()
+            if self.use_saved_weights:
+                logger.info(f"(seqavg) Very first minibatch of epoch n°{epoch_index}, init model with previous coalition model for each partner")
+            else:
+                logger.info(f"(seqavg) Very first minibatch of epoch n°{epoch_index}, init new model for each partner")
+            model_for_round = self.init_with_model()
         else:
-            logger.debug(f"(seqavg) Minibatch n°{minibatch_index} of epoch n°{epoch_index}, "
+            logger.info(f"(seqavg) Minibatch n°{minibatch_index} of epoch n°{epoch_index}, "
                          f"init model by aggregating models from previous round")
             model_for_round = self.init_with_agg_model()
 
@@ -435,36 +468,56 @@ class MultiPartnerLearning:
             new_weights.append(list(avg_weights_for_layer))
 
         return new_weights
+    
 
     def build_model_from_weights(self, new_weights):
         """Generate a new model initialized with weights passed as arguments"""
 
         new_model = self.generate_new_model()
         new_model.set_weights(new_weights)
-        return new_model
 
-    def init_with_new_models(self):
+        return new_model
+    
+    
+    def init_with_models(self):
         """Return a list of newly generated models, one per partner"""
 
         # Init a list to receive a new model for each partner
         partners_model_list = []
 
         # Generate a new model and add it to the list
-        new_model = self.generate_new_model()
+        if self.use_saved_weights:
+            new_model = self.generate_new_model()
+            new_model.load_weights(self.init_model_from)
+        else:
+            new_model = self.generate_new_model()
+            
         partners_model_list.append(new_model)
+        model_weights = new_model.get_weights()
 
         # For each remaining partner, duplicate the new model and add it to the list
-        new_model_weights = new_model.get_weights()
+        
         for i in range(len(self.partners_list)-1):
-            partners_model_list.append(self.build_model_from_weights(new_model_weights))
+            partners_model_list.append(self.build_model_from_weights(model_weights))
 
         return partners_model_list
+    
+    
+    def init_with_model(self):
+        new_model = self.generate_new_model()
+        
+        if self.use_saved_weights:
+            new_model.load_weights(self.init_model_from)
+            
+        return new_model
+
 
     def init_with_agg_model(self):
         """Return a new model aggregating models from model_list"""
 
         self.prepare_aggregation_weights()
         return self.build_model_from_weights(self.aggregate_model_weights())
+    
 
     def init_with_agg_models(self):
         """Return a list with the aggregated model duplicated for each partner"""
@@ -474,6 +527,7 @@ class MultiPartnerLearning:
         for partner in self.partners_list:
             partners_model_list.append(self.build_model_from_weights(self.aggregate_model_weights()))
         return partners_model_list
+    
 
     @staticmethod
     def collaborative_round_fit(model_to_fit, train_data, val_data, batch_size):
@@ -524,6 +578,8 @@ def init_multi_partner_learning_from_scenario(scenario, is_save_data=True):
         scenario.is_early_stopping,
         is_save_data,
         scenario.save_folder,
+        scenario.init_model_from,
+        scenario.use_saved_weights, 
     )
 
     return mpl

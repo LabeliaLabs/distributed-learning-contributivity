@@ -154,6 +154,7 @@ def create_Scenario(iterate_dataset_name, iterate_samples_split_option):
     params.update({"partners_count": 3, "amounts_per_partner": [0.2, 0.5, 0.3], "samples_split_option": samples_split_option, "corrupted_datasets": ["not_corrupted"]*3})
     params.update({"methods":["Shapley values", "Independent scores"], "multi_partner_learning_approach":"fedavg", "aggregation_weighting": "uniform"})
     params.update({"gradient_updates_per_pass_count": 5, "epoch_count": 2, "minibatch_count": 2, "is_early_stopping": True})
+    params.update({"init_model_from": "random_initialization"})
     params.update({"is_quick_demo": False})
 
 
