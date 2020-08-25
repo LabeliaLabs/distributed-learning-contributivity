@@ -489,12 +489,11 @@ class MultiPartnerLearning:
         if self.use_saved_weights:
             new_model = self.generate_new_model()
             new_model.load_weights(self.init_model_from)
-            model_weights = new_model.get_weights()
-            partners_model_list.append(new_model)
         else:
             new_model = self.generate_new_model()
-            partners_model_list.append(new_model)
-            model_weights = new_model.get_weights()
+            
+        partners_model_list.append(new_model)
+        model_weights = new_model.get_weights()
 
         # For each remaining partner, duplicate the new model and add it to the list
         

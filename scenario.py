@@ -181,11 +181,10 @@ class Scenario:
             self.is_early_stopping = True  # default
 
         # Model used to initialise model
+        self.init_model_from = params["init_model_from"]
         if params["init_model_from"] == "random_initialization":
-            self.init_model_from = params["init_model_from"]
             self.use_saved_weights = False
         else:
-            self.init_model_from = params["init_model_from"]
             self.use_saved_weights = True
 
         # -----------------------------------------------------------------
