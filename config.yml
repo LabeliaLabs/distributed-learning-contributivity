@@ -2,8 +2,10 @@ experiment_name: my_example
 n_repeats: 5
 scenario_params_list:
  - dataset_name:
-     - 'mnist'
-     - 'cifar10'
+    'mnist':
+    - 'random_initialization'
+    'cifar10':
+    - 'random_initialization'
    partners_count:
      - 3
    amounts_per_partner: 
@@ -31,7 +33,8 @@ scenario_params_list:
    dataset_proportion:
      - 1
  - dataset_name:
-     - 'mnist'
+    'mnist':
+    - 'random_initialization'
    partners_count:
      - 2
    amounts_per_partner: 
@@ -53,3 +56,4 @@ scenario_params_list:
      - 5
    dataset_proportion:
      - 1
+
