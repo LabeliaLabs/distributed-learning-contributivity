@@ -24,7 +24,7 @@ from .partner import Partner
 
 
 class Scenario:
-    def __init__(self, params, experiment_path=Path(r"./experiments/nlp"), scenario_id=1, n_repeat=1, is_dry_run=False):
+    def __init__(self, params, experiment_path=Path(r"./experiments"), scenario_id=1, n_repeat=1, is_dry_run=False):
 
         # ---------------------------------------------------------------------
         # Initialization of the dataset defined in the config of the experiment
