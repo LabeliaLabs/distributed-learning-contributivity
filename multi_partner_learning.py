@@ -92,18 +92,7 @@ class MultiPartnerLearning:
 
         # Train model
         logger.info("   Training model...")
-        if isinstance(model, type(LogisticRegression())):
-            history = model.fit(partner.x_train, partner.y_train)
-        else:
-            history = model.fit(
-                partner.x_train,
-                partner.y_train,
-                batch_size=partner.batch_size,
-                epochs=self.epoch_count,
-                verbose=0,
-                validation_data=self.val_data,
-                callbacks=cb,
-            )
+        history = self.fit_model(model, (partner.x_train, partner.y_train), self.val_data, partner.batch_size, self.epoch_count)
 
         # Evaluate trained model
         test_evaluation = self.evaluate_model(model, self.test_data)
@@ -557,7 +546,7 @@ class MultiPartnerLearning:
 
 
     @staticmethod
-    def fit_model(model_to_fit, train_data, val_data, batch_size):
+    def fit_model(model_to_fit, train_data, val_data, batch_size, epoch_count=1):
         """Fit the model with arguments passed as parameters and returns the history object"""
 
         x_train, y_train = train_data
@@ -577,7 +566,7 @@ class MultiPartnerLearning:
                 x_train,
                 y_train,
                 batch_size=batch_size,
-                epochs=1,
+                epochs=epoch_count,
                 verbose=0,
                 validation_data=val_data,
             )
