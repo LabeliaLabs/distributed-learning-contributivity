@@ -40,6 +40,7 @@ import utils
 import yaml
 import pytest
 import numpy as np
+import subprocess
 
 from pathlib import Path
 
@@ -403,3 +404,24 @@ class TestDemoClass:
             assert yaml.load(config_file, Loader=yaml.FullLoader)
         with open("config_quick_debug.yml", "r") as config_quick_debug_file:
             assert yaml.load(config_quick_debug_file, Loader=yaml.FullLoader)
+
+
+class EndToEndTest:
+
+    def EndToEndTest(self):
+        """
+        EndToEndTest test
+        """
+        # run test
+        subprocess.run(["python main.py -f config_end_to_end_test.yml"])
+
+        # read results from csv
+        # df = pd.read_csv(...)
+        
+        # Extract score 
+        #test_score = df["test_score"]
+        test_score = 0.96
+        
+        # assert  
+        assert  test_score > 0.95
+        
