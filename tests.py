@@ -42,6 +42,7 @@ import utils
 import yaml
 import pytest
 import numpy as np
+import pandas as pd
 import subprocess
 
 from pathlib import Path
@@ -418,7 +419,7 @@ class Test_EndToEndTest:
         subprocess.run(["python", "main.py", "-f", "config_end_to_end_test.yml"])
 
         # Get latest generated folder
-        root_folder = Path().absolute().parent / "experiments" 
+        root_folder = Path().absolute() / "experiments" 
 
         subfolder_list = list(root_folder.glob('*end_to_end_test*'))
         subfolder_list_creation_time = [f.stat().st_ctime for f in subfolder_list]
@@ -428,8 +429,6 @@ class Test_EndToEndTest:
 
         # Extract score 
         min_test_score = df["mpl_test_score"].min()
-        test_score = 0.96
         
-        # assert  
         assert  min_test_score > 0.96
         
