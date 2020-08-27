@@ -97,10 +97,10 @@ class MultiPartnerLearning:
         # Evaluate trained model
         model_evaluation_test_data= self.evaluate_model(model, self.test_data)
         logger.info(f"   Model evaluation on test data: "
-                    f"{list(zip(model.metrics_names, ['%.3f' % elem for elem in test_evaluation]))}")
+                    f"{list(zip(model.metrics_names, ['%.3f' % elem for elem in model_evaluation_test_data]))}")
 
         # Save model score on test data
-        self.test_score = test_evaluation[1]  # 0 is for the loss
+        self.test_score = model_evaluation_test_data[1]  # 0 is for the loss
         self.nb_epochs_done = (es.stopped_epoch + 1) if es.stopped_epoch != 0 else self.epoch_count
 
         end = timer()
@@ -174,14 +174,14 @@ class MultiPartnerLearning:
 
             model_evaluation_val_data= self.evaluate_model(model_to_evaluate, self.val_data)
 
-            current_val_loss = val_evaluation[0]
-            current_val_metric = val_evaluation[1]
+            current_val_loss = model_evaluation_val_data[0]
+            current_val_metric = model_evaluation_val_data[1]
 
             self.score_matrix_collective_models[epoch_index, minibatch_count] = current_val_metric
             self.loss_collective_models.append(current_val_loss)
 
             logger.info(f"   Model evaluation at the end of the epoch: "
-                        f"{['%.3f' % elem for elem in val_evaluation]}")
+                        f"{['%.3f' % elem for elem in model_evaluation_val_data]}")
 
             logger.debug("      Checking if early stopping criteria are met:")
             if is_early_stopping:
@@ -199,8 +199,8 @@ class MultiPartnerLearning:
         logger.info("### Evaluating model on test data:")
         model_evaluation_test_data= self.evaluate_model(model_to_evaluate, self.test_data)
         logger.info(f"   Model metrics names: {model_to_evaluate.metrics_names}")
-        logger.info(f"   Model metrics values: {['%.3f' % elem for elem in test_evaluation]}")
-        self.test_score = test_evaluation[1]  # 0 is for the loss
+        logger.info(f"   Model metrics values: {['%.3f' % elem for elem in model_evaluation_test_data]}")
+        self.test_score = model_evaluation_test_data[1]  # 0 is for the loss
         self.nb_epochs_done = self.epoch_index + 1
 
         # Plot training history # TODO: move the data saving and plotting in dedicated functions
@@ -291,7 +291,7 @@ class MultiPartnerLearning:
         # Evaluate and store accuracy of mini-batch start model
         model_to_evaluate = partners_model_list_for_iteration[0]
         model_evaluation_val_data= self.evaluate_model(model_to_evaluate, self.val_data)
-        self.score_matrix_collective_models[epoch_index, minibatch_index] = val_evaluation[1]
+        self.score_matrix_collective_models[epoch_index, minibatch_index] = model_evaluation_val_data[1]
 
         # Iterate over partners for training each individual model
         for partner_index, partner in enumerate(self.partners_list):
@@ -309,7 +309,7 @@ class MultiPartnerLearning:
 
             # Log results of the round
             model_evaluation_val_data= history.history['val_accuracy'][0]
-            self.log_collaborative_round_partner_result(partner, partner_index, val_evaluation)
+            self.log_collaborative_round_partner_result(partner, partner_index, model_evaluation_val_data)
 
             # Update the partner's model in the models' list
             self.save_model_for_partner(partner_model, partner_index)
@@ -330,7 +330,7 @@ class MultiPartnerLearning:
 
         # Evaluate and store accuracy of mini-batch start model
         model_evaluation_val_data= self.evaluate_model(sequentially_trained_model, self.val_data)
-        self.score_matrix_collective_models[epoch_index, minibatch_index] = val_evaluation[1]
+        self.score_matrix_collective_models[epoch_index, minibatch_index] = model_evaluation_val_data[1]
 
         # Iterate over partners for training the model sequentially
         shuffled_indexes = np.random.permutation(self.partners_count)
@@ -349,7 +349,7 @@ class MultiPartnerLearning:
 
             # Log results of the round
             model_evaluation_val_data= history.history['val_accuracy'][0]
-            self.log_collaborative_round_partner_result(partner, for_loop_idx, val_evaluation)
+            self.log_collaborative_round_partner_result(partner, for_loop_idx, model_evaluation_val_data)
 
             # On final collaborative round, save the partner's model in the models' list
             if is_last_round:
@@ -383,7 +383,7 @@ class MultiPartnerLearning:
 
         # Evaluate and store accuracy of mini-batch start model
         model_evaluation_val_data= self.evaluate_model(model_for_round, self.val_data)
-        self.score_matrix_collective_models[epoch_index, minibatch_index] = val_evaluation[1]
+        self.score_matrix_collective_models[epoch_index, minibatch_index] = model_evaluation_val_data[1]
 
         # Iterate over partners for training each individual model
         shuffled_indexes = np.random.permutation(self.partners_count)
@@ -402,7 +402,7 @@ class MultiPartnerLearning:
 
             # Log results
             model_evaluation_val_data= history.history['val_accuracy'][0]
-            self.log_collaborative_round_partner_result(partner, for_loop_idx, val_evaluation)
+            self.log_collaborative_round_partner_result(partner, for_loop_idx, model_evaluation_val_data)
 
             # Save the partner's model in the models' list
             self.save_model_for_partner(model_for_round, partner_index)
