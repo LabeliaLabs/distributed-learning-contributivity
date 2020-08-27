@@ -21,6 +21,8 @@ This enables to parameterize unit tests - the tests are run by Travis each time 
 # --collect-only, --co  only collect tests, don't execute them.
 # pytest tests.py --co
 
+# A "test_" prefix in classes and methods is needed to make a test discoverable by pytest
+
 # Main documentation:
 # https://docs.pytest.org/en/latest/contents.html
 
@@ -406,14 +408,14 @@ class TestDemoClass:
             assert yaml.load(config_quick_debug_file, Loader=yaml.FullLoader)
 
 
-class EndToEndTest:
+class Test_EndToEndTest:
 
-    def EndToEndTest(self):
+    def test_endToEndTest(self):
         """
         EndToEndTest test
         """
         # run test
-        subprocess.run(["python main.py -f config_end_to_end_test.yml"])
+        subprocess.run(["python", "main.py", "-f", "config_end_to_end_test.yml"])
 
         # read results from csv
         # df = pd.read_csv(...)
@@ -421,6 +423,8 @@ class EndToEndTest:
         # Extract score 
         #test_score = df["test_score"]
         test_score = 0.96
+
+        # clean up
         
         # assert  
         assert  test_score > 0.95
