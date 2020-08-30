@@ -275,7 +275,7 @@ class MultiPartnerLearning:
             for index,p in enumerate(self.partners_list):
                 
                 plot_value = np.array(p.weigths_list)
-                x = [i for i in range(len(ref))]
+                x = [i for i in range(len(plot_value))]
                 plt.figure()
                 plt.plot(x,plot_value)
                 plt.ylabel("weights value")
