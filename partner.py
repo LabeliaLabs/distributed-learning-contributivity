@@ -28,6 +28,8 @@ class Partner:
         self.computed_accuracy_list = []
         self.reference_accuracy_list = []
 
+        self.weights_history = []
+        
         self.x_train = None
         self.x_val = None
         self.x_test = None

@@ -266,7 +266,22 @@ class MultiPartnerLearning:
                 plt.plot(x,diff)
                 plt.ylabel("|reference_accuracy-computed_accuracy|")
                 plt.xlabel("Training epoch")
-                plt.savefig(self.save_folder/"graphs/reverence_computed_variation_"+str(index))
+                path_end = "graphs/reverence_computed_variation_"+str(index)+".png"
+                plt.savefig(self.save_folder/path_end)
+                plt.close()
+
+        if self.aggregation_weighting == "sequential":
+
+            for index,p in enumerate(self.partners_list):
+                
+                plot_value = np.array(p.weigths_list)
+                x = [i for i in range(len(ref))]
+                plt.figure()
+                plt.plot(x,plot_value)
+                plt.ylabel("weights value")
+                plt.xlabel("Training epoch")
+                path_end = "graphs/weights_evolution_"+str(index)+".png"
+                plt.savefig(self.save_folder/path_end)
                 plt.close()
 
         plt.figure()
@@ -573,10 +588,13 @@ class MultiPartnerLearning:
             alpha = self.sequential_weighting_ponderation
             if self.epoch_index == 0:
                 self.aggregation_weights = [1 for i in range(len(self.partners_list))]
+                for index,p in enumerate(self.partners_list):
+                    p.weights_history.append(self.aggregation_weights[index])
             else:
                 for index,p in enumerate(self.partners_list):
+                    
                     self.aggregation_weights[index] = (alpha)*self.scores_last_learning_round[index] + (1-alpha)*self.aggregation_weights[index]
-            
+                    p.weights_history.append(self.aggregation_weights[index])
 
         else:
             raise NameError("The aggregation_weighting value [" + self.aggregation_weighting + "] is not recognized.")
