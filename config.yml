@@ -22,7 +22,7 @@ scenario_params_list:
   methods:
     - ["Shapley values"]
   minibatch_count: 
-    - 500
+    - 1
   gradient_updates_per_pass_count:
     - 1
   dataset_proportion:
