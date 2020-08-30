@@ -435,7 +435,7 @@ class MultiPartnerLearning:
                 history = self.collaborative_round_fit(
                     partner_model, train_data_for_fit_iteration, self.val_data, partner.batch_size)
 
-                reference_accuracy = partner_model.evaluate(x = x_val, y = y_val)
+                reference_accuracy = partner_model.evaluate(x = x_val, y = y_val)[1]
                 computed_accuracy = 0
 
                 full_test_size = sum([len(partner.y_test) for partner in partners_test_list])
