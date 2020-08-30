@@ -15,16 +15,17 @@ scenario_params_list:
     - ['fully_specified', [[5000,5000, [0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1]], [5000,5000, [0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1]], [5000,5000, [0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1]]]]
   multi_partner_learning_approach:
     - 'qavg'
+    - 'fedavg'
   aggregation_weighting: 
     - 'sequential'
   epoch_count: 
-    - 1
+    - 10
   methods:
     - ["Shapley values","Independent scores"]
   minibatch_count: 
-    - 1
+    - 30
   gradient_updates_per_pass_count:
-    - 1
+    - 8
   dataset_proportion:
     - 1
 
