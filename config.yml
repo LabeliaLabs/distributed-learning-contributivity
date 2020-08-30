@@ -12,19 +12,19 @@ scenario_params_list:
   amounts_per_partner: 
     - [0.4, 0.3, 0.3]
   samples_split_option: 
-    - ['fully_specified', [[5000,5000, [0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1]], [5000,5000, [0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1]], [5000,5000, [0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1]]]]
+    - ['fully_specified', [[500,500, [0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1]], [500,500, [0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1]], [500,500, [0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1]]]]
   multi_partner_learning_approach:
     - 'qavg'
   aggregation_weighting: 
     - 'sequential'
   epoch_count: 
-    - 38
+    - 1
   methods:
-    - ["Shapley values", "Independent scores", "TMCS"]
+    - ["Shapley values"]
   minibatch_count: 
-    - 20
+    - 500
   gradient_updates_per_pass_count:
-    - 8
+    - 1
   dataset_proportion:
     - 1
 
