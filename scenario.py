@@ -130,7 +130,7 @@ class Scenario:
         # ---------------------------------------------------
 
         self.mpl = None
-        self.evaluation_partner_number = None
+        self.evaluation_partner_numbers = None
         self.sequential_weighting_ponderation = None
 
         # Multi-partner learning approach
@@ -150,12 +150,12 @@ class Scenario:
                 if self.multi_partner_learning_approach == "qavg":
                     
                     # for specifiying evaluation on subpart of ther dataset 
-                    if "evaluation_partner_number" in params:
+                    if "evaluation_partner_numbers" in params:
                         
-                        self.evaluation_partner_number = params['evaluation_partner_numbers']
+                        self.evaluation_partner_numbers = params['evaluation_partner_numbers']
 
                     else:
-                        self.evaluation_partner_number = len(self.partners_list)
+                        self.evaluation_partner_numbers = len(self.partners_list)
 
             else:
                 raise Exception(f"Multi-partner learning approach '{approach}' is not a valid approach.")

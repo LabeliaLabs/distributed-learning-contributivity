@@ -154,6 +154,9 @@ def get_random_index_from_weighted_list(weighted_list):
 
     return None
 
+def distance_vector_numpy(a,b):
+
+    return np.sqrt(np.sum((a-b)**2))
 
 def distance_vector_dictionnary(a,b):
 

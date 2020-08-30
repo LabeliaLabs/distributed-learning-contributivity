@@ -25,6 +25,9 @@ class Partner:
         self.final_nb_samples = int
         self.final_nb_samples_p_cluster = int
 
+        self.computed_accuracy_list = []
+        self.reference_accuracy_list = []
+
         self.x_train = None
         self.x_val = None
         self.x_test = None

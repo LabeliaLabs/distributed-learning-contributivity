@@ -182,7 +182,7 @@ class MultiPartnerLearning:
             self.prepare_aggregation_weights()
             if self.learning_approach == 'seq-pure':
                 model_to_evaluate = sequentially_trained_model
-            elif self.learning_approach in ['fedavg', 'seq-with-final-agg', 'seqavg']:
+            elif self.learning_approach in ['fedavg', 'seq-with-final-agg', 'seqavg','qavg']:
                 model_to_evaluate = self.build_model_from_weights(self.aggregate_model_weights())
             model_evaluation = model_to_evaluate.evaluate(
                 x_val, y_val, batch_size=constants.DEFAULT_BATCH_SIZE, verbose=0,
@@ -254,6 +254,21 @@ class MultiPartnerLearning:
         plt.savefig(self.save_folder / "graphs/federated_training_acc.png")
         plt.close()
 
+        if self.learning_approach == "qavg":
+            for index,p in enumerate(self.partners_list):
+                
+                ref = np.array(p.reference_accuracy_list)
+                comp = np.array(p.computed_accuracy_list)
+
+                diff = np.abs(ref-comp)
+                x = [i for i in range(len(ref))]
+                plt.figure()
+                plt.plot(x,diff)
+                plt.ylabel("|reference_accuracy-computed_accuracy|")
+                plt.xlabel("Training epoch")
+                plt.savefig(self.save_folder/"graphs/reverence_computed_variation_"+str(index))
+                plt.close()
+
         plt.figure()
         plt.plot(self.score_matrix_per_partner[: self.epoch_index + 1, self.minibatch_count - 1, ])
         plt.title("Model accuracy")
@@ -276,6 +291,7 @@ class MultiPartnerLearning:
         is_very_first_minibatch = (epoch_index == 0 and minibatch_index == 0)
         x_val, y_val = self.val_data
 
+        print(y_val)
         # Starting model for each partner is the aggregated model from the previous mini-batch iteration
         if is_very_first_minibatch:  # Except for the very first mini-batch where it is a new model
             logger.debug(f"(fedavg) Very first minibatch of epoch n°{epoch_index}, init new models for each partner")
@@ -326,52 +342,67 @@ class MultiPartnerLearning:
             is_very_first_minibatch = (epoch_index == 0 and minibatch_index == 0)
             x_val, y_val = self.val_data
             partners_list = self.partners_list
+            
+
 
             # Starting model for each partner is the aggregated model from the previous mini-batch iteration
             if is_very_first_minibatch:  # Except for the very first mini-batch where it is a new model
-                logger.debug(f"(fedavg) Very first minibatch of epoch n°{epoch_index}, init new models for each partner")
+                logger.debug(f"(qavg) Very first minibatch of epoch n°{epoch_index}, init new models for each partner")
                 partners_model_list_for_iteration = self.init_with_new_models()
             else:
-                logger.debug(f"(fedavg) Minibatch n°{minibatch_index} of epoch n°{epoch_index}, "
+                logger.debug(f"(qavg) Minibatch n°{minibatch_index} of epoch n°{epoch_index}, "
                             f"init aggregated model for each partner with models from previous round")
                 partners_model_list_for_iteration = self.init_with_agg_models()
-
-            # model_to_evaluate = partners_model_list_for_iteration[0]
-            # model_evaluation = model_to_evaluate.evaluate(x_val, y_val, batch_size=constants.DEFAULT_BATCH_SIZE, verbose=0)
-            # self.score_matrix_collective_models[epoch_index, minibatch_index] = model_evaluation[1]
-            
 
             # Select partners for model testing
             # We use a method of divergence between two partners based on label distribution difference between them.
             # We select k points which are closest from all label repartition vectors barycenter
-            labels = list(set(y_val))
             
-            mean_label_repartion = {label:0 for label in labels}
+            partner_repartition_list = []
+            for partner_index,p in enumerate(partners_list):
+                p_rep_vector = np.zeros(len(p.y_val[0]))
 
-            for p in partners_list:
+                for val in p.y_val:
+
+                    p_rep_vector+=val
+
+                p_rep_vector/=np.sum(p_rep_vector)
+                partner_repartition_list.append(p_rep_vector)
+
+            mean_vector = np.zeros(len(partner_repartition_list[0]))
+
+            for repartition in partner_repartition_list:
+
+                mean_vector += repartition
+
+            mean_vector/= len(partner_repartition_list)
+            partner_distance = []
+
+            for partner_index,p in enumerate(self.partners_list):
+
+                partner_distance.append(utils.distance_vector_numpy(mean_vector,partner_repartition_list[partner_index]))
+
+            idx = np.argsort(partner_distance)[0:self.evaluation_partner_numbers]
+            partners_test_list = []
+            for index in idx:
+                partners_test_list.append(self.partners_list[idx[index]])
+
+            model_to_evaluate = partners_model_list_for_iteration[0]
+            model_evaluation = 0
+
+            full_test_size = sum([len(partner.y_test) for partner in partners_test_list])
+
+            for partner_test in partners_test_list:
                 
-                for label,size in zip(p.label_repartition):
-                    
-                    mean_label_repartion[label] += size
+                size_coefficient = len( partner_test.y_test ) / full_test_size
+                model_evaluation += size_coefficient * model_to_evaluate.evaluate(x=partner_test.x_test, y=partner_test.y_test)[1]
 
-            for label,size in zip(mean_label_repartion):
+            model_evaluation /= len(partners_test_list)
 
-                mean_label_repartion[label]/= len(partners_list)
-
-
-            testing_partner_list = []
-
-            for i,p in enumerate(partners_list):
-                
-                distance = utils.distance_vector_dictionnary(mean_label_repartion,p.label_repartition,batch_size=constants.DEFAULT_BATCH_SIZE, verbose=0)
-                testing_partner_list.append((distance,i))
-
-            sorted_partners_list = sorted(testing_partner_list, key=lambda tup: tup[0])   
-
-            # TODO : include parameter for node number in parsing 
-            final_partners_list = sorted_partners_list[:self.evaluation_partner_numbers] 
-
-            partners_test_list = [partners_list[i] for (d,i) in final_partners_list]
+            # model_evaluation = model_to_evaluate.evaluate(x=partner_test_x.x_test)
+            # model_evaluation = model_to_evaluate.evaluate(x_val, y_val, batch_size=constants.DEFAULT_BATCH_SIZE, verbose=0)
+            self.score_matrix_collective_models[epoch_index, minibatch_index] = model_evaluation
+            
 
             # Iterate over partners for training each individual model
             for partner_index, partner in enumerate(self.partners_list):
@@ -402,7 +433,7 @@ class MultiPartnerLearning:
                 computed_accuracy /= len(partners_test_list)
 
                 p.computed_accuracy_list.append(computed_accuracy)
-                p.refference_accuracy_list.append(reference_accuracy)
+                p.reference_accuracy_list.append(reference_accuracy)
 
                 # Log results of the round
                 self.log_collaborative_round_partner_result(partner, partner_index, history.history["val_accuracy"][0])
@@ -540,7 +571,11 @@ class MultiPartnerLearning:
             self.aggregation_weights = self.scores_last_learning_round / np.sum(self.scores_last_learning_round)
         elif self.aggregation_weighting == "sequential":        
             alpha = self.sequential_weighting_ponderation
-            self.aggregation_weights = (alpha)*self.scores_last_learning_round + (1-alpha)*self.aggregation_weights
+            if self.epoch_index == 0:
+                self.aggregation_weights = [1 for i in range(len(self.partners_list))]
+            else:
+                for index,p in enumerate(self.partners_list):
+                    self.aggregation_weights[index] = (alpha)*self.scores_last_learning_round[index] + (1-alpha)*self.aggregation_weights[index]
             
 
         else:
@@ -649,7 +684,7 @@ def init_multi_partner_learning_from_scenario(scenario, is_save_data=True):
         scenario.is_early_stopping,
         is_save_data,
         scenario.save_folder,
-        scenario.evaluation_partner_number,
+        scenario.evaluation_partner_numbers,
         scenario.sequential_weighting_ponderation
     )
 
