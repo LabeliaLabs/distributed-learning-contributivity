@@ -274,7 +274,7 @@ class MultiPartnerLearning:
 
             for index,p in enumerate(self.partners_list):
                 
-                plot_value = np.array(p.weigths_list)
+                plot_value = np.array(p.weights_history)
                 x = [i for i in range(len(plot_value))]
                 plt.figure()
                 plt.plot(x,plot_value)
