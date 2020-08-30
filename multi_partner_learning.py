@@ -306,7 +306,6 @@ class MultiPartnerLearning:
         is_very_first_minibatch = (epoch_index == 0 and minibatch_index == 0)
         x_val, y_val = self.val_data
 
-        print(y_val)
         # Starting model for each partner is the aggregated model from the previous mini-batch iteration
         if is_very_first_minibatch:  # Except for the very first mini-batch where it is a new model
             logger.debug(f"(fedavg) Very first minibatch of epoch n°{epoch_index}, init new models for each partner")
@@ -358,8 +357,7 @@ class MultiPartnerLearning:
             x_val, y_val = self.val_data
             partners_list = self.partners_list
             
-
-
+         
             # Starting model for each partner is the aggregated model from the previous mini-batch iteration
             if is_very_first_minibatch:  # Except for the very first mini-batch where it is a new model
                 logger.debug(f"(qavg) Very first minibatch of epoch n°{epoch_index}, init new models for each partner")
@@ -398,9 +396,12 @@ class MultiPartnerLearning:
                 partner_distance.append(utils.distance_vector_numpy(mean_vector,partner_repartition_list[partner_index]))
 
             idx = np.argsort(partner_distance)[0:self.evaluation_partner_numbers]
+
             partners_test_list = []
+            
             for index in idx:
                 partners_test_list.append(self.partners_list[idx[index]])
+
 
             model_to_evaluate = partners_model_list_for_iteration[0]
             model_evaluation = 0

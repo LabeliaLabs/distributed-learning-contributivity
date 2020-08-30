@@ -113,6 +113,8 @@ class Contributivity:
                 is_early_stopping=True,
                 is_save_data=False,
                 save_folder=the_scenario.save_folder,
+                evaluation_partner_numbers=the_scenario.evaluation_partner_numbers,
+                sequential_weighting_ponderation=the_scenario.sequential_weighting_ponderation
             )
             mpl.compute_test_score()
             self.charac_fct_values[tuple(subset)] = mpl.test_score
