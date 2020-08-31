@@ -21,6 +21,9 @@ This enables to parameterize unit tests - the tests are run by Travis each time 
 # --collect-only, --co  only collect tests, don't execute them.
 # pytest tests.py --co
 
+# -v run the tests in verbose mode, outputting one line per test
+# pytest -v tests.py
+
 # A "test_" prefix in classes and methods is needed to make a test discoverable by pytest
 
 # Main documentation:
