@@ -11,7 +11,7 @@ import constants
 from pathlib import Path
 
 
-class Test_end_to_end_test:
+class Test_EndToEndTest:
 
     def test_mnist(self):
         """
@@ -32,5 +32,4 @@ class Test_end_to_end_test:
         # Extract score 
         min_test_score = df["mpl_test_score"].min()
         
-        assert  min_test_score > 0.96
-        
+        assert min_test_score > 0.96
