@@ -56,6 +56,7 @@ from dataset import Dataset
 from scenario import Scenario
 from contributivity import Contributivity
 from multi_partner_learning import MultiPartnerLearning
+import constants
 
 ######
 # Fixture Iterate: to generate the combination of parameters
@@ -161,7 +162,7 @@ def create_Scenario(iterate_dataset_name, iterate_samples_split_option):
 
 
     full_experiment_name = "unit-test-pytest"
-    experiment_path = Path.cwd() / "experiments" / full_experiment_name
+    experiment_path = Path.cwd() / constants.EXPERIMENTS_FOLDER_NAME / full_experiment_name
 
     # scenar.dataset object is created inside the Scenario constructor
     scenar = Scenario(

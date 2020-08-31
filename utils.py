@@ -10,6 +10,7 @@ from loguru import logger
 from shutil import copyfile
 from itertools import product
 import datetime
+import constants
 
 
 def load_cfg(yaml_filepath):
@@ -113,13 +114,13 @@ def init_result_folder(yaml_filepath, cfg):
     now_str = now.strftime("%Y-%m-%d_%Hh%M")
 
     full_experiment_name = cfg["experiment_name"] + "_" + now_str
-    experiment_path = Path.cwd() / "experiments" / full_experiment_name
+    experiment_path = Path.cwd() / constants.EXPERIMENTS_FOLDER_NAME / full_experiment_name
 
     # Check if experiment folder already exists
     while experiment_path.exists():
         logger.warning(f"Experiment folder, {experiment_path} already exists")
         new_experiment_name = Path(str(experiment_path) + "_bis")
-        experiment_path = Path.cwd() / "experiments" / new_experiment_name
+        experiment_path = Path.cwd() / constants.EXPERIMENTS_FOLDER_NAME / new_experiment_name
         logger.warning(f"Experiment folder has been renamed to: {experiment_path}")
 
     experiment_path.mkdir(parents=True, exist_ok=False)

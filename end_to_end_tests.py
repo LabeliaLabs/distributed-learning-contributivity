@@ -6,6 +6,7 @@ This enables to parameterize end to end tests - the tests are run by Travis each
 import pytest
 import pandas as pd
 import subprocess
+import constants
 
 from pathlib import Path
 
@@ -14,17 +15,17 @@ class Test_end_to_end_test:
 
     def test_mnist(self):
         """
-        EndToEndTest test
+        Test performance on MNIST dataset after one epoch
         """
         # run test
         subprocess.run(["python", "main.py", "-f", "config_end_to_end_test.yml"], capture_output=True)
 
         # Get latest experiment folder
-        root_folder = Path().absolute() / "experiments" 
+        root_folder = Path().absolute() / constants.EXPERIMENTS_FOLDER_NAME
         subfolder_list = list(root_folder.glob('*end_to_end_test*'))
         subfolder_list_creation_time = [f.stat().st_ctime for f in subfolder_list]
         latest_subfolder_idx =  subfolder_list_creation_time.index(max(subfolder_list_creation_time))
-        
+
         experiment_path = subfolder_list[latest_subfolder_idx]
         df = pd.read_csv(experiment_path / "results.csv")
 
