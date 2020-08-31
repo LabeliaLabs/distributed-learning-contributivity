@@ -10,12 +10,9 @@ scenario_params_list:
      - [0.4, 0.3, 0.3]
    samples_split_option: 
      - ['basic', 'random']
-#     - ['basic', 'stratified']
    multi_partner_learning_approach:
      - 'fedavg'
      - 'seq-pure'
-#     - 'seq-with-final-agg'
-#     - 'seqavg'
    epoch_count: 
      - 1
    minibatch_count: 
