@@ -41,6 +41,8 @@ This enables to parameterize unit tests - the tests are run by Travis each time 
 # Test architecture
 # https://docs.pytest.org/en/latest/goodpractices.html#test-discovery
 
+import sys
+sys.path.append("..")
 import utils
 import yaml
 import pytest
