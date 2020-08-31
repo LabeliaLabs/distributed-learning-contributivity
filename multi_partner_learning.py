@@ -400,7 +400,7 @@ class MultiPartnerLearning:
             partners_test_list = []
             
             for index in idx:
-                partners_test_list.append(self.partners_list[idx[index]])
+                partners_test_list.append(self.partners_list[index])
 
 
             model_to_evaluate = partners_model_list_for_iteration[0]
