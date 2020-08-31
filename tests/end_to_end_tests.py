@@ -20,7 +20,7 @@ class Test_EndToEndTest:
         Test performance on MNIST dataset after one epoch
         """
         # run test
-        subprocess.run(["python", "main.py", "-f", "config_end_to_end_test.yml"], capture_output=True)
+        subprocess.run(["python", "main.py", "-f", "tests/config_end_to_end_test.yml"])
 
         # Get latest experiment folder
         root_folder = Path().absolute() / constants.EXPERIMENTS_FOLDER_NAME
