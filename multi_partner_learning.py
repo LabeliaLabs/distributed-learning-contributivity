@@ -15,6 +15,7 @@ import operator
 from loguru import logger
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import log_loss
+from sklearn.externals.joblib import dump
 
 import constants
 
@@ -221,10 +222,19 @@ class MultiPartnerLearning:
         if not os.path.isdir(model_folder):
             os.makedirs(model_folder)
 
-        model_to_save.save_weights(os.path.join(model_folder, self.dataset_name+'_final_weights.h5'))
-        model_weights = model_to_save.get_weights()
+        if isinstance(model_to_save, type(LogisticRegression())):
+            dump(model_to_save, os.path.join(model_folder, self.dataset_name+'_final_weights.h5'))
+            coefs = np.array(model_to_save.coef_ )
+            intercepts = np.array(model_to_save.intercept_ )
 
-        np.save(os.path.join(model_folder, self.dataset_name+'_final_weights.npy'),
+            np.savez(os.path.join(model_folder, self.dataset_name+'_final_weights.npy'),
+                name1=coefs, name2=intercepts)
+
+        else:
+            model_to_save.save_weights(os.path.join(model_folder, self.dataset_name+'_final_weights.h5'))
+            model_weights = model_to_save.get_weights()
+
+            np.save(os.path.join(model_folder, self.dataset_name+'_final_weights.npy'),
                 model_weights)
 
     def save_data(self):
