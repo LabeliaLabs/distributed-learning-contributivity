@@ -21,6 +21,11 @@ This enables to parameterize unit tests - the tests are run by Travis each time 
 # --collect-only, --co  only collect tests, don't execute them.
 # pytest tests.py --co
 
+# -v run the tests in verbose mode, outputting one line per test
+# pytest -v tests.py
+
+# A "test_" prefix in classes and methods is needed to make a test discoverable by pytest
+
 # Main documentation:
 # https://docs.pytest.org/en/latest/contents.html
 
@@ -36,6 +41,8 @@ This enables to parameterize unit tests - the tests are run by Travis each time 
 # Test architecture
 # https://docs.pytest.org/en/latest/goodpractices.html#test-discovery
 
+import sys
+sys.path.append("..")
 import utils
 import yaml
 import pytest
@@ -54,6 +61,7 @@ from dataset import Dataset
 from scenario import Scenario
 from contributivity import Contributivity
 from multi_partner_learning import MultiPartnerLearning
+import constants
 
 ######
 # Fixture Iterate: to generate the combination of parameters
@@ -159,7 +167,7 @@ def create_Scenario(iterate_dataset_name, iterate_samples_split_option):
 
 
     full_experiment_name = "unit-test-pytest"
-    experiment_path = Path.cwd() / "experiments" / full_experiment_name
+    experiment_path = Path.cwd() / constants.EXPERIMENTS_FOLDER_NAME / full_experiment_name
 
     # scenar.dataset object is created inside the Scenario constructor
     scenar = Scenario(

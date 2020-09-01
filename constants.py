@@ -16,5 +16,8 @@ GPU_MEMORY_LIMIT_MB = 4096
 INFO_LOGGING_FILE_NAME = "info.log"
 DEBUG_LOGGING_FILE_NAME = "debug.log"
 
+# Paths
+EXPERIMENTS_FOLDER_NAME = "experiments"
+
 # Contributivity methods names
 # TODO
