@@ -100,6 +100,9 @@ venv.bak/
 # VScode project settings
 .vscode/
 
+# PyCharm project setting
+.idea
+
 # mkdocs documentation
 /site
 
@@ -110,3 +113,6 @@ nohup.out
 
 trash/
 experiments/
+
+# datasets
+datasets/local_data/

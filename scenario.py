@@ -3,7 +3,7 @@
 This enables to parameterize a desired scenario to mock a multi-partner ML project.
 """
 
-from datasets import dataset_mnist, dataset_cifar10, dataset_titanic
+from datasets import dataset_mnist, dataset_cifar10, dataset_titanic, dataset_esc50
 from sklearn.model_selection import train_test_split
 import datetime
 import os
@@ -15,7 +15,6 @@ from loguru import logger
 import operator
 import random
 
-from dataset import Dataset
 import constants
 from partner import Partner
 
@@ -46,7 +45,7 @@ class Scenario:
             raise Exception(f"Unrecognised parameters {x}, check your .yml file")
 
         # Get and verify which dataset is configured
-        supported_datasets_names = ["mnist", "cifar10", "titanic"]
+        supported_datasets_names = ["mnist", "cifar10", "titanic", "esc50"]
         if "dataset_name" in params:
             dataset_name = params["dataset_name"]
             if dataset_name not in supported_datasets_names:
@@ -62,6 +61,8 @@ class Scenario:
             dataset_module = dataset_cifar10
         elif dataset_name == "titanic":
             dataset_module = dataset_titanic
+        elif dataset_name == "esc50":
+            dataset_module = dataset_esc50
         else:
             raise Exception(f"Dataset named '{dataset_name}' is not supported (yet). You could add it!")
 
@@ -73,17 +74,7 @@ class Scenario:
         else:
             self.dataset_proportion = 1  # default
 
-        self.dataset = Dataset(
-            dataset_name,
-            dataset_module.x_train,
-            dataset_module.x_test,
-            dataset_module.y_train,
-            dataset_module.y_test,
-            dataset_module.input_shape,
-            dataset_module.num_classes,
-            dataset_module.preprocess_dataset_labels,
-            dataset_module.generate_new_model_for_dataset,
-        )
+        self.dataset = dataset_module.generate_new_dataset()
 
         if self.dataset_proportion < 1:
             self.shorten_dataset_proportion()
@@ -569,10 +560,10 @@ class Scenario:
             data_count = np.bincount(partner.y_train)
 
             # Fill with 0
-            while len(data_count) < 10:
+            while len(data_count) < self.dataset.num_classes:
                 data_count = np.append(data_count, 0)
 
-            plt.bar(np.arange(0, 10), data_count)
+            plt.bar(np.arange(0, self.dataset.num_classes), data_count)
             plt.ylabel("partner " + str(partner.id))
 
         plt.suptitle("Data distribution")

@@ -9,10 +9,15 @@ from keras.layers import Dense, Dropout, Activation, Flatten
 from keras.layers import Conv2D, MaxPooling2D
 import keras
 
+from . import dataset
+
+# Init dataset-specific variables
+input_shape = (32, 32, 3)
+num_classes = 10
+
 
 # Data samples pre-processing method for inputs
 def preprocess_dataset_inputs(x):
-
     x = x.astype("float32")
     x /= 255
 
@@ -21,24 +26,32 @@ def preprocess_dataset_inputs(x):
 
 # Data samples pre-processing method for labels
 def preprocess_dataset_labels(y):
-
     y = keras.utils.to_categorical(y, num_classes)
 
     return y
 
 
-# Load and flatten data
-(x_train, y_train), (x_test, y_test) = cifar10.load_data()
-y_train = y_train.flatten()
-y_test = y_test.flatten()
+def generate_new_dataset():
+    (x_train, y_train), (x_test, y_test) = cifar10.load_data()
+    y_train = y_train.flatten()
+    y_test = y_test.flatten()
 
-# Init dataset-specific variables
-input_shape = (32, 32, 3)
-num_classes = 10
+    # Pre-process inputs
+    x_train = preprocess_dataset_inputs(x_train)
+    x_test = preprocess_dataset_inputs(x_test)
 
-# Pre-process inputs
-x_train = preprocess_dataset_inputs(x_train)
-x_test = preprocess_dataset_inputs(x_test)
+    dataset_obj = dataset.Dataset(
+        "cifar10",
+        x_train,
+        x_test,
+        y_train,
+        y_test,
+        input_shape,
+        num_classes,
+        preprocess_dataset_labels,
+        generate_new_model_for_dataset,
+    )
+    return dataset_obj
 
 
 # Model structure and generation
