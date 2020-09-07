@@ -15,7 +15,7 @@ import operator
 from loguru import logger
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import log_loss
-from sklearn.externals.joblib import dump
+from sklearn.externals.joblib import dump, load
 
 import constants
 
@@ -220,11 +220,11 @@ class MultiPartnerLearning:
             os.makedirs(model_folder)
 
         if isinstance(model_to_save, type(LogisticRegression())):
-            dump(model_to_save, os.path.join(model_folder, self.dataset_name+'_final_weights.h5'))
+            dump(model_to_save, os.path.join(model_folder, self.dataset_name+'_final_weights.joblib'))
             coefs = np.array(model_to_save.coef_)
             intercepts = np.array(model_to_save.intercept_)
 
-            np.savez(os.path.join(model_folder, self.dataset_name+'_final_weights.npy'), name1=coefs, name2=intercepts)
+            np.savez(os.path.join(model_folder, self.dataset_name+'_final_weights.npy'), coefs=coefs, intercepts=intercepts)
 
         else:
             model_to_save.save_weights(os.path.join(model_folder, self.dataset_name+'_final_weights.h5'))
@@ -497,7 +497,10 @@ class MultiPartnerLearning:
         # Generate a new model and add it to the list
         if self.use_saved_weights:
             new_model = self.generate_new_model()
-            new_model.load_weights(self.init_model_from)
+            if isinstance(new_model, type(LogisticRegression())):
+                new_model = load(self.init_model_from)
+            else:
+                new_model.load_weights(self.init_model_from)
         else:
             new_model = self.generate_new_model()
 
@@ -521,7 +524,10 @@ class MultiPartnerLearning:
         new_model = self.generate_new_model()
 
         if self.use_saved_weights:
-            new_model.load_weights(self.init_model_from)
+            if isinstance(new_model, type(LogisticRegression())):
+                new_model = load(self.init_model_from)
+            else:
+                new_model.load_weights(self.init_model_from)
 
         return new_model
 
