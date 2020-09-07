@@ -10,7 +10,6 @@ scenario_params_list:
 =======
  - partners_count: 
      - 10
->>>>>>> add notebook
    amounts_per_partner: 
      - [0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1]
    samples_split_option: 
