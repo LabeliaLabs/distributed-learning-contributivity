@@ -4,8 +4,6 @@ scenario_params_list:
  - dataset_name:
     'mnist':
     - 'random_initialization'
-    'cifar10':
-    - 'random_initialization'
    partners_count:
     - 3
    amounts_per_partner:
@@ -28,4 +26,3 @@ scenario_params_list:
     - 2
    minibatch_count:
     - 2
-
