@@ -6,7 +6,6 @@ Functions for model training and evaluation (single-partner and multi-partner ca
 import os
 from timeit import default_timer as timer
 import pickle
-import keras
 from keras.backend.tensorflow_backend import clear_session
 from keras.callbacks import EarlyStopping
 import numpy as np
@@ -65,7 +64,8 @@ class MultiPartnerLearning:
         self.aggregation_weights = []
         self.models_weights_list = [None] * self.partners_count
         self.scores_last_learning_round = [None] * self.partners_count
-        self.score_matrix_per_partner = np.nan * np.zeros(shape=(self.epoch_count, self.minibatch_count, self.partners_count))
+        self.score_matrix_per_partner = np.nan * np.zeros(
+            shape=(self.epoch_count, self.minibatch_count, self.partners_count))
         self.score_matrix_collective_models = np.nan * np.zeros(shape=(self.epoch_count, self.minibatch_count + 1))
         self.loss_collective_models = []
         self.test_score = None
@@ -87,16 +87,22 @@ class MultiPartnerLearning:
 
         # Set if early stopping if needed
         cb = []
+        es = None
         if self.is_early_stopping:
             es = EarlyStopping(monitor='val_loss', mode='min', verbose=0, patience=constants.PATIENCE)
             cb.append(es)
 
         # Train model
         logger.info("   Training model...")
-        history = self.fit_model(model, (partner.x_train, partner.y_train), self.val_data, partner.batch_size, self.epoch_count)
+        self.fit_model(model,
+                       (partner.x_train, partner.y_train),
+                       self.val_data,
+                       partner.batch_size,
+                       self.epoch_count,
+                       )
 
         # Evaluate trained model
-        model_evaluation_test_data= self.evaluate_model(model, self.test_data)
+        model_evaluation_test_data = self.evaluate_model(model, self.test_data)
         logger.info(f"   Model evaluation on test data: "
                     f"{list(zip(model.metrics_names, ['%.3f' % elem for elem in model_evaluation_test_data]))}")
 
@@ -224,7 +230,10 @@ class MultiPartnerLearning:
             coefs = np.array(model_to_save.coef_)
             intercepts = np.array(model_to_save.intercept_)
 
-            np.savez(os.path.join(model_folder, self.dataset_name+'_final_weights.npy'), coefs=coefs, intercepts=intercepts)
+            np.savez(os.path.join(model_folder, self.dataset_name+'_final_weights.npy'),
+                     coefs=coefs,
+                     intercepts=intercepts,
+                     )
 
         else:
             model_to_save.save_weights(os.path.join(model_folder, self.dataset_name+'_final_weights.h5'))
@@ -282,7 +291,8 @@ class MultiPartnerLearning:
         # Starting model for each partner is the aggregated model from the previous mini-batch iteration
         if is_very_first_minibatch:  # Except for the very first mini-batch where it is a new model
             if self.use_saved_weights:
-                logger.info(f"(fedavg) Very first minibatch of epoch n°{epoch_index}, init models with previous coalition model for each partner")
+                logger.info(f"(fedavg) Very first minibatch of epoch n°{epoch_index}, "
+                            f"init models with previous coalition model for each partner")
             else:
                 logger.info(f"(fedavg) Very first minibatch of epoch n°{epoch_index}, init new models for each partner")
             partners_model_list_for_iteration = self.init_with_models()
@@ -375,7 +385,8 @@ class MultiPartnerLearning:
         # Starting model for each partner is the aggregated model from the previous collaborative round
         if is_very_first_minibatch:  # Except for the very first mini-batch where it is a new model
             if self.use_saved_weights:
-                logger.info(f"(seqavg) Very first minibatch of epoch n°{epoch_index}, init model with previous coalition model for each partner")
+                logger.info(f"(seqavg) Very first minibatch of epoch n°{epoch_index}, "
+                            f"init model with previous coalition model for each partner")
             else:
                 logger.info(f"(seqavg) Very first minibatch of epoch n°{epoch_index}, init new model for each partner")
             model_for_round = self.init_with_model()
@@ -587,7 +598,11 @@ class MultiPartnerLearning:
                 accuracy = model_to_evaluate.score(x_eval, y_eval)
                 model_evaluation = [loss, accuracy]
         else:
-            model_evaluation = model_to_evaluate.evaluate(x_eval, y_eval, batch_size=constants.DEFAULT_BATCH_SIZE, verbose=0)
+            model_evaluation = model_to_evaluate.evaluate(x_eval,
+                                                          y_eval,
+                                                          batch_size=constants.DEFAULT_BATCH_SIZE,
+                                                          verbose=0,
+                                                          )
         return model_evaluation
 
     def log_collaborative_round_partner_result(self, partner, partner_index, validation_score):
