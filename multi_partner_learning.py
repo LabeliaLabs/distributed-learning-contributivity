@@ -494,7 +494,6 @@ class MultiPartnerLearning:
 
         if isinstance(new_model, type(LogisticRegression())):
             new_model.coef_, new_model.intercept_ = new_weights
-            # new_model.n_iter_ = 0  ## Objective unclear - to be confirmed or removed
         else:
             new_model.set_weights(new_weights)
         return new_model
