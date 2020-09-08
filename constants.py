@@ -21,3 +21,12 @@ EXPERIMENTS_FOLDER_NAME = "experiments"
 
 # Contributivity methods names
 # TODO
+
+# Datasets' Tags
+MNIST = "mnist"
+CIFAR10 = "cifar10"
+TITANIC = "titanic"
+ESC50 = "esc50"
+
+# Supported datasets
+SUPPORTED_DATASETS_NAMES = [MNIST, CIFAR10, TITANIC, ESC50]

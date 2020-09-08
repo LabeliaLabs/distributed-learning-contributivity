@@ -8,6 +8,7 @@ from keras.models import Sequential
 from keras.layers import Dense, Dropout, Activation, Flatten
 from keras.layers import Conv2D, MaxPooling2D
 import keras
+from sklearn.model_selection import train_test_split
 
 from . import dataset
 
@@ -50,8 +51,14 @@ def generate_new_dataset():
         num_classes,
         preprocess_dataset_labels,
         generate_new_model_for_dataset,
+        train_val_split_global,
+        train_test_split_local,
+        train_val_split_local
     )
     return dataset_obj
+
+
+# Load and flatten data
 
 
 # Model structure and generation
@@ -89,3 +96,22 @@ def generate_new_model_for_dataset():
                   metrics=['accuracy'])
 
     return model
+
+
+# train, test, val splits
+
+def train_test_split_local(x, y):
+    return train_test_split(x, y, test_size=0.1, random_state=42)
+
+
+def train_val_split_local(x, y):
+    return train_test_split(x, y, test_size=0.1, random_state=42)
+
+
+def train_val_split_global(x, y):
+    return train_test_split(x, y, test_size=0.1, random_state=42)
+
+
+def train_test_split_global():
+    # The split is already done when importing the dataset
+    return None

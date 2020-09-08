@@ -45,23 +45,23 @@ class Scenario:
             raise Exception(f"Unrecognised parameters {x}, check your .yml file")
 
         # Get and verify which dataset is configured
-        supported_datasets_names = ["mnist", "cifar10", "titanic", "esc50"]
+
         if "dataset_name" in params:
             dataset_name = params["dataset_name"]
-            if dataset_name not in supported_datasets_names:
+            if dataset_name not in constants.SUPPORTED_DATASETS_NAMES:
                 raise Exception(f"Dataset named '{dataset_name}' is not supported (yet). You could add it!")
         else:
-            dataset_name = "mnist"  # default
+            dataset_name = constants.MNIST  # default
         logger.debug(f"Dataset selected: {dataset_name}")
 
         # Reference the module corresponding to the dataset selected and initialize the Dataset object
-        if dataset_name == "mnist":
+        if dataset_name == constants.MNIST:
             dataset_module = dataset_mnist
-        elif dataset_name == "cifar10":
+        elif dataset_name == constants.CIFAR10:
             dataset_module = dataset_cifar10
-        elif dataset_name == "titanic":
+        elif dataset_name == constants.TITANIC:
             dataset_module = dataset_titanic
-        elif dataset_name == "esc50":
+        elif dataset_name == constants.ESC50:
             dataset_module = dataset_esc50
         else:
             raise Exception(f"Dataset named '{dataset_name}' is not supported (yet). You could add it!")
@@ -513,19 +513,15 @@ class Scenario:
 
             # Finalize selection of train data
             x_partner_train = x_train[train_idx, :]
-            y_partner_train = y_train[train_idx, ]
+            y_partner_train = y_train[train_idx,]
 
             # Populate the partner's train dataset
             p.x_train = x_partner_train
             p.y_train = y_partner_train
 
             # Create local validation and test datasets from the partner train data
-            p.x_train, p.x_val, p.y_train, p.y_val = train_test_split(
-                p.x_train, p.y_train, test_size=0.1, random_state=42
-            )
-            p.x_train, p.x_test, p.y_train, p.y_test = train_test_split(
-                p.x_train, p.y_train, test_size=0.1, random_state=42
-            )
+            p.x_train, p.x_val, p.y_train, p.y_val = self.dataset.train_val_split_local(p.x_train, p.y_train)
+            p.x_train, p.x_test, p.y_train, p.y_test = self.dataset.train_test_split_local(p.x_train, p.y_train)
 
             # Update other attributes from partner
             p.final_nb_samples = len(p.x_train)

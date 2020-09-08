@@ -55,6 +55,7 @@ from datasets import dataset_mnist as data_mn
 import multi_partner_learning
 
 from partner import Partner
+
 from scenario import Scenario
 from contributivity import Contributivity
 from multi_partner_learning import MultiPartnerLearning

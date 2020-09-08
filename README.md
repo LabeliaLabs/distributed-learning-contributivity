@@ -169,8 +169,8 @@ Example: `n_repeats: 2`
 #### Scenario-level parameters
 
 ##### Choice of dataset
-`dataset_name`: `'mnist'` (default), `'cifar10'` or `'titanic'`
-MNIST, CIFAR10 and Titanic are currently supported. They come with their associated modules in `/datasets` for loading data, pre-processing inputs, and define a model architecture.\
+`dataset_name`: `'mnist'` (default), `'cifar10'`, `'esc50'` or `'titanic'`
+MNIST, CIFAR10, ESC50 and Titanic are currently supported. They come with their associated modules in `/datasets` for loading data, pre-processing inputs, and define a model architecture.\
 For each dataset, it is possible to provide a path to model weights learned from a previous coalition. Use `'random_initialization'` if you want a random initialization or an empty value as in one of the two following syntaxes:
 
 ```
