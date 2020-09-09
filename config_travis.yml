@@ -1,5 +1,4 @@
-# Please update `config_travis.yml` accordingly
-experiment_name: debug_config
+experiment_name: travis_config
 n_repeats: 1
 scenario_params_list:
  - dataset_name:
