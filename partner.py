@@ -33,9 +33,6 @@ class Partner:
         self.y_val = None
         self.y_test = None
 
-    def get_x_train_len(self):
-        return len(self.x_train)
-
     def corrupt_labels(self):
         for label in self.y_train:
             idx_max = np.argmax(label)

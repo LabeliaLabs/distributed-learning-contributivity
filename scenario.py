@@ -3,7 +3,7 @@
 This enables to parameterize a desired scenario to mock a multi-partner ML project.
 """
 
-from datasets import dataset_mnist, dataset_cifar10
+from datasets import dataset_mnist, dataset_cifar10, dataset_titanic
 from sklearn.model_selection import train_test_split
 import datetime
 import os
@@ -27,8 +27,23 @@ class Scenario:
         # Initialization of the dataset defined in the config of the experiment
         # ---------------------------------------------------------------------
 
+        # Raise Exception if unknown parameters in the .yml file
+
+        params_known = ["dataset_name", "dataset_proportion"]  # Dataset related
+        params_known += ["methods", "multi_partner_learning_approach", "aggregation_weighting"]  # federated learning related
+        params_known += ["partners_count", "amounts_per_partner", "corrupted_datasets", "samples_split_option"]  # Partners related
+        params_known += ["gradient_updates_per_pass_count", "epoch_count", "minibatch_count", "is_early_stopping"]  # Computation related
+        params_known += ["init_model_from"] # Model related
+        params_known += ["is_quick_demo"]
+
+        if not all([x in params_known for x in params]):
+            for x in params:
+                if not x in params_known:
+                    logger.debug(f"Unrecognised parameter: {x}")
+            raise Exception(f"Unrecognised parameters, check your .yml file")
+
         # Get and verify which dataset is configured
-        supported_datasets_names = ["mnist", "cifar10"]
+        supported_datasets_names = ["mnist", "cifar10", "titanic"]
         if "dataset_name" in params:
             dataset_name = params["dataset_name"]
             if dataset_name not in supported_datasets_names:
@@ -42,8 +57,18 @@ class Scenario:
             dataset_module = dataset_mnist
         elif dataset_name == "cifar10":
             dataset_module = dataset_cifar10
+        elif dataset_name == "titanic":
+            dataset_module = dataset_titanic
         else:
             raise Exception(f"Dataset named '{dataset_name}' is not supported (yet). You could add it!")
+
+        # The proportion of the dataset the computation will used
+        if "dataset_proportion" in params:
+            self.dataset_proportion = params["dataset_proportion"]
+            assert self.dataset_proportion > 0, "Error in the config file, dataset_proportion should be > 0"
+            assert self.dataset_proportion <= 1, "Error in the config file, dataset_proportion should be <= 1"
+        else:
+            self.dataset_proportion = 1  # default
 
         self.dataset = Dataset(
             dataset_name,
@@ -56,6 +81,12 @@ class Scenario:
             dataset_module.preprocess_dataset_labels,
             dataset_module.generate_new_model_for_dataset,
         )
+
+        if self.dataset_proportion < 1:
+            self.shorten_dataset_proportion()
+        else:
+            logger.debug(f"Computation use the full dataset for scenario #{scenario_id}")
+
 
         self.nb_samples_used = len(self.dataset.x_train)
         self.final_relative_nb_samples = []
@@ -126,19 +157,19 @@ class Scenario:
         # Number of epochs, mini-batches and fit_batches in ML training
         if "epoch_count" in params:
             self.epoch_count = params["epoch_count"]
-            assert self.epoch_count > 0
+            assert self.epoch_count > 0, "Error: in the provided config file, epoch_count should be > 0"
         else:
             self.epoch_count = 40  # default
 
         if "minibatch_count" in params:
             self.minibatch_count = params["minibatch_count"]
-            assert self.minibatch_count > 0
+            assert self.minibatch_count > 0, "Error: in the provided config file, minibatch_count should be > 0"
         else:
             self.minibatch_count = 20  # default
 
         if "gradient_updates_per_pass_count" in params:
             self.gradient_updates_per_pass_count = params["gradient_updates_per_pass_count"]
-            assert self.gradient_updates_per_pass_count > 0
+            assert self.gradient_updates_per_pass_count > 0, "Error: in the provided config file, gradient_updates_per_pass_count should be > 0"
         else:
             self.gradient_updates_per_pass_count = constants.DEFAULT_GRADIENT_UPDATES_PER_PASS_COUNT
 
@@ -149,8 +180,12 @@ class Scenario:
         else:
             self.is_early_stopping = True  # default
 
-        if "folder_of_starting_model" in params:
-            self.folder_of_starting_model = params["folder_of_starting_model"]
+        # Model used to initialise model
+        self.init_model_from = params["init_model_from"]
+        if params["init_model_from"] == "random_initialization":
+            self.use_saved_weights = False
+        else:
+            self.use_saved_weights = True
 
         # -----------------------------------------------------------------
         #  Configuration of contributivity measurement methods to be tested
@@ -190,19 +225,27 @@ class Scenario:
         self.scenario_id = scenario_id
         self.n_repeat = n_repeat
 
+        if "is_quick_demo" in params:
+            self.is_quick_demo = params["is_quick_demo"]
+            if self.is_quick_demo and self.dataset_proportion < 1:
+                raise Exception("Don't start a quick_demo without the full dataset")
+        else:
+            self.is_quick_demo = False  # default
+
         # The quick demo parameters overwrites previously defined parameters to make the scenario faster to compute
         if "is_quick_demo" in params and params["is_quick_demo"]:
-            # Use less data and less epochs to speed up the computations
+            # Use less data and/or less epochs to speed up the computations
             logger.info("Quick demo: limit number of data and number of epochs.")
-            index_train = np.random.choice(self.dataset.x_train.shape[0], 1000, replace=False)
-            index_val = np.random.choice(self.dataset.x_val.shape[0], 500, replace=False)
-            index_test = np.random.choice(self.dataset.x_test.shape[0], 500, replace=False)
-            self.dataset.x_train = self.dataset.x_train[index_train]
-            self.dataset.y_train = self.dataset.y_train[index_train]
-            self.dataset.x_val = self.dataset.x_val[index_val]
-            self.dataset.y_val = self.dataset.y_val[index_val]
-            self.dataset.x_test = self.dataset.x_test[index_test]
-            self.dataset.y_test = self.dataset.y_test[index_test]
+            if (len(self.dataset.x_train) > 1000):
+                index_train = np.random.choice(self.dataset.x_train.shape[0], 1000, replace=False)
+                index_val = np.random.choice(self.dataset.x_val.shape[0], 500, replace=False)
+                index_test = np.random.choice(self.dataset.x_test.shape[0], 500, replace=False)
+                self.dataset.x_train = self.dataset.x_train[index_train]
+                self.dataset.y_train = self.dataset.y_train[index_train]
+                self.dataset.x_val = self.dataset.x_val[index_val]
+                self.dataset.y_val = self.dataset.y_val[index_val]
+                self.dataset.x_test = self.dataset.x_test[index_test]
+                self.dataset.y_test = self.dataset.y_test[index_test]
             self.epoch_count = 3
             self.minibatch_count = 2
 
@@ -264,6 +307,10 @@ class Scenario:
         self.contributivity_list.append(contributivity)
 
     def instantiate_scenario_partners(self):
+        """Create the partners_list - self.partners_list should be []"""
+
+        if self.partners_list != []:
+            raise Exception("self.partners_list should be []")
 
         self.partners_list = [Partner(i) for i in range(self.partners_count)]
 
@@ -297,7 +344,7 @@ class Scenario:
             shared_clusters_count = max([p.cluster_count for p in partners_with_shared_clusters])
         else:
             shared_clusters_count = 0
-        assert specific_clusters_count + shared_clusters_count <= nb_diff_labels
+        assert specific_clusters_count + shared_clusters_count <= nb_diff_labels, "Error: data samples from the initial dataset are split in clusters per data labels - Incompatibility between the split arguments and the dataset provided - Example: ['advanced', [[7, 'shared'], [6, 'shared'], [2, 'specific'], [1, 'specific']]] means 7 shared clusters and 2 + 1 = 3 specific clusters ==> This scenario can't work with a dataset with less than 10 labels"
 
         # Stratify the dataset into clusters per labels
         x_train_for_cluster, y_train_for_cluster, nb_samples_per_cluster = {}, {}, {}
@@ -386,7 +433,7 @@ class Scenario:
             )
 
         # Check coherence of number of mini-batches versus partner with small dataset
-        assert self.minibatch_count <= min([len(p.x_train) for p in self.partners_list])
+        assert self.minibatch_count <= min([len(p.x_train) for p in self.partners_list]), "Error: in the provided config file and the provided dataset, a partner doesn't have enough data samples to create the minibatches "
 
         if is_logging_enabled:
             logger.info("### Splitting data among partners:")
@@ -412,8 +459,8 @@ class Scenario:
         # ... or receive different amounts?
 
         # Check the percentages of samples per partner and control its coherence
-        assert len(self.amounts_per_partner) == self.partners_count
-        assert np.sum(self.amounts_per_partner) == 1
+        assert len(self.amounts_per_partner) == self.partners_count, "Error: in the provided config file, amounts_per_partner list should have a size equals to partners_count"
+        assert np.sum(self.amounts_per_partner) == 1, "Error: in the provided config file, amounts_per_partner argument: the sum of the proportions you provided isn't equal to 1"
 
         # Then we parameterize this via the splitting_indices to be passed to np.split
         # This is to transform the percentages from the scenario configuration into indices where to split the data
@@ -433,9 +480,9 @@ class Scenario:
         # Create a list of indexes of the samples
         train_idx = np.arange(len(y_train))
 
-        # In the 'stratified' scenario we sort MNIST by labels
+        # In the 'stratified' scenario we sort by labels
         if self.samples_split_description == "stratified":
-            # Sort MNIST by labels
+            # Sort by labels
             y_sorted_idx = y_train.argsort()
             y_train = y_train[y_sorted_idx]
             x_train = x_train[y_sorted_idx]
@@ -488,7 +535,7 @@ class Scenario:
             partner_idx += 1
 
         # Check coherence of number of mini-batches versus smaller partner
-        assert self.minibatch_count <= (min(self.amounts_per_partner) * len(x_train))
+        assert self.minibatch_count <= (min(self.amounts_per_partner) * len(x_train)), "Error: in the provided config file and dataset, a partner doesn't have enough data samples to create the minibatches"
 
         self.nb_samples_used = sum([len(p.x_train) for p in self.partners_list])
         self.final_relative_nb_samples = [p.final_nb_samples / self.nb_samples_used for p in self.partners_list]
@@ -628,3 +675,23 @@ class Scenario:
                 df = df.append(dict_results, ignore_index=True)
 
         return df
+
+    def shorten_dataset_proportion(self):
+        """Truncate the dataset depending on self.dataset_proportion"""
+
+        if self.dataset_proportion == 1:
+            raise Exception("shorten_dataset_proportion shouldn't be called on this scenario, the user targets the full dataset")
+
+        x_train = self.dataset.x_train
+        y_train = self.dataset.y_train
+
+        logger.info(f"We don't use the full dataset: only {self.dataset_proportion*100}%")
+
+        skip_idx = int(round(len(x_train) * self.dataset_proportion))
+        train_idx = np.arange(len(x_train))
+
+        np.random.seed(42)
+        np.random.shuffle(train_idx)
+
+        self.dataset.x_train = x_train[train_idx[0:skip_idx]]
+        self.dataset.y_train = y_train[train_idx[0:skip_idx]]
