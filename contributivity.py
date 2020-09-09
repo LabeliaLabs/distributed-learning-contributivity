@@ -43,9 +43,7 @@ class krigingModel:
         self.K = np.linalg.inv(K)
         self.invK = np.linalg.inv(K)
         Ht_invK_H = H.transpose().dot(self.invK).dot(H)
-        self.beta = (
-            np.linalg.inv(Ht_invK_H).dot(H.transpose()).dot(self.invK).dot(self.Y)
-        )
+        self.beta = np.linalg.inv(Ht_invK_H).dot(H.transpose()).dot(self.invK).dot(self.Y)
 
     def predict(self, x):
         gx = []
@@ -88,9 +86,7 @@ class Contributivity:
         # TODO print only 3 digits
         output += "Contributivity scores: " + str(self.contributivity_scores) + "\n"
         output += "Std of the contributivity scores: " + str(self.scores_std) + "\n"
-        output += (
-            "Normalized contributivity scores: " + str(self.normalized_scores) + "\n"
-        )
+        output += "Normalized contributivity scores: " + str(self.normalized_scores) + "\n"
 
         return output
 
@@ -151,9 +147,7 @@ class Contributivity:
 
         # Define all possible coalitions of players
         coalitions = [
-            list(j)
-            for i in range(len(partners_idx))
-            for j in combinations(partners_idx, i + 1)
+            list(j) for i in range(len(partners_idx)) for j in combinations(partners_idx, i + 1)
         ]
 
         # For each coalition, obtain value of characteristic function...
@@ -161,9 +155,7 @@ class Contributivity:
         characteristic_function = []
 
         for coalition in coalitions:
-            characteristic_function.append(
-                self.not_twice_characteristic(coalition, the_scenario)
-            )
+            characteristic_function.append(self.not_twice_characteristic(coalition, the_scenario))
 
         # Compute Shapley Value for each partner
         # We are using this python implementation: https://github.com/susobhang70/shapley_value
@@ -182,16 +174,16 @@ class Contributivity:
     def compute_independent_scores(self, the_scenario):
         start = timer()
 
-        logger.info("# Launching computation of perf. scores of models trained independently on each partner")
+        logger.info(
+            "# Launching computation of perf. scores of models trained independently on each partner"
+        )
 
         # Initialize a list of performance scores
         performance_scores = []
 
         # Train models independently on each partner and append perf. score to list of perf. scores
         for i in range(len(the_scenario.partners_list)):
-            performance_scores.append(
-                self.not_twice_characteristic(np.array([i]), the_scenario)
-            )
+            performance_scores.append(self.not_twice_characteristic(np.array([i]), the_scenario))
         self.name = "Independent scores raw"
         self.contributivity_scores = np.array(performance_scores)
         self.scores_std = np.zeros(len(performance_scores))
@@ -201,7 +193,8 @@ class Contributivity:
 
     # %% compute Shapley values with the truncated Monte-carlo method
     def truncated_MC(self, the_scenario, sv_accuracy=0.01, alpha=0.9, truncation=0.05):
-        """Return the vector of approximated Shapley value corresponding to a list of partner and a characteristic function using the truncated monte-carlo method."""
+        """Return the vector of approximated Shapley value corresponding to a list of partner and
+        a characteristic function using the truncated monte-carlo method."""
         start = timer()
         n = len(the_scenario.partners_list)
 
@@ -212,9 +205,7 @@ class Contributivity:
             self.name = "TMC Shapley"
             self.contributivity_scores = np.array([characteristic_all_partners])
             self.scores_std = np.array([0])
-            self.normalized_scores = self.contributivity_scores / np.sum(
-                self.contributivity_scores
-            )
+            self.normalized_scores = self.contributivity_scores / np.sum(self.contributivity_scores)
             end = timer()
             self.computation_time_sec = end - start
         else:
@@ -223,9 +214,11 @@ class Contributivity:
             t = 0
             q = norm.ppf((1 - alpha) / 2, loc=0, scale=1)
             v_max = 0
+
+            # Check if the length of the confidence interval  is below the value of sv_accuracy*characteristic_all_partners
             while (
                 t < 100 or t < q ** 2 * v_max / (sv_accuracy) ** 2
-            ):  # Check if the length of the confidence interval  is below the value of sv_accuracy*characteristic_all_partners
+            ):
                 t += 1
 
                 if t == 1:
@@ -254,29 +247,24 @@ class Contributivity:
             self.name = "TMC Shapley"
             self.contributivity_scores = sv
             self.scores_std = np.std(contributions, axis=0) / np.sqrt(t - 1)
-            self.normalized_scores = self.contributivity_scores / np.sum(
-                self.contributivity_scores
-            )
+            self.normalized_scores = self.contributivity_scores / np.sum(self.contributivity_scores)
             end = timer()
             self.computation_time_sec = end - start
 
     # %% compute Shapley values with the truncated Monte-carlo method with a small bias correction
 
     def interpol_TMC(self, the_scenario, sv_accuracy=0.01, alpha=0.9, truncation=0.05):
-        """Return the vector of approximated Shapley value corresponding to a list of partner and a characteristic function using the interpolated truncated monte-carlo method."""
+        """Return the vector of approximated Shapley value corresponding to a list of partner and a characteristic
+        function using the interpolated truncated monte-carlo method."""
         start = timer()
         n = len(the_scenario.partners_list)
         # Characteristic function on all partners
-        characteristic_all_partners = self.not_twice_characteristic(
-            np.arange(n), the_scenario
-        )
+        characteristic_all_partners = self.not_twice_characteristic(np.arange(n), the_scenario)
         if n == 1:
             self.name = "ITMCS"
             self.contributivity_scores = np.array([characteristic_all_partners])
             self.scores_std = np.array([0])
-            self.normalized_scores = self.contributivity_scores / np.sum(
-                self.contributivity_scores
-            )
+            self.normalized_scores = self.contributivity_scores / np.sum(self.contributivity_scores)
             end = timer()
             self.computation_time_sec = end - start
         else:
@@ -308,7 +296,7 @@ class Contributivity:
                             size_of_rest = 0
                             for i in range(j, n):
                                 size_of_rest += len(the_scenario.partners_list[i].y_train)
-                            a = (characteristic_all_partners - char_partnerlists[j])/size_of_rest
+                            a = (characteristic_all_partners - char_partnerlists[j]) / size_of_rest
                             first = False
 
                         size_of_S = len(the_scenario.partners_list[j].y_train)
@@ -326,9 +314,7 @@ class Contributivity:
             self.name = "ITMCS"
             self.contributivity_scores = sv
             self.scores_std = np.std(contributions, axis=0) / np.sqrt(t - 1)
-            self.normalized_scores = self.contributivity_scores / np.sum(
-                self.contributivity_scores
-            )
+            self.normalized_scores = self.contributivity_scores / np.sum(self.contributivity_scores)
             end = timer()
             self.computation_time_sec = end - start
 
@@ -340,16 +326,12 @@ class Contributivity:
         start = timer()
         n = len(the_scenario.partners_list)
         # Characteristic function on all partners
-        characteristic_all_partners = self.not_twice_characteristic(
-            np.arange(n), the_scenario
-        )
+        characteristic_all_partners = self.not_twice_characteristic(np.arange(n), the_scenario)
         if n == 1:
             self.name = "IS_lin Shapley"
             self.contributivity_scores = np.array([characteristic_all_partners])
             self.scores_std = np.array([0])
-            self.normalized_scores = self.contributivity_scores / np.sum(
-                self.contributivity_scores
-            )
+            self.normalized_scores = self.contributivity_scores / np.sum(self.contributivity_scores)
             end = timer()
             self.computation_time_sec = end - start
         else:
@@ -367,9 +349,7 @@ class Contributivity:
             for k in range(n):
                 last_increments.append(
                     characteristic_all_partners
-                    - self.not_twice_characteristic(
-                        np.delete(np.arange(n), k), the_scenario
-                    )
+                    - self.not_twice_characteristic(np.delete(np.arange(n), k), the_scenario)
                 )
                 first_increments.append(
                     self.not_twice_characteristic(np.array([k]), the_scenario)
@@ -439,18 +419,14 @@ class Contributivity:
                     ) - self.not_twice_characteristic(S, the_scenario)
                     # computed the weight p/g
                     contributions[t - 1][k] = (
-                        increment
-                        * renorms[k]
-                        / np.abs(approx_increment(np.array(S), k))
+                        increment * renorms[k] / np.abs(approx_increment(np.array(S), k))
                     )
                 v_max = np.max(np.var(contributions, axis=0))
             shap = np.mean(contributions, axis=0)
             self.name = "IS_lin Shapley"
             self.contributivity_scores = shap
             self.scores_std = np.std(contributions, axis=0) / np.sqrt(t - 1)
-            self.normalized_scores = self.contributivity_scores / np.sum(
-                self.contributivity_scores
-            )
+            self.normalized_scores = self.contributivity_scores / np.sum(self.contributivity_scores)
             end = timer()
             self.computation_time_sec = end - start
 
@@ -564,25 +540,22 @@ class Contributivity:
                         SUk, the_scenario
                     ) - self.not_twice_characteristic(S, the_scenario)
                     contributions[t - 1][k] = (
-                        increment
-                        * renorms[k]
-                        / np.abs(approx_increment(np.array(S), k))
+                        increment * renorms[k] / np.abs(approx_increment(np.array(S), k))
                     )
                 v_max = np.max(np.var(contributions, axis=0))
             shap = np.mean(contributions, axis=0)
             self.name = "IS_reg Shapley"
             self.contributivity_scores = shap
             self.scores_std = np.std(contributions, axis=0) / np.sqrt(t - 1)
-            self.normalized_scores = self.contributivity_scores / np.sum(
-                self.contributivity_scores
-            )
+            self.normalized_scores = self.contributivity_scores / np.sum(self.contributivity_scores)
             end = timer()
             self.computation_time_sec = end - start
 
     # # %% compute Shapley values with the Kriging adaptive importance sampling method
 
     def AIS_Kriging(self, the_scenario, sv_accuracy=0.01, alpha=0.95, update=50):
-        """Return the vector of approximated Shapley value corresponding to a list of partner and a characteristic function using the importance sampling method and a Kriging model."""
+        """Return the vector of approximated Shapley value corresponding to a list of partner
+        and a characteristic function using the importance sampling method and a Kriging model."""
         start = timer()
 
         n = len(the_scenario.partners_list)
@@ -664,9 +637,11 @@ class Contributivity:
         all_renorms = []
         all_models = []
         Subsets = []  # created like this to avoid pointer issue
+
+        # Check if the length of the confidence interval  is below the value of sv_accuracy*characteristic_all_partners
         while (
             t < 100 or t < 4 * q ** 2 * v_max / (sv_accuracy) ** 2
-        ):  # Check if the length of the confidence interval  is below the value of sv_accuracy*characteristic_all_partners
+        ):
             if t == 0:
                 contributions = np.array([np.zeros(n)])
             else:
@@ -683,7 +658,8 @@ class Contributivity:
                     for length_combination in range(len(list_k) + 1):
                         for subset in combinations(
                             list_k, length_combination
-                        ):  # could be avoided as   prob(np.array(subset))*np.abs(approx_increment(np.array(subset),j)) is constant in the combination
+                        ):  # could be avoided as   prob(np.array(subset))*np.abs(approx_increment(np.array(subset),j))
+                            # is constant in the combination
                             renorm += prob(np.array(subset)) * np.abs(
                                 approx_increment(np.array(subset), k, j)
                             )
@@ -698,7 +674,8 @@ class Contributivity:
                 for length_combination in range(len(list_k) + 1):
                     for subset in combinations(
                         list_k, length_combination
-                    ):  # could be avoided as   prob(np.array(subset))*np.abs(approx_increment(np.array(subset),j)) is constant in the combination
+                    ):  # could be avoided as   prob(np.array(subset))*np.abs(approx_increment(np.array(subset),j))
+                        # is constant in the combination
                         cumSum += prob(np.array(subset)) * np.abs(
                             approx_increment(np.array(subset), k, j)
                         )
@@ -724,9 +701,7 @@ class Contributivity:
             self.name = "AIS Shapley"
             self.contributivity_scores = shap
             self.scores_std = np.std(contributions, axis=0) / np.sqrt(t - 1)
-            self.normalized_scores = self.contributivity_scores / np.sum(
-                self.contributivity_scores
-            )
+            self.normalized_scores = self.contributivity_scores / np.sum(self.contributivity_scores)
             end = timer()
             self.computation_time_sec = end - start
 
@@ -747,9 +722,7 @@ class Contributivity:
             self.name = "Stratified MC Shapley"
             self.contributivity_scores = np.array([characteristic_all_partners])
             self.scores_std = np.array([0])
-            self.normalized_scores = self.contributivity_scores / np.sum(
-                self.contributivity_scores
-            )
+            self.normalized_scores = self.contributivity_scores / np.sum(self.contributivity_scores)
             end = timer()
             self.computation_time_sec = end - start
         else:
@@ -786,8 +759,7 @@ class Contributivity:
                         p = np.repeat(1 / N, N)  # alocate uniformly if np.sum(sigma2[k]) == 0
                     else:
                         p = (
-                            np.repeat(1 / N, N) * (1 - e)
-                            + sigma2[k] / np.sum(sigma2[k]) * e
+                            np.repeat(1 / N, N) * (1 - e) + sigma2[k] / np.sum(sigma2[k]) * e
                         )  # alocate more and more as according to sigma2[k] / np.sum(sigma2[k]) as t grows
 
                     strata = np.random.choice(np.arange(N), 1, p=p)[0]
@@ -797,11 +769,7 @@ class Contributivity:
                     cumSum = 0
                     list_k = np.delete(np.arange(N), k)
                     for subset in combinations(list_k, strata):
-                        cumSum += (
-                            factorial(N - 1 - strata)
-                            * factorial(strata)
-                            / factorial(N - 1)
-                        )
+                        cumSum += factorial(N - 1 - strata) * factorial(strata) / factorial(N - 1)
                         if cumSum > u:
                             S = np.array(subset, dtype=int)
                             break
@@ -829,9 +797,7 @@ class Contributivity:
             self.name = "Stratified MC Shapley"
             self.contributivity_scores = shap
             self.scores_std = np.sqrt(var)
-            self.normalized_scores = self.contributivity_scores / np.sum(
-                self.contributivity_scores
-            )
+            self.normalized_scores = self.contributivity_scores / np.sum(self.contributivity_scores)
             end = timer()
             self.computation_time_sec = end - start
 
@@ -844,17 +810,13 @@ class Contributivity:
 
         N = len(the_scenario.partners_list)
         # Characteristic function on all partners
-        characteristic_all_partners = self.not_twice_characteristic(
-            np.arange(N), the_scenario
-        )
+        characteristic_all_partners = self.not_twice_characteristic(np.arange(N), the_scenario)
 
         if N == 1:
             self.name = "WR_SMC Shapley"
             self.contributivity_scores = np.array([characteristic_all_partners])
             self.scores_std = np.array([0])
-            self.normalized_scores = self.contributivity_scores / np.sum(
-                self.contributivity_scores
-            )
+            self.normalized_scores = self.contributivity_scores / np.sum(self.contributivity_scores)
             end = timer()
             self.computation_time_sec = end - start
         else:
@@ -880,14 +842,16 @@ class Contributivity:
                     continuer[k].append(True)
 
             # Sampling
-            while (
-                np.any(continuer) or (1 - alpha) < v_max / (sv_accuracy ** 2)
+            while np.any(continuer) or (1 - alpha) < v_max / (
+                sv_accuracy ** 2
             ):  # Check if the length of the confidence interval  is below the value of sv_accuracy
                 t += 1
                 for k in range(N):
                     # select the strata to add an increment
                     if np.any(continuer[k]):
-                        p = np.array(continuer[k])/np.sum(continuer[k])  # Allocate uniformly among strata that are not fully explored
+                        p = np.array(continuer[k]) / np.sum(
+                            continuer[k]
+                        )  # Allocate uniformly among strata that are not fully explored
                     elif np.sum(sigma2[k]) == 0:
                         continue
                     else:
@@ -897,9 +861,7 @@ class Contributivity:
                     # generate the increment
                     length = len(increments_to_generate[k][strata])
                     subset = np.random.choice(
-                        increments_to_generate[k][strata],
-                        1,
-                        p=np.repeat(1 / length, length),
+                        increments_to_generate[k][strata], 1, p=np.repeat(1 / length, length),
                     )[0]
                     increments_to_generate[k][strata].remove(subset)
 
@@ -925,7 +887,9 @@ class Contributivity:
                         sigma2[k, strata] /= length - 1
                     else:  # Avoid creating a Nan value when length = 1
                         sigma2[k, strata] = 0
-                    sigma2[k, strata] *= (1 / length - factorial(N - 1 - strata) * factorial(strata) / factorial(N-1))
+                    sigma2[k, strata] *= 1 / length - factorial(N - 1 - strata) * factorial(
+                        strata
+                    ) / factorial(N - 1)
                     logger.debug(f"t: {t}, k: {k}, strat: {strata}, sigma2: {sigma2[k]}")
 
                 shap = np.mean(mu, axis=1)
@@ -943,16 +907,16 @@ class Contributivity:
                         if n_k_strata > 20:
                             continuer[k][strata] = False
                         # if a strata as been fully explored we stop allocating to this strata
-                        if len(increments_generated[k][strata]) == factorial(N-1) / (factorial(N - 1 - strata) * factorial(strata)):
+                        if len(increments_generated[k][strata]) == factorial(N - 1) / (
+                            factorial(N - 1 - strata) * factorial(strata)
+                        ):
                             continuer[k][strata] = False
                     var[k] /= N ** 2  # correct the variance of the estimator
                 v_max = np.max(var)
             self.name = "WR_SMC Shapley"
             self.contributivity_scores = shap
             self.scores_std = np.sqrt(var)
-            self.normalized_scores = self.contributivity_scores / np.sum(
-                self.contributivity_scores
-            )
+            self.normalized_scores = self.contributivity_scores / np.sum(self.contributivity_scores)
             end = timer()
             self.computation_time_sec = end - start
 
@@ -975,18 +939,12 @@ class Contributivity:
         elif method_to_compute == "TMCS":
             # Contributivity 3: Truncated Monte Carlo Shapley
             self.truncated_MC(
-                current_scenario,
-                sv_accuracy=sv_accuracy,
-                alpha=alpha,
-                truncation=truncation,
+                current_scenario, sv_accuracy=sv_accuracy, alpha=alpha, truncation=truncation,
             )
         elif method_to_compute == "ITMCS":
             # Contributivity 4: interpolated monte-carlo
             self.interpol_TMC(
-                current_scenario,
-                sv_accuracy=sv_accuracy,
-                alpha=alpha,
-                truncation=truncation,
+                current_scenario, sv_accuracy=sv_accuracy, alpha=alpha, truncation=truncation,
             )
         elif method_to_compute == "IS_lin_S":
             # Contributivity 5: Importance sampling with linear interpolation model
@@ -996,16 +954,12 @@ class Contributivity:
             self.IS_reg(current_scenario, sv_accuracy=sv_accuracy, alpha=alpha)
         elif method_to_compute == "AIS_Kriging_S":
             # Contributivity 7: Adaptative importance sampling with Kriging model
-            self.AIS_Kriging(
-                current_scenario, sv_accuracy=sv_accuracy, alpha=alpha, update=update
-            )
+            self.AIS_Kriging(current_scenario, sv_accuracy=sv_accuracy, alpha=alpha, update=update)
         elif method_to_compute == "SMCS":
             # Contributivity 8:  Stratified Monte Carlo
             self.Stratified_MC(current_scenario, sv_accuracy=sv_accuracy, alpha=alpha)
         elif method_to_compute == "WR_SMC":
             # Contributivity 9: Without replacement Stratified Monte Carlo
-            self.without_replacment_SMC(
-                current_scenario, sv_accuracy=sv_accuracy, alpha=alpha
-            )
+            self.without_replacment_SMC(current_scenario, sv_accuracy=sv_accuracy, alpha=alpha)
         else:
             logger.warning("Unrecognized name of method, statement ignored!")
