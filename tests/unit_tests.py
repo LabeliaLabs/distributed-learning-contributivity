@@ -50,7 +50,7 @@ import numpy as np
 
 from pathlib import Path
 
-from tensorflow.keras.datasets import cifar10,mnist
+from tensorflow.keras.datasets import cifar10, mnist
 
 from datasets import dataset_cifar10 as data_cf
 from datasets import dataset_mnist as data_mn
@@ -68,11 +68,13 @@ import constants
 # of the Scenario Partner MPL Dataset Objects
 ######
 
+
 @pytest.fixture(scope='class', params=['cifar10', 'mnist'])
 def iterate_dataset_name(request):
     yield request.param
 
-@pytest.fixture(scope='class', params=[['basic', 'random'], ['advanced', [[4, 'shared'], [6, 'shared'], [4, 'specific']]]], ids=['basic','advanced'])
+
+@pytest.fixture(scope='class', params=[['basic', 'random'], ['advanced', [[4, 'shared'], [6, 'shared'], [4, 'specific']]]], ids=['basic', 'advanced'])
 def iterate_samples_split_option(request):
     yield request.param
 
@@ -160,11 +162,10 @@ def create_Scenario(iterate_dataset_name, iterate_samples_split_option):
 
     params = {"dataset_name": dataset_name}
     params.update({"partners_count": 3, "amounts_per_partner": [0.2, 0.5, 0.3], "samples_split_option": samples_split_option, "corrupted_datasets": ["not_corrupted"]*3})
-    params.update({"methods":["Shapley values", "Independent scores"], "multi_partner_learning_approach":"fedavg", "aggregation_weighting": "uniform"})
+    params.update({"methods": ["Shapley values", "Independent scores"], "multi_partner_learning_approach": "fedavg", "aggregation_weighting": "uniform"})
     params.update({"gradient_updates_per_pass_count": 5, "epoch_count": 2, "minibatch_count": 2, "is_early_stopping": True})
     params.update({"init_model_from": "random_initialization"})
     params.update({"is_quick_demo": False})
-
 
     full_experiment_name = "unit-test-pytest"
     experiment_path = Path.cwd() / constants.EXPERIMENTS_FOLDER_NAME / full_experiment_name
@@ -231,7 +232,6 @@ class Test_Partner:
             part = Partner(partner_id=0)
             part.corrupt_labels()
 
-
     def test_corrupt_labels_type_elem(self, create_Partner):
         """corrupt_labels raise TypeError if partner.y_train isn't float32"""
         with pytest.raises(TypeError):
@@ -239,13 +239,11 @@ class Test_Partner:
             part.y_train = part.y_train.astype("float64")
             part.corrupt_labels(part)
 
-
     def test_shuffle_labels_type(self):
         """shuffle_labels should be a numpy.ndarray"""
         with pytest.raises(TypeError):
             part = Partner(partner_id=0)
             part.shuffle_labels(part)
-
 
     def test_shuffle_labels_type_elem(self, create_Partner):
         """shuffle_labels raise TypeError if partner.y_train isn't float32"""
@@ -258,8 +256,7 @@ class Test_Partner:
 class Test_Dataset:
 
     def test_generate_new_model(self, create_Dataset):
-        assert create_Dataset.name in {"cifar10","mnist"}
-
+        assert create_Dataset.name in {"cifar10", "mnist"}
 
     def test_train_val_split(self, create_Dataset):
         """train_val_split is used once, just after Dataset being instantiated - this is written to prevent its call from another place"""
@@ -362,7 +359,6 @@ class Test_dataset_mnist:
         greater_than_0 = not False in np.greater_equal(x_test, 0)
         lower_than_1 = not True in np.greater(x_test, 1)
         assert (greater_than_0 and lower_than_1)
-
 
     def test_inputs_shape(self, create_mnist_x):
         """the shape of the elements of x_train and x_test should be equal to input_shape"""

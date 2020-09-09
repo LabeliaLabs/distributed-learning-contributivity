@@ -38,9 +38,9 @@ class Scenario:
 
         if not all([x in params_known for x in params]):
             for x in params:
-                if not x in params_known:
+                if x not in params_known:
                     logger.debug(f"Unrecognised parameter: {x}")
-            raise Exception(f"Unrecognised parameters, check your .yml file")
+            raise Exception(f"Unrecognised parameters {x}, check your .yml file")
 
         # Get and verify which dataset is configured
         supported_datasets_names = ["mnist", "cifar10", "titanic"]
@@ -86,7 +86,6 @@ class Scenario:
             self.shorten_dataset_proportion()
         else:
             logger.debug(f"Computation use the full dataset for scenario #{scenario_id}")
-
 
         self.nb_samples_used = len(self.dataset.x_train)
         self.final_relative_nb_samples = []
@@ -435,7 +434,7 @@ class Scenario:
 
         if is_logging_enabled:
             logger.info("### Splitting data among partners:")
-            logger.info(f"   Advanced split performed.")
+            logger.info("   Advanced split performed.")
             logger.info(f"   Nb of samples split amongst partners: {self.nb_samples_used}")
             logger.info(f"   Partners' relative nb of samples: {[round(p, 2) for p in self.final_relative_nb_samples]} "
                         f"   (versus initially configured: {amounts_per_partner})")
@@ -539,8 +538,8 @@ class Scenario:
         self.final_relative_nb_samples = [p.final_nb_samples / self.nb_samples_used for p in self.partners_list]
 
         if is_logging_enabled:
-            logger.info(f"### Splitting data among partners:")
-            logger.info(f"   Simple split performed.")
+            logger.info("### Splitting data among partners:")
+            logger.info("   Simple split performed.")
             logger.info(f"   Nb of samples split amongst partners: {self.nb_samples_used}")
             for partner in self.partners_list:
                 logger.info(f"   Partner #{partner.id}: "

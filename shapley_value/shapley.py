@@ -1,8 +1,9 @@
+# -*- coding: utf-8 -*-
+
 # From: https://github.com/susobhang70/shapley_value
 # Cloned by @bowni on 2019.10.04 at 3:46pm (Paris time)
 # Adapted by @bowni
 
-#!/usr/bin/env python
 import bisect
 from itertools import combinations
 import math

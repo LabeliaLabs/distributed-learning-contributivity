@@ -24,6 +24,7 @@ import utils
 
 DEFAULT_CONFIG_FILE = "config.yml"
 
+
 @logger.catch
 def main():
 
@@ -103,6 +104,7 @@ def init_logger(args):
     info_debug_id = logger.add(constants.DEBUG_LOGGING_FILE_NAME, level="DEBUG")
     return stream, info_logger_id, info_debug_id
 
+
 def init_gpu_config():
     gpus = tf.config.experimental.list_physical_devices("GPU")
     if gpus:
@@ -110,7 +112,8 @@ def init_gpu_config():
         tf.config.experimental.set_memory_growth(gpus[0], True)
         tf.config.experimental.set_virtual_device_configuration(
                 gpus[0],
-                [tf.config.experimental.VirtualDeviceConfiguration(memory_limit=constants.GPU_MEMORY_LIMIT_MB)])
+                [tf.config.experimental.VirtualDeviceConfiguration(memory_limit=constants.GPU_MEMORY_LIMIT_MB)]
+                )
     else:
         logger.info("No GPU found")
 

@@ -308,12 +308,12 @@ class Contributivity:
                             size_of_rest = 0
                             for i in range(j, n):
                                 size_of_rest += len(the_scenario.partners_list[i].y_train)
-                            a=(characteristic_all_partners - char_partnerlists[j])/size_of_rest
+                            a = (characteristic_all_partners - char_partnerlists[j])/size_of_rest
                             first = False
-                            
+
                         size_of_S = len(the_scenario.partners_list[j].y_train)
-                        char_partnerlists[j + 1] = char_partnerlists[j] + a*size_of_S
-                        
+                        char_partnerlists[j + 1] = char_partnerlists[j] + a * size_of_S
+
                     else:
                         char_partnerlists[j + 1] = self.not_twice_characteristic(
                             permutation[: j + 1], the_scenario
@@ -462,19 +462,16 @@ class Contributivity:
         n = len(the_scenario.partners_list)
 
         if n < 4:
-          
             self.compute_SV(the_scenario)
             self.name = "IS_reg Shapley values"
-            
         else:
-
             # definition of the original density
             def prob(subset):
                 lS = len(subset)
                 return factorial(n - 1 - lS) * factorial(lS) / factorial(n)
 
             # definition of the approximation of the increment
-            # ## compute some  increments
+            # compute some  increments
             permutation = np.random.permutation(n)
             for j in range(n):
                 self.not_twice_characteristic(permutation[: j + 1], the_scenario)
@@ -486,9 +483,9 @@ class Contributivity:
                 for j in range(n):
                     self.not_twice_characteristic(permutation[: j + 1], the_scenario)
 
-            # ## do the regressions
+            # do the regressions
 
-            ###### make the datasets
+            # make the datasets
             def makedata(subset):
                 # compute the size of subset : ||subset||
                 small_partners_list = np.array([the_scenario.partners_list[i] for i in subset])
@@ -509,19 +506,18 @@ class Contributivity:
                 datasets.append(x)
                 outputs.append(y)
 
-            ###### fit the regressions
+            # fit the regressions
             models = []
             for k in range(n):
                 model_k = LinearRegression()
                 model_k.fit(datasets[k], outputs[k])
                 models.append(model_k)
 
-            # ##define the approximation
+            # define the approximation
             def approx_increment(subset, k):
                 return models[k].predict([makedata(subset)])[0]
 
-            # ## compute the renormalization constant of the importance density for all datatsets
-
+            # compute the renormalization constant of the importance density for all datatsets
             renorms = []
             for k in range(n):
                 list_k = np.delete(np.arange(n), k)
@@ -596,8 +592,8 @@ class Contributivity:
             lS = len(subset)
             return factorial(n - 1 - lS) * factorial(lS) / factorial(n)
 
-        #     definition of the approximation of the increment
-        ## compute some  increments to fuel the Kriging
+        # definition of the approximation of the increment
+        # compute some  increments to fuel the Kriging
         S = np.arange(n)
         self.not_twice_characteristic(S, the_scenario)
         for k1 in range(n):
@@ -613,7 +609,6 @@ class Contributivity:
                     self.not_twice_characteristic(S, the_scenario)
 
         # ## do the regressions
-
         def make_coordinate(subset, k):
             assert k not in subset
             # compute the size of subset : ||subset||
@@ -639,8 +634,7 @@ class Contributivity:
             cov.append(covk)
 
         def make_models():
-            ###### make the datasets
-
+            # make the datasets
             datasets = []
             outputs = []
             for k in range(n):
@@ -651,7 +645,7 @@ class Contributivity:
                     y.append(incr)
                 datasets.append(x)
                 outputs.append(y)
-            ###### fit the kriging
+            # fit the kriging
             models = []
             for k in range(n):
                 model_k = krigingModel(2, cov[k])
@@ -659,7 +653,7 @@ class Contributivity:
                 models.append(model_k)
             all_models.append(models)
 
-        # ##define the approximation
+        # define the approximation
         def approx_increment(subset, k, j):
             return all_models[j][k].predict(make_coordinate(subset, k))[0]
 
@@ -789,7 +783,7 @@ class Contributivity:
                 for k in range(N):
                     # select the strata to add an increment
                     if np.sum(sigma2[k]) == 0:
-                        p = np.repeat(1 / N, N) # alocate uniformly if np.sum(sigma2[k]) == 0
+                        p = np.repeat(1 / N, N)  # alocate uniformly if np.sum(sigma2[k]) == 0
                     else:
                         p = (
                             np.repeat(1 / N, N) * (1 - e)
@@ -931,9 +925,9 @@ class Contributivity:
                         sigma2[k, strata] /= length - 1
                     else:  # Avoid creating a Nan value when length = 1
                         sigma2[k, strata] = 0
-                    sigma2[k, strata] *= (1/length-   factorial(N - 1 - strata) * factorial(strata)  / factorial(N-1) )
+                    sigma2[k, strata] *= (1 / length - factorial(N - 1 - strata) * factorial(strata) / factorial(N-1))
                     logger.debug(f"t: {t}, k: {k}, strat: {strata}, sigma2: {sigma2[k]}")
-                
+
                 shap = np.mean(mu, axis=1)
                 var = np.zeros(N)  # variance of the estimator
                 for k in range(N):
@@ -945,11 +939,11 @@ class Contributivity:
                         else:
                             var[k] += sigma2[k, strata] ** 2 / n_k_strata
                         # handle the while condition and the next allocations
-                        ## if the number of allocation is above 20 in each strat we can stop
+                        # if the number of allocation is above 20 in each strat we can stop
                         if n_k_strata > 20:
                             continuer[k][strata] = False
-                        ## if a strata as been fully explored we stop allocating to this strata
-                        if  len(increments_generated[k][strata]) ==  factorial(N-1)/ (factorial(N - 1 - strata) * factorial(strata) ) :
+                        # if a strata as been fully explored we stop allocating to this strata
+                        if len(increments_generated[k][strata]) == factorial(N-1) / (factorial(N - 1 - strata) * factorial(strata)):
                             continuer[k][strata] = False
                     var[k] /= N ** 2  # correct the variance of the estimator
                 v_max = np.max(var)

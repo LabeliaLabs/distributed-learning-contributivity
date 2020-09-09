@@ -138,9 +138,9 @@ class MultiPartnerLearning:
         model_to_evaluate, sequentially_trained_model = None, None
         if self.learning_approach in ['seq-pure', 'seq-with-final-agg']:
             if self.use_saved_weights:
-                logger.info(f"(seq) Init models with previous coalition model for each partner")
+                logger.info("(seq) Init models with previous coalition model for each partner")
             else:
-                logger.info(f"(seq) Init new models for each partner")
+                logger.info("(seq) Init new models for each partner")
             sequentially_trained_model = self.init_with_model()
 
         # Train model (iterate for each epoch and mini-batch)
@@ -207,7 +207,8 @@ class MultiPartnerLearning:
         self.test_score = model_evaluation_test_data[1]  # 0 is for the loss
         self.nb_epochs_done = self.epoch_index + 1
 
-        # Plot training history # TODO: move the data saving and plotting in dedicated functions
+        # Plot training history
+        # TODO: move the data saving and plotting in dedicated functions
         if self.is_save_data:
             self.save_data()
 
@@ -226,27 +227,29 @@ class MultiPartnerLearning:
             os.makedirs(model_folder)
 
         if isinstance(model_to_save, type(LogisticRegression())):
-            dump(model_to_save, os.path.join(model_folder, self.dataset_name+'_final_weights.joblib'))
+            dump(model_to_save, os.path.join(model_folder, self.dataset_name + '_final_weights.joblib'))
             coefs = np.array(model_to_save.coef_)
             intercepts = np.array(model_to_save.intercept_)
 
-            np.savez(os.path.join(model_folder, self.dataset_name+'_final_weights.npy'),
+            np.savez(os.path.join(model_folder, self.dataset_name + '_final_weights.npy'),
                      coefs=coefs,
                      intercepts=intercepts,
                      )
 
         else:
-            model_to_save.save_weights(os.path.join(model_folder, self.dataset_name+'_final_weights.h5'))
+            model_to_save.save_weights(os.path.join(model_folder, self.dataset_name + '_final_weights.h5'))
             model_weights = model_to_save.get_weights()
 
-            np.save(os.path.join(model_folder, self.dataset_name+'_final_weights.npy'), model_weights)
+            np.save(os.path.join(model_folder, self.dataset_name + '_final_weights.npy'), model_weights)
 
     def save_data(self):
         """Save figures, losses and metrics to disk"""
 
-        history_data = {"loss_collective_models": self.loss_collective_models,
-                        "score_matrix_per_partner": self.score_matrix_per_partner,
-                        "score_matrix_collective_models": self.score_matrix_collective_models}
+        history_data = {
+            "loss_collective_models": self.loss_collective_models,
+            "score_matrix_per_partner": self.score_matrix_per_partner,
+            "score_matrix_collective_models": self.score_matrix_collective_models,
+            }
         with open(self.save_folder / "history_data.p", 'wb') as f:
             pickle.dump(history_data, f)
 
