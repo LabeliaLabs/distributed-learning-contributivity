@@ -46,8 +46,6 @@ def main(partners_count, char_func_list):
                     / float(math.factorial(n))
                 )
                 shapley += temp
-                # if i is 0:
-                #     print j, Cui, cmod, n-cmod-1, characteristic_function[k], characteristic_function[l], math.factorial(cmod), math.factorial(n - cmod - 1), math.factorial(n)
 
         cmod = 0
         Cui = [i]

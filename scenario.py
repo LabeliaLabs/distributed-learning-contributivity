@@ -33,7 +33,7 @@ class Scenario:
         params_known += ["methods", "multi_partner_learning_approach", "aggregation_weighting"]  # federated learning related
         params_known += ["partners_count", "amounts_per_partner", "corrupted_datasets", "samples_split_option"]  # Partners related
         params_known += ["gradient_updates_per_pass_count", "epoch_count", "minibatch_count", "is_early_stopping"]  # Computation related
-        params_known += ["init_model_from"] # Model related
+        params_known += ["init_model_from"]  # Model related
         params_known += ["is_quick_demo"]
 
         if not all([x in params_known for x in params]):
