@@ -13,4 +13,3 @@ install:
 script:
   - pytest -v tests/unit_tests.py
   - travis_wait 30 pytest -v tests/end_to_end_tests.py
-  - python main.py -f config_travis.yml
