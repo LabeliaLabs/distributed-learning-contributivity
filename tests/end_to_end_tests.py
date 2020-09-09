@@ -6,10 +6,10 @@ This enables to parameterize end to end tests - the tests are run by Travis each
 import pandas as pd
 import subprocess
 import sys
-sys.path.append("..")
-import constants
-
 from pathlib import Path
+
+sys.path.append("..")
+import constants  # noqa: E402
 
 
 class Test_EndToEndTest:
@@ -32,5 +32,5 @@ class Test_EndToEndTest:
 
         # Extract score
         min_test_score = df["mpl_test_score"].min()
-        
+
         assert min_test_score > 0.95

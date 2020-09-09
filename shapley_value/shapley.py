@@ -35,7 +35,7 @@ def main(partners_count, char_func_list):
                 cmod = len(j)
                 Cui = j[:]
                 bisect.insort_left(Cui, i)
-                l = N.index(j)
+                l = N.index(j)  # noqa: E741
                 k = N.index(Cui)
                 temp = (
                     float(

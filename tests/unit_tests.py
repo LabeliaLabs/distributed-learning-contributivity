@@ -63,7 +63,7 @@ from multi_partner_learning import MultiPartnerLearning
 import sys
 
 sys.path.append("..")
-import constants
+import constants  # noqa: E402
 
 ######
 # Fixture Iterate: to generate the combination of parameters
