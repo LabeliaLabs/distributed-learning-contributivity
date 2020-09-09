@@ -5,6 +5,7 @@ This enables to parameterize the contributivity measurements to be performed.
 
 from __future__ import print_function
 
+import os
 import datetime
 from timeit import default_timer as timer
 import numpy as np
@@ -971,6 +972,7 @@ class Contributivity:
         partner_values = np.exp(w) / (1.0 + np.exp(w))
         previous_partner_values  = np.zeros(the_scenario.partners_count)
         epsilon = 0.002
+
         mpl= multi_partner_learning.MultiPartnerLearning(
                     the_scenario.partners_list,
                     1,
@@ -978,13 +980,13 @@ class Contributivity:
                     the_scenario.dataset,
                     the_scenario.multi_partner_learning_approach,
                     the_scenario.aggregation_weighting,
-                    None,
-                    the_scenario.is_early_stopping,
-                    is_save_data=False,
-                    save_folder="",
+                    is_early_stopping=False,
+                    is_save_data=True,
+                    save_folder=the_scenario.save_folder,
+                    init_model_from= "random_initialization",
+                    use_saved_weights=False,
                     )
         mpl.compute_test_score()
-        weights_for_starting_model = mpl.federated_model_weights
         previous_loss = mpl.loss_collective_models[-1]
         t=0
         while (t<the_scenario.epoch_count*the_scenario.partners_count or np.sum(np.abs(partner_values -previous_partner_values))/ the_scenario.partners_count > epsilon ):
@@ -996,8 +998,9 @@ class Contributivity:
             while np.sum(is_partner_in)==0 :
                 is_partner_in= np.random.binomial(  1, p=partner_values)
 
-            # apply one epoch with the selected partner to the model/ do the action
+            # apply one epoch with the selected partner to the previous model/ do the action
             small_partner_list= [partner for partner, is_in in zip(the_scenario.partners_list,is_partner_in) if is_in == 1]
+            weights_folder = os.path.join(the_scenario.save_folder, 'model',the_scenario.dataset.name+'_final_weights.h5')
             mpl= multi_partner_learning.MultiPartnerLearning(
                 small_partner_list,
                 1,
@@ -1005,13 +1008,13 @@ class Contributivity:
                 the_scenario.dataset,
                 the_scenario.multi_partner_learning_approach,
                 the_scenario.aggregation_weighting,
-                weights_for_starting_model,
-                the_scenario.is_early_stopping,
-                is_save_data=False,
-                save_folder="",
+                is_early_stopping=False,
+                is_save_data=True,
+                save_folder=the_scenario.save_folder,
+                init_model_from=weights_folder,
+                use_saved_weights=True,
                 )
             mpl.compute_test_score()
-            weights_for_starting_model = mpl.federated_model_weights
             loss = mpl.loss_collective_models[-1]
 
 
@@ -1056,13 +1059,13 @@ class Contributivity:
                     the_scenario.dataset,
                     the_scenario.multi_partner_learning_approach,
                     the_scenario.aggregation_weighting,
-                    None,
-                    the_scenario.is_early_stopping,
-                    is_save_data=False,
-                    save_folder="",
+                    is_early_stopping=False,
+                    is_save_data=True,
+                    save_folder=the_scenario.save_folder,
+                    init_model_from= "random_initialization",
+                    use_saved_weights=False,
                     )
         mpl.compute_test_score()
-        weights_for_starting_model = mpl.federated_model_weights
         previous_loss = mpl.loss_collective_models[-1]
         t=0
         while (t<100 ):
@@ -1084,6 +1087,7 @@ class Contributivity:
             # apply one epoch with the partners selected to participate to the learning
             small_partner_list= [partner for partner, a  in zip(the_scenario.partners_list,is_in[:-1]) if a==1.0  ]
             if len(small_partner_list)>0:
+                weights_folder = os.path.join(the_scenario.save_folder, 'model',the_scenario.dataset.name+'_final_weights.h5')
                 mpl = multi_partner_learning.MultiPartnerLearning(
                     small_partner_list,
                     1,
@@ -1091,16 +1095,16 @@ class Contributivity:
                     the_scenario.dataset,
                     the_scenario.multi_partner_learning_approach,
                     the_scenario.aggregation_weighting,
-                    weights_for_starting_model,
-                    the_scenario.is_early_stopping,
-                    is_save_data=False,
-                    save_folder="",
+                    is_early_stopping=False,
+                    is_save_data=True,
+                    save_folder=the_scenario.save_folder,
+                    init_model_from=weights_folder,
+                    use_saved_weights=True,
                     )
                 mpl.compute_test_score()
-                weights_for_starting_model = mpl.federated_model_weights
                 loss = mpl.loss_collective_models[-1]
                 # define the gain
-                G = - loss + previous_loss
+                G = - loss + mpl.loss_collective_models[0]
             else:
                 G = 0.
 

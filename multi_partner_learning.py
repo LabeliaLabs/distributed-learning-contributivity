@@ -67,7 +67,7 @@ class MultiPartnerLearning:
         self.score_matrix_per_partner = np.nan * np.zeros(
             shape=(self.epoch_count, self.minibatch_count, self.partners_count))
         self.score_matrix_collective_models = np.nan * np.zeros(shape=(self.epoch_count, self.minibatch_count + 1))
-        self.loss_collective_models = [] 
+        self.loss_collective_models = []
         self.test_score = None
         self.nb_epochs_done = int
         self.is_save_data = is_save_data
@@ -109,8 +109,8 @@ class MultiPartnerLearning:
         # Save model score on test data
         self.test_score = model_evaluation_test_data[1]  # 0 is for the loss
         self.loss_collective_models.append(model_evaluation_test_data[0]) # store the loss for PVRL
-        self.nb_epochs_done = (es.stopped_epoch + 1) if es.stopped_epoch != 0 else self.epoch_count
-        
+        self.nb_epochs_done = (es.stopped_epoch + 1) if self.is_early_stopping else self.epoch_count
+
         end = timer()
         self.learning_computation_time = end - start
 
@@ -215,8 +215,8 @@ class MultiPartnerLearning:
         self.save_final_model_weights(model_to_evaluate)
 
         logger.info("Training and evaluation on multiple partners: done.")
-        
-        
+
+
         end = timer()
         self.learning_computation_time = end - start
 
@@ -637,7 +637,6 @@ def init_multi_partner_learning_from_scenario(scenario, is_save_data=True):
         scenario.dataset,
         scenario.multi_partner_learning_approach,
         scenario.aggregation_weighting,
-        None,
         scenario.is_early_stopping,
         is_save_data,
         scenario.save_folder,
