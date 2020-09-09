@@ -2,21 +2,21 @@ experiment_name: debug_config
 n_repeats: 1
 scenario_params_list:
  - dataset_name:
-    - 'mnist' 
+    - 'mnist'
    partners_count:
     - 3
-   amounts_per_partner: 
+   amounts_per_partner:
     - [0.2, 0.5, 0.3]
    samples_split_option:
-    - ['basic', 'random']
+    - ['basic', 'stratified']
    corrupted_datasets:
     - ['not_corrupted','not_corrupted', 'corrupted']
    multi_partner_learning_approach:
     - 'fedavg'
-   aggregation_weighting: 
-    - 'data_volume' 
+   aggregation_weighting:
+    - 'data_volume'
    methods:
-    - ["PVRL"]
+    - ["PVRL2"]
    gradient_updates_per_pass_count:
     - 5
    is_quick_demo:
