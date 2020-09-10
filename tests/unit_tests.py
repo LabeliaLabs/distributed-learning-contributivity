@@ -55,7 +55,7 @@ from datasets import dataset_mnist as data_mn
 import multi_partner_learning
 
 from partner import Partner
-from dataset import Dataset
+
 from scenario import Scenario
 from contributivity import Contributivity
 from multi_partner_learning import MultiPartnerLearning
@@ -118,29 +118,10 @@ def create_Dataset(iterate_dataset_name):
     dataset_name = iterate_dataset_name
 
     if dataset_name == "cifar10":
-        (x_train, y_train), (x_test, y_test) = cifar10.load_data()
-        input_shape = data_cf.input_shape
-        num_classes = data_cf.num_classes
-        preprocess_dataset_labels = data_cf.preprocess_dataset_labels
-        generate_new_model_for_dataset = data_cf.generate_new_model_for_dataset
+        dataset = data_cf.generate_new_dataset()
     if dataset_name == "mnist":
-        (x_train, y_train), (x_test, y_test) = mnist.load_data()
-        input_shape = data_mn.input_shape
-        num_classes = data_mn.num_classes
-        preprocess_dataset_labels = data_mn.preprocess_dataset_labels
-        generate_new_model_for_dataset = data_mn.generate_new_model_for_dataset
+        dataset = data_mn.generate_new_dataset()
 
-    dataset = Dataset(
-        dataset_name=dataset_name,
-        x_train=x_train,
-        x_test=x_test,
-        y_train=y_train,
-        y_test=y_test,
-        input_shape=input_shape,
-        num_classes=num_classes,
-        preprocess_dataset_labels=preprocess_dataset_labels,
-        generate_new_model_for_dataset=generate_new_model_for_dataset,
-    )
     yield dataset
 
 

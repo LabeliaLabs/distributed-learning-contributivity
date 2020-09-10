@@ -3,8 +3,6 @@
 The dataset object used in the multi-partner learning and contributivity measurement experiments.
 """
 
-from sklearn.model_selection import train_test_split
-
 
 class Dataset:
 
@@ -18,8 +16,10 @@ class Dataset:
                  num_classes,
                  preprocess_dataset_labels,
                  generate_new_model_for_dataset,
+                 train_val_split_global,
+                 train_test_split_local,
+                 train_val_split_local
                  ):
-
         self.name = dataset_name
 
         self.input_shape = input_shape
@@ -35,13 +35,16 @@ class Dataset:
         self.preprocess_dataset_labels = preprocess_dataset_labels
         self.generate_new_model_for_dataset = generate_new_model_for_dataset
 
+        self.train_val_split_local = train_val_split_local
+        self.train_test_split_local = train_test_split_local
+        self.train_val_split_global = train_val_split_global
+
     def train_val_split(self):
         """Called once, after Dataset's constructor"""
         if self.x_val or self.y_val:
             raise Exception("x_val and y_val should be of NoneType")
 
-        self.x_train, self.x_val, self.y_train, self.y_val = train_test_split(self.x_train, self.y_train,
-                                                                              test_size=0.2, random_state=42)
+        self.x_train, self.x_val, self.y_train, self.y_val = self.train_val_split_global(self.x_train, self.y_train)
 
     def generate_new_model(self):
         return self.generate_new_model_for_dataset()
