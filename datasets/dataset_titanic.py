@@ -7,8 +7,6 @@ Titanic dataset.
 import pandas as pd
 import numpy as np
 
-import keras
-
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LogisticRegression
 
@@ -38,6 +36,7 @@ def generate_new_dataset():
         train_val_split_local
     )
     return dataset_obj
+
 
 # Init dataset-specific functions
 def preprocess_dataset_labels(y):
@@ -69,8 +68,8 @@ def preprocess_dataset_inputs(x):
     x.drop('Parents/Children Aboard', axis=1, inplace=True)
     x.drop('Title', axis=1, inplace=True)
     return x.to_numpy()
-  
-  
+
+
 def load_data():
     """Return a usable dataset"""
 
