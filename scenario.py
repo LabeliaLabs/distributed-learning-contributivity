@@ -30,17 +30,20 @@ class Scenario:
         # Raise Exception if unknown parameters in the .yml file
 
         params_known = ["dataset_name", "dataset_proportion"]  # Dataset related
-        params_known += ["methods", "multi_partner_learning_approach", "aggregation_weighting"]  # federated learning related
-        params_known += ["partners_count", "amounts_per_partner", "corrupted_datasets", "samples_split_option"]  # Partners related
-        params_known += ["gradient_updates_per_pass_count", "epoch_count", "minibatch_count", "is_early_stopping"]  # Computation related
-        params_known += ["init_model_from"] # Model related
+        params_known += ["methods", "multi_partner_learning_approach",
+                         "aggregation_weighting"]  # federated learning related
+        params_known += ["partners_count", "amounts_per_partner",
+                         "corrupted_datasets", "samples_split_option"]  # Partners related
+        params_known += ["gradient_updates_per_pass_count", "epoch_count",
+                         "minibatch_count", "is_early_stopping"]  # Computation related
+        params_known += ["init_model_from"]  # Model related
         params_known += ["is_quick_demo"]
 
         if not all([x in params_known for x in params]):
             for x in params:
-                if not x in params_known:
+                if x not in params_known:
                     logger.debug(f"Unrecognised parameter: {x}")
-            raise Exception(f"Unrecognised parameters, check your .yml file")
+            raise Exception(f"Unrecognised parameters {x}, check your .yml file")
 
         # Get and verify which dataset is configured
         supported_datasets_names = ["mnist", "cifar10", "titanic"]
@@ -86,7 +89,6 @@ class Scenario:
             self.shorten_dataset_proportion()
         else:
             logger.debug(f"Computation use the full dataset for scenario #{scenario_id}")
-
 
         self.nb_samples_used = len(self.dataset.x_train)
         self.final_relative_nb_samples = []
@@ -169,7 +171,8 @@ class Scenario:
 
         if "gradient_updates_per_pass_count" in params:
             self.gradient_updates_per_pass_count = params["gradient_updates_per_pass_count"]
-            assert self.gradient_updates_per_pass_count > 0, "Error: in the provided config file, gradient_updates_per_pass_count should be > 0"
+            assert self.gradient_updates_per_pass_count > 0, "Error: in the provided config file, \
+                gradient_updates_per_pass_count should be > 0"
         else:
             self.gradient_updates_per_pass_count = constants.DEFAULT_GRADIENT_UPDATES_PER_PASS_COUNT
 
@@ -342,7 +345,12 @@ class Scenario:
             shared_clusters_count = max([p.cluster_count for p in partners_with_shared_clusters])
         else:
             shared_clusters_count = 0
-        assert specific_clusters_count + shared_clusters_count <= nb_diff_labels, "Error: data samples from the initial dataset are split in clusters per data labels - Incompatibility between the split arguments and the dataset provided - Example: ['advanced', [[7, 'shared'], [6, 'shared'], [2, 'specific'], [1, 'specific']]] means 7 shared clusters and 2 + 1 = 3 specific clusters ==> This scenario can't work with a dataset with less than 10 labels"
+        assert specific_clusters_count + shared_clusters_count <= nb_diff_labels, "Error: data samples from the \
+            initial dataset are split in clusters per data labels - Incompatibility between the split arguments \
+            and the dataset provided \
+            - Example: ['advanced', [[7, 'shared'], [6, 'shared'], [2, 'specific'], [1, 'specific']]] \
+            means 7 shared clusters and 2 + 1 = 3 specific clusters ==> This scenario can't work with a dataset with \
+            less than 10 labels"
 
         # Stratify the dataset into clusters per labels
         x_train_for_cluster, y_train_for_cluster, nb_samples_per_cluster = {}, {}, {}
@@ -431,11 +439,12 @@ class Scenario:
             )
 
         # Check coherence of number of mini-batches versus partner with small dataset
-        assert self.minibatch_count <= min([len(p.x_train) for p in self.partners_list]), "Error: in the provided config file and the provided dataset, a partner doesn't have enough data samples to create the minibatches "
+        assert self.minibatch_count <= min([len(p.x_train) for p in self.partners_list]), "Error: in the provided \
+            config file and the provided dataset, a partner doesn't have enough data samples to create the minibatches "
 
         if is_logging_enabled:
             logger.info("### Splitting data among partners:")
-            logger.info(f"   Advanced split performed.")
+            logger.info("   Advanced split performed.")
             logger.info(f"   Nb of samples split amongst partners: {self.nb_samples_used}")
             logger.info(f"   Partners' relative nb of samples: {[round(p, 2) for p in self.final_relative_nb_samples]} "
                         f"   (versus initially configured: {amounts_per_partner})")
@@ -457,8 +466,10 @@ class Scenario:
         # ... or receive different amounts?
 
         # Check the percentages of samples per partner and control its coherence
-        assert len(self.amounts_per_partner) == self.partners_count, "Error: in the provided config file, amounts_per_partner list should have a size equals to partners_count"
-        assert np.sum(self.amounts_per_partner) == 1, "Error: in the provided config file, amounts_per_partner argument: the sum of the proportions you provided isn't equal to 1"
+        assert len(self.amounts_per_partner) == self.partners_count, "Error: in the provided config file, \
+            amounts_per_partner list should have a size equals to partners_count"
+        assert np.sum(self.amounts_per_partner) == 1, "Error: in the provided config file, \
+            amounts_per_partner argument: the sum of the proportions you provided isn't equal to 1"
 
         # Then we parameterize this via the splitting_indices to be passed to np.split
         # This is to transform the percentages from the scenario configuration into indices where to split the data
@@ -533,14 +544,15 @@ class Scenario:
             partner_idx += 1
 
         # Check coherence of number of mini-batches versus smaller partner
-        assert self.minibatch_count <= (min(self.amounts_per_partner) * len(x_train)), "Error: in the provided config file and dataset, a partner doesn't have enough data samples to create the minibatches"
+        assert self.minibatch_count <= (min(self.amounts_per_partner) * len(x_train)), "Error: in the provided config \
+            file and dataset, a partner doesn't have enough data samples to create the minibatches"
 
         self.nb_samples_used = sum([len(p.x_train) for p in self.partners_list])
         self.final_relative_nb_samples = [p.final_nb_samples / self.nb_samples_used for p in self.partners_list]
 
         if is_logging_enabled:
-            logger.info(f"### Splitting data among partners:")
-            logger.info(f"   Simple split performed.")
+            logger.info("### Splitting data among partners:")
+            logger.info("   Simple split performed.")
             logger.info(f"   Nb of samples split amongst partners: {self.nb_samples_used}")
             for partner in self.partners_list:
                 logger.info(f"   Partner #{partner.id}: "
@@ -678,7 +690,8 @@ class Scenario:
         """Truncate the dataset depending on self.dataset_proportion"""
 
         if self.dataset_proportion == 1:
-            raise Exception("shorten_dataset_proportion shouldn't be called on this scenario, the user targets the full dataset")
+            raise Exception("shorten_dataset_proportion shouldn't be called on this scenario, \
+                the user targets the full dataset")
 
         x_train = self.dataset.x_train
         y_train = self.dataset.y_train

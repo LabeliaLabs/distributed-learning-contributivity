@@ -44,5 +44,4 @@ class Dataset:
                                                                               test_size=0.2, random_state=42)
 
     def generate_new_model(self):
-
         return self.generate_new_model_for_dataset()

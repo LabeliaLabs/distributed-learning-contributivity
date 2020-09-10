@@ -6,10 +6,10 @@ This enables to parameterize end to end tests - the tests are run by Travis each
 import pandas as pd
 import subprocess
 import sys
-sys.path.append("..")
-import constants
-
 from pathlib import Path
+
+sys.path.append("..")
+import constants  # noqa: E402
 
 
 class Test_EndToEndTest:

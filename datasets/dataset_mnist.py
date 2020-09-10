@@ -16,6 +16,7 @@ img_cols = 28
 input_shape = (img_rows, img_cols, 1)
 num_classes = 10
 
+
 # Data samples pre-processing method for inputs
 def preprocess_dataset_inputs(x):
 
@@ -47,7 +48,12 @@ def generate_new_model_for_dataset():
     """Return a CNN model from scratch based on given batch_size"""
 
     model = Sequential()
-    model.add(Conv2D(32, kernel_size=(3, 3), activation="relu", input_shape=input_shape))
+    model.add(Conv2D(
+        32,
+        kernel_size=(3, 3),
+        activation="relu",
+        input_shape=input_shape,
+        ))
     model.add(Conv2D(64, (3, 3), activation="relu"))
     model.add(MaxPooling2D(pool_size=(2, 2)))
     model.add(Flatten())

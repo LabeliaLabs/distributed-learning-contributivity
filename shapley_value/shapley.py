@@ -1,8 +1,9 @@
+# -*- coding: utf-8 -*-
+
 # From: https://github.com/susobhang70/shapley_value
 # Cloned by @bowni on 2019.10.04 at 3:46pm (Paris time)
 # Adapted by @bowni
 
-#!/usr/bin/env python
 import bisect
 from itertools import combinations
 import math
@@ -34,7 +35,7 @@ def main(partners_count, char_func_list):
                 cmod = len(j)
                 Cui = j[:]
                 bisect.insort_left(Cui, i)
-                l = N.index(j)
+                l = N.index(j)  # noqa: E741
                 k = N.index(Cui)
                 temp = (
                     float(
@@ -45,8 +46,6 @@ def main(partners_count, char_func_list):
                     / float(math.factorial(n))
                 )
                 shapley += temp
-                # if i is 0:
-                #     print j, Cui, cmod, n-cmod-1, characteristic_function[k], characteristic_function[l], math.factorial(cmod), math.factorial(n - cmod - 1), math.factorial(n)
 
         cmod = 0
         Cui = [i]

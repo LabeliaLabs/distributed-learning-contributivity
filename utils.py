@@ -25,13 +25,11 @@ def load_cfg(yaml_filepath):
     """
     logger.info("Loading experiment yaml file")
 
-    yaml=YAML(typ='safe')
+    yaml = YAML(typ='safe')
     with open(yaml_filepath, "r") as stream:
         # This will fail if there are duplicated keys in the YAML file
         cfg = yaml.load(stream)
-
     logger.info(cfg)
-
     return cfg
 
 
@@ -56,7 +54,6 @@ def get_scenario_params_list(config):
     config_dataset = []
 
     for list_scenario in config:
-        
         if isinstance(list_scenario['dataset_name'], dict):
             for dataset_name in list_scenario['dataset_name'].keys():
                 # Add path to init model from an existing model
@@ -66,31 +63,24 @@ def get_scenario_params_list(config):
                     dataset_scenario['init_model_from'] = ['random_initialization']
                 else:
                     dataset_scenario['init_model_from'] = list_scenario['dataset_name'][dataset_name]
-                
                 config_dataset.append(dataset_scenario)
         else:
             config_dataset.append(list_scenario)
-    
+
     for list_scenario in config_dataset:
         params_name = list_scenario.keys()
         params_list = list(list_scenario.values())
-
         for el in product(*params_list):
             scenario = dict(zip(params_name, el))
-        
             if scenario['partners_count'] != len(scenario['amounts_per_partner']):
                 raise Exception("Length of amounts_per_partner does not match number of partners.")
-
             if scenario['samples_split_option'][0] == 'advanced' \
                     and (scenario['partners_count'] != len(scenario['samples_split_option'][1])):
                 raise Exception("Length of samples_split_option does not match number of partners.")
-        
             if 'corrupted_datasets' in params_name:
                 if scenario['partners_count'] != len(scenario['corrupted_datasets']):
                     raise Exception("Length of corrupted_datasets does not match number of partners.")
-
             scenario_params_list.append(scenario)
-            
 
     logger.info(f"Number of scenario(s) configured: {len(scenario_params_list)}")
     return scenario_params_list
