@@ -215,7 +215,8 @@ class Contributivity:
             q = norm.ppf((1 - alpha) / 2, loc=0, scale=1)
             v_max = 0
 
-            # Check if the length of the confidence interval  is below the value of sv_accuracy*characteristic_all_partners
+            # Check if the length of the confidence interval
+            # is below the value of sv_accuracy*characteristic_all_partners
             while (
                 t < 100 or t < q ** 2 * v_max / (sv_accuracy) ** 2
             ):
@@ -275,7 +276,8 @@ class Contributivity:
             v_max = 0
             while (
                 t < 100 or t < q ** 2 * v_max / (sv_accuracy) ** 2
-            ):  # Check if the length of the confidence interval  is below the value of sv_accuracy*characteristic_all_partners
+            ):  # Check if the length of the confidence interval
+                # is below the value of sv_accuracy*characteristic_all_partners
                 t += 1
 
                 if t == 1:
@@ -321,7 +323,8 @@ class Contributivity:
     # # %% compute Shapley values with the importance sampling method
 
     def IS_lin(self, the_scenario, sv_accuracy=0.01, alpha=0.95):
-        """Return the vector of approximated Shapley value corresponding to a list of partner and a characteristic function using the importance sampling method and a linear interpolation model."""
+        """Return the vector of approximated Shapley value corresponding to a list of partner and \
+            a characteristic function using the importance sampling method and a linear interpolation model."""
 
         start = timer()
         n = len(the_scenario.partners_list)
@@ -342,7 +345,8 @@ class Contributivity:
                 return factorial(n - 1 - lS) * factorial(lS) / factorial(n)
 
             # definition of the approximation of the increment
-            # ## compute the last and the first increments in performance (they are needed to compute the approximated increments)
+            # compute the last and the first increments in performance \
+            # (they are needed to compute the approximated increments)
             characteristic_no_partner = 0
             last_increments = []
             first_increments = []
@@ -379,7 +383,9 @@ class Contributivity:
                 for length_combination in range(len(list_k) + 1):
                     for subset in combinations(
                         list_k, length_combination
-                    ):  # could be avoided as   prob(np.array(subset))*np.abs(approx_increment(np.array(subset),j)) is constant in the combination
+                    ):  # could be avoided as
+                        # prob(np.array(subset))*np.abs(approx_increment(np.array(subset),j))
+                        # is constant in the combination
                         renorm += prob(np.array(subset)) * np.abs(
                             approx_increment(np.array(subset), k)
                         )
@@ -391,7 +397,8 @@ class Contributivity:
             v_max = 0
             while (
                 t < 100 or t < 4 * q ** 2 * v_max / (sv_accuracy) ** 2
-            ):  # Check if the length of the confidence interval  is below the value of sv_accuracy*characteristic_all_partners
+            ):  # Check if the length of the confidence interval  is below the value of
+                # sv_accuracy*characteristic_all_partners
                 t += 1
                 if t == 1:
                     contributions = np.array([np.zeros(n)])
@@ -433,7 +440,9 @@ class Contributivity:
     # # %% compute Shapley values with the regression importance sampling method
 
     def IS_reg(self, the_scenario, sv_accuracy=0.01, alpha=0.95):
-        """Return the vector of approximated Shapley value corresponding to a list of partner and a characteristic function using the importance sampling method and a regression model."""
+        """Return the vector of approximated Shapley value corresponding
+        to a list of partner and a characteristic function using the
+        importance sampling method and a regression model."""
         start = timer()
         n = len(the_scenario.partners_list)
 
@@ -501,7 +510,9 @@ class Contributivity:
                 for length_combination in range(len(list_k) + 1):
                     for subset in combinations(
                         list_k, length_combination
-                    ):  # could be avoided as   prob(np.array(subset))*np.abs(approx_increment(np.array(subset),j)) is constant in the combination
+                    ):  # could be avoided as
+                        # prob(np.array(subset))*np.abs(approx_increment(np.array(subset),j))
+                        # is constant in the combination
                         renorm += prob(np.array(subset)) * np.abs(
                             approx_increment(np.array(subset), k)
                         )
@@ -513,7 +524,8 @@ class Contributivity:
             v_max = 0
             while (
                 t < 100 or t < 4 * q ** 2 * v_max / (sv_accuracy) ** 2
-            ):  # Check if the length of the confidence interval  is below the value of sv_accuracy*characteristic_all_partners
+            ):  # Check if the length of the confidence interval is below the value of
+                # sv_accuracy*characteristic_all_partners
                 t += 1
                 if t == 1:
                     contributions = np.array([np.zeros(n)])
@@ -526,7 +538,9 @@ class Contributivity:
                     for length_combination in range(len(list_k) + 1):
                         for subset in combinations(
                             list_k, length_combination
-                        ):  # could be avoided as   prob(np.array(subset))*np.abs(approx_increment(np.array(subset),j)) is constant in the combination
+                        ):  # could be avoided as
+                            # prob(np.array(subset))*np.abs(approx_increment(np.array(subset),j))
+                            # is constant in the combination
                             cumSum += prob(np.array(subset)) * np.abs(
                                 approx_increment(np.array(subset), k)
                             )
