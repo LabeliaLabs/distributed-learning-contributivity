@@ -3,20 +3,22 @@
 This enables to parameterize a desired scenario to mock a multi-partner ML project.
 """
 
-from datasets import dataset_mnist, dataset_cifar10, dataset_titanic, dataset_esc50
-from sklearn.model_selection import train_test_split
 import datetime
-import os
-import numpy as np
-import matplotlib.pyplot as plt
-import uuid
-import pandas as pd
-from loguru import logger
 import operator
 import random
+import os
+import uuid
+
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+
+from loguru import logger
+from sklearn.model_selection import train_test_split
 
 import constants
 from partner import Partner
+from datasets import dataset_mnist, dataset_cifar10, dataset_titanic, dataset_esc50
 
 
 class Scenario:
