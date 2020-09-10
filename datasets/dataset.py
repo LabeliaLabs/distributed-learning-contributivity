@@ -3,8 +3,6 @@
 The dataset object used in the multi-partner learning and contributivity measurement experiments.
 """
 
-from sklearn.model_selection import train_test_split
-
 
 class Dataset:
 
@@ -22,7 +20,6 @@ class Dataset:
                  train_test_split_local,
                  train_val_split_local
                  ):
-
         self.name = dataset_name
 
         self.input_shape = input_shape

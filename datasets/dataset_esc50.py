@@ -114,7 +114,8 @@ def _download_data(path):
     Download the dataset, and unzip it. The dataset will be stored in the datasets/local_data directory, which is
     gitignored
 
-    :param path: provided by load_data. Should be LOCAL_DIR/distributed-learning-contributivity/datasets/local_data/esc50
+    :param path: provided by load_data.
+                 Should be LOCAL_DIR/distributed-learning-contributivity/datasets/local_data/esc50
     :return: None
     """
     logger.debug('Downloading it from https://github.com/karoldvl/ESC-50/')

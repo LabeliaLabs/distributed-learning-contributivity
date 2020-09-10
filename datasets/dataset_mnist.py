@@ -45,7 +45,6 @@ def generate_new_dataset():
     return dataset_obj
 
 
-
 # Data samples pre-processing method for inputs
 def preprocess_dataset_inputs(x):
     x = x.reshape(x.shape[0], img_rows, img_cols, 1)
