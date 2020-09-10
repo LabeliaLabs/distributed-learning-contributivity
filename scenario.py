@@ -515,7 +515,7 @@ class Scenario:
 
             # Finalize selection of train data
             x_partner_train = x_train[train_idx, :]
-            y_partner_train = y_train[train_idx,]
+            y_partner_train = y_train[train_idx]
 
             # Populate the partner's train dataset
             p.x_train = x_partner_train
