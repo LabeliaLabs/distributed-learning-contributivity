@@ -6,15 +6,15 @@ A script for:
     - measuring the respective contributions of each partner to the model performance (termed "contributivity")
 """
 
-import matplotlib.pyplot as plt
-from loguru import logger
-import tensorflow as tf
-
 import argparse
 import contextlib
 import os
 import shutil
 import sys
+
+import matplotlib.pyplot as plt
+import tensorflow as tf
+from loguru import logger
 
 import constants
 import contributivity

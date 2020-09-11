@@ -4,12 +4,17 @@ Titanic dataset.
 (inspired from: https://web.stanford.edu/class/archive/cs/cs109/cs109.1166/problem12.html)
 """
 
-import pandas as pd
+from pathlib import Path
+from time import sleep
+from urllib.error import HTTPError, URLError
+
 import numpy as np
-
-from sklearn.model_selection import train_test_split
+import pandas as pd
+from loguru import logger
 from sklearn.linear_model import LogisticRegression
+from sklearn.model_selection import train_test_split
 
+import constants
 from . import dataset
 
 
@@ -72,9 +77,36 @@ def preprocess_dataset_inputs(x):
 
 def load_data():
     """Return a usable dataset"""
+    path = Path(__file__).resolve().parents[0]
+    folder = path / 'local_data' / 'titanic'
+    if not folder.is_dir():
+        Path.mkdir(folder)
+        logger.info('Titanic dataset not found. Downloading it...')
+        attempts = 0
+        while True:
+            try:
+                raw_dataset = pd.read_csv(
+                    'https://web.stanford.edu/class/archive/cs/cs109/cs109.1166/stuff/titanic.csv',
+                    index_col=False)
+                break
+            except (HTTPError, URLError) as e:
+                if hasattr(e, 'code'):
+                    temp = e.code
+                else:
+                    temp = e.errno
+                logger.debug(
+                    f'URL fetch failure on '
+                    f'https://web.stanford.edu/class/archive/cs/cs109/cs109.1166/stuff/titanic.csv : '
+                    f'{temp} -- {e.reason}')
+                if attempts < constants.NUMBER_OF_DOWNLOAD_ATTEMPTS:
+                    sleep(2)
+                    attempts += 1
+                else:
+                    raise
 
-    raw_dataset = pd.read_csv('https://web.stanford.edu/class/archive/cs/cs109/cs109.1166/stuff/titanic.csv',
-                              index_col=False)
+        raw_dataset.to_csv((folder / "titanic.csv").resolve())
+    else:
+        raw_dataset = pd.read_csv((folder / "titanic.csv").resolve())
     x = raw_dataset.drop('Survived', axis=1)
     x = preprocess_dataset_inputs(x)
     y = raw_dataset['Survived']

@@ -3,14 +3,19 @@
 MNIST dataset.
 (inspired from: https://keras.io/examples/mnist_cnn/)
 """
+from time import sleep
+from urllib.error import HTTPError, URLError
 
 from keras.datasets import mnist
-from keras.models import Sequential
-from keras.layers import Dense, Flatten
 from keras.layers import Conv2D, MaxPooling2D
-import keras
+from keras.layers import Dense, Flatten
+from keras.losses import categorical_crossentropy
+from keras.models import Sequential
+from keras.utils import to_categorical
+from loguru import logger
 from sklearn.model_selection import train_test_split
 
+import constants
 from . import dataset
 
 # Init dataset-specific variables
@@ -22,7 +27,25 @@ num_classes = 10
 
 def generate_new_dataset():
     # Load data
-    (x_train, y_train), (x_test, y_test) = mnist.load_data()
+    attempts = 0
+    while True:
+        try:
+            (x_train, y_train), (x_test, y_test) = mnist.load_data()
+            break
+        except (HTTPError, URLError) as e:
+            if hasattr(e, 'code'):
+                temp = e.code
+            else:
+                temp = e.errno
+            logger.debug(
+                f'URL fetch failure on '
+                f'https://s3.amazonaws.com/img-datasets/mnist.npz : '
+                f'{temp} -- {e.reason}')
+            if attempts < constants.NUMBER_OF_DOWNLOAD_ATTEMPTS:
+                sleep(2)
+                attempts += 1
+            else:
+                raise
 
     # Pre-process inputs
     x_train = preprocess_dataset_inputs(x_train)
@@ -56,7 +79,7 @@ def preprocess_dataset_inputs(x):
 
 # Data samples pre-processing method for labels
 def preprocess_dataset_labels(y):
-    y = keras.utils.to_categorical(y, num_classes)
+    y = to_categorical(y, num_classes)
 
     return y
 
@@ -79,7 +102,7 @@ def generate_new_model_for_dataset():
     model.add(Dense(num_classes, activation="softmax"))
 
     model.compile(
-        loss=keras.losses.categorical_crossentropy,
+        loss=categorical_crossentropy,
         optimizer="adam",
         metrics=["accuracy"],
     )
