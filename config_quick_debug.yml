@@ -2,8 +2,8 @@ experiment_name: debug_config
 n_repeats: 1
 scenario_params_list:
  - dataset_name:
-    'mnist':
-    - 'random_initialization'
+    'titanic':
+      - 'random_initialization'
    partners_count:
     - 3
    amounts_per_partner:

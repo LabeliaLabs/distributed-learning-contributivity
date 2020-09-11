@@ -5,7 +5,7 @@ Declaration of constants.
 
 # ML constants
 DEFAULT_BATCH_SIZE = 256
-MAX_BATCH_SIZE = 2**20
+MAX_BATCH_SIZE = 2 ** 20
 DEFAULT_GRADIENT_UPDATES_PER_PASS_COUNT = 8
 PATIENCE = 10  # patience for early stopping
 
@@ -30,3 +30,6 @@ ESC50 = "esc50"
 
 # Supported datasets
 SUPPORTED_DATASETS_NAMES = [MNIST, CIFAR10, TITANIC, ESC50]
+
+# Number of attempts allowed before raising an error while trying to download dataset
+NUMBER_OF_DOWNLOAD_ATTEMPTS = 3

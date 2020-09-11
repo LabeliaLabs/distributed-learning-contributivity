@@ -6,6 +6,8 @@ More infos at https://github.com/karolpiczak/ESC-50
 import glob
 import os
 import shutil
+from time import sleep
+from urllib.error import HTTPError, URLError
 from urllib.request import urlretrieve
 import zipfile
 from pathlib import Path
@@ -24,6 +26,7 @@ from keras.layers import Conv2D, GlobalAveragePooling2D, MaxPooling2D
 from keras.losses import categorical_crossentropy
 from keras.utils import to_categorical
 
+import constants
 from . import dataset
 
 num_classes = 50
@@ -119,7 +122,28 @@ def _download_data(path):
     :return: None
     """
     logger.info('Downloading it from https://github.com/karoldvl/ESC-50/')
-    urlretrieve('https://github.com/karoldvl/ESC-50/archive/master.zip', '{0}/ESC-50.zip'.format(path))
+    attempts = 0
+    while True:
+        try:
+            urlretrieve('https://github.com/karoldvl/ESC-50/archive/master.zip', f'{path}/ESC-50.zip')
+            break
+        except HTTPError as e:
+            logger.debug(
+                f'URL fetch failure on https://github.com/karoldvl/ESC-50/archive/master.zip : {e.code} -- {e.msg}')
+            if attempts < constants.NUMBER_OF_DOWNLOAD_ATTEMPTS:
+                sleep(2)
+                attempts += 1
+            else:
+                raise
+        except URLError as e:
+            logger.debug(
+                f'URL fetch failure on https://github.com/karoldvl/ESC-50/archive/master.zip : '
+                f'{e.errno} -- {e.reason}')
+            if attempts < constants.NUMBER_OF_DOWNLOAD_ATTEMPTS:
+                sleep(2)
+                attempts += 1
+            else:
+                raise
     logger.info('Extration at distributed-learning-contributivity/datasets/local_data/esc50')
     with zipfile.ZipFile('{0}/ESC-50.zip'.format(path)) as package:
         package.extractall('{0}/'.format(path))

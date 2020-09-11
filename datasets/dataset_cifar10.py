@@ -2,14 +2,20 @@
 """
 CIFAR10 dataset.
 """
+from time import sleep
+from urllib.error import HTTPError, URLError
+from loguru import logger
 
 from keras.datasets import cifar10
 from keras.models import Sequential
 from keras.layers import Dense, Dropout, Activation, Flatten
 from keras.layers import Conv2D, MaxPooling2D
-import keras
+from keras.optimizers import RMSprop
+from keras.utils import to_categorical
+
 from sklearn.model_selection import train_test_split
 
+import constants
 from . import dataset
 
 # Init dataset-specific variables
@@ -27,13 +33,35 @@ def preprocess_dataset_inputs(x):
 
 # Data samples pre-processing method for labels
 def preprocess_dataset_labels(y):
-    y = keras.utils.to_categorical(y, num_classes)
+    y = to_categorical(y, num_classes)
 
     return y
 
 
 def generate_new_dataset():
-    (x_train, y_train), (x_test, y_test) = cifar10.load_data()
+    attempts = 0
+    while True:
+        try:
+            (x_train, y_train), (x_test, y_test) = cifar10.load_data()
+            break
+        except HTTPError as e:
+            logger.debug(
+                f'URL fetch failure on https://www.cs.toronto.edu/~kriz/cifar-10-python.tar.gz : {e.code} -- {e.msg}')
+            if attempts < constants.NUMBER_OF_DOWNLOAD_ATTEMPTS:
+                sleep(2)
+                attempts += 1
+            else:
+                raise
+        except URLError as e:
+            logger.debug(
+                f'URL fetch failure on https://www.cs.toronto.edu/~kriz/cifar-10-python.tar.gz : '
+                f'{e.errno} -- {e.reason}')
+            if attempts < constants.NUMBER_OF_DOWNLOAD_ATTEMPTS:
+                sleep(2)
+                attempts += 1
+            else:
+                raise
+
     y_train = y_train.flatten()
     y_test = y_test.flatten()
 
@@ -88,7 +116,7 @@ def generate_new_model_for_dataset():
     model.add(Activation('softmax'))
 
     # initiate RMSprop optimizer
-    opt = keras.optimizers.RMSprop(learning_rate=0.0001, decay=1e-6)
+    opt = RMSprop(learning_rate=0.0001, decay=1e-6)
 
     # Let's train the model using RMSprop
     model.compile(loss='categorical_crossentropy',
