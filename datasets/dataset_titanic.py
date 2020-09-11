@@ -3,6 +3,9 @@
 Titanic dataset.
 (inspired from: https://web.stanford.edu/class/archive/cs/cs109/cs109.1166/problem12.html)
 """
+import os
+from pathlib import Path
+from loguru import logger
 
 import pandas as pd
 import numpy as np
@@ -72,9 +75,19 @@ def preprocess_dataset_inputs(x):
 
 def load_data():
     """Return a usable dataset"""
+    path = Path(__file__).resolve().parents[0]
+    repertoire = str(path) + '/local_data/titanic/'
+    if not Path(repertoire).is_dir():
+        os.makedirs(repertoire)
+        os.chdir(repertoire)
+        logger.info('Titanic dataset not found. Downloading it...')
+        raw_dataset = pd.read_csv('https://web.stanford.edu/class/archive/cs/cs109/cs109.1166/stuff/titanic.csv',
+                                  index_col=False)
+        raw_dataset.to_csv(repertoire + "titanic.csv")
+    else:
+        os.chdir(repertoire)
 
-    raw_dataset = pd.read_csv('https://web.stanford.edu/class/archive/cs/cs109/cs109.1166/stuff/titanic.csv',
-                              index_col=False)
+    raw_dataset = pd.read_csv(repertoire + 'titanic.csv')
     x = raw_dataset.drop('Survived', axis=1)
     x = preprocess_dataset_inputs(x)
     y = raw_dataset['Survived']

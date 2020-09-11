@@ -118,9 +118,9 @@ def _download_data(path):
                  Should be LOCAL_DIR/distributed-learning-contributivity/datasets/local_data/esc50
     :return: None
     """
-    logger.debug('Downloading it from https://github.com/karoldvl/ESC-50/')
+    logger.info('Downloading it from https://github.com/karoldvl/ESC-50/')
     urlretrieve('https://github.com/karoldvl/ESC-50/archive/master.zip', '{0}/ESC-50.zip'.format(path))
-    logger.debug('Extration at distributed-learning-contributivity/datasets/local_data/esc50')
+    logger.info('Extration at distributed-learning-contributivity/datasets/local_data/esc50')
     with zipfile.ZipFile('{0}/ESC-50.zip'.format(path)) as package:
         package.extractall('{0}/'.format(path))
 
