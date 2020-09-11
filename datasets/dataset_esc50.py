@@ -4,7 +4,6 @@ ESC-50 dataset
 More infos at https://github.com/karolpiczak/ESC-50
 """
 import glob
-import os
 import shutil
 import zipfile
 from pathlib import Path
@@ -90,23 +89,23 @@ def load_data():
     :return: (x_train, y_train), (x_test, y_test)
     """
     path = Path(__file__).resolve().parents[0]
-    repertoire = str(path) + '/local_data/esc50'
-    if not Path(repertoire).is_dir():
-        os.makedirs(repertoire)
-        os.chdir(repertoire)
+    folder = path / 'local_data' / 'esc50'
+    if not folder.is_dir():
+        Path.mkdir(folder)
         logger.info('ESC-50 dataset not found.')
-        _download_data(repertoire)
+        _download_data(str(folder))
     else:
         logger.info('ESC-50 dataset found')
-        os.chdir(repertoire)
-    esc50_df = pd.read_csv('esc50.csv')
+
+    esc50_df = pd.read_csv(folder / 'esc50.csv')
     train, test = train_test_split_global(esc50_df)
     y_train = train.target.to_numpy()
     y_test = test.target.to_numpy()
-    x_train = (wav_load(repertoire + '/audio/' + file_name, sr=None) for file_name in train.filename.to_list())
-    x_test = (wav_load(repertoire + '/audio/' + file_name, sr=None) for file_name in test.filename.to_list())
+    x_train = (wav_load((folder / 'audio' / file_name).resolve(), sr=None)
+               for file_name in train.filename.to_list())
+    x_test = (wav_load((folder / 'audio' / file_name).resolve(), sr=None)
+              for file_name in test.filename.to_list())
 
-    os.chdir(str(Path(__file__).resolve().parents[1]))
     return (x_train, y_train), (x_test, y_test)
 
 
@@ -132,23 +131,23 @@ def _download_data(path):
                 temp = e.errno
             logger.debug(
                 f'URL fetch failure on '
-                f'https://web.stanford.edu/class/archive/cs/cs109/cs109.1166/stuff/titanic.csv : '
+                f'https://github.com/karoldvl/ESC-50/archive/master.zip : '
                 f'{temp} -- {e.reason}')
             if attempts < constants.NUMBER_OF_DOWNLOAD_ATTEMPTS:
                 sleep(2)
                 attempts += 1
             else:
                 raise
-    logger.info('Extration at distributed-learning-contributivity/datasets/local_data/esc50')
-    with zipfile.ZipFile('{0}/ESC-50.zip'.format(path)) as package:
-        package.extractall('{0}/'.format(path))
+    logger.info('Extraction at distributed-learning-contributivity/datasets/local_data/esc50')
+    with zipfile.ZipFile(f'{path}/ESC-50.zip') as package:
+        package.extractall(f'{path}/')
 
-    os.unlink('{0}/ESC-50.zip'.format(path))
-    for src in glob.glob('{0}/ESC-50-master/audio'.format(path)):
-        shutil.move(src, '{0}/{1}'.format(path, os.path.basename(src)))
-    shutil.move('{0}/ESC-50-master/meta/esc50.csv'.format(path), '{0}/{1}'.format(path, 'esc50.csv'))
+    Path.unlink(Path(path) / 'ESC-50.zip')
+    for src in glob.glob(f'{path}/ESC-50-master/audio'):
+        shutil.move(src, f'{path}/{str(Path(src).name)}')
+    shutil.move(f'{path}/ESC-50-master/meta/esc50.csv', f'{path}/esc50.csv')
 
-    shutil.rmtree('{0}/ESC-50-master'.format(path))
+    shutil.rmtree(f'{path}/ESC-50-master')
 
 
 # Model structure and generation

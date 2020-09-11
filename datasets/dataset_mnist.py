@@ -39,7 +39,7 @@ def generate_new_dataset():
                 temp = e.errno
             logger.debug(
                 f'URL fetch failure on '
-                f'https://web.stanford.edu/class/archive/cs/cs109/cs109.1166/stuff/titanic.csv : '
+                f'https://s3.amazonaws.com/img-datasets/mnist.npz : '
                 f'{temp} -- {e.reason}')
             if attempts < constants.NUMBER_OF_DOWNLOAD_ATTEMPTS:
                 sleep(2)

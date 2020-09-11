@@ -3,7 +3,7 @@
 Titanic dataset.
 (inspired from: https://web.stanford.edu/class/archive/cs/cs109/cs109.1166/problem12.html)
 """
-import os
+
 from pathlib import Path
 from time import sleep
 from urllib.error import HTTPError, URLError
@@ -78,16 +78,15 @@ def preprocess_dataset_inputs(x):
 def load_data():
     """Return a usable dataset"""
     path = Path(__file__).resolve().parents[0]
-    repertoire = str(path) + '/local_data/titanic/'
-    if not Path(repertoire).is_dir():
-        os.makedirs(repertoire)
-        os.chdir(repertoire)
+    folder = path / 'local_data' / 'titanic'
+    if not folder.is_dir():
+        Path.mkdir(folder)
         logger.info('Titanic dataset not found. Downloading it...')
         attempts = 0
         while True:
             try:
                 raw_dataset = pd.read_csv(
-                    'https://web.stanford.edu/class/archive/cs/cs109/cs109.1166/stufftitanic.csv',
+                    'https://web.stanford.edu/class/archive/cs/cs109/cs109.1166/stuff/titanic.csv',
                     index_col=False)
                 break
             except (HTTPError, URLError) as e:
@@ -105,9 +104,9 @@ def load_data():
                 else:
                     raise
 
-        raw_dataset.to_csv(repertoire + "titanic.csv")
-
-    raw_dataset = pd.read_csv(repertoire + 'titanic.csv')
+        raw_dataset.to_csv((folder / "titanic.csv").resolve())
+    else:
+        raw_dataset = pd.read_csv((folder / "titanic.csv").resolve())
     x = raw_dataset.drop('Survived', axis=1)
     x = preprocess_dataset_inputs(x)
     y = raw_dataset['Survived']
