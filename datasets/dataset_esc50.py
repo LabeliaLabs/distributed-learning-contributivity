@@ -6,25 +6,23 @@ More infos at https://github.com/karolpiczak/ESC-50
 import glob
 import os
 import shutil
+import zipfile
+from pathlib import Path
 from time import sleep
 from urllib.error import HTTPError, URLError
 from urllib.request import urlretrieve
-import zipfile
-from pathlib import Path
 
-import pandas as pd
 import numpy as np
-
+import pandas as pd
+from keras.layers import Conv2D, GlobalAveragePooling2D, MaxPooling2D
+from keras.layers import Dense, Dropout
+from keras.losses import categorical_crossentropy
+from keras.models import Sequential
+from keras.utils import to_categorical
 from librosa import load as wav_load
 from librosa.feature import mfcc
-from sklearn.model_selection import train_test_split
 from loguru import logger
-
-from keras.models import Sequential
-from keras.layers import Dense, Dropout
-from keras.layers import Conv2D, GlobalAveragePooling2D, MaxPooling2D
-from keras.losses import categorical_crossentropy
-from keras.utils import to_categorical
+from sklearn.model_selection import train_test_split
 
 import constants
 from . import dataset
@@ -127,18 +125,15 @@ def _download_data(path):
         try:
             urlretrieve('https://github.com/karoldvl/ESC-50/archive/master.zip', f'{path}/ESC-50.zip')
             break
-        except HTTPError as e:
-            logger.debug(
-                f'URL fetch failure on https://github.com/karoldvl/ESC-50/archive/master.zip : {e.code} -- {e.msg}')
-            if attempts < constants.NUMBER_OF_DOWNLOAD_ATTEMPTS:
-                sleep(2)
-                attempts += 1
+        except (HTTPError, URLError) as e:
+            if hasattr(e, 'code'):
+                temp = e.code
             else:
-                raise
-        except URLError as e:
+                temp = e.errno
             logger.debug(
-                f'URL fetch failure on https://github.com/karoldvl/ESC-50/archive/master.zip : '
-                f'{e.errno} -- {e.reason}')
+                f'URL fetch failure on '
+                f'https://web.stanford.edu/class/archive/cs/cs109/cs109.1166/stuff/titanic.csv : '
+                f'{temp} -- {e.reason}')
             if attempts < constants.NUMBER_OF_DOWNLOAD_ATTEMPTS:
                 sleep(2)
                 attempts += 1

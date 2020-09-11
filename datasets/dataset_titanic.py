@@ -8,13 +8,11 @@ from pathlib import Path
 from time import sleep
 from urllib.error import HTTPError, URLError
 
-from loguru import logger
-
-import pandas as pd
 import numpy as np
-
-from sklearn.model_selection import train_test_split
+import pandas as pd
+from loguru import logger
 from sklearn.linear_model import LogisticRegression
+from sklearn.model_selection import train_test_split
 
 import constants
 from . import dataset
@@ -92,21 +90,15 @@ def load_data():
                     'https://web.stanford.edu/class/archive/cs/cs109/cs109.1166/stufftitanic.csv',
                     index_col=False)
                 break
-            except HTTPError as e:
-                logger.debug(
-                    f'URL fetch failure on '
-                    f'https://web.stanford.edu/class/archive/cs/cs109/cs109.1166/stuff/titanic.csv : '
-                    f'{e.code} -- {e.msg}')
-                if attempts < constants.NUMBER_OF_DOWNLOAD_ATTEMPTS:
-                    sleep(2)
-                    attempts += 1
+            except (HTTPError, URLError) as e:
+                if hasattr(e, 'code'):
+                    temp = e.code
                 else:
-                    raise
-            except URLError as e:
+                    temp = e.errno
                 logger.debug(
                     f'URL fetch failure on '
                     f'https://web.stanford.edu/class/archive/cs/cs109/cs109.1166/stuff/titanic.csv : '
-                    f'{e.errno} -- {e.reason}')
+                    f'{temp} -- {e.reason}')
                 if attempts < constants.NUMBER_OF_DOWNLOAD_ATTEMPTS:
                     sleep(2)
                     attempts += 1
@@ -114,8 +106,6 @@ def load_data():
                     raise
 
         raw_dataset.to_csv(repertoire + "titanic.csv")
-    else:
-        os.chdir(repertoire)
 
     raw_dataset = pd.read_csv(repertoire + 'titanic.csv')
     x = raw_dataset.drop('Survived', axis=1)

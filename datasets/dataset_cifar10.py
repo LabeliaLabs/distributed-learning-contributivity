@@ -4,15 +4,14 @@ CIFAR10 dataset.
 """
 from time import sleep
 from urllib.error import HTTPError, URLError
-from loguru import logger
 
 from keras.datasets import cifar10
-from keras.models import Sequential
-from keras.layers import Dense, Dropout, Activation, Flatten
 from keras.layers import Conv2D, MaxPooling2D
+from keras.layers import Dense, Dropout, Activation, Flatten
+from keras.models import Sequential
 from keras.optimizers import RMSprop
 from keras.utils import to_categorical
-
+from loguru import logger
 from sklearn.model_selection import train_test_split
 
 import constants
@@ -44,18 +43,15 @@ def generate_new_dataset():
         try:
             (x_train, y_train), (x_test, y_test) = cifar10.load_data()
             break
-        except HTTPError as e:
-            logger.debug(
-                f'URL fetch failure on https://www.cs.toronto.edu/~kriz/cifar-10-python.tar.gz : {e.code} -- {e.msg}')
-            if attempts < constants.NUMBER_OF_DOWNLOAD_ATTEMPTS:
-                sleep(2)
-                attempts += 1
+        except (HTTPError, URLError) as e:
+            if hasattr(e, 'code'):
+                temp = e.code
             else:
-                raise
-        except URLError as e:
+                temp = e.errno
             logger.debug(
-                f'URL fetch failure on https://www.cs.toronto.edu/~kriz/cifar-10-python.tar.gz : '
-                f'{e.errno} -- {e.reason}')
+                f'URL fetch failure on '
+                f'https://web.stanford.edu/class/archive/cs/cs109/cs109.1166/stuff/titanic.csv : '
+                f'{temp} -- {e.reason}')
             if attempts < constants.NUMBER_OF_DOWNLOAD_ATTEMPTS:
                 sleep(2)
                 attempts += 1
