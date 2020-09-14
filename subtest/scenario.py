@@ -521,8 +521,8 @@ class Scenario:
             p.y_train = y_partner_train
 
             # Create local validation and test datasets from the partner train data
-            p.x_train, p.x_val, p.y_train, p.y_val = self.dataset.train_val_split_local(p.x_train, p.y_train)
             p.x_train, p.x_test, p.y_train, p.y_test = self.dataset.train_test_split_local(p.x_train, p.y_train)
+            p.x_train, p.x_val, p.y_train, p.y_val = self.dataset.train_val_split_local(p.x_train, p.y_train)
 
             # Update other attributes from partner
             p.final_nb_samples = len(p.x_train)
