@@ -3,18 +3,19 @@
 Functions for model training and evaluation (single-partner and multi-partner cases)
 """
 
+import operator
 import os
-from timeit import default_timer as timer
 import pickle
+from timeit import default_timer as timer
+
+import matplotlib.pyplot as plt
+import numpy as np
 from keras.backend.tensorflow_backend import clear_session
 from keras.callbacks import EarlyStopping
-import numpy as np
-import matplotlib.pyplot as plt
-import operator
 from loguru import logger
+from sklearn.externals.joblib import dump, load
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import log_loss
-from sklearn.externals.joblib import dump, load
 
 from . import constants
 
@@ -249,7 +250,7 @@ class MultiPartnerLearning:
             "loss_collective_models": self.loss_collective_models,
             "score_matrix_per_partner": self.score_matrix_per_partner,
             "score_matrix_collective_models": self.score_matrix_collective_models,
-            }
+        }
         with open(self.save_folder / "history_data.p", 'wb') as f:
             pickle.dump(history_data, f)
 
@@ -311,7 +312,6 @@ class MultiPartnerLearning:
 
         # Iterate over partners for training each individual model
         for partner_index, partner in enumerate(self.partners_list):
-
             # Reference the partner's model
             partner_model = partners_model_list_for_iteration[partner_index]
 
@@ -406,7 +406,6 @@ class MultiPartnerLearning:
         shuffled_indexes = np.random.permutation(self.partners_count)
         logger.debug(f"(seqavg) Shuffled order for this seqavg collaborative round: {shuffled_indexes}")
         for for_loop_idx, partner_index in enumerate(shuffled_indexes):
-
             partner = self.partners_list[partner_index]
 
             # Train on partner local data set
@@ -521,14 +520,14 @@ class MultiPartnerLearning:
         if isinstance(new_model, type(LogisticRegression())):
             partners_model_list.append(new_model)
             # For each remaining partner, create a new model and add it to the list
-            for i in range(len(self.partners_list)-1):
+            for i in range(len(self.partners_list) - 1):
                 partners_model_list.append(self.generate_new_model())
         else:
             partners_model_list.append(new_model)
 
             # For each remaining partner, duplicate the new model and add it to the list
             new_model_weights = new_model.get_weights()
-            for i in range(len(self.partners_list)-1):
+            for i in range(len(self.partners_list) - 1):
                 partners_model_list.append(self.build_model_from_weights(new_model_weights))
 
         return partners_model_list
@@ -555,7 +554,7 @@ class MultiPartnerLearning:
 
         self.prepare_aggregation_weights()
         partners_model_list = []
-        for partner in self.partners_list:
+        for _ in self.partners_list:
             partners_model_list.append(self.build_model_from_weights(self.aggregate_model_weights()))
         return partners_model_list
 
@@ -565,7 +564,7 @@ class MultiPartnerLearning:
         model = None
         self.prepare_aggregation_weights()
         if self.learning_approach == 'seq-pure':
-            model =  self.build_model_from_weights(self.models_weights_list[self.partners_count-1])
+            model = self.build_model_from_weights(self.models_weights_list[self.partners_count - 1])
         elif self.learning_approach in ['fedavg', 'seq-with-final-agg', 'seqavg']:
             model = self.build_model_from_weights(self.aggregate_model_weights())
         return model
@@ -605,7 +604,7 @@ class MultiPartnerLearning:
 
         if isinstance(model_to_evaluate, type(LogisticRegression())):
             if not hasattr(model_to_evaluate, 'coef_'):
-                model_evaluation = [0]*2
+                model_evaluation = [0] * 2
             else:
                 loss = log_loss(y_eval, model_to_evaluate.predict(x_eval))  # mimic keras model evaluation
                 accuracy = model_to_evaluate.score(x_eval, y_eval)
@@ -640,7 +639,6 @@ class MultiPartnerLearning:
 
 
 def init_multi_partner_learning_from_scenario(scenario, is_save_data=True):
-
     mpl = MultiPartnerLearning(
         scenario.partners_list,
         scenario.epoch_count,
