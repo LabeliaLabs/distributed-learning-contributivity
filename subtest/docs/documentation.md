@@ -10,9 +10,10 @@
 ## Prerequisities
 
 At root folder:
-- `pip install -r requirements.txt`
-- `pip install -i https://test.pypi.org/simple/ subtest==0.0.0.6`
-
+```bash
+pip install -r requirements.txt
+pip install -i https://test.pypi.org/simple/ subtest==0.0.0.6
+```
 Note: This is the temporary package for our library.
 
 ## Check out our tutorials!
@@ -77,7 +78,7 @@ The steps to follow are:
   There are 2 mandatory parameters for a collaborative run: `partners_count` and `amounts_per_partner`.
 
  Here is an example of how you should do it:
-```
+```python
 scenario_params = {
     'partners_count': 3,
     'amounts_per_partner': [0.2, 0.5, 0.3],
@@ -95,13 +96,13 @@ current_scenario = Scenario(scenario_params)
 ```
 
 - Assign your `dataset` object to the `current_scenario`:
-```
+```python
 current_scenario.dataset = dataset
 ```
 - The split between the validation and train sets is done by the constructor's of the dataset
 
 - Run the scenario:
-```
+```python
 current_scenario.run()
 ```
 
@@ -118,11 +119,11 @@ Here is a non exhaustive list of metrics available:
 - `score_matrix_per_partner`
 
 Here is an example of an accuracy plot for 3 partner
-```
+```python
 import seaborn as sns
 sns.set()
 
-x= current_scenario.mpl.score_matrix_per_partner
+x = current_scenario.mpl.score_matrix_per_partner
 
 x_collective = current_scenario.mpl.score_matrix_collective_models
 
@@ -149,12 +150,12 @@ Check out our Tutorial 3 for more information.
 ## Contributivity measurement methods
 
 To use contributivity measurement tools, you will have to set parameters to your `scenario` object.
-```
+```python
 scenario_params['methods'] = ["Shapley values"]
 ```
 
 To access to the results use:
-```
+```python
 contributivity_score = current_scenario.contributivity_list
 print(contributivity_score[0])
 ```
