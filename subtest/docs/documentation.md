@@ -94,17 +94,15 @@ The first partner will have 20% of the total dataset, the second 50% and the thi
 current_scenario = Scenario(scenario_params)
 ```
 
-- Asignate your `dataset` object to the `current_scenario`:
+- Assign your `dataset` object to the `current_scenario`:
 ```
 current_scenario.dataset = dataset
 ```
-- Split the validation and train sets:
-```
-current_scenario.dataset.train_val_split()
-```
+- The split between the validation and train sets is done by the constructor's of the dataset
+
 - Run the scenario:
 ```
-run_scenario(current_scenario)
+current_scenario.run()
 ```
 
 ## Results

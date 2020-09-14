@@ -682,17 +682,25 @@ class Scenario:
 
         x_train = self.dataset.x_train
         y_train = self.dataset.y_train
+        x_val = self.dataset.x_val
+        y_val = self.dataset.y_val
 
         logger.info(f"We don't use the full dataset: only {self.dataset_proportion * 100}%")
 
-        skip_idx = int(round(len(x_train) * self.dataset_proportion))
+        skip_train_idx = int(round(len(x_train) * self.dataset_proportion))
         train_idx = np.arange(len(x_train))
+
+        skip_val_idx = int(round(len(x_val) * self.dataset_proportion))
+        val_idx = np.arange(len(x_val))
 
         np.random.seed(42)
         np.random.shuffle(train_idx)
+        np.random.shuffle(val_idx)
 
-        self.dataset.x_train = x_train[train_idx[0:skip_idx]]
-        self.dataset.y_train = y_train[train_idx[0:skip_idx]]
+        self.dataset.x_train = x_train[train_idx[0:skip_train_idx]]
+        self.dataset.y_train = y_train[train_idx[0:skip_train_idx]]
+        self.dataset.x_val = x_val[val_idx[0:skip_val_idx]]
+        self.dataset.y_val = y_val[val_idx[0:skip_val_idx]]
 
     def run(self):
         # -----------------------
