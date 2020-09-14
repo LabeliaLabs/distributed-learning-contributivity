@@ -74,7 +74,7 @@ The steps to follow are:
 
 - Define scenario parameters:
 
-  There are 2 mandatory parametters for a collaborative run: `partners_count` and `amounts_per_partner`.
+  There are 2 mandatory parameters for a collaborative run: `partners_count` and `amounts_per_partner`.
 
  Here is an example of how you should do it:
 ```
