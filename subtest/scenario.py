@@ -29,9 +29,6 @@ class Scenario:
         # Initialization of the dataset defined in the config of the experiment
         # ---------------------------------------------------------------------
 
-        # List of all partners defined in the scenario
-        self.partners_list = []
-
         # Raise Exception if unknown parameters in the .yml file
 
         params_known = ["dataset_name", "dataset_proportion"]  # Dataset related
@@ -95,6 +92,8 @@ class Scenario:
         # --------------------------------------
         #  Definition of collaborative scenarios
         # --------------------------------------
+        # List of all partners defined in the scenario
+        self.partners_list = []
 
         # partners mock different partners in a collaborative data science project
         # For defining the number of partners

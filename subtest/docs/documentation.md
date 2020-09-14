@@ -5,7 +5,7 @@
 
 - Quick start
 - Results
-- Contributivity mesuring methods
+- Contributivity measurement methods
 
 ## Prerequisities
 
@@ -17,7 +17,7 @@ Note: This is the temporary package for our library.
 
 ## Check out our tutorials!
 
-For a better start and a quick understanding of how our library work, we recommand to take a look at our Notebook based tutorials.
+For a better start and a quick understanding of how our library work, we recommend to take a look at our Notebook based tutorials.
 
 ## Quick start
 
@@ -144,11 +144,11 @@ sns.relplot(data = df, kind = "line")
 
 ```
 
-Check out our Tutorial 3 for more informations.
+Check out our Tutorial 3 for more information.
 
-## Contributivity mesuring methods
+## Contributivity measurement methods
 
-To use contributivity mesuring tools, you will have to set parameters to your `scenario` object.
+To use contributivity measurement tools, you will have to set parameters to your `scenario` object.
 ```
 scenario_params['methods'] = ["Shapley values"]
 ```
@@ -159,7 +159,7 @@ contributivity_score = current_scenario.contributivity_list
 print(contributivity_score[0])
 ```
 
-Check out our Tutorial 4 for more informations.
+Check out our Tutorial 4 for more information.
 
 
 ## Contacts, contributions, collaborations
@@ -171,4 +171,4 @@ Should you be interested in this open effort and would like to share any questio
 - Come meet with us at La Paillasse (Paris, France), Le Palace (Nantes, France) or Studio Iconosquare (Limoges, France)
 
 
-# Work in progress
+*Work in progress*
