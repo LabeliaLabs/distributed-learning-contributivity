@@ -16,8 +16,7 @@ import pandas as pd
 from loguru import logger
 from sklearn.model_selection import train_test_split
 
-from . import constants
-from . import contributivity
+from . import contributivity, constants
 from . import multi_partner_learning
 from .datasets import dataset_mnist, dataset_titanic, dataset_esc50, dataset_cifar10
 from .partner import Partner
