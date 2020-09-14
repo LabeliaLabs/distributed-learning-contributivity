@@ -395,8 +395,8 @@ class TestDemoClass:
         Check if the two config files are present
         and loaded with the load_cfg method
         """
-        config_file = utils.load_cfg("../config.yml")
-        config_quick_debug_file = utils.load_cfg("../config_quick_debug.yml")
+        config_file = utils.load_cfg("config.yml")
+        config_quick_debug_file = utils.load_cfg("config_quick_debug.yml")
         assert config_file and config_quick_debug_file
 
     def test_load_config_files(self):
@@ -404,7 +404,7 @@ class TestDemoClass:
         Check if the two config files are present
         and loaded with the load method
         """
-        with open("../config.yml", "r") as config_file:
+        with open("config.yml", "r") as config_file:
             assert yaml.load(config_file, Loader=yaml.FullLoader)
-        with open("../config_quick_debug.yml", "r") as config_quick_debug_file:
+        with open("config_quick_debug.yml", "r") as config_quick_debug_file:
             assert yaml.load(config_quick_debug_file, Loader=yaml.FullLoader)

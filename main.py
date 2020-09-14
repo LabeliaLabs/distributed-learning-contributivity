@@ -17,11 +17,8 @@ import tensorflow as tf
 from loguru import logger
 
 from subtest import constants
-from subtest import contributivity
-from subtest import multi_partner_learning
 from subtest import scenario
 from subtest import utils
-
 
 DEFAULT_CONFIG_FILE = "./config.yml"
 
@@ -76,7 +73,7 @@ def main():
                     n_repeat=i+1
                 )
 
-                scenario.run_scenario(current_scenario)
+                current_scenario.run()
 
                 # Write results to CSV file
                 df_results = current_scenario.to_dataframe()
