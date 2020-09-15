@@ -67,10 +67,10 @@ def main():
                 logger.info(scenario_params)
 
                 current_scenario = scenario.Scenario(
-                    scenario_params,
-                    experiment_path,
-                    scenario_id=scenario_id+1,
-                    n_repeat=i+1
+                    **scenario_params,
+                    experiment_path=experiment_path,
+                    scenario_id=scenario_id + 1,
+                    n_repeat=i + 1
                 )
 
                 current_scenario.run()
@@ -134,7 +134,7 @@ def validate_scenario_list(scenario_params_list, experiment_path):
         logger.debug(f"Validation scenario {scenario_id + 1}/{len(scenario_params_list)}")
 
         # TODO: we should not create scenario folder at this point
-        current_scenario = scenario.Scenario(scenario_params, experiment_path, is_dry_run=True)
+        current_scenario = scenario.Scenario(**scenario_params, experiment_path=experiment_path, is_dry_run=True)
         current_scenario.instantiate_scenario_partners()
 
         if current_scenario.samples_split_type == 'basic':

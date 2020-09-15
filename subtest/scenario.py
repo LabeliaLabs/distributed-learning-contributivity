@@ -25,7 +25,7 @@ from .partner import Partner
 
 class Scenario:
     def __init__(self,
-                 partner_count,
+                 partners_count,
                  amounts_per_partner,
                  dataset=None,
                  dataset_name=constants.MNIST,
@@ -112,7 +112,7 @@ class Scenario:
         # partners mock different partners in a collaborative data science project
         # For defining the number of partners
 
-        self.partners_count = partner_count
+        self.partners_count = partners_count
 
         # For configuring the respective sizes of the partners' datasets
         # Should the partners receive an equivalent amount of samples each or receive different amounts?
