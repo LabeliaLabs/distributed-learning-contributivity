@@ -2,7 +2,7 @@ from pathlib import Path
 
 from setuptools import setup, find_packages
 
-with open("README.md", "r") as fh:
+with open("subtest/docs/pck-description.md", "r") as fh:
     long_description = fh.read()
 
 with open(Path.joinpath(Path(__file__).resolve().parents[0], 'subtest/requirements.txt')) as file:
