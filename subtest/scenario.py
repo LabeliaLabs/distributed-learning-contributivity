@@ -80,7 +80,7 @@ class Scenario:
         self.dataset = dataset_module.generate_new_dataset()
 
         if self.dataset_proportion < 1:
-            self.shorten_dataset_proportion()
+            self.dataset.shorten_dataset_proportion(self.dataset_proportion)
         else:
             logger.debug(f"Computation use the full dataset for scenario #{scenario_id}")
 
@@ -97,6 +97,7 @@ class Scenario:
 
         # partners mock different partners in a collaborative data science project
         # For defining the number of partners
+
         self.partners_count = params["partners_count"]
 
         # For configuring the respective sizes of the partners' datasets
@@ -671,35 +672,6 @@ class Scenario:
                 df = df.append(dict_results, ignore_index=True)
 
         return df
-
-    def shorten_dataset_proportion(self):
-        """Truncate the dataset depending on self.dataset_proportion"""
-
-        if self.dataset_proportion == 1:
-            raise Exception("shorten_dataset_proportion shouldn't be called on this scenario, \
-                the user targets the full dataset")
-
-        x_train = self.dataset.x_train
-        y_train = self.dataset.y_train
-        x_val = self.dataset.x_val
-        y_val = self.dataset.y_val
-
-        logger.info(f"We don't use the full dataset: only {self.dataset_proportion * 100}%")
-
-        skip_train_idx = int(round(len(x_train) * self.dataset_proportion))
-        train_idx = np.arange(len(x_train))
-
-        skip_val_idx = int(round(len(x_val) * self.dataset_proportion))
-        val_idx = np.arange(len(x_val))
-
-        np.random.seed(42)
-        np.random.shuffle(train_idx)
-        np.random.shuffle(val_idx)
-
-        self.dataset.x_train = x_train[train_idx[0:skip_train_idx]]
-        self.dataset.y_train = y_train[train_idx[0:skip_train_idx]]
-        self.dataset.x_val = x_val[val_idx[0:skip_val_idx]]
-        self.dataset.y_val = y_val[val_idx[0:skip_val_idx]]
 
     def run(self):
         # -----------------------
