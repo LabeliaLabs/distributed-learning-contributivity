@@ -162,8 +162,8 @@ class Scenario:
         assert self.minibatch_count > 0, "Error: in the provided config file, minibatch_count should be > 0"
 
         self.gradient_updates_per_pass_count = gradient_updates_per_pass_count
-        assert self.gradient_updates_per_pass_count > 0, f"Error: in the provided config file, " \
-                                                         f"gradient_updates_per_pass_count should be > 0 "
+        assert self.gradient_updates_per_pass_count > 0, "Error: in the provided config file, " \
+                                                         "gradient_updates_per_pass_count should be > 0 "
 
         # Early stopping stops ML training when performance increase is not significant anymore
         # It is used to optimize the number of epochs and the execution time
