@@ -3,12 +3,12 @@ from setuptools import setup, find_packages
 with open("README.md", "r") as fh:
     long_description = fh.read()
 
-with open("requirements.txt", "r") as fh:
+with open("subtest/requirements.txt", "r") as fh:
     requirements = fh.read()
 
 setup(
     name="subtest",
-    version="0.0.0.10",
+    version="0.0.0.11",
     author="SubstraFoundation",
     author_email="contact@substra.org",
     description="A distributed learning contributivity package",
