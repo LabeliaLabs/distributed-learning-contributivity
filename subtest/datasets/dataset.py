@@ -41,7 +41,7 @@ class Dataset:
         if train_val_split_local:
             self.train_val_split_local = train_val_split_local
         else:
-            self.train_test_split_local = self.__default_train_split_local
+            self.train_val_split_local = self.__default_train_split_local
 
         if train_test_split_local:
             self.train_test_split_local = train_test_split_local
