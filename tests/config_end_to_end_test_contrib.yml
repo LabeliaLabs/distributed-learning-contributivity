@@ -1,0 +1,24 @@
+experiment_name: end_to_end_test_contrib
+n_repeats: 1
+scenario_params_list:
+ - dataset_name:
+    'mnist':
+     - 'random_initialization'
+   partners_count:
+     - 2
+   amounts_per_partner: 
+     - [0.05, 0.95]
+   samples_split_option: 
+     - ['basic', 'random']
+   multi_partner_learning_approach:
+     - 'fedavg'
+   methods:
+    - ["Shapley values", "Independent scores"]
+   epoch_count: 
+     - 1
+   minibatch_count: 
+     - 10
+   gradient_updates_per_pass_count:
+     - 8
+   dataset_proportion:
+     - 0.1

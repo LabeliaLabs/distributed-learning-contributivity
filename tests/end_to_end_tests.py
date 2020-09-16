@@ -19,7 +19,33 @@ class Test_EndToEndTest:
         Test performance on MNIST dataset after one epoch
         """
         # run test
-        subprocess.run(["python", "main.py", "-f", "tests/config_end_to_end_test.yml"])
+        subprocess.run(["python", "main.py", "-f", "tests/config_end_to_end_test_mnist.yml"])
+
+        df = get_latest_dataframe("*end_to_end_test*"):
+
+        # Extract score
+        min_test_score = df["mpl_test_score"].min()
+
+        assert min_test_score > 0.95
+
+
+    def test_contrib(self):
+        """
+        Test contrib score
+        """
+        # run test
+        subprocess.run(["python", "main.py", "-f", "tests/config_end_to_end_test_contrib.yml"])
+
+        df = get_latest_dataframe("*end_to_end_test*"):
+
+        # Extract score
+        min_test_score = df["mpl_test_score"].min()
+
+        assert min_test_score > 0.95
+
+
+    @staticmethod
+    def get_latest_dataframe(pattern):
 
         # Get latest experiment folder
         root_folder = Path().absolute() / constants.EXPERIMENTS_FOLDER_NAME
@@ -28,9 +54,5 @@ class Test_EndToEndTest:
         latest_subfolder_idx = subfolder_list_creation_time.index(max(subfolder_list_creation_time))
 
         experiment_path = subfolder_list[latest_subfolder_idx]
-        df = pd.read_csv(experiment_path / "results.csv")
 
-        # Extract score
-        min_test_score = df["mpl_test_score"].min()
-
-        assert min_test_score > 0.95
+        return pd.read_csv(experiment_path / "results.csv")
