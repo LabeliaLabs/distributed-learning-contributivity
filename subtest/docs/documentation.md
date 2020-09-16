@@ -2,111 +2,82 @@
 # Work in progress
 
 ## Summary
-
-- Quick start
-- Results
-- Contributivity measurement methods
+- [Prerequisities](#prerequisities)
+- [Quick start](#quick-start)
+  * [My first scenario](#my-first-scenario)
+  * [Select a pre-implemented dataset](#select-a-pre-implemented-dataset)
+  * [Thune some ML parameters](#thune-some-ml-parameters)
+  * [Results](#results)
+  * [Contributivity measurement methods](#contributivity-measurement-methods)
+- [Scenario parameters](#scenario-parameters)
+  * [Choice of dataset](#choice-of-dataset)
+  * [Definition of collaborative scenarios](#definition-of-collaborative-scenarios)
+  * [Configuration of the collaborative and distributed learning](#configuration-of-the-collaborative-and-distributed-learning)
+  * [Configuration of contributivity measurement methods to be tested](#configuration-of-contributivity-measurement-methods-to-be-tested)
+  * [Miscellaneous](#miscellaneous)
+- [Dataset generation](#dataset-generation)
+  * [Dataset](#dataset)
+  * [Model generator](#model-generator)
+  * [Preprocessing](#preprocessing)
+  * [Train/validation/test splits](#train-validation-test-splits)
+- [Contacts, contributions, collaborations](#contacts--contributions--collaborations)
 
 ## Prerequisities
 
 At root folder:
 ```bash
 pip install -r requirements.txt
-pip install -i https://test.pypi.org/simple/ subtest==0.0.0.6
+pip install -i https://test.pypi.org/simple/ subtest==0.0.0.18
 ```
 Note: This is the temporary package for our library.
 
-## Check out our tutorials!
-
-For a better start and a quick understanding of how our library work, we recommend to take a look at our Notebook based tutorials.
-
 ## Quick start
 
-### Important classes:
+### My first scenario
+To lauch a collaborative round, you need to generate scenario and run it, though a Scenario object.
 
-#### Dataset
-
-This is where you define your dataset and relatives objects such as preprocessing functions and model generator.
-
-##### Dataset
-
-This is the structure of the dataset generator:
-
+There are 2 mandatory parameters for a collaborative run: `partners_count` and `amounts_per_partner`.
+For instance, you could want to see what is happending with 3 partners, the first with 20% of the total dataset, the second 50% and the third 30% (for a total of 100%).
+Here is an example of how you should do it:
 ```python
-dataset = dataset.Dataset(
-    "name",
-    X_train,
-    X_test,
-    y_train,
-    y_test,
-    input_shape,
-    num_classes,
-    preprocess_dataset_labels,      # See below
-    generate_new_model_for_dataset  # See below
-)
+from subtest.scenario import Scenario
+my_scenario = Scenario(partners_count=3,
+                       amounts_per_partner=[0.2, 0.3, 0.5])
+```
+Note that you can use more advanced sample split options in order to fine tune the data distribution between partners. See the doc
+
+At this point, you can already launch your first scenario !
+### Select a pre-implemented dataset
+You might also want to consider other parameters such as the dataset, for instance. The easiest way to select a dataset is to use those which are already implemented in subtest. 
+Currently MNIST, CIFAR10, TITANIC and ESC50 are handled. You can use one of those by simply passing the parameter dataset_name to your scenario object
+```python
+from subtest.scenario import Scenario
+my_scenario = Scenario(partners_count=3,
+                       amounts_per_partner=[0.2, 0.3, 0.5],
+                        dataset_name='mnist')
+```
+With each dataset, a model is provided, so you do not need to care of it. Moreover, the split between the validation and train sets is done by the constructor's of the dataset, even if you can fine thune it.
+If you want to use an homemade dataset or a homemade model, you will have to use the dataset class. #TODO add anchor link
+Note that this parameter is not mandatory as the MNIST dataset is selected by default. 
+
+### Set some ML parameters
+Even if default training values are provided, it is strongly advised to adapt these to your case. 
+For instance you can want your training to go for 10 epochs and 3 minibatches per epoch. 
+```python
+from subtest.scenario import Scenario
+my_scenario = Scenario(partners_count=3,
+                       amounts_per_partner=[0.2, 0.3, 0.5],
+                       dataset_name='mnist',
+                       epoch_count=10,
+                       minibatch_count=3)
+```
+### Run it
+You scenario is ready, you can run it.
+```python
+my_scenario.run()
 ```
 
-##### Model generator
-
-
-```python
-def generate_new_model_for_dataset():
-    model = Sequential()
-    # add layers
-    model.add(Dense(num_classes, activation='softmax'))
-    # compile with loss and accuracy
-    model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
-    return model
-```
-Note: It is mandatory to have loss and accuracy as metrics for your model.
-
-##### Preprocessing
-```python
-def preprocess_dataset_labels(y):
-    # Do stuff
-    return y
-```
-
-#### Scenario
-
-This is how you launch a collaborative round.
-
-The steps to follow are:
-
-- Define scenario parameters:
-
-  There are 2 mandatory parameters for a collaborative run: `partners_count` and `amounts_per_partner`.
-
- Here is an example of how you should do it:
-```python
-scenario_params = {
-    'partners_count': 3,
-    'amounts_per_partner': [0.2, 0.5, 0.3],
-}
-```
-The first partner will have 20% of the total dataset, the second 50% and the third 30% for a total of 100%.
-
- If you don't want to use the entire dataset you can use the `dataset_proportion` parameter.
-
- You might also want to consider other parameters such as `epoch_count` or `minibatch_count`. See full params list at: [scenario-level-parameters](https://github.com/SubstraFoundation/distributed-learning-contributivity/blob/master/README.md#scenario-level-parameters)
-
-- Create scenario:
-```python
-current_scenario = Scenario(scenario_params)
-```
-
-- Assign your `dataset` object to the `current_scenario`:
-```python
-current_scenario.dataset = dataset
-```
-- The split between the validation and train sets is done by the constructor's of the dataset
-
-- Run the scenario:
-```python
-current_scenario.run()
-```
-
-## Results
+### Results
 
 After a run, every information regarding the training phase will be available under the `multi_partner_learning` object in the `scenario.dataset.mpl` attribute
 
@@ -120,12 +91,13 @@ Here is a non exhaustive list of metrics available:
 
 Here is an example of an accuracy plot for 3 partner
 ```python
+import pandas as pd
 import seaborn as sns
 sns.set()
 
-x = current_scenario.mpl.score_matrix_per_partner
+x = my_scenario.mpl.score_matrix_per_partner
 
-x_collective = current_scenario.mpl.score_matrix_collective_models
+x_collective = my_scenario.mpl.score_matrix_collective_models
 
 x = x[:,:,0]
 x_collective = x_collective[:,0]
@@ -147,45 +119,38 @@ sns.relplot(data = df, kind = "line")
 
 Check out our Tutorial 3 for more information.
 
-## Contributivity measurement methods
+### Contributivity measurement methods
 
-To use contributivity measurement tools, you will have to set parameters to your `scenario` object.
+To use contributivity measurement tools, you will have to change the parameters of your Scenario object
 ```python
-scenario_params['methods'] = ["Shapley values"]
+from subtest.scenario import Scenario
+my_scenario = Scenario(partners_count=3,
+                       amounts_per_partner=[0.2, 0.3, 0.5],
+                       dataset_name='mnist',
+                       epoch_count=10,
+                       minibatch_count=3,
+                       methods=['Shapley values'])
 ```
-
-To access to the results use:
+The result's access is straightforward
 ```python
-contributivity_score = current_scenario.contributivity_list
+contributivity_score = my_scenario.contributivity_list
 print(contributivity_score[0])
 ```
 
 Check out our Tutorial 4 for more information.
 
+There is a lot more parameters that you can play with, which are fully explained below, in the documentation
+
 ## Scenario parameters
 
-#### Choice of dataset
+### Choice of dataset
+There is two way to select a dataset. You can either choice a pre-implemented dataset, by setting the `dataset_name` parameter, or directly pass the dataset object to the `dataset` parameter. To look at the structure of the dataset object, see the relatied documentaiton #TODO anchor 
+
+`dataset` : `None` (default), `datasets.Dataset object`. If None, the dataset provided by the `dataset_name` will be used
 `dataset_name`: `'mnist'` (default), `'cifar10'`, `'esc50'` or `'titanic'`
 MNIST, CIFAR10, ESC50 and Titanic are currently supported. They come with their associated modules in `/datasets` for loading data, pre-processing inputs, and define a model architecture.\
 For each dataset, it is possible to provide a path to model weights learned from a previous coalition. Use `'random_initialization'` if you want a random initialization or an empty value as in one of the two following syntaxes:
 You can also use your own dataset, with the class Dataset. The Notebook #TODO provides more explicit information.
-
-```python
- scenario_params['dataset_name']=['mnist', 'cifar10']
-```
-
-
-
-Please, note that if you want to specify a path to saved weights and launch the same scenario with a random initialization, you must specify it in the list of initialization.
-
-```
-scenario_params_list:
- - dataset_name:
-    'mnist':
-     - 'random_initialization'
-     - path_to_saved_weights
-    'cifar10':
-```
 
 **Note on validation and test datasets**:
 
@@ -193,7 +158,7 @@ scenario_params_list:
 - The global train set is then further split into a global train set and a global validation set.
 In the multi-partner learning computations, the global validation set is used for early stopping and the global test set is used for performance evaluation.
 - The global train set is split amongst partner (according to the scenario configuration) to populate the partner's local datasets.
-- For each partner, the local dataset is split into separated train, validation and test sets. Currently, the local validation and test set are not used, but they are available for further developments of multi-partner learning and contributivity measurement approaches.
+- For each partner, the local dataset can be split into separated train, validation and test sets, depending on the dataset configuration. Currently, the local validation and test set are not used, but they are available for further developments of multi-partner learning and contributivity measurement approaches.
 
 `dataset_proportion`: `float` (default: `1`)
 This argument allows you to make computation on a sub-dataset of the provided dataset.
@@ -201,7 +166,7 @@ This is the proportion of the dataset (initialy the train and test sets) which i
 it's done before the creation of the global validation set.
 You have to ensure that `0 < dataset_proportion <= 1`
 
-##### Definition of collaborative scenarios
+### Definition of collaborative scenarios
 
 `partners_count`: `int`  
 Number of partners in the mocked collaborative ML scenario.  
@@ -237,7 +202,7 @@ Enables to artificially corrupt the data of one or several partners:
 
 Example: `[not_corrupted, not_corrupted, not_corrupted, shuffled]`
 
-##### Configuration of the collaborative and distributed learning
+### Configuration of the collaborative and distributed learning
 
 There are several parameters influencing how the collaborative and distributed learning is done over the datasets of the partners. The following schema introduces certain definitions used in the below description of parameters:
 
@@ -267,27 +232,27 @@ After a training iteration over a given mini-batch, how individual models of eac
 - `'data_volume'`: average weighted with per the amounts of data of partners (number of data samples)
 - `'local_score'`: average weighted with the performance (on a central validation set) of the individual models
 
-Example: `aggregation_weighting: 'data_volume'`
+Example: `aggregation_weighting = 'data_volume'`
 
 `epoch_count`: `int` (default: `40`)  
 Number of epochs, i.e. of passes over the entire datasets. Superseded when `is_early_stopping` is set to `true`.  
-Example: `epoch_count: 30`
+Example: `epoch_count = 30`
 
 `minibatch_count`: `int` (default: `20`)  
 Within an epoch, the learning on each partner's dataset is not done in one single pass. The partners' datasets are split into multiple *mini-batches*, over which learning iterations are performed. These iterations are repeated for all *mini-batches* into which the partner's datasets are split at the beginning of each epoch. This gives a total of `epoch_count * minibatch_count` learning iterations.  
-Example: `minibatch_count: 20`
+Example: `minibatch_count = 20`
 
 `gradient_updates_per_pass_count`: `int` (default: `8`)  
 The ML training implemented relies on Keras' `.fit()` function, which takes as argument a `batch_size` interpreted by `fit()` as the number of samples per gradient update. Depending on the number of samples in the train dataset, this defines how many gradient updates are done by `.fit()`. The `gradient_updates_per_pass_count` parameter enables to specify this number of gradient updates per `.fit()` iteration (both in multi-partner setting where there is 1 `.fit()` iteration per mini-batch, and in single-partner setting where there is 1 `.fit()` iteration per epoch).  
-Example: `gradient_updates_per_pass_count: 5`
+Example: `gradient_updates_per_pass_count = 5`
 
 `is_early_stopping`: `True` (default) or `False`  
 When set to `True`, the training phases (whether multi-partner of single-partner) are stopped when the performance on the validation set reaches a plateau.  
-Example: `is_early_stopping: False`
+Example: `is_early_stopping = False`
 
 **Note:** to only launch the distributed learning on the scenarios (and no contributivity measurement methods), simply omit the `methods` parameter (see section [Configuration of contributivity measurement methods to be tested](#configuration-of-contributivity-measurement-methods-to-be-tested) below).
 
-##### Configuration of contributivity measurement methods to be tested
+### Configuration of contributivity measurement methods to be tested
 
 `methods`:  
 A declarative list `[]` of the contributivity measurement methods to be executed.
@@ -309,11 +274,68 @@ See below section [Contributivity measurement approaches studied and implemented
 **Note:** When `methods` is omitted in the config file only the distributed learning is run.  
 Example: `["Shapley values", "Independent scores", "TMCS"]`
 
-##### Miscellaneous
+### Miscellaneous
 
 `is_quick_demo`: `True` or `False` (default)  
 When set to `True`, the amount of data samples and the number of epochs and mini-batches are significantly reduced, to minimize the duration of the run. This is particularly useful for quick demos or debugging.  
-Example: `is_quick_demo: True`
+Example: `is_quick_demo = True`
+
+## Dataset generation
+
+The dataset object is useful if you want to define your dataset and relatives objects such as preprocessing functions and model generator.
+
+### Dataset
+
+This is the structure of the dataset generator:
+
+```python
+dataset = dataset.Dataset(
+    "name",
+    X_train,
+    X_test,
+    y_train,
+    y_test,
+    input_shape,
+    num_classes,
+    preprocess_dataset_labels,      # See below
+    generate_new_model_for_dataset  # See below
+    train_val_split_global,         # See below
+    train_test_split_local,         # See below
+    train_val_split_local           # See below
+)
+```
+
+### Model generator
+This function provides the model use, which will be trained by the scenario object. 
+
+```python
+def generate_new_model_for_dataset():
+    model = Sequential()
+    # add layers
+    model.add(Dense(num_classes, activation='softmax'))
+    # compile with loss and accuracy
+    model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
+    return model
+```
+Note: It is mandatory to have loss and accuracy as metrics for your model.
+
+### Preprocessing
+```python
+def preprocess_dataset_labels(y):
+    # Do stuff
+    return y
+```
+
+### Train/validation/test splits
+
+The dataset object must be provided separated train and test sets (referred to as global train set and global test set).
+The global train set is then further split into a global train set and a global validation set, by the function `train_val_split_global`. Please denote that if this function is not provided, the sklearn's train_test_split function will be called by default, and 10% of the training set will be use as validation set. 
+In the multi-partner learning computations, the global validation set is used for early stopping and the global test set is used for performance evaluation.
+The global train set is then split amongst partners (according to the scenario configuration) to populate the partner's local datasets.
+For each partner, the local dataset will be split into separated train, validation and test sets, using the `train_test_split_local` and `train_val_split_local` functions.
+These are not mandatory, by default the local dataset will not be split. 
+Denote that currently, the local validation and test set are not used, but they are available for further developments of multi-partner learning and contributivity measurement approaches.
+
 
 
 ## Contacts, contributions, collaborations
