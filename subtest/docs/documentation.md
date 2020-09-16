@@ -2,11 +2,12 @@
 # Work in progress
 
 ## Summary
-- [Prerequisities](#prerequisities)
+- [Prerequisites](#prerequisites)
 - [Quick start](#quick-start)
   * [My first scenario](#my-first-scenario)
   * [Select a pre-implemented dataset](#select-a-pre-implemented-dataset)
-  * [Thune some ML parameters](#thune-some-ml-parameters)
+  * [Set some ML parameters](#set-some-ml-parameters)
+  * [Run it](#run-it)
   * [Results](#results)
   * [Contributivity measurement methods](#contributivity-measurement-methods)
 - [Scenario parameters](#scenario-parameters)
@@ -22,7 +23,7 @@
   * [Train/validation/test splits](#train-validation-test-splits)
 - [Contacts, contributions, collaborations](#contacts--contributions--collaborations)
 
-## Prerequisities
+## Prerequisites
 
 At root folder:
 ```bash
@@ -34,10 +35,10 @@ Note: This is the temporary package for our library.
 ## Quick start
 
 ### My first scenario
-To lauch a collaborative round, you need to generate scenario and run it, though a Scenario object.
+To launch a collaborative round, you need to generate scenario and run it, though a Scenario object.
 
 There are 2 mandatory parameters for a collaborative run: `partners_count` and `amounts_per_partner`.
-For instance, you could want to see what is happending with 3 partners, the first with 20% of the total dataset, the second 50% and the third 30% (for a total of 100%).
+For instance, you could want to see what is happening with 3 partners, the first with 20% of the total dataset, the second 50% and the third 30% (for a total of 100%).
 Here is an example of how you should do it:
 ```python
 from subtest.scenario import Scenario
@@ -57,7 +58,7 @@ my_scenario = Scenario(partners_count=3,
                         dataset_name='mnist')
 ```
 With each dataset, a model is provided, so you do not need to care of it. Moreover, the split between the validation and train sets is done by the constructor's of the dataset, even if you can fine thune it.
-If you want to use an homemade dataset or a homemade model, you will have to use the dataset class. #TODO add anchor link
+If you want to use an homemade dataset or a homemade model, you will have to use the [dataset class.](#dataset-generation)
 Note that this parameter is not mandatory as the MNIST dataset is selected by default. 
 
 ### Set some ML parameters
@@ -117,7 +118,7 @@ sns.relplot(data = df, kind = "line")
 
 ```
 
-Check out our Tutorial 3 for more information.
+Check out our [Tutorial 3](https://github.com/SubstraFoundation/distributed-learning-contributivity/blob/master/notebooks/examples/3_Exploring_results.ipynb) for more information.
 
 ### Contributivity measurement methods
 
@@ -137,20 +138,20 @@ contributivity_score = my_scenario.contributivity_list
 print(contributivity_score[0])
 ```
 
-Check out our Tutorial 4 for more information.
+Check out our [Tutorial 4](https://github.com/SubstraFoundation/distributed-learning-contributivity/blob/master/notebooks/examples/4_Exploring_contributivity.ipynb) for more information.
 
 There is a lot more parameters that you can play with, which are fully explained below, in the documentation
 
 ## Scenario parameters
 
 ### Choice of dataset
-There is two way to select a dataset. You can either choice a pre-implemented dataset, by setting the `dataset_name` parameter, or directly pass the dataset object to the `dataset` parameter. To look at the structure of the dataset object, see the relatied documentaiton #TODO anchor 
+There is two way to select a dataset. You can either choice a pre-implemented dataset, by setting the `dataset_name` parameter, or directly pass the dataset object to the `dataset` parameter. To look at the structure of the dataset object, see the [related documentation](#dataset-generation)
 
 `dataset` : `None` (default), `datasets.Dataset object`. If None, the dataset provided by the `dataset_name` will be used
 `dataset_name`: `'mnist'` (default), `'cifar10'`, `'esc50'` or `'titanic'`
 MNIST, CIFAR10, ESC50 and Titanic are currently supported. They come with their associated modules in `/datasets` for loading data, pre-processing inputs, and define a model architecture.\
 For each dataset, it is possible to provide a path to model weights learned from a previous coalition. Use `'random_initialization'` if you want a random initialization or an empty value as in one of the two following syntaxes:
-You can also use your own dataset, with the class Dataset. The Notebook #TODO provides more explicit information.
+You can also use your own dataset, with the class Dataset. The [Tutorial 2](https://github.com/SubstraFoundation/distributed-learning-contributivity/blob/master/notebooks/examples/2%20_Sentiment140.ipynb) provides more explicit information.
 
 **Note on validation and test datasets**:
 
@@ -162,7 +163,7 @@ In the multi-partner learning computations, the global validation set is used fo
 
 `dataset_proportion`: `float` (default: `1`)
 This argument allows you to make computation on a sub-dataset of the provided dataset.
-This is the proportion of the dataset (initialy the train and test sets) which is randomly selected to create a sub-dataset,
+This is the proportion of the dataset (initially the train and test sets) which is randomly selected to create a sub-dataset,
 it's done before the creation of the global validation set.
 You have to ensure that `0 < dataset_proportion <= 1`
 
