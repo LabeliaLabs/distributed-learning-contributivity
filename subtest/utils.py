@@ -13,7 +13,7 @@ from shutil import copyfile
 from loguru import logger
 from ruamel.yaml import YAML
 
-from subtest import constants
+from . import constants
 
 
 def load_cfg(yaml_filepath):
