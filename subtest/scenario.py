@@ -43,10 +43,39 @@ class Scenario:
                  is_quick_demo=False,
                  experiment_path=Path(r"./experiments"),
                  scenario_id=1,
-                 n_repeat=1,
+                 repeat_tag=1,
                  is_dry_run=False,
                  **kwargs):
+        """
 
+        :param partners_count: int, number of partners. Example: partners_count = 3
+        :param amounts_per_partner:  [float]. Fractions of the
+        original dataset each partner receives to mock a collaborative ML scenario where each partner provides data
+        for the ML training.
+        :param dataset: dataset.Dataset object. Use it if you want to use your own dataset, otherwise use dataset_name.
+        :param dataset_name: str. mnist, cifar10, esc50 and titanic are currently supported (default: mnist)
+        :param dataset_proportion: float (default: 1)
+        :param samples_split_option: ['basic', 'random'] (default),
+                                     ['basic', 'stratified']
+                                     or ['advanced', [[nb of clusters (int), 'shared' or 'specific']]].
+        :param corrupted_datasets: [not_corrupted (default), shuffled or corrupted]
+                                   Enables to artificially corrupt the data of one or several partners:
+        :param init_model_from: None (default) or path
+        :param multi_partner_learning_approach: 'fedavg' (default), 'seq-pure', 'seq-with-final-agg' or 'seqavg'
+                                                Define the multi-partner learning approach
+        :param aggregation_weighting: 'uniform' (default), 'data_volume' or 'local_score'
+        :param gradient_updates_per_pass_count: int
+        :param minibatch_count: int
+        :param epoch_count: int
+        :param is_early_stopping: boolean. Stop the training if scores on val_set reach a plateau
+        :param methods: A declarative list `[]` of the contributivity measurement methods to be executed.
+        :param is_quick_demo: boolean. Useful for debugging
+        :param experiment_path: path
+        :param scenario_id: str
+        :param repeat_tag: int
+        :param is_dry_run: boolean
+        :param **kwargs:
+        """
         # ---------------------------------------------------------------------
         # Initialization of the dataset defined in the config of the experiment
         # ---------------------------------------------------------------------
@@ -199,7 +228,7 @@ class Scenario:
 
         # Scenario id and number of repetition
         self.scenario_id = scenario_id
-        self.n_repeat = n_repeat
+        self.n_repeat = repeat_tag
 
         self.is_quick_demo = is_quick_demo
         if self.is_quick_demo and self.dataset_proportion < 1:
