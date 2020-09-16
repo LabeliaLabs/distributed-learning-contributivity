@@ -20,6 +20,10 @@ DEBUG_LOGGING_FILE_NAME = "debug.log"
 # Paths
 EXPERIMENTS_FOLDER_NAME = "experiments"
 
+# Number of samples for quick_demo
+TRAIN_SET_MAX_SIZE_QUICK_DEMO = 1000
+VAL_SET_MAX_SIZE_QUICK_DEMO = 500
+TEST_SET_MAX_SIZE_QUICK_DEMO = 500
 # Contributivity methods names
 CONTRIBUTIVITY_METHODS = [
     "Shapley values",

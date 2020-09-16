@@ -209,10 +209,16 @@ class Scenario:
         if self.is_quick_demo:
             # Use less data and/or less epochs to speed up the computations
             logger.info("Quick demo: limit number of data and number of epochs.")
-            if len(self.dataset.x_train) > 1000:
-                index_train = np.random.choice(self.dataset.x_train.shape[0], 1000, replace=False)
-                index_val = np.random.choice(self.dataset.x_val.shape[0], 500, replace=False)
-                index_test = np.random.choice(self.dataset.x_test.shape[0], 500, replace=False)
+            if len(self.dataset.x_train) > constants.TRAIN_SET_MAX_SIZE_QUICK_DEMO:
+                index_train = np.random.choice(self.dataset.x_train.shape[0],
+                                               constants.TRAIN_SET_MAX_SIZE_QUICK_DEMO,
+                                               replace=False)
+                index_val = np.random.choice(self.dataset.x_val.shape[0],
+                                             constants.VAL_SET_MAX_SIZE_QUICK_DEMO,
+                                             replace=False)
+                index_test = np.random.choice(self.dataset.x_test.shape[0],
+                                              constants.TEST_SET_MAX_SIZE_QUICK_DEMO,
+                                              replace=False)
                 self.dataset.x_train = self.dataset.x_train[index_train]
                 self.dataset.y_train = self.dataset.y_train[index_train]
                 self.dataset.x_val = self.dataset.x_val[index_val]

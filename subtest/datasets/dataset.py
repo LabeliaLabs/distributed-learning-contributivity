@@ -74,28 +74,23 @@ class Dataset:
         """Truncate the dataset depending on self.dataset_proportion"""
 
         if dataset_proportion == 1:
-            raise Exception("shorten_dataset_proportion shouldn't be called on this scenario, \
-                the user targets the full dataset")
+            return
         elif dataset_proportion < 0:
             raise ValueError("The dataset proportion should be strictly between 0 and 1")
-        x_train = self.x_train
-        y_train = self.y_train
-        x_val = self.x_val
-        y_val = self.y_val
+        else:
+            logger.info(f"We don't use the full dataset: only {dataset_proportion * 100}%")
 
-        logger.info(f"We don't use the full dataset: only {dataset_proportion * 100}%")
+            skip_train_idx = int(round(len(self.x_train) * dataset_proportion))
+            train_idx = np.arange(len(self.x_train))
 
-        skip_train_idx = int(round(len(x_train) * dataset_proportion))
-        train_idx = np.arange(len(x_train))
+            skip_val_idx = int(round(len(self.x_val) * dataset_proportion))
+            val_idx = np.arange(len(self.x_val))
 
-        skip_val_idx = int(round(len(x_val) * dataset_proportion))
-        val_idx = np.arange(len(x_val))
+            np.random.seed(42)
+            np.random.shuffle(train_idx)
+            np.random.shuffle(val_idx)
 
-        np.random.seed(42)
-        np.random.shuffle(train_idx)
-        np.random.shuffle(val_idx)
-
-        self.x_train = x_train[train_idx[0:skip_train_idx]]
-        self.y_train = y_train[train_idx[0:skip_train_idx]]
-        self.x_val = x_val[val_idx[0:skip_val_idx]]
-        self.y_val = y_val[val_idx[0:skip_val_idx]]
+            self.x_train = self.x_train[train_idx[0:skip_train_idx]]
+            self.y_train = self.y_train[train_idx[0:skip_train_idx]]
+            self.x_val = self.x_val[val_idx[0:skip_val_idx]]
+            self.y_val = self.y_val[val_idx[0:skip_val_idx]]
