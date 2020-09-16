@@ -192,7 +192,7 @@ How the original dataset data samples are split among partners:
 
 Example: `['advanced', [[7, 'shared'], [6, 'shared'], [2, 'specific'], [1, 'specific']]]`
 
-![Example of the advanced split option](img/advanced_split_example.png)
+![Example of the advanced split option](https://github.com/SubstraFoundation/distributed-learning-contributivity/blob/master/imgadvanced_split_example.png)
 
 `corrupted_datasets`: `[not_corrupted (default), shuffled or corrupted]`  
 Enables to artificially corrupt the data of one or several partners:
@@ -207,22 +207,22 @@ Example: `[not_corrupted, not_corrupted, not_corrupted, shuffled]`
 
 There are several parameters influencing how the collaborative and distributed learning is done over the datasets of the partners. The following schema introduces certain definitions used in the below description of parameters:
 
-![Schema epochs mini-batches gradient updates](img/epoch_minibatch_gradientupdates.png)
+![Schema epochs mini-batches gradient updates](https://github.com/SubstraFoundation/distributed-learning-contributivity/blob/master/imgepoch_minibatch_gradientupdates.png)
 
 `multi_partner_learning_approach`: `'fedavg'` (default), `'seq-pure'`, `'seq-with-final-agg'` or `'seqavg'`  
 Define the multi-partner learning approach, among the following as described by the schemas:
 
 - `'fedavg'`: stands for federated averaging
 
-    ![Schema fedavg](img/collaborative_rounds_fedavg.png)
+    ![Schema fedavg](https://github.com/SubstraFoundation/distributed-learning-contributivity/blob/master/imgcollaborative_rounds_fedavg.png)
 
 - `'seq-...'`: stands for sequential and comes with 2 variations, `'seq-pure'` with no aggregation at all, and `'seq-with-final-agg'` where an aggregation is performed before evaluating on the validation set and test set (on last mini-batch of each epoch) for mitigating impact when the very last subset on which the model is trained is of low quality, or corrupted, or just detrimental to the model performance.
 
-    ![Schema seq](img/collaborative_rounds_seq.png)
+    ![Schema seq](https://github.com/SubstraFoundation/distributed-learning-contributivity/blob/master/imgcollaborative_rounds_seq.png)
 
 - `'seqavg'`: stands for sequential averaging
 
-    ![Schema seqavg](img/collaborative_rounds_seqavg.png)
+    ![Schema seqavg](https://github.com/SubstraFoundation/distributed-learning-contributivity/blob/master/imgcollaborative_rounds_seqavg.png)
 
 Example: `multi_partner_learning_approach: 'seqavg'`
 

@@ -5,27 +5,19 @@
 # Exploration of dataset contributivity to a model in collaborative ML projects
 
 - [Introduction](#introduction)
-  - [Context of this work](#context-of-this-work)
-  - [How to interact with this?](#how-to-interact-with-this)
+  * [Context of this work](#context-of-this-work)
+  * [How to interact with this?](#how-to-interact-with-this-)
 - [About this repository](#about-this-repository)
-  - [Experimental approach](#experimental-approach)
-  - [Structure of the library](#structure-of-the-library)
-    - [Scenarios](#scenarios)
-    - [Multi-partner learning approaches](#multi-partner-learning-approaches)
-    - [Contributivity measurement approaches](#contributivity-measurement-approaches)
-  - [Using the code files](#using-the-code-files)
-  - [Config file parameters](#config-file-parameters)
-    - [Experiment-level parameters](#experiment-level-parameters)
-    - [Scenario-level parameters](#scenario-level-parameters)
-      - [Choice of dataset](#choice-of-dataset)
-      - [Definition of collaborative scenarios](#definition-of-collaborative-scenarios)
-      - [Configuration of the collaborative and distributed learning](#configuration-of-the-collaborative-and-distributed-learning)
-      - [Configuration of contributivity measurement methods to be tested](#configuration-of-contributivity-measurement-methods-to-be-tested)
-      - [Miscellaneous](#miscellaneous)
-  - [Contributivity measurement approaches studied and implemented](#contributivity-measurement-approaches-studied-and-implemented)
-  - [Ongoing work and improvement plan](#ongoing-work-and-improvement-plan)
-- [Contacts, contributions, collaborations](#contacts-contributions-collaborations)
-
+  * [Experimental approach](#experimental-approach)
+  * [Structure of the library](#structure-of-the-library)
+    + [Scenarios](#scenarios)
+    + [Multi-partner learning approaches](#multi-partner-learning-approaches)
+    + [Contributivity measurement approaches](#contributivity-measurement-approaches)
+  * [Run an experiment](#run-an-experiment)
+    + [Using the code files](#using-the-code-files)
+    + [Using the library](#using-the-library)
+  * [Ongoing work and improvement plan](#ongoing-work-and-improvement-plan)
+- [Contacts, contributions, collaborations](#contacts--contributions--collaborations)
 ___
 
 ## Introduction
@@ -83,7 +75,9 @@ Once a given scenario configured, it seemed useful to choose how the multi-partn
 
 Finally, with given scenarios and multi-partner learning approaches, we can address contributivity measurement approaches. See below sections [Configuration of contributivity measurement methods to be tested](#configuration-of-contributivity-measurement-methods-to-be-tested) and [Contributivity measurement approaches studied and implemented](#contributivity-measurement-approaches-studied-and-implemented).
 
-### Using the code files
+### Run an experiment
+
+#### Using the code files
 
 1. Define your mock scenario(s) in `config.yml` by changing the values of the suggested parameters of the 2 example scenarios (you can browse more available parameters in section [Config file parameters](#config-file-parameters) below). For example:
 
@@ -151,8 +145,9 @@ Finally, with given scenarios and multi-partner learning approaches, we can addr
 
    **Note**: example experiment(s) are stored in folder `/saved_experiments` to illustrate the use of the library. The notebooks include graphs, like for example the following:  
    ![Example graphs](./img/results_graphs_example.png)
-
-
+   
+#### Using the library
+**TODO** 
 ### Ongoing work and improvement plan
 
 The current work focuses on the following 4 priorities:
