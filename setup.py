@@ -1,14 +1,16 @@
+from pathlib import Path
+
 from setuptools import setup, find_packages
 
 with open("README.md", "r") as fh:
     long_description = fh.read()
 
-with open("subtest/requirements.txt", "r") as fh:
-    requirements = fh.read()
+with open(Path.joinpath(Path(__file__).resolve().parents[0], 'subtest/requirements.txt')) as file:
+    requirements = file.read().split("\n")
 
 setup(
     name="subtest",
-    version="0.0.0.11",
+    version="0.0.0.18",
     author="SubstraFoundation",
     author_email="contact@substra.org",
     description="A distributed learning contributivity package",
