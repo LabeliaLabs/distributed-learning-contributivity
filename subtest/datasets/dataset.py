@@ -17,7 +17,6 @@ class Dataset:
                  y_test,
                  input_shape,
                  num_classes,
-                 preprocess_dataset_labels,
                  generate_new_model_for_dataset,
                  train_val_split_global=None,
                  train_test_split_local=None,
@@ -35,7 +34,6 @@ class Dataset:
         self.y_val = None
         self.y_test = y_test
 
-        self.preprocess_dataset_labels = preprocess_dataset_labels
         self.generate_new_model_for_dataset = generate_new_model_for_dataset
 
         if train_val_split_local:

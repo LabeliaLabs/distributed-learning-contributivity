@@ -34,7 +34,6 @@ def generate_new_dataset():
         y_test,
         input_shape,
         num_classes,
-        preprocess_dataset_labels,
         generate_new_model_for_dataset,
         train_val_split_global,
         train_test_split_local,
