@@ -6,7 +6,7 @@ This enables to parameterize the partners that participate to the simulated fede
 import numpy as np
 from random import shuffle
 
-import constants
+from . import constants
 
 
 class Partner:

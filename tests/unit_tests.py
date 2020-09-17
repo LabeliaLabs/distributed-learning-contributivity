@@ -41,29 +41,21 @@ This enables to parameterize unit tests - the tests are run by Travis each time 
 # Test architecture
 # https://docs.pytest.org/en/latest/goodpractices.html#test-discovery
 
-import utils
-import yaml
-import pytest
-import numpy as np
-
 from pathlib import Path
 
+import numpy as np
+import pytest
+import yaml
 from tensorflow.keras.datasets import cifar10, mnist
 
-from datasets import dataset_cifar10 as data_cf
-from datasets import dataset_mnist as data_mn
-import multi_partner_learning
+from subtest import multi_partner_learning, constants, utils
+from subtest.contributivity import Contributivity
+from subtest.datasets import dataset_cifar10 as data_cf
+from subtest.datasets import dataset_mnist as data_mn
+from subtest.multi_partner_learning import MultiPartnerLearning
+from subtest.partner import Partner
+from subtest.scenario import Scenario
 
-from partner import Partner
-
-from scenario import Scenario
-from contributivity import Contributivity
-from multi_partner_learning import MultiPartnerLearning
-
-import sys
-
-sys.path.append("..")
-import constants  # noqa: E402
 
 ######
 # Fixture Iterate: to generate the combination of parameters
@@ -149,7 +141,6 @@ def create_MultiPartnerLearning(create_Dataset):
 
 @pytest.fixture(scope="class")
 def create_Scenario(iterate_dataset_name, iterate_samples_split_option):
-
     dataset_name = iterate_dataset_name
     samples_split_option = iterate_samples_split_option
 
@@ -182,12 +173,12 @@ def create_Scenario(iterate_dataset_name, iterate_samples_split_option):
 
     full_experiment_name = "unit-test-pytest"
     experiment_path = (
-        Path.cwd() / constants.EXPERIMENTS_FOLDER_NAME / full_experiment_name
+            Path.cwd() / constants.EXPERIMENTS_FOLDER_NAME / full_experiment_name
     )
 
     # scenar.dataset object is created inside the Scenario constructor
     scenar = Scenario(
-        params=params, experiment_path=experiment_path, scenario_id=0, n_repeat=1
+        **params, experiment_path=experiment_path, scenario_id=0, n_repeat=1
     )
 
     scenar.partners_list = create_partners_list(

@@ -5,32 +5,55 @@ This enables to parameterize a desired scenario to mock a multi-partner ML proje
 
 import datetime
 import operator
-import random
 import os
+import random
 import uuid
+from pathlib import Path
 
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-
 from loguru import logger
 from sklearn.model_selection import train_test_split
 
-import constants
-from partner import Partner
-from datasets import dataset_mnist, dataset_cifar10, dataset_titanic, dataset_esc50
+from . import contributivity, constants
+from . import multi_partner_learning
+from .datasets import dataset as dataset_mod
+from .datasets import dataset_mnist, dataset_titanic, dataset_esc50, dataset_cifar10
+from .partner import Partner
 
 
 class Scenario:
-    def __init__(self, params, experiment_path, scenario_id=1, n_repeat=1, is_dry_run=False):
+    def __init__(self,
+                 partners_count,
+                 amounts_per_partner,
+                 dataset=None,
+                 dataset_name=constants.MNIST,
+                 dataset_proportion=1,
+                 samples_split_option=None,
+                 corrupted_datasets=None,
+                 init_model_from="random_initialization",
+                 multi_partner_learning_approach='fedavg',
+                 aggregation_weighting="uniform",
+                 gradient_updates_per_pass_count=constants.DEFAULT_GRADIENT_UPDATES_PER_PASS_COUNT,
+                 minibatch_count=constants.DEFAULT_BATCH_COUNT,
+                 epoch_count=constants.DEFAULT_EPOCH_COUNT,
+                 is_early_stopping=True,
+                 methods=None,
+                 is_quick_demo=False,
+                 experiment_path=Path(r"./experiments"),
+                 scenario_id=1,
+                 n_repeat=1,
+                 is_dry_run=False,
+                 **kwargs):
 
         # ---------------------------------------------------------------------
         # Initialization of the dataset defined in the config of the experiment
         # ---------------------------------------------------------------------
 
-        # Raise Exception if unknown parameters in the .yml file
+        # Raise Exception if unknown parameters in the config of the scenario
 
-        params_known = ["dataset_name", "dataset_proportion"]  # Dataset related
+        params_known = ["dataset", "dataset_name", "dataset_proportion"]  # Dataset related
         params_known += ["methods", "multi_partner_learning_approach",
                          "aggregation_weighting"]  # federated learning related
         params_known += ["partners_count", "amounts_per_partner",
@@ -40,82 +63,73 @@ class Scenario:
         params_known += ["init_model_from"]  # Model related
         params_known += ["is_quick_demo"]
 
-        if not all([x in params_known for x in params]):
-            for x in params:
-                if x not in params_known:
-                    logger.debug(f"Unrecognised parameter: {x}")
-            raise Exception(f"Unrecognised parameters {x}, check your .yml file")
+        unrecognised_parameters = [x for x in kwargs.keys() if x not in params_known]
+        if len(unrecognised_parameters) > 0:
+            for x in unrecognised_parameters:
+                logger.debug(f"Unrecognised parameter: {x}")
+            raise Exception(f"Unrecognised parameters {unrecognised_parameters}, check your configuration")
 
         # Get and verify which dataset is configured
-
-        if "dataset_name" in params:
-            dataset_name = params["dataset_name"]
-            if dataset_name not in constants.SUPPORTED_DATASETS_NAMES:
-                raise Exception(f"Dataset named '{dataset_name}' is not supported (yet). You could add it!")
+        if isinstance(dataset, dataset_mod.Dataset):
+            self.dataset = dataset
         else:
-            dataset_name = constants.MNIST  # default
-        logger.debug(f"Dataset selected: {dataset_name}")
+            # Reference the module corresponding to the dataset selected and initialize the Dataset object
+            if dataset_name == constants.MNIST:  # default
+                self.dataset = dataset_mnist.generate_new_dataset()
+            elif dataset_name == constants.CIFAR10:
+                self.dataset = dataset_cifar10.generate_new_dataset()
+            elif dataset_name == constants.TITANIC:
+                self.dataset = dataset_titanic.generate_new_dataset()
+            elif dataset_name == constants.ESC50:
+                self.dataset = dataset_esc50.generate_new_dataset()
+            else:
+                raise Exception(f"Dataset named '{dataset_name}' is not supported (yet). You can construct your own "
+                                f"dataset object, or even add it by contributing to the project !")
+            logger.debug(f"Dataset selected: {dataset_name}")
 
-        # Reference the module corresponding to the dataset selected and initialize the Dataset object
-        if dataset_name == constants.MNIST:
-            dataset_module = dataset_mnist
-        elif dataset_name == constants.CIFAR10:
-            dataset_module = dataset_cifar10
-        elif dataset_name == constants.TITANIC:
-            dataset_module = dataset_titanic
-        elif dataset_name == constants.ESC50:
-            dataset_module = dataset_esc50
-        else:
-            raise Exception(f"Dataset named '{dataset_name}' is not supported (yet). You could add it!")
+        # The train set is split into a train set and a validation set (used in particular for early stopping)
 
         # The proportion of the dataset the computation will used
-        if "dataset_proportion" in params:
-            self.dataset_proportion = params["dataset_proportion"]
-            assert self.dataset_proportion > 0, "Error in the config file, dataset_proportion should be > 0"
-            assert self.dataset_proportion <= 1, "Error in the config file, dataset_proportion should be <= 1"
-        else:
-            self.dataset_proportion = 1  # default
 
-        self.dataset = dataset_module.generate_new_dataset()
+        self.dataset_proportion = dataset_proportion
+        assert self.dataset_proportion > 0, "Error in the config file, dataset_proportion should be > 0"
+        assert self.dataset_proportion <= 1, "Error in the config file, dataset_proportion should be <= 1"
 
         if self.dataset_proportion < 1:
-            self.shorten_dataset_proportion()
+            self.dataset.shorten_dataset_proportion(self.dataset_proportion)
         else:
             logger.debug(f"Computation use the full dataset for scenario #{scenario_id}")
 
         self.nb_samples_used = len(self.dataset.x_train)
         self.final_relative_nb_samples = []
 
-        # The train set is split into a train set and a validation set (used in particular for early stopping)
-        self.dataset.train_val_split()
-
         # --------------------------------------
         #  Definition of collaborative scenarios
         # --------------------------------------
-
         # List of all partners defined in the scenario
         self.partners_list = []
 
         # partners mock different partners in a collaborative data science project
         # For defining the number of partners
-        self.partners_count = params["partners_count"]
+
+        self.partners_count = partners_count
 
         # For configuring the respective sizes of the partners' datasets
         # Should the partners receive an equivalent amount of samples each or receive different amounts?
         # Define the percentages of samples per partner
         # Sum has to equal 1 and number of items has to equal partners_count
-        self.amounts_per_partner = params["amounts_per_partner"]
+        self.amounts_per_partner = amounts_per_partner
 
         # For configuring if data samples are split between partners randomly or in a stratified way...
         # ... so that they cover distinct areas of the samples space
-        if "samples_split_option" in params:
-            (self.samples_split_type, self.samples_split_description) = params["samples_split_option"]
+        if samples_split_option is not None:
+            (self.samples_split_type, self.samples_split_description) = samples_split_option
         else:
             (self.samples_split_type, self.samples_split_description) = ("basic", "random")  # default
 
         # For configuring if the data of the partners are corrupted or not (useful for testing contributivity measures)
-        if "corrupted_datasets" in params:
-            self.corrupted_datasets = params["corrupted_datasets"]
+        if corrupted_datasets is not None:
+            self.corrupted_datasets = corrupted_datasets
         else:
             self.corrupted_datasets = ["not_corrupted"] * self.partners_count  # default
 
@@ -126,59 +140,39 @@ class Scenario:
         self.mpl = None
 
         # Multi-partner learning approach
-        multi_partner_learning_approaches_list = [
-            "fedavg",
-            "seq-pure",
-            "seq-with-final-agg",
-            "seqavg",
-        ]
 
-        if "multi_partner_learning_approach" in params:
-            approach = params["multi_partner_learning_approach"]
-            if approach in multi_partner_learning_approaches_list:
-                self.multi_partner_learning_approach = approach
-            else:
-                raise Exception(f"Multi-partner learning approach '{approach}' is not a valid approach.")
+        if multi_partner_learning_approach in constants.MULTI_PARTNER_LEARNING_APPROACHES:
+            self.multi_partner_learning_approach = multi_partner_learning_approach
         else:
-            self.multi_partner_learning_approach = 'fedavg'  # default
+            raise Exception(
+                f"Multi-partner learning approach '{multi_partner_learning_approach}' is not a valid approach.")
 
         # Define how federated learning aggregation steps are weighted. Toggle between 'uniform' and 'data_volume'
         # Default is 'uniform'
-        if "aggregation_weighting" in params:
-            self.aggregation_weighting = params["aggregation_weighting"]
+        if aggregation_weighting in ['uniform', 'data_volume']:
+            self.aggregation_weighting = aggregation_weighting
         else:
-            self.aggregation_weighting = "uniform"  # default
+            raise ValueError(f"aggregation_weighting approach'{self.aggregation_weighting}' is not a valid approach. ")
 
         # Number of epochs, mini-batches and fit_batches in ML training
-        if "epoch_count" in params:
-            self.epoch_count = params["epoch_count"]
-            assert self.epoch_count > 0, "Error: in the provided config file, epoch_count should be > 0"
-        else:
-            self.epoch_count = 40  # default
+        self.epoch_count = epoch_count
+        assert self.epoch_count > 0, "Error: in the provided config file, epoch_count should be > 0"
 
-        if "minibatch_count" in params:
-            self.minibatch_count = params["minibatch_count"]
-            assert self.minibatch_count > 0, "Error: in the provided config file, minibatch_count should be > 0"
-        else:
-            self.minibatch_count = 20  # default
+        self.minibatch_count = minibatch_count
+        assert self.minibatch_count > 0, "Error: in the provided config file, minibatch_count should be > 0"
 
-        if "gradient_updates_per_pass_count" in params:
-            self.gradient_updates_per_pass_count = params["gradient_updates_per_pass_count"]
-            assert self.gradient_updates_per_pass_count > 0, "Error: in the provided config file, \
-                gradient_updates_per_pass_count should be > 0"
-        else:
-            self.gradient_updates_per_pass_count = constants.DEFAULT_GRADIENT_UPDATES_PER_PASS_COUNT
+        self.gradient_updates_per_pass_count = gradient_updates_per_pass_count
+        assert self.gradient_updates_per_pass_count > 0, "Error: in the provided config file, " \
+                                                         "gradient_updates_per_pass_count should be > 0 "
 
         # Early stopping stops ML training when performance increase is not significant anymore
         # It is used to optimize the number of epochs and the execution time
-        if "is_early_stopping" in params:
-            self.is_early_stopping = params["is_early_stopping"]
-        else:
-            self.is_early_stopping = True  # default
+
+        self.is_early_stopping = is_early_stopping
 
         # Model used to initialise model
-        self.init_model_from = params["init_model_from"]
-        if params["init_model_from"] == "random_initialization":
+        self.init_model_from = init_model_from
+        if init_model_from == "random_initialization":
             self.use_saved_weights = False
         else:
             self.use_saved_weights = True
@@ -191,22 +185,10 @@ class Scenario:
         self.contributivity_list = []
 
         # Contributivity methods
-        contributivity_methods_list = [
-            "Shapley values",
-            "Independent scores",
-            "TMCS",
-            "ITMCS",
-            "IS_lin_S",
-            "IS_reg_S",
-            "AIS_Kriging_S",
-            "SMCS",
-            "WR_SMC",
-        ]
-
         self.methods = []
-        if "methods" in params and params["methods"]:
-            for method in params["methods"]:
-                if method in contributivity_methods_list:
+        if methods is not None:
+            for method in methods:
+                if method in constants.CONTRIBUTIVITY_METHODS:
                     self.methods.append(method)
                 else:
                     raise Exception(f"Contributivity method '{method}' is not in methods list.")
@@ -219,21 +201,24 @@ class Scenario:
         self.scenario_id = scenario_id
         self.n_repeat = n_repeat
 
-        if "is_quick_demo" in params:
-            self.is_quick_demo = params["is_quick_demo"]
-            if self.is_quick_demo and self.dataset_proportion < 1:
-                raise Exception("Don't start a quick_demo without the full dataset")
-        else:
-            self.is_quick_demo = False  # default
+        self.is_quick_demo = is_quick_demo
+        if self.is_quick_demo and self.dataset_proportion < 1:
+            raise Exception("Don't start a quick_demo without the full dataset")
 
         # The quick demo parameters overwrites previously defined parameters to make the scenario faster to compute
-        if "is_quick_demo" in params and params["is_quick_demo"]:
+        if self.is_quick_demo:
             # Use less data and/or less epochs to speed up the computations
             logger.info("Quick demo: limit number of data and number of epochs.")
-            if (len(self.dataset.x_train) > 1000):
-                index_train = np.random.choice(self.dataset.x_train.shape[0], 1000, replace=False)
-                index_val = np.random.choice(self.dataset.x_val.shape[0], 500, replace=False)
-                index_test = np.random.choice(self.dataset.x_test.shape[0], 500, replace=False)
+            if len(self.dataset.x_train) > constants.TRAIN_SET_MAX_SIZE_QUICK_DEMO:
+                index_train = np.random.choice(self.dataset.x_train.shape[0],
+                                               constants.TRAIN_SET_MAX_SIZE_QUICK_DEMO,
+                                               replace=False)
+                index_val = np.random.choice(self.dataset.x_val.shape[0],
+                                             constants.VAL_SET_MAX_SIZE_QUICK_DEMO,
+                                             replace=False)
+                index_test = np.random.choice(self.dataset.x_test.shape[0],
+                                              constants.TEST_SET_MAX_SIZE_QUICK_DEMO,
+                                              replace=False)
                 self.dataset.x_train = self.dataset.x_train[index_train]
                 self.dataset.y_train = self.dataset.y_train[index_train]
                 self.dataset.x_val = self.dataset.x_val[index_val]
@@ -510,7 +495,6 @@ class Scenario:
         # Populate partners
         partner_idx = 0
         for train_idx in train_idx_idx_list:
-
             p = self.partners_list[partner_idx]
 
             # Finalize selection of train data
@@ -522,8 +506,8 @@ class Scenario:
             p.y_train = y_partner_train
 
             # Create local validation and test datasets from the partner train data
-            p.x_train, p.x_val, p.y_train, p.y_val = self.dataset.train_val_split_local(p.x_train, p.y_train)
             p.x_train, p.x_test, p.y_train, p.y_test = self.dataset.train_test_split_local(p.x_train, p.y_train)
+            p.x_train, p.x_val, p.y_train, p.y_val = self.dataset.train_val_split_local(p.x_train, p.y_train)
 
             # Update other attributes from partner
             p.final_nb_samples = len(p.x_train)
@@ -664,7 +648,6 @@ class Scenario:
             dict_results["first_characteristic_calls_count"] = contrib.first_charac_fct_calls_count
 
             for i in range(self.partners_count):
-
                 # Partner-specific data
                 dict_results["partner_id"] = i
                 dict_results["dataset_fraction_of_partner"] = self.amounts_per_partner[i]
@@ -675,23 +658,41 @@ class Scenario:
 
         return df
 
-    def shorten_dataset_proportion(self):
-        """Truncate the dataset depending on self.dataset_proportion"""
+    def run(self):
+        # -----------------------
+        #  Provision the scenario
+        # -----------------------
 
-        if self.dataset_proportion == 1:
-            raise Exception("shorten_dataset_proportion shouldn't be called on this scenario, \
-                the user targets the full dataset")
+        self.instantiate_scenario_partners()
+        # Split data according to scenario and then pre-process successively...
+        # ... train data, early stopping validation data, test data
+        if self.samples_split_type == 'basic':
+            self.split_data()
+        elif self.samples_split_type == 'advanced':
+            self.split_data_advanced()
+        self.plot_data_distribution()
+        self.compute_batch_sizes()
+        self.preprocess_scenarios_data()
 
-        x_train = self.dataset.x_train
-        y_train = self.dataset.y_train
+        # --------------------------------------------
+        # Instantiate and run a multi-partner learning
+        # --------------------------------------------
 
-        logger.info(f"We don't use the full dataset: only {self.dataset_proportion*100}%")
+        self.mpl = multi_partner_learning.init_multi_partner_learning_from_scenario(
+            self,
+            is_save_data=True,
+        )
+        self.mpl.compute_test_score()
 
-        skip_idx = int(round(len(x_train) * self.dataset_proportion))
-        train_idx = np.arange(len(x_train))
+        # ----------------------------------------------------------
+        # Instantiate and run the contributivity measurement methods
+        # ----------------------------------------------------------
 
-        np.random.seed(42)
-        np.random.shuffle(train_idx)
+        for method in self.methods:
+            logger.info(f"{method}")
+            contrib = contributivity.Contributivity(scenario=self)
+            contrib.compute_contributivity(method, self)
+            self.append_contributivity(contrib)
+            logger.info(f"## Evaluating contributivity with {method}: {contrib}")
 
-        self.dataset.x_train = x_train[train_idx[0:skip_idx]]
-        self.dataset.y_train = y_train[train_idx[0:skip_idx]]
+        return 0

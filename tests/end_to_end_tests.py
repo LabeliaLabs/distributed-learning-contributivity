@@ -3,13 +3,12 @@
 This enables to parameterize end to end tests - the tests are run by Travis each time you commit to the github repo
 """
 
-import pandas as pd
 import subprocess
-import sys
 from pathlib import Path
 
-sys.path.append("..")
-import constants  # noqa: E402
+import pandas as pd
+
+from subtest import constants  # noqa: E402
 
 
 class Test_EndToEndTest:

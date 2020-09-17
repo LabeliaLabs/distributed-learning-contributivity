@@ -16,13 +16,11 @@ import matplotlib.pyplot as plt
 import tensorflow as tf
 from loguru import logger
 
-import constants
-import contributivity
-import multi_partner_learning
-import scenario
-import utils
+from subtest import constants
+from subtest import scenario
+from subtest import utils
 
-DEFAULT_CONFIG_FILE = "config.yml"
+DEFAULT_CONFIG_FILE = "./config.yml"
 
 
 @logger.catch
@@ -69,13 +67,13 @@ def main():
                 logger.info(scenario_params)
 
                 current_scenario = scenario.Scenario(
-                    scenario_params,
-                    experiment_path,
-                    scenario_id=scenario_id+1,
-                    n_repeat=i+1
+                    **scenario_params,
+                    experiment_path=experiment_path,
+                    scenario_id=scenario_id + 1,
+                    n_repeat=i + 1
                 )
 
-                run_scenario(current_scenario)
+                current_scenario.run()
 
                 # Write results to CSV file
                 df_results = current_scenario.to_dataframe()
@@ -136,7 +134,7 @@ def validate_scenario_list(scenario_params_list, experiment_path):
         logger.debug(f"Validation scenario {scenario_id + 1}/{len(scenario_params_list)}")
 
         # TODO: we should not create scenario folder at this point
-        current_scenario = scenario.Scenario(scenario_params, experiment_path, is_dry_run=True)
+        current_scenario = scenario.Scenario(**scenario_params, experiment_path=experiment_path, is_dry_run=True)
         current_scenario.instantiate_scenario_partners()
 
         if current_scenario.samples_split_type == 'basic':
@@ -145,47 +143,6 @@ def validate_scenario_list(scenario_params_list, experiment_path):
             current_scenario.split_data_advanced(is_logging_enabled=False)
 
     logger.debug("All scenario have been validated")
-
-
-def run_scenario(current_scenario):
-
-    # -----------------------
-    #  Provision the scenario
-    # -----------------------
-
-    current_scenario.instantiate_scenario_partners()
-    # Split data according to scenario and then pre-process successively...
-    # ... train data, early stopping validation data, test data
-    if current_scenario.samples_split_type == 'basic':
-        current_scenario.split_data()
-    elif current_scenario.samples_split_type == 'advanced':
-        current_scenario.split_data_advanced()
-    current_scenario.plot_data_distribution()
-    current_scenario.compute_batch_sizes()
-    current_scenario.preprocess_scenarios_data()
-
-    # --------------------------------------------
-    # Instantiate and run a multi-partner learning
-    # --------------------------------------------
-
-    current_scenario.mpl = multi_partner_learning.init_multi_partner_learning_from_scenario(
-        current_scenario,
-        is_save_data=True,
-    )
-    current_scenario.mpl.compute_test_score()
-
-    # ----------------------------------------------------------
-    # Instantiate and run the contributivity measurement methods
-    # ----------------------------------------------------------
-
-    for method in current_scenario.methods:
-        logger.info(f"{method}")
-        contrib = contributivity.Contributivity(scenario=current_scenario)
-        contrib.compute_contributivity(method, current_scenario)
-        current_scenario.append_contributivity(contrib)
-        logger.info(f"## Evaluating contributivity with {method}: {contrib}")
-
-    return 0
 
 
 def parse_command_line_arguments():

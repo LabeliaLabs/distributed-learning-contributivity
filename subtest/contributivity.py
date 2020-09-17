@@ -5,17 +5,18 @@ This enables to parameterize the contributivity measurements to be performed.
 
 from __future__ import print_function
 
+import bisect
 import datetime
-from timeit import default_timer as timer
-import numpy as np
-from scipy.stats import norm
 from itertools import combinations
 from math import factorial
-from sklearn.linear_model import LinearRegression
-from loguru import logger
+from timeit import default_timer as timer
 
-import multi_partner_learning
-import shapley_value.shapley as sv
+import numpy as np
+from loguru import logger
+from scipy.stats import norm
+from sklearn.linear_model import LinearRegression
+
+from . import multi_partner_learning
 
 
 class krigingModel:
@@ -79,9 +80,9 @@ class Contributivity:
         output = "\n" + self.name + "\n"
         output += "Computation time: " + computation_time_sec + "\n"
         output += (
-            "Number of characteristic function computed: "
-            + str(self.first_charac_fct_calls_count)
-            + "\n"
+                "Number of characteristic function computed: "
+                + str(self.first_charac_fct_calls_count)
+                + "\n"
         )
         # TODO print only 3 digits
         output += "Contributivity scores: " + str(self.contributivity_scores) + "\n"
@@ -117,20 +118,20 @@ class Contributivity:
                 if i in subset:
                     subset_without_i = np.delete(subset, np.argwhere(subset == i))
                     if (
-                        tuple(subset_without_i) in self.charac_fct_values
+                            tuple(subset_without_i) in self.charac_fct_values
                     ):  # we store the new known increments
                         self.increments_values[i][tuple(subset_without_i)] = (
-                            self.charac_fct_values[tuple(subset)]
-                            - self.charac_fct_values[tuple(subset_without_i)]
+                                self.charac_fct_values[tuple(subset)]
+                                - self.charac_fct_values[tuple(subset_without_i)]
                         )
                 else:
                     subset_with_i = np.sort(np.append(subset, i))
                     if (
-                        tuple(subset_with_i) in self.charac_fct_values
+                            tuple(subset_with_i) in self.charac_fct_values
                     ):  # we store the new known increments
                         self.increments_values[i][tuple(subset)] = (
-                            self.charac_fct_values[tuple(subset_with_i)]
-                            - self.charac_fct_values[tuple(subset)]
+                                self.charac_fct_values[tuple(subset_with_i)]
+                                - self.charac_fct_values[tuple(subset)]
                         )
         # else we will Return the characteristic_func(permut) that was already computed
         return self.charac_fct_values[tuple(subset)]
@@ -160,7 +161,7 @@ class Contributivity:
         # Compute Shapley Value for each partner
         # We are using this python implementation: https://github.com/susobhang70/shapley_value
         # It requires coalitions to be ordered - see README of https://github.com/susobhang70/shapley_value
-        list_shapley_value = sv.main(partners_count, characteristic_function)
+        list_shapley_value = shapley_value(partners_count, characteristic_function)
 
         # Return SV of each partner
         self.name = "Shapley"
@@ -218,7 +219,7 @@ class Contributivity:
             # Check if the length of the confidence interval
             # is below the value of sv_accuracy*characteristic_all_partners
             while (
-                t < 100 or t < q ** 2 * v_max / (sv_accuracy) ** 2
+                    t < 100 or t < q ** 2 * v_max / (sv_accuracy) ** 2
             ):
                 t += 1
 
@@ -241,7 +242,7 @@ class Contributivity:
                             permutation[: j + 1], the_scenario
                         )
                     contributions[-1][permutation[j]] = (
-                        char_partnerlists[j + 1] - char_partnerlists[j]
+                            char_partnerlists[j + 1] - char_partnerlists[j]
                     )
                 v_max = np.max(np.var(contributions, axis=0))
             sv = np.mean(contributions, axis=0)
@@ -275,7 +276,7 @@ class Contributivity:
             q = norm.ppf((1 - alpha) / 2, loc=0, scale=1)
             v_max = 0
             while (
-                t < 100 or t < q ** 2 * v_max / (sv_accuracy) ** 2
+                    t < 100 or t < q ** 2 * v_max / (sv_accuracy) ** 2
             ):  # Check if the length of the confidence interval
                 # is below the value of sv_accuracy*characteristic_all_partners
                 t += 1
@@ -302,6 +303,7 @@ class Contributivity:
                             first = False
 
                         size_of_S = len(the_scenario.partners_list[j].y_train)
+
                         char_partnerlists[j + 1] = char_partnerlists[j] + a * size_of_S
 
                     else:
@@ -309,7 +311,7 @@ class Contributivity:
                             permutation[: j + 1], the_scenario
                         )
                     contributions[-1][permutation[j]] = (
-                        char_partnerlists[j + 1] - char_partnerlists[j]
+                            char_partnerlists[j + 1] - char_partnerlists[j]
                     )
                 v_max = np.max(np.var(contributions, axis=0))
             sv = np.mean(contributions, axis=0)
@@ -382,7 +384,7 @@ class Contributivity:
                 renorm = 0
                 for length_combination in range(len(list_k) + 1):
                     for subset in combinations(
-                        list_k, length_combination
+                            list_k, length_combination
                     ):  # could be avoided as
                         # prob(np.array(subset))*np.abs(approx_increment(np.array(subset),j))
                         # is constant in the combination
@@ -396,7 +398,7 @@ class Contributivity:
             q = -norm.ppf((1 - alpha) / 2, loc=0, scale=1)
             v_max = 0
             while (
-                t < 100 or t < 4 * q ** 2 * v_max / (sv_accuracy) ** 2
+                    t < 100 or t < 4 * q ** 2 * v_max / (sv_accuracy) ** 2
             ):  # Check if the length of the confidence interval  is below the value of
                 # sv_accuracy*characteristic_all_partners
                 t += 1
@@ -426,7 +428,7 @@ class Contributivity:
                     ) - self.not_twice_characteristic(S, the_scenario)
                     # computed the weight p/g
                     contributions[t - 1][k] = (
-                        increment * renorms[k] / np.abs(approx_increment(np.array(S), k))
+                            increment * renorms[k] / np.abs(approx_increment(np.array(S), k))
                     )
                 v_max = np.max(np.var(contributions, axis=0))
             shap = np.mean(contributions, axis=0)
@@ -447,8 +449,10 @@ class Contributivity:
         n = len(the_scenario.partners_list)
 
         if n < 4:
+
             self.compute_SV(the_scenario)
             self.name = "IS_reg Shapley values"
+
         else:
             # definition of the original density
             def prob(subset):
@@ -509,7 +513,7 @@ class Contributivity:
                 renorm = 0
                 for length_combination in range(len(list_k) + 1):
                     for subset in combinations(
-                        list_k, length_combination
+                            list_k, length_combination
                     ):  # could be avoided as
                         # prob(np.array(subset))*np.abs(approx_increment(np.array(subset),j))
                         # is constant in the combination
@@ -523,7 +527,7 @@ class Contributivity:
             q = -norm.ppf((1 - alpha) / 2, loc=0, scale=1)
             v_max = 0
             while (
-                t < 100 or t < 4 * q ** 2 * v_max / (sv_accuracy) ** 2
+                    t < 100 or t < 4 * q ** 2 * v_max / (sv_accuracy) ** 2
             ):  # Check if the length of the confidence interval is below the value of
                 # sv_accuracy*characteristic_all_partners
                 t += 1
@@ -537,7 +541,7 @@ class Contributivity:
                     list_k = np.delete(np.arange(n), k)
                     for length_combination in range(len(list_k) + 1):
                         for subset in combinations(
-                            list_k, length_combination
+                                list_k, length_combination
                         ):  # could be avoided as
                             # prob(np.array(subset))*np.abs(approx_increment(np.array(subset),j))
                             # is constant in the combination
@@ -554,7 +558,7 @@ class Contributivity:
                         SUk, the_scenario
                     ) - self.not_twice_characteristic(S, the_scenario)
                     contributions[t - 1][k] = (
-                        increment * renorms[k] / np.abs(approx_increment(np.array(S), k))
+                            increment * renorms[k] / np.abs(approx_increment(np.array(S), k))
                     )
                 v_max = np.max(np.var(contributions, axis=0))
             shap = np.mean(contributions, axis=0)
@@ -654,7 +658,7 @@ class Contributivity:
 
         # Check if the length of the confidence interval  is below the value of sv_accuracy*characteristic_all_partners
         while (
-            t < 100 or t < 4 * q ** 2 * v_max / (sv_accuracy) ** 2
+                t < 100 or t < 4 * q ** 2 * v_max / (sv_accuracy) ** 2
         ):
             if t == 0:
                 contributions = np.array([np.zeros(n)])
@@ -671,7 +675,7 @@ class Contributivity:
                     renorm = 0
                     for length_combination in range(len(list_k) + 1):
                         for subset in combinations(
-                            list_k, length_combination
+                                list_k, length_combination
                         ):  # could be avoided as   prob(np.array(subset))*np.abs(approx_increment(np.array(subset),j))
                             # is constant in the combination
                             renorm += prob(np.array(subset)) * np.abs(
@@ -687,7 +691,7 @@ class Contributivity:
                 list_k = np.delete(np.arange(n), k)
                 for length_combination in range(len(list_k) + 1):
                     for subset in combinations(
-                        list_k, length_combination
+                            list_k, length_combination
                     ):  # could be avoided as   prob(np.array(subset))*np.abs(approx_increment(np.array(subset),j))
                         # is constant in the combination
                         cumSum += prob(np.array(subset)) * np.abs(
@@ -704,7 +708,7 @@ class Contributivity:
                     SUk, the_scenario
                 ) - self.not_twice_characteristic(S, the_scenario)
                 contributions[t - 1][k] = (
-                    increment * all_renorms[j][k] / np.abs(approx_increment(S, k, j))
+                        increment * all_renorms[j][k] / np.abs(approx_increment(S, k, j))
                 )
             Subsets.append(subsets)
             shap = np.mean(contributions, axis=0)
@@ -759,13 +763,13 @@ class Contributivity:
                     continuer[k].append(True)
             # sampling
             while np.any(continuer) or (1 - alpha) < v_max / (
-                sv_accuracy ** 2
+                    sv_accuracy ** 2
             ):  # Check if the length of the confidence interval  is below the value of sv_accuracy
                 t += 1
                 e = (
-                    1
-                    + 1 / (1 + np.exp(gamma / beta))
-                    - 1 / (1 + np.exp(-(t - gamma * N) / (beta * N)))
+                        1
+                        + 1 / (1 + np.exp(gamma / beta))
+                        - 1 / (1 + np.exp(-(t - gamma * N) / (beta * N)))
                 )  # e is used in the allocation to each strata, here we take the formula adviced in the litterature
                 for k in range(N):
                     # select the strata to add an increment
@@ -773,7 +777,7 @@ class Contributivity:
                         p = np.repeat(1 / N, N)  # alocate uniformly if np.sum(sigma2[k]) == 0
                     else:
                         p = (
-                            np.repeat(1 / N, N) * (1 - e) + sigma2[k] / np.sum(sigma2[k]) * e
+                                np.repeat(1 / N, N) * (1 - e) + sigma2[k] / np.sum(sigma2[k]) * e
                         )  # alocate more and more as according to sigma2[k] / np.sum(sigma2[k]) as t grows
 
                     strata = np.random.choice(np.arange(N), 1, p=p)[0]
@@ -857,7 +861,7 @@ class Contributivity:
 
             # Sampling
             while np.any(continuer) or (1 - alpha) < v_max / (
-                sv_accuracy ** 2
+                    sv_accuracy ** 2
             ):  # Check if the length of the confidence interval  is below the value of sv_accuracy
                 t += 1
                 for k in range(N):
@@ -922,7 +926,7 @@ class Contributivity:
                             continuer[k][strata] = False
                         # if a strata as been fully explored we stop allocating to this strata
                         if len(increments_generated[k][strata]) == factorial(N - 1) / (
-                            factorial(N - 1 - strata) * factorial(strata)
+                                factorial(N - 1 - strata) * factorial(strata)
                         ):
                             continuer[k][strata] = False
                     var[k] /= N ** 2  # correct the variance of the estimator
@@ -935,13 +939,13 @@ class Contributivity:
             self.computation_time_sec = end - start
 
     def compute_contributivity(
-        self,
-        method_to_compute,
-        current_scenario,
-        sv_accuracy=0.01,
-        alpha=0.95,
-        truncation=0.05,
-        update=50,
+            self,
+            method_to_compute,
+            current_scenario,
+            sv_accuracy=0.01,
+            alpha=0.95,
+            truncation=0.05,
+            update=50,
     ):
 
         if method_to_compute == "Shapley values":
@@ -977,3 +981,58 @@ class Contributivity:
             self.without_replacment_SMC(current_scenario, sv_accuracy=sv_accuracy, alpha=alpha)
         else:
             logger.warning("Unrecognized name of method, statement ignored!")
+
+
+# From: https://github.com/susobhang70/shapley_value
+# Cloned by @bowni on 2019.10.04 at 3:46pm (Paris time)
+# Adapted by @bowni
+
+def power_set(List):
+    PS = [list(j) for i in range(len(List)) for j in combinations(List, i + 1)]
+    return PS
+
+
+def shapley_value(partners_count, char_func_list):  # Updated by @arthurPignet
+    n = partners_count  # Added by @bowni
+    characteristic_function = char_func_list  # Updated by @bowni
+
+    if n == 0:
+        logger.info("No players, exiting")  # Updated by @bowni
+        quit()
+
+    tempList = list([i for i in range(n)])
+    N = power_set(tempList)
+
+    shapley_values = []
+    for i in range(n):
+        shapley = 0
+        for j in N:
+            if i not in j:
+                cmod = len(j)
+                Cui = j[:]
+                bisect.insort_left(Cui, i)
+                l = N.index(j)  # noqa: E741
+                k = N.index(Cui)
+                temp = (
+                        float(
+                            float(characteristic_function[k])
+                            - float(characteristic_function[l])
+                        )
+                        * float(factorial(cmod) * factorial(n - cmod - 1))  # Updated by @arthurPignet
+                        / float(factorial(n))  # Updated by @arthurPignet
+                )
+                shapley += temp
+
+        cmod = 0
+        Cui = [i]
+        k = N.index(Cui)
+        temp = (
+                float(characteristic_function[k])
+                * float(factorial(cmod) * factorial(n - cmod - 1))  # Updated by @arthurPignet
+                / float(factorial(n))  # Updated by @arthurPignet
+        )
+        shapley += temp
+
+        shapley_values.append(shapley)
+
+    return shapley_values  # Added by @bowni

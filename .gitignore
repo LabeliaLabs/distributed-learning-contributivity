@@ -89,6 +89,7 @@ venv/
 ENV/
 env.bak/
 venv.bak/
+*.idea
 
 # Spyder project settings
 .spyderproject
@@ -114,5 +115,9 @@ nohup.out
 trash/
 experiments/
 
+
 # datasets
-datasets/local_data/
+subtest/datasets/local_data/
+
+*.zip
+*.csv
