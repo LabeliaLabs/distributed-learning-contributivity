@@ -2,14 +2,17 @@
 """
 Some utils functions.
 """
-
 from __future__ import print_function
 
+import argparse
 import datetime
+import shutil
+import sys
 from itertools import product
 from pathlib import Path
 from shutil import copyfile
 
+import tensorflow as tf
 from loguru import logger
 from ruamel.yaml import YAML
 
@@ -126,3 +129,67 @@ def init_result_folder(yaml_filepath, cfg):
 
     logger.info("Result folder initiated")
     return cfg
+
+
+def init_gpu_config():
+    gpus = tf.config.experimental.list_physical_devices("GPU")
+    if gpus:
+        logger.info(f"Found GPU: {gpus[0].name}")
+        tf.config.experimental.set_memory_growth(gpus[0], True)
+        tf.config.experimental.set_virtual_device_configuration(
+            gpus[0],
+            [tf.config.experimental.VirtualDeviceConfiguration(memory_limit=constants.GPU_MEMORY_LIMIT_MB)]
+        )
+    else:
+        logger.info("No GPU found")
+
+
+def get_config_from_file(config_filepath):
+    config = load_cfg(config_filepath)
+    config = init_result_folder(config_filepath, config)
+
+    return config
+
+
+def parse_command_line_arguments():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-f", "--file", help="input config file")
+    parser.add_argument("-v", "--verbose", help="verbose output", action="store_true")
+    args = parser.parse_args()
+
+    return args
+
+
+class StreamToLogger:
+    def __init__(self, level="INFO"):
+        self._level = level
+
+    def write(self, buffer):
+        for line in buffer.rstrip().splitlines():
+            logger.opt(depth=1).log(self._level, line.rstrip())
+
+    def flush(self):
+        pass
+
+
+def init_logger(args):
+    logger.remove()
+
+    # Forward logging to standard output
+    if args.verbose:
+        logger.add(sys.__stdout__, level="DEBUG")
+    else:
+        logger.add(sys.__stdout__, level="INFO")
+
+    stream = StreamToLogger()
+
+    info_logger_id = logger.add(constants.INFO_LOGGING_FILE_NAME, level="INFO")
+    info_debug_id = logger.add(constants.DEBUG_LOGGING_FILE_NAME, level="DEBUG")
+    return stream, info_logger_id, info_debug_id
+
+
+def move_log_file_to_experiment_folder(logger_id, experiment_path, filename, level):
+    logger.remove(logger_id)
+    new_log_path = experiment_path / filename
+    shutil.move(filename, new_log_path)
+    logger.add(new_log_path, level=level)
