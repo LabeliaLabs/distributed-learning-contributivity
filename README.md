@@ -53,7 +53,7 @@ For a start we made the following choices:
 - What we want to compare (with the Shapley values being the baseline, see section below):
   - Contributivity relative values
   - Computation time
-- Public datasets for experiments currently supported: MNIST, CIFAR10, TITANIC
+- Public datasets for experiments currently supported: MNIST, CIFAR10, TITANIC, ESC50
 
 ### Structure of the library
 

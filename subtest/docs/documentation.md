@@ -30,6 +30,7 @@ At root folder:
 pip install -r requirements.txt
 pip install -i https://test.pypi.org/simple/ subtest==0.0.0.18
 ```
+The requirements can be found in the subtest folder. The installation will work with the dev-requirements as well, but you will install extra dependencies, as pytest and flake8, which are optional.  
 Note: This is the temporary package for our library.
 
 ## Quick start
@@ -64,6 +65,7 @@ Note that this parameter is not mandatory as the MNIST dataset is selected by de
 ### Set some ML parameters
 Even if default training values are provided, it is strongly advised to adapt these to your case. 
 For instance you can want your training to go for 10 epochs and 3 minibatches per epoch. 
+Please be aware that in a context of multi partner learning, the notion of minibatch is quite differente from the 
 ```python
 from subtest.scenario import Scenario
 my_scenario = Scenario(partners_count=3,
