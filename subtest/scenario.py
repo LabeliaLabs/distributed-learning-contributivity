@@ -54,7 +54,7 @@ class Scenario:
         original dataset each partner receives to mock a collaborative ML scenario where each partner provides data
         for the ML training.
         :param dataset: dataset.Dataset object. Use it if you want to use your own dataset, otherwise use dataset_name.
-        :param dataset_name: str. mnist, cifar10, esc50 and titanic are currently supported (default: mnist)
+        :param dataset_name: str. 'mnist', 'cifar10', 'esc50' and 'titanic' are currently supported (default: mnist)
         :param dataset_proportion: float (default: 1)
         :param samples_split_option: ['basic', 'random'] (default),
                                      ['basic', 'stratified']
