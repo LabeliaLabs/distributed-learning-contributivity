@@ -61,7 +61,7 @@ For a start we made the following choices:
 - What we want to compare (with the Shapley values being the baseline, see section below):
   - Contributivity relative values
   - Computation time
-- Public datasets for experiments currently supported: MNIST, CIFAR10, TITANIC
+- Public datasets for experiments currently supported: MNIST, CIFAR10, TITANIC and ESC50
 
 ### Structure of the library
 
@@ -173,14 +173,14 @@ Example: `n_repeats: 2`
 MNIST, CIFAR10, ESC50 and Titanic are currently supported. They come with their associated modules in `/datasets` for loading data, pre-processing inputs, and define a model architecture.\
 For each dataset, it is possible to provide a path to model weights learned from a previous coalition. Use `'random_initialization'` if you want a random initialization or an empty value as in one of the two following syntaxes:
 
-```
+```yaml
 scenario_params_list:
  - dataset_name:
     'mnist':
     'cifar10':
 ```
 
-``` 
+```yaml
 scenario_params_list:
  - dataset_name:
     - 'mnist'
@@ -189,7 +189,7 @@ scenario_params_list:
 
 Please, note that if you want to specify a path to saved weights and launch the same scenario with a random initialization, you must specify it in the list of initialization.
 
-```
+```yaml
 scenario_params_list:
  - dataset_name:
     'mnist':

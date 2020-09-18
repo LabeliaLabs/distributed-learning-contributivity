@@ -6,7 +6,7 @@
 
 - [Introduction](#introduction)
   * [Context of this work](#context-of-this-work)
-  * [How to interact with this?](#how-to-interact-with-this-)
+  * [How to interact with this?](#how-to-interact-with-this)
 - [About this repository](#about-this-repository)
   * [Experimental approach](#experimental-approach)
   * [Structure of the library](#structure-of-the-library)
@@ -17,7 +17,7 @@
     + [Using the code files](#using-the-code-files)
     + [Using the library](#using-the-library)
   * [Ongoing work and improvement plan](#ongoing-work-and-improvement-plan)
-- [Contacts, contributions, collaborations](#contacts--contributions--collaborations)
+- [Contacts, contributions, collaborations](#contacts,-contributions,-collaborations)
 ___
 
 ## Introduction

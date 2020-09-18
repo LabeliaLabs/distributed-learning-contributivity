@@ -36,7 +36,7 @@ Note: This is the temporary package for our library.
 ## Quick start
 
 ### My first scenario
-To launch a collaborative round, you need to generate scenario and run it, though a Scenario object.
+To launch a collaborative round, you need to generate scenario and run it, though a `Scenario` object.
 
 There are 2 mandatory parameters for a collaborative run: `partners_count` and `amounts_per_partner`.
 For instance, you could want to see what is happening with 3 partners, the first with 20% of the total dataset, the second 50% and the third 30% (for a total of 100%).
@@ -46,7 +46,7 @@ from subtest.scenario import Scenario
 my_scenario = Scenario(partners_count=3,
                        amounts_per_partner=[0.2, 0.3, 0.5])
 ```
-Note that you can use more advanced sample split options in order to fine tune the data distribution between partners. See the doc
+Note that you can use more advanced sample split options in order to fine tune the data distribution between partners. See the [specific section of the documentation](#sample_split_option)
 
 At this point, you can already launch your first scenario !
 ### Select a pre-implemented dataset
@@ -124,7 +124,7 @@ Check out our [Tutorial 3](https://github.com/SubstraFoundation/distributed-lear
 
 ### Contributivity measurement methods
 
-To use contributivity measurement tools, you will have to change the parameters of your Scenario object
+To use contributivity measurement tools, you will have to change the parameters of your `Scenario` object
 ```python
 from subtest.scenario import Scenario
 my_scenario = Scenario(partners_count=3,
@@ -149,7 +149,7 @@ There is a lot more parameters that you can play with, which are fully explained
 ### Choice of dataset
 There is two way to select a dataset. You can either choice a pre-implemented dataset, by setting the `dataset_name` parameter, or directly pass the dataset object to the `dataset` parameter. To look at the structure of the dataset object, see the [related documentation](#dataset-generation)
 
-`dataset` : `None` (default), `datasets.Dataset object`. If None, the dataset provided by the `dataset_name` will be used
+`dataset`: `None` (default), `datasets.Dataset object`. If None, the dataset provided by the `dataset_name` will be used
 `dataset_name`: `'mnist'` (default), `'cifar10'`, `'esc50'` or `'titanic'`
 MNIST, CIFAR10, ESC50 and Titanic are currently supported. They come with their associated modules in `/datasets` for loading data, pre-processing inputs, and define a model architecture.\
 For each dataset, it is possible to provide a path to model weights learned from a previous coalition. Use `'random_initialization'` if you want a random initialization or an empty value as in one of the two following syntaxes:
@@ -180,6 +180,7 @@ Fractions of the original dataset each partner receives to mock a collaborative 
 You have to ensure the fractions sum up to 1.
 Example: `amounts_per_partner: [0.3, 0.3, 0.1, 0.3]`
 
+<a id="sample_split_option"></a>
 `samples_split_option`: `['basic', 'random']` (default), `['basic', 'stratified']` or `['advanced', [[nb of clusters (int), 'shared' or 'specific']]]`   
 How the original dataset data samples are split among partners:
 
@@ -325,7 +326,7 @@ Note: It is mandatory to have loss and accuracy as metrics for your model.
 ### Preprocessing
 ```python
 def preprocess_dataset_labels(y):
-    # Do stuff
+    # (...)
     return y
 ```
 

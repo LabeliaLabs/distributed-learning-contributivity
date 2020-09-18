@@ -24,7 +24,13 @@ DEFAULT_CONFIG_FILE = "./config.yml"
 def main():
     args = parse_command_line_arguments()
 
-    stream, info_logger_id, info_debug_id = utils.init_logger(args)
+    # Forward logging to standard output
+    if args.verbose:
+        debug = True
+    else:
+        debug = False
+
+    stream, info_logger_id, info_debug_id = utils.init_logger(debug)
 
     with contextlib.redirect_stdout(stream):
         logger.debug("Standard output is sent to added handlers.")
