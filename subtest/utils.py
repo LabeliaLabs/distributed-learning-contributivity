@@ -172,11 +172,11 @@ class StreamToLogger:
         pass
 
 
-def init_logger(args):
+def init_logger(debug=True):
     logger.remove()
 
     # Forward logging to standard output
-    if args.verbose:
+    if debug:
         logger.add(sys.__stdout__, level="DEBUG")
     else:
         logger.add(sys.__stdout__, level="INFO")

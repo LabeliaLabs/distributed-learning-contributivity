@@ -228,6 +228,7 @@ class Scenario:
         # -------------
 
         # Scenario id and number of repetition
+
         self.scenario_id = scenario_id
         self.n_repeat = repeat_tag
 
@@ -492,15 +493,10 @@ class Scenario:
             splitting_indices_train = (splitting_indices * len(y_train)).astype(int)
 
         # Configure the desired data distribution scenario
-
-        # Create a list of indexes of the samples
-
-
         # In the 'stratified' scenario we sort by labels
         if self.samples_split_description == "stratified":
             # Sort by labels
             train_idx = y_train.argsort()
-
 
         # In the 'random' scenario we shuffle randomly the indexes
         elif self.samples_split_description == "random":
@@ -516,8 +512,7 @@ class Scenario:
                 + "] is not recognized."
             )
 
-        # Do the splitting among partners according to desired scenarios
-
+        # Do the partitioning among partners according to desired scenarios
         # Split data between partners
         train_idx_idx_list = np.split(train_idx, splitting_indices_train)
 
