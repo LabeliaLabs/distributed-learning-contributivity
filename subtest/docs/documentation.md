@@ -35,23 +35,39 @@ Note: This is the temporary package for our library.
 
 ## Quick start
 
-### My first scenario
-To launch a collaborative round, you need to generate scenario and run it, though a `Scenario` object.
+First a few words of context! This library enables to run a multi-partner learning and contributivity measurement experiment. This breaks down into three relatively independent blocks:
 
-There are 2 mandatory parameters for a collaborative run: `partners_count` and `amounts_per_partner`.
-For instance, you could want to see what is happening with 3 partners, the first with 20% of the total dataset, the second 50% and the third 30% (for a total of 100%).
-Here is an example of how you should do it:
+1. Creating a mock collaborative multi-partner learning scenario
+1. Running a multi-partner ML algorithm to learn a model on all partners respective 
+1. Running one or several contributivity measurement methods to evaluate the performance contribution of each partner's dataset to the model performance.
+
+### My first scenario
+
+To run a multi-partner learning and contributivity measurement experiment, you have to define the scenario of your experiment. For that you'll use the `Scenario` object, in which you will define: 
+
+- what dataset will be used and how it will be partitioned among the partners
+- what multi-partner learning approach will be used, with what options
+- what contributivity measurement approach(es) will be run
+
+There are only 2 mandatory parameters to define a scenario: `partners_count` and `amounts_per_partner`. Many more exists but are optional as default values are configured. You can browse them all in below section [Scenario parameters](#scenario-parameters).
+
+For this very first scenario, you could for example want to see what is happening with 3 partners, where the first one gets 20% of the total dataset, the second one 50% and the third one 30% (for a total of 100%!):
+
 ```python
 from subtest.scenario import Scenario
+
 my_scenario = Scenario(partners_count=3,
                        amounts_per_partner=[0.2, 0.3, 0.5])
 ```
-Note that you can use more advanced sample split options in order to fine tune the data distribution between partners. See the [specific section of the documentation](#sample_split_option)
 
-At this point, you can already launch your first scenario !
+Note that you can use more advanced partitioning options in order to finetune the data distribution between partners to your likings.
+
+At this point, you can already launch your first scenario ! But before showing you the `run()` button, let's go just a bit further.
+
 ### Select a pre-implemented dataset
-You might also want to consider other parameters such as the dataset, for instance. The easiest way to select a dataset is to use those which are already implemented in subtest. 
-Currently MNIST, CIFAR10, TITANIC and ESC50 are handled. You can use one of those by simply passing the parameter dataset_name to your scenario object
+
+You might also want to consider other parameters such as the dataset to be used, for instance. The easiest way to select a dataset is to use those which are already implemented in subtest. 
+Currently MNIST, CIFAR10, TITANIC and ESC50 are supported. You can use one of those by simply passing the parameter dataset_name to your scenario object
 ```python
 from subtest.scenario import Scenario
 my_scenario = Scenario(partners_count=3,
@@ -63,9 +79,11 @@ If you want to use an homemade dataset or a homemade model, you will have to use
 Note that this parameter is not mandatory as the MNIST dataset is selected by default. 
 
 ### Set some ML parameters
+
 Even if default training values are provided, it is strongly advised to adapt these to your case. 
 For instance you can want your training to go for 10 epochs and 3 minibatches per epoch. 
 Please be aware that in a context of multi partner learning, the notion of minibatch is quite differente from the 
+
 ```python
 from subtest.scenario import Scenario
 my_scenario = Scenario(partners_count=3,
@@ -74,8 +92,11 @@ my_scenario = Scenario(partners_count=3,
                        epoch_count=10,
                        minibatch_count=3)
 ```
+
 ### Run it
+
 You scenario is ready, you can run it.
+
 ```python
 my_scenario.run()
 ```
@@ -147,6 +168,7 @@ There is a lot more parameters that you can play with, which are fully explained
 ## Scenario parameters
 
 ### Choice of dataset
+
 There is two way to select a dataset. You can either choice a pre-implemented dataset, by setting the `dataset_name` parameter, or directly pass the dataset object to the `dataset` parameter. To look at the structure of the dataset object, see the [related documentation](#dataset-generation)
 
 `dataset`: `None` (default), `datasets.Dataset object`. If None, the dataset provided by the `dataset_name` will be used

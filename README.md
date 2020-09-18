@@ -2,7 +2,7 @@
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/SubstraFoundation/distributed-learning-contributivity/blob/master/run_experiment_on_google_collab.ipynb)
 [![Discuss on Slack](https://img.shields.io/badge/chat-on%20slack-orange)](https://substra.us18.list-manage.com/track/click?e=2effed55c9&id=fa49875322&u=385fa3f9736ea94a1fcca969f)
 
-# Exploration of dataset contributivity to a model in collaborative ML projects
+# Simulate collaborative multi-partner ML projects & Experiment learning and contributivity measurement approaches
 
 - [Introduction](#introduction)
   * [Context of this work](#context-of-this-work)
@@ -32,7 +32,7 @@ This work is being carried out in the context of collaborative research projects
 
 It depends in what capacity you are interested! For example:
 
-- If you'd like to experiment right now by yourself multi-partner learning approaches and contributivity measurement methods, jump to section **[Using the code files](#using-the-code-files)**
+- If you'd like to experiment right now by yourself multi-partner learning approaches and contributivity measurement methods, jump to section **[Run an experiment](#run-an-experiment)**
 - If you'd like to get in touch with the workgroup, jump to section **[Contacts, contributions, collaborations](#contacts-contributions-collaborations)**. If you are a student or a teacher, we love discussing student projects!
 - If you are very familiar with this type of projects, well you can either have a look at section **[Ongoing work and improvement plan](#ongoing-work-and-improvement-plan)** or head towards [issues](https://github.com/SubstraFoundation/distributed-learning-contributivity/issues) and [PRs](https://github.com/SubstraFoundation/distributed-learning-contributivity/pulls) to see what's going on these days. We use the `help wanted` tag to flag issues on which help is particularly wanted, but other open issues would also very much welcome contributions
 
@@ -40,20 +40,11 @@ Should you have any question, [reach out](#contacts-contributions-collaborations
 
 ## About this repository
 
-In this repository, we benchmark different contributivity measurement approaches on a public dataset artificially split in a number of individual datasets, to mock a collaborative ML project.
+In this repository, we benchmark different contributivity measurement approaches on a public dataset artificially partitioned in a number of individual datasets, to mock a collaborative ML project.
 
 The objective is to compare the contributivity figures obtained with the different approaches, and try to see how potential differences could be interpreted.
 
-### Experimental approach
-
-We want to start experimenting contributivity evaluations in collaborative data science and distributed multi-partner learning scenarios. Our exploration of this topic is in progress, as is this library and associated experiments. To make the most out of it, it is key to capitalize on this effort and develop it as a reproducible pipeline that can be improved, enriched, complemented over time.
-
-For a start we made the following choices:
-
-- What we want to compare (with the Shapley values being the baseline, see section below):
-  - Contributivity relative values
-  - Computation time
-- Public datasets for experiments currently supported: MNIST, CIFAR10, TITANIC, ESC50
+The public datasets currently supported are: MNIST, CIFAR10, TITANIC, ESC50.
 
 ### Structure of the library
 
@@ -77,9 +68,9 @@ Finally, with given scenarios and multi-partner learning approaches, we can addr
 
 ### Run an experiment
 
-#### Using the code files
+#### Using this library
 
-1. Define your mock scenario(s) in `config.yml` by changing the values of the suggested parameters of the 2 example scenarios (you can browse more available parameters in section [Config file parameters](#config-file-parameters) below). For example:
+1. Define your mock scenario(s) in the `config.yml` file by changing the values of the suggested parameters of the 2 example scenarios (you can browse more available parameters in section [Config file parameters](#config-file-parameters) below). For example:
 
     ```yaml
     experiment_name: my_custom_experiment
@@ -147,17 +138,19 @@ Finally, with given scenarios and multi-partner learning approaches, we can addr
    ![Example graphs](./img/results_graphs_example.png)
    
 #### Using the library
-**TODO** 
+
+**TODO**
+ 
 ### Ongoing work and improvement plan
 
 The current work focuses on the following 4 priorities:
 
 1. Improve the **[multi-partner learning approaches](https://github.com/SubstraFoundation/distributed-learning-contributivity/projects/4)**
 1. Continue developing new **[contributivity measurement methods](https://github.com/SubstraFoundation/distributed-learning-contributivity/projects/3)**
-1. Perform **[experiments](https://github.com/SubstraFoundation/distributed-learning-contributivity/projects/1)** and gain experience about best-suited contributivity measurement methods in different situations
+1. Perform **[experiments](https://github.com/SubstraFoundation/distributed-learning-contributivity/projects/1)** and gain experience about best-suited multi-partner learning approaches and contributivity measurement methods in different situations
 1. Make the library **[agnostic/compatible with other datasets and model architectures](https://github.com/SubstraFoundation/distributed-learning-contributivity/projects/2)**
 
-There is also a transverse, continuous improvement effort on **[code quality, readibility, optimization](https://github.com/SubstraFoundation/distributed-learning-contributivity/projects/5)**.
+There is also a transverse, continuous improvement effort on **[code quality, readability, optimization](https://github.com/SubstraFoundation/distributed-learning-contributivity/projects/5)**.
 
 This work is collaborative, enthusiasts are welcome to comment open issues and PRs or open new ones.
 
