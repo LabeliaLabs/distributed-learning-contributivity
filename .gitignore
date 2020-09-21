@@ -117,7 +117,7 @@ experiments/
 
 
 # datasets
-subtest/datasets/local_data/
+mplc/datasets/local_data/
 
 *.zip
 *.csv

@@ -17,9 +17,8 @@ from loguru import logger
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelEncoder
 
-from . import contributivity, constants
+from . import contributivity, constants, dataset as dataset_mod
 from . import multi_partner_learning
-from .datasets import dataset as dataset_mod
 from .datasets import dataset_mnist, dataset_titanic, dataset_esc50, dataset_cifar10
 from .partner import Partner
 
@@ -59,8 +58,9 @@ class Scenario:
         :param samples_split_option: ['basic', 'random'] (default),
                                      ['basic', 'stratified']
                                      or ['advanced', [[nb of clusters (int), 'shared' or 'specific']]].
-        :param corrupted_datasets: [not_corrupted (default), shuffled or corrupted]
-                                   Enables to artificially corrupt the data of one or several partners:
+        :param corrupted_datasets: ['not_corrupted' (default), 'shuffled' or 'corrupted'].
+                                   Enables to artificially corrupt the data of one or several partners.
+                                   The size of the list must be equal to the number of partners
         :param init_model_from: None (default) or path
         :param multi_partner_learning_approach: 'fedavg' (default), 'seq-pure', 'seq-with-final-agg' or 'seqavg'
                                                 Define the multi-partner learning approach

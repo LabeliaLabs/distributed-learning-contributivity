@@ -23,8 +23,7 @@ from librosa.feature import mfcc
 from loguru import logger
 from sklearn.model_selection import train_test_split
 
-from . import dataset
-from .. import constants
+from .. import constants, dataset
 
 num_classes = 50
 input_shape = (40, 431, 1)

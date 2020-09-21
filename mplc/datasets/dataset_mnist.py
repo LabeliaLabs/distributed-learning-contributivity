@@ -15,8 +15,7 @@ from keras.utils import to_categorical
 from loguru import logger
 from sklearn.model_selection import train_test_split
 
-from . import dataset
-from .. import constants
+from .. import constants, dataset
 
 # Init dataset-specific variables
 img_rows = 28
