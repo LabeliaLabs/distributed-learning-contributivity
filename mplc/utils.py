@@ -6,7 +6,6 @@ from __future__ import print_function
 
 import argparse
 import datetime
-import shutil
 import sys
 from itertools import product
 from pathlib import Path
@@ -135,7 +134,10 @@ def init_gpu_config():
     gpus = tf.config.experimental.list_physical_devices("GPU")
     if gpus:
         logger.info(f"Found GPU: {gpus[0].name}")
-        tf.config.experimental.set_memory_growth(gpus[0], True)
+        try:  # catch error when used on virtual devices
+            tf.config.experimental.set_memory_growth(gpus[0], True)
+        except ValueError as e:
+            logger.warning(str(e))
         tf.config.experimental.set_virtual_device_configuration(
             gpus[0],
             [tf.config.experimental.VirtualDeviceConfiguration(memory_limit=constants.GPU_MEMORY_LIMIT_MB)]
@@ -160,36 +162,39 @@ def parse_command_line_arguments():
     return args
 
 
-class StreamToLogger:
-    def __init__(self, level="INFO"):
-        self._level = level
-
-    def write(self, buffer):
-        for line in buffer.rstrip().splitlines():
-            logger.opt(depth=1).log(self._level, line.rstrip())
-
-    def flush(self):
-        pass
-
-
-def init_logger(debug=True):
+def init_logger(debug=False):
     logger.remove()
-
+    global log_filter
+    log_filter = MyFilter("INFO")
+    logger.opt(depth=1)
     # Forward logging to standard output
+    logger.add(sys.stdout, enqueue=True, filter=log_filter, level=0)
     if debug:
-        logger.add(sys.__stdout__, level="DEBUG")
+        log_filter.set_to_debug_level()
     else:
-        logger.add(sys.__stdout__, level="INFO")
-
-    stream = StreamToLogger()
-
-    info_logger_id = logger.add(constants.INFO_LOGGING_FILE_NAME, level="INFO")
-    info_debug_id = logger.add(constants.DEBUG_LOGGING_FILE_NAME, level="DEBUG")
-    return stream, info_logger_id, info_debug_id
+        log_filter.set_to_info_level()
 
 
-def move_log_file_to_experiment_folder(logger_id, experiment_path, filename, level):
-    logger.remove(logger_id)
-    new_log_path = experiment_path / filename
-    shutil.move(filename, new_log_path)
-    logger.add(new_log_path, level=level)
+class MyFilter:
+
+    def __init__(self, level):
+        self.level = level
+
+    def set_to_debug_level(self):
+        self.level = "DEBUG"
+
+    def set_to_info_level(self):
+        self.level = "INFO"
+
+    def __call__(self, record):
+        levelno = logger.level(self.level).no
+        return record["level"].no >= levelno
+
+
+def set_log_file(path):
+    logger.remove()
+    logger.add(sys.stdout, enqueue=True, filter=log_filter, level=0)
+    info_path = path / constants.INFO_LOGGING_FILE_NAME
+    debug_path = path / constants.DEBUG_LOGGING_FILE_NAME
+    logger.add(info_path, level="INFO")
+    logger.add(debug_path, level="DEBUG")

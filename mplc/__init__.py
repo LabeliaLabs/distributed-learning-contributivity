@@ -5,3 +5,6 @@ from . import datasets  # noqa
 from . import multi_partner_learning  # noqa
 from . import scenario  # noqa
 from . import utils  # noqa
+
+utils.init_gpu_config()
+utils.init_logger()
