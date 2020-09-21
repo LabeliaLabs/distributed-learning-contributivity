@@ -1,5 +1,5 @@
-experiment_name: patience_sept
-n_repeats: 40
+experiment_name: my_example
+n_repeats: 5
 scenario_params_list:
 <<<<<<< HEAD
  - dataset_name:
@@ -11,11 +11,16 @@ scenario_params_list:
  - partners_count: 
      - 10
    amounts_per_partner: 
-     - [0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1]
+     - [0.4, 0.3, 0.3]
    samples_split_option: 
-     - ['advanced', [[1, 'specific'], [1, 'specific'], [1, 'specific'], [1, 'specific'], [1, 'specific'], [1, 'specific'], [1, 'specific'], [1, 'specific'], [1, 'specific'], [1, 'specific']]]
+     - ['basic', 'random']
+     - ['basic', 'stratified']
+     - ['advanced', [[4, 'shared'], [6, 'shared'], [4, 'specific']]]
    multi_partner_learning_approach:
+     - 'fedavg'
      - 'seq-pure'
+     - 'seq-with-final-agg'
+     - 'seqavg'
    aggregation_weighting: 
      - 'uniform' 
    gradient_updates_per_pass_count: 
@@ -43,8 +48,14 @@ scenario_params_list:
 =======
 >>>>>>> add new config
    epoch_count: 
-     - 100
+     - 38
+   methods:
+     - ["Shapley values", "Independent scores", "TMCS"]
    minibatch_count: 
+     - 20
+   gradient_updates_per_pass_count:
+     - 8
+   dataset_proportion:
      - 1
      - 2
      - 5
