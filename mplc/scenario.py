@@ -19,7 +19,7 @@ from sklearn.preprocessing import LabelEncoder
 
 from . import contributivity, constants, dataset as dataset_mod
 from . import multi_partner_learning
-from .datasets import dataset_mnist, dataset_titanic, dataset_esc50, dataset_cifar10
+from .datasets import dataset_mnist, dataset_titanic, dataset_esc50, dataset_cifar10, dataset_imdb
 from .partner import Partner
 
 
@@ -112,6 +112,8 @@ class Scenario:
                 self.dataset = dataset_titanic.generate_new_dataset()
             elif dataset_name == constants.ESC50:
                 self.dataset = dataset_esc50.generate_new_dataset()
+            elif dataset_name == constants.IMDB:
+                self.dataset = dataset_imdb.generate_new_dataset()
             else:
                 raise Exception(f"Dataset named '{dataset_name}' is not supported (yet). You can construct your own "
                                 f"dataset object, or even add it by contributing to the project !")
