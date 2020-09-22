@@ -1,21 +1,24 @@
 # -*- coding: utf-8 -*-
+from time import sleep
+from urllib.error import HTTPError, URLError
 
+import numpy as np
 import tensorflow as tf
 from keras import layers
 from keras.datasets import imdb
 from keras.models import Sequential
-
 # Load Data
-from mplc import dataset
+from loguru import logger
+from sklearn.model_selection import train_test_split
+
+from mplc import dataset, constants
 
 
 def generate_new_dataset():
     attempts = 0
     while True:
         try:
-            (x_train, y_train), (x_test, y_test) = imdb.load_data(
-                path='imdb.npz', num_words=None, skip_top=50, maxlen=None,
-                seed=113, start_char=1, oov_char=2, index_from=3)
+            (x_train, y_train), (x_test, y_test) = imdb.load_data()
             break
         except (HTTPError, URLError) as e:
             if hasattr(e, 'code'):
@@ -23,8 +26,7 @@ def generate_new_dataset():
             else:
                 temp = e.errno
             logger.debug(
-                f'URL fetch failure on '
-                f'https://www.cs.toronto.edu/~kriz/cifar-10-python.tar.gz : '
+                f'URL fetch failure : '
                 f'{temp} -- {e.reason}')
             if attempts < constants.NUMBER_OF_DOWNLOAD_ATTEMPTS:
                 sleep(2)
@@ -68,9 +70,6 @@ def preprocess_dataset_labels(y):
     return y
 
 
-
-
-
 # Model structure and generation
 def generate_new_model_for_dataset():
     """ Return a CNN model from scratch based on given batch_size"""
@@ -109,3 +108,21 @@ def generate_new_model_for_dataset():
                   metrics=['accuracy'])
 
     return model
+
+
+# train, test, val splits
+
+def train_test_split_local(x, y):
+    return x, np.array([]), y, np.array([])
+
+
+def train_val_split_local(x, y):
+    return x, np.array([]), y, np.array([])
+
+
+def train_val_split_global(x, y):
+    return train_test_split(x, y, test_size=0.1, random_state=42)
+
+
+def train_test_split_global(data):
+    return train_test_split(data, test_size=0.1, random_state=42)
