@@ -48,13 +48,13 @@ import pytest
 import yaml
 from tensorflow.keras.datasets import cifar10, mnist
 
-from subtest import multi_partner_learning, constants, utils
-from subtest.contributivity import Contributivity
-from subtest.datasets import dataset_cifar10 as data_cf
-from subtest.datasets import dataset_mnist as data_mn
-from subtest.multi_partner_learning import MultiPartnerLearning
-from subtest.partner import Partner
-from subtest.scenario import Scenario
+from mplc import multi_partner_learning, constants, utils
+from mplc.contributivity import Contributivity
+from mplc.datasets import dataset_cifar10 as data_cf
+from mplc.datasets import dataset_mnist as data_mn
+from mplc.multi_partner_learning import MultiPartnerLearning
+from mplc.partner import Partner
+from mplc.scenario import Scenario
 
 
 ######

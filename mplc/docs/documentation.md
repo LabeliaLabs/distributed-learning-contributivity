@@ -26,6 +26,7 @@
 ## Prerequisites
 
 At root folder:
+
 ```bash
 pip install -r requirements.txt
 pip install -i https://test.pypi.org/simple/ subtest==0.0.0.18
@@ -68,6 +69,7 @@ At this point, you can already launch your first scenario ! But before showing y
 
 You might also want to consider other parameters such as the dataset to be used, for instance. The easiest way to select a dataset is to use those which are already implemented in subtest. 
 Currently MNIST, CIFAR10, TITANIC and ESC50 are supported. You can use one of those by simply passing the parameter dataset_name to your scenario object
+
 ```python
 from subtest.scenario import Scenario
 my_scenario = Scenario(partners_count=3,
@@ -113,7 +115,8 @@ Here is a non exhaustive list of metrics available:
 - `score_matrix_collective_models`
 - `score_matrix_per_partner`
 
-Here is an example of an accuracy plot for 3 partner
+Here is an example of an accuracy plot for 3 partners
+
 ```python
 import pandas as pd
 import seaborn as sns
@@ -126,7 +129,6 @@ x_collective = my_scenario.mpl.score_matrix_collective_models
 x = x[:,:,0]
 x_collective = x_collective[:,0]
 
-
 d = {
     'partner 0' : x[:,0],
     'partner 1' : x[:,1],
@@ -135,10 +137,7 @@ d = {
 }
 
 df = pd.DataFrame(d)
-
-
 sns.relplot(data = df, kind = "line")
-
 ```
 
 Check out our [Tutorial 3](https://github.com/SubstraFoundation/distributed-learning-contributivity/blob/master/notebooks/examples/3_Exploring_results.ipynb) for more information.
@@ -146,6 +145,7 @@ Check out our [Tutorial 3](https://github.com/SubstraFoundation/distributed-lear
 ### Contributivity measurement methods
 
 To use contributivity measurement tools, you will have to change the parameters of your `Scenario` object
+
 ```python
 from subtest.scenario import Scenario
 my_scenario = Scenario(partners_count=3,
@@ -156,6 +156,7 @@ my_scenario = Scenario(partners_count=3,
                        methods=['Shapley values'])
 ```
 The result's access is straightforward
+
 ```python
 contributivity_score = my_scenario.contributivity_list
 print(contributivity_score[0])
@@ -171,7 +172,8 @@ There is a lot more parameters that you can play with, which are fully explained
 
 There is two way to select a dataset. You can either choice a pre-implemented dataset, by setting the `dataset_name` parameter, or directly pass the dataset object to the `dataset` parameter. To look at the structure of the dataset object, see the [related documentation](#dataset-generation)
 
-`dataset`: `None` (default), `datasets.Dataset object`. If None, the dataset provided by the `dataset_name` will be used
+`dataset`: `None` (default), `datasets.Dataset object`. If None, the dataset provided by the `dataset_name` will be used.
+
 `dataset_name`: `'mnist'` (default), `'cifar10'`, `'esc50'` or `'titanic'`
 MNIST, CIFAR10, ESC50 and Titanic are currently supported. They come with their associated modules in `/datasets` for loading data, pre-processing inputs, and define a model architecture.\
 For each dataset, it is possible to provide a path to model weights learned from a previous coalition. Use `'random_initialization'` if you want a random initialization or an empty value as in one of the two following syntaxes:
@@ -185,7 +187,7 @@ In the multi-partner learning computations, the global validation set is used fo
 - The global train set is split amongst partner (according to the scenario configuration) to populate the partner's local datasets.
 - For each partner, the local dataset can be split into separated train, validation and test sets, depending on the dataset configuration. Currently, the local validation and test set are not used, but they are available for further developments of multi-partner learning and contributivity measurement approaches.
 
-`dataset_proportion`: `float` (default: `1`)
+`dataset_proportion`: `float` (default: `1`). 
 This argument allows you to make computation on a sub-dataset of the provided dataset.
 This is the proportion of the dataset (initially the train and test sets) which is randomly selected to create a sub-dataset,
 it's done before the creation of the global validation set.
@@ -346,6 +348,7 @@ def generate_new_model_for_dataset():
 Note: It is mandatory to have loss and accuracy as metrics for your model.
 
 ### Preprocessing
+
 ```python
 def preprocess_dataset_labels(y):
     # (...)
