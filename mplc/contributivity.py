@@ -940,7 +940,9 @@ class Contributivity:
 
     def federated_SBS_linear(self, the_scenario):
         start = timer()
-        logger.info( "# Launching computation of perf. scores of linear performance increase compared to previous collective model")
+        logger.info(
+            "# Launching computation of perf. scores of linear "
+            "performance increase compared to previous collective model")
 
         relative_perf_matrix = self.compute_relative_perf_matrix(the_scenario)
         comp_rounds_kept = relative_perf_matrix.shape[0]
@@ -961,7 +963,8 @@ class Contributivity:
     def federated_SBS_quadratic(self, the_scenario):
         start = timer()
         logger.info(
-            "# Launching computation of perf. scores of quadratic performance increase compared to previous collective model")
+            "# Launching computation of perf. scores of"
+            "quadratic performance increase compared to previous collective model")
 
         relative_perf_matrix = self.compute_relative_perf_matrix(the_scenario)
         comp_rounds_kept = relative_perf_matrix.shape[0]
@@ -982,7 +985,8 @@ class Contributivity:
     def federated_SBS_constant(self, the_scenario):
         start = timer()
         logger.info(
-            "# Launching computation of perf. scores of constant performance increase compared to previous collective model")
+            "# Launching computation of perf. scores of constant"
+            "performance increase compared to previous collective model")
 
         relative_perf_matrix = self.compute_relative_perf_matrix(the_scenario)
 
