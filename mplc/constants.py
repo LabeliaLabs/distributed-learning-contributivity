@@ -35,6 +35,9 @@ CONTRIBUTIVITY_METHODS = [
     "AIS_Kriging_S",
     "SMCS",
     "WR_SMC",
+    "Federated SBS linear",
+    "Federated SBS quadratic",
+    "Federated SBS constant"
 ]
 
 # Datasets' Tags
