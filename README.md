@@ -44,7 +44,7 @@ In this repository, we benchmark different contributivity measurement approaches
 
 The objective is to compare the contributivity figures obtained with the different approaches, and try to see how potential differences could be interpreted.
 
-The public datasets currently supported are: MNIST, CIFAR10, TITANIC, ESC50.
+The public datasets currently supported are: MNIST, CIFAR10, TITANIC, ESC50 and IMDB.
 
 ### Structure of the library
 

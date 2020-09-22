@@ -68,7 +68,7 @@ At this point, you can already launch your first scenario ! But before showing y
 ### Select a pre-implemented dataset
 
 You might also want to consider other parameters such as the dataset to be used, for instance. The easiest way to select a dataset is to use those which are already implemented in subtest. 
-Currently MNIST, CIFAR10, TITANIC and ESC50 are supported. You can use one of those by simply passing the parameter dataset_name to your scenario object
+Currently MNIST, CIFAR10, TITANIC, IMDB and ESC50 are supported. You can use one of those by simply passing the parameter dataset_name to your scenario object
 
 ```python
 from subtest.scenario import Scenario
@@ -174,8 +174,8 @@ There is two way to select a dataset. You can either choice a pre-implemented da
 
 `dataset`: `None` (default), `datasets.Dataset object`. If None, the dataset provided by the `dataset_name` will be used.
 
-`dataset_name`: `'mnist'` (default), `'cifar10'`, `'esc50'` or `'titanic'`
-MNIST, CIFAR10, ESC50 and Titanic are currently supported. They come with their associated modules in `/datasets` for loading data, pre-processing inputs, and define a model architecture.\
+`dataset_name`: `'mnist'` (default), `'cifar10'`, `'esc50'`, `'imdb'` or `'titanic'`
+MNIST, CIFAR10, ESC50, IMDB and Titanic are currently supported. They come with their associated modules in `/datasets` for loading data, pre-processing inputs, and define a model architecture.\
 For each dataset, it is possible to provide a path to model weights learned from a previous coalition. Use `'random_initialization'` if you want a random initialization or an empty value as in one of the two following syntaxes:
 You can also use your own dataset, with the class Dataset. The [Tutorial 2](https://github.com/SubstraFoundation/distributed-learning-contributivity/blob/master/notebooks/examples/2%20_Sentiment140.ipynb) provides more explicit information.
 
