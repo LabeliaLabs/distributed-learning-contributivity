@@ -943,10 +943,10 @@ class Contributivity:
         logger.info( "# Launching computation of perf. scores of linear performance increase compared to previous collective model")
 
         relative_perf_matrix = self.compute_relative_perf_matrix(the_scenario)
-        comp_rounds_count = relative_perf_matrix.shape[0]
+        comp_rounds_kept = relative_perf_matrix.shape[0]
 
         # Calculate contributivity score with linear importance function
-        contributivity_scores = np.array(np.arange(comp_rounds_count)) \
+        contributivity_scores = np.array(np.arange(comp_rounds_kept)) \
             .dot(np.nan_to_num(relative_perf_matrix))
 
         # Return contributivity scores
@@ -964,10 +964,10 @@ class Contributivity:
             "# Launching computation of perf. scores of quadratic performance increase compared to previous collective model")
 
         relative_perf_matrix = self.compute_relative_perf_matrix(the_scenario)
-        comp_rounds_count = relative_perf_matrix.shape[0]
+        comp_rounds_kept = relative_perf_matrix.shape[0]
 
-        # Calculate contributivity score with linear importance function
-        contributivity_scores = np.array(np.square(np.arange(comp_rounds_count))) \
+        # Calculate contributivity score with quadratic importance function
+        contributivity_scores = np.array(np.square(np.arange(comp_rounds_kept))) \
             .dot(np.nan_to_num(relative_perf_matrix))
 
         # Return contributivity scores
@@ -986,7 +986,7 @@ class Contributivity:
 
         relative_perf_matrix = self.compute_relative_perf_matrix(the_scenario)
 
-        # Calculate contributivity score with linear importance function
+        # Calculate contributivity score as average of the relative performance for each round for each partner
         contributivity_scores = np.nanmean(relative_perf_matrix, axis=0)
 
         # Return contributivity scores
@@ -1000,7 +1000,7 @@ class Contributivity:
 
     def compute_relative_perf_matrix(self, the_scenario):
 
-        # Define proportion of initial and final computation rounds to skip
+        # Define proportion of initial and final computation rounds to skip (default 10% each)
         init_comp_rounds_skipped = 0.1
         final_comp_rounds_skipped = 0.1
 
@@ -1026,7 +1026,10 @@ class Contributivity:
         score_matrix_performance_rel = np.divide(score_matrix_per_partner_reshape,
                                                  scores_matrix_collective_reshape[:, None])
 
-        score_matrix_performance_rel = score_matrix_performance_rel[first_comp_round_kept: last_comp_round_kept, :]
+        # keep only the computation rounds that should not be skipped
+        relative_perf_matrix = score_matrix_performance_rel[first_comp_round_kept: last_comp_round_kept, :]
+
+        return relative_perf_matrix
 
     def compute_contributivity(
             self,
@@ -1072,18 +1075,15 @@ class Contributivity:
         elif method_to_compute == "Federated SBS linear":
             # Contributivity 10: step by step increments with linear importance ioncrease
             self.federated_SBS_linear(
-                current_scenario
-            )
+                current_scenario)
         elif method_to_compute == "Federated SBS quadratic":
             # Contributivity 11: step by step increments with quadratic importance increase
             self.federated_SBS_quadratic(
-                current_scenario
-            )
+                current_scenario)
         elif method_to_compute == "Federated SBS constant":
             # Contributivity 12: step by step increments with constant importance
             self.federated_SBS_constant(
-                current_scenario
-            )
+                current_scenario)
         else:
             logger.warning("Unrecognized name of method, statement ignored!")
 
