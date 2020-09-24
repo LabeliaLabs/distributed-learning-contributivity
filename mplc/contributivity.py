@@ -941,42 +941,46 @@ class Contributivity:
 
     # %% compute Partner value by reinforocment learning
 
-    def PVRL(self, the_scenario, learning_rate ):
+    def PVRL(self, the_scenario, learning_rate):
         start = timer()
         w = np.zeros(the_scenario.partners_count)
         partner_values = np.exp(w) / (1.0 + np.exp(w))
-        previous_partner_values  = np.zeros(the_scenario.partners_count)
+        previous_partner_values = np.zeros(the_scenario.partners_count)
         epsilon = 0.002
 
-        mpl= multi_partner_learning.MultiPartnerLearning(
-                    the_scenario.partners_list,
-                    1,
-                    the_scenario.minibatch_count,
-                    the_scenario.dataset,
-                    the_scenario.multi_partner_learning_approach,
-                    the_scenario.aggregation_weighting,
-                    is_early_stopping=False,
-                    is_save_data=True,
-                    save_folder=the_scenario.save_folder,
-                    init_model_from= "random_initialization",
-                    use_saved_weights=False,
-                    )
+        mpl = multi_partner_learning.MultiPartnerLearning(
+            the_scenario.partners_list,
+            1,
+            the_scenario.minibatch_count,
+            the_scenario.dataset,
+            the_scenario.multi_partner_learning_approach,
+            the_scenario.aggregation_weighting,
+            is_early_stopping=False,
+            is_save_data=True,
+            save_folder=the_scenario.save_folder,
+            init_model_from="random_initialization",
+            use_saved_weights=False,
+        )
         mpl.compute_test_score()
         previous_loss = mpl.loss_collective_models[-1]
-        t=0
-        while (t<the_scenario.epoch_count*the_scenario.partners_count or np.sum(np.abs(partner_values -previous_partner_values))/ the_scenario.partners_count > epsilon ):
-            t+=1
-            print("t:",t)
-            print("partner_values:",partner_values)
+        t = 0
+        while (t < the_scenario.epoch_count * the_scenario.partners_count or np.sum(
+                np.abs(partner_values - previous_partner_values)) / the_scenario.partners_count > epsilon):
+            t += 1
+            logger.info("t:", t)
+            logger.info("partner_values:", partner_values)
             # Select the partner / the action
             is_partner_in = np.random.binomial(1, p=partner_values)
             while np.sum(is_partner_in) == 0:
                 is_partner_in = np.random.binomial(1, p=partner_values)
 
             # apply one epoch with the selected partner to the previous model/ do the action
-            small_partner_list= [partner for partner, is_in in zip(the_scenario.partners_list,is_partner_in) if is_in == 1]
-            weights_folder = os.path.join(the_scenario.save_folder, 'model',the_scenario.dataset.name+'_final_weights.h5')
-            mpl= multi_partner_learning.MultiPartnerLearning(
+            small_partner_list = [partner for partner, is_in in zip(the_scenario.partners_list, is_partner_in) if
+                                  is_in == 1]
+            weights_folder = os.path.join(the_scenario.save_folder, 'model',
+                                          the_scenario.dataset.name + '_final_weights'
+                                                                      '.h5')
+            mpl = multi_partner_learning.MultiPartnerLearning(
                 small_partner_list,
                 1,
                 the_scenario.minibatch_count,
@@ -988,7 +992,7 @@ class Contributivity:
                 save_folder=the_scenario.save_folder,
                 init_model_from=weights_folder,
                 use_saved_weights=True,
-                )
+            )
             mpl.compute_test_score()
             loss = mpl.loss_collective_models[-1]
 
@@ -998,8 +1002,10 @@ class Contributivity:
             # Update the weight according to the REINFORCE method
             new_w = np.zeros(the_scenario.partners_count)
             for i in range(the_scenario.partners_count):
-                new_w[i] = w[i] + learning_rate * G * dp_dw[i] * (is_partner_in[i] / partner_values[i]  - (1.0 - is_partner_in[i])  / (1.0 -partner_values[i])  - prodp / (1.0-prodp) / (1.0 -partner_values[i]) )
-            w=new_w
+                grad = is_partner_in[i] / partner_values[i] - (1.0 - is_partner_in[i]) / (
+                        1.0 - partner_values[i]) - prodp / (1.0 - prodp) / (1.0 - partner_values[i])
+                new_w[i] = w[i] + learning_rate * G * dp_dw[i] * grad
+            w = new_w
             # Update values before the next round
             previous_partner_values = partner_values
             partner_values = np.exp(w) / (1.0 + np.exp(w))
