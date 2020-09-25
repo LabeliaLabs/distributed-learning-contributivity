@@ -68,7 +68,7 @@ Finally, with given scenarios and multi-partner learning approaches, we can addr
 
 ### Run an experiment
 
-There is two ways to run an experiment. You can first use the mplc library in a notebook, or regular python script, as it is demonstrated in the [tutorials](./notebooks/tutorials)
+There are two ways to run an experiment. You can first use the mplc library in a notebook, or regular python script, as it is demonstrated in the [tutorials](./notebooks/tutorials).
 
 For instance : 
 
