@@ -22,7 +22,6 @@ DEFAULT_CONFIG_FILE = "./config.yml"
 def main():
     args = parse_command_line_arguments()
 
-    # Forward logging to standard output
     if args.verbose:
         debug = True
     else:
@@ -73,7 +72,7 @@ def main():
                 **scenario_params,
                 experiment_path=experiment_path,
                 scenario_id=scenario_id + 1,
-                repeat_tag=i + 1
+                repeats_count=i + 1
             )
 
             current_scenario.run()

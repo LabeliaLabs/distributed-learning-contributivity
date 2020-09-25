@@ -43,7 +43,7 @@ class Scenario:
                  is_quick_demo=False,
                  experiment_path=Path(r"./experiments"),
                  scenario_id=1,
-                 repeat_tag=1,
+                 repeats_count=1,
                  is_dry_run=False,
                  **kwargs):
         """
@@ -73,7 +73,7 @@ class Scenario:
         :param is_quick_demo: boolean. Useful for debugging
         :param experiment_path: path
         :param scenario_id: str
-        :param repeat_tag: int
+        :param repeats_count: int
         :param is_dry_run: boolean
         :param **kwargs:
         """
@@ -230,7 +230,7 @@ class Scenario:
         # Scenario id and number of repetition
 
         self.scenario_id = scenario_id
-        self.n_repeat = repeat_tag
+        self.n_repeat = repeats_count
 
         self.is_quick_demo = is_quick_demo
         if self.is_quick_demo and self.dataset_proportion < 1:

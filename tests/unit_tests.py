@@ -178,7 +178,7 @@ def create_Scenario(iterate_dataset_name, iterate_samples_split_option):
 
     # scenar.dataset object is created inside the Scenario constructor
     scenar = Scenario(
-        **params, experiment_path=experiment_path, scenario_id=0, repeat_tag=1
+        **params, experiment_path=experiment_path, scenario_id=0, repeats_count=1
     )
 
     scenar.partners_list = create_partners_list(
