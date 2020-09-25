@@ -32,7 +32,7 @@ This work is being carried out in the context of collaborative research projects
 
 It depends in what capacity you are interested! For example:
 
-- If you'd like to experiment right now by yourself multi-partner learning approaches and contributivity measurement methods, jump to section **[Run an experiment](#run-an-experiment)**
+- If you'd like to experiment right now by yourself multi-partner learning approaches and contributivity measurement methods, jump to section **[Run an experiment.](#run-an-experiment)**
 - If you'd like to get in touch with the workgroup, jump to section **[Contacts, contributions, collaborations](#contacts-contributions-collaborations)**. If you are a student or a teacher, we love discussing student projects!
 - If you are very familiar with this type of projects, well you can either have a look at section **[Ongoing work and improvement plan](#ongoing-work-and-improvement-plan)** or head towards [issues](https://github.com/SubstraFoundation/distributed-learning-contributivity/issues) and [PRs](https://github.com/SubstraFoundation/distributed-learning-contributivity/pulls) to see what's going on these days. We use the `help wanted` tag to flag issues on which help is particularly wanted, but other open issues would also very much welcome contributions
 
@@ -56,19 +56,37 @@ This library can be broken down into 3 blocks:
 
 #### Scenarios
 
-From the start of this work it seemed very useful to be able to simulate different multi-partner settings to be able to experiment on them. For that, the library enables to configure scenarios by specifying the number of partners, what are the relative volume of data they have, how the data are distributed among them, etc. (see below section [Definition of collaborative scenarios](#definition-of-collaborative-scenarios) for all available parameters).
+From the start of this work it seemed very useful to be able to simulate different multi-partner settings to be able to experiment on them. For that, the library enables to configure scenarios by specifying the number of partners, what are the relative volume of data they have, how the data are distributed among them, etc. (see our [first Tutorial](https://github.com/SubstraFoundation/distributed-learning-contributivity/blob/master/notebooks/tutorials/Tutorial-1_Run_your_first_scenario.ipynb), and the related documentation's section [Definition of collaborative scenarios](./mplc/docs/documentation.md#definition-of-collaborative-scenarios) for all available parameters).
 
 #### Multi-partner learning approaches
 
-Once a given scenario configured, it seemed useful to choose how the multi-partner learning would be done. So far, 3 different approaches are implemented (federated averaging, sequential learning, sequential averaging). See below section [Configuration of the collaborative and distributed learning](#configuration-of-the-collaborative-and-distributed-learning) for descriptive schemas and additional ML-related parameters.
+Once a given scenario configured, it seemed useful to choose how the multi-partner learning would be done. So far, 3 different approaches are implemented (federated averaging, sequential learning, sequential averaging). See below section [Configuration of the collaborative and distributed learning](./mplc/docs/documentation.md#configuration-of-the-collaborative-and-distributed-learning) for descriptive schemas and additional ML-related parameters.
 
 #### Contributivity measurement approaches
 
-Finally, with given scenarios and multi-partner learning approaches, we can address contributivity measurement approaches. See below sections [Configuration of contributivity measurement methods to be tested](#configuration-of-contributivity-measurement-methods-to-be-tested) and [Contributivity measurement approaches studied and implemented](#contributivity-measurement-approaches-studied-and-implemented).
+Finally, with given scenarios and multi-partner learning approaches, we can address contributivity measurement approaches. See below sections [Configuration of contributivity measurement methods to be tested](./mplc/docs/documentation.md#scenario-parameters) and [Contributivity measurement approaches studied and implemented](./mplc/docs/documentation.md#configuration-of-contributivity-measurement-methods-to-be-tested).
 
 ### Run an experiment
 
-#### Using this library
+There is two ways to run an experiment. You can first use the mplc library in a notebook, or regular python script, as it is demonstrated in the [tutorials](./notebooks/tutorials)
+
+For instance : 
+
+#### Using this library 
+
+```python
+from subtest.scenario import Scenario
+my_scenario = Scenario(partners_count=3,
+                       amounts_per_partner=[0.2, 0.3, 0.5],
+                       dataset_name='mnist',
+                       epoch_count=10,
+                       minibatch_count=3)
+my_scenario.run()
+# (...) Results' exploration 
+```
+
+You can also use the main.py provided in the repository, with a yaml config file.
+#### Using the main.py script
 
 1. Define your mock scenario(s) in the `config.yml` file by changing the values of the suggested parameters of the 2 example scenarios (you can browse more available parameters in section [Config file parameters](#config-file-parameters) below). For example:
 
@@ -130,16 +148,14 @@ Finally, with given scenarios and multi-partner learning approaches, we can addr
 
    Under `scenario_params_list`, enter a list of sets of scenario(s). Each set starts with ` - dataset_name:` and must have only one `partners_count` value. The length of `amount_per_partners`, `corrupted_datasets` (and `samples_split_option` when the advanced definition is used) must match the `partner_counts` value. If for a given parameter multiple values are specified, e.g. like for `agregation_weighting` in the first scenario set of the above example, all possible combinations of parameters will be assembled as separate scenarios and run.
 
-1. Then execute `main.py -f config.yml`. Add the `-v` argument if you want a more verbose output.
+2. Then execute `main.py -f config.yml`. Add the `-v` argument if you want a more verbose output.
 
-1. A `results.csv` file will be generated in a new folder for your experiment under `/experiments/<your_experiment>`. You can read this raw `results.csv` file or use the notebooks in `/notebooks`.  
+3. A `results.csv` file will be generated in a new folder for your experiment under `/experiments/<your_experiment>`. You can read this raw `results.csv` file or use the notebooks in `/notebooks`.  
 
    **Note**: example experiment(s) are stored in folder `/saved_experiments` to illustrate the use of the library. The notebooks include graphs, like for example the following:  
    ![Example graphs](./img/results_graphs_example.png)
    
-#### Using the library
 
-**TODO**
  
 ### Ongoing work and improvement plan
 
