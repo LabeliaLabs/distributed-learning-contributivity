@@ -15,10 +15,10 @@ import numpy as np
 import pandas as pd
 from loguru import logger
 from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import LabelEncoder
 
-from . import contributivity, constants
+from . import contributivity, constants, dataset as dataset_mod
 from . import multi_partner_learning
-from .datasets import dataset as dataset_mod
 from .datasets import dataset_mnist, dataset_titanic, dataset_esc50, dataset_cifar10
 from .partner import Partner
 
@@ -43,10 +43,40 @@ class Scenario:
                  is_quick_demo=False,
                  experiment_path=Path(r"./experiments"),
                  scenario_id=1,
-                 n_repeat=1,
+                 repeats_count=1,
                  is_dry_run=False,
                  **kwargs):
+        """
 
+        :param partners_count: int, number of partners. Example: partners_count = 3
+        :param amounts_per_partner:  [float]. Fractions of the
+        original dataset each partner receives to mock a collaborative ML scenario where each partner provides data
+        for the ML training.
+        :param dataset: dataset.Dataset object. Use it if you want to use your own dataset, otherwise use dataset_name.
+        :param dataset_name: str. 'mnist', 'cifar10', 'esc50' and 'titanic' are currently supported (default: mnist)
+        :param dataset_proportion: float (default: 1)
+        :param samples_split_option: ['basic', 'random'] (default),
+                                     ['basic', 'stratified']
+                                     or ['advanced', [[nb of clusters (int), 'shared' or 'specific']]].
+        :param corrupted_datasets: ['not_corrupted' (default), 'shuffled' or 'corrupted'].
+                                   Enables to artificially corrupt the data of one or several partners.
+                                   The size of the list must be equal to the number of partners
+        :param init_model_from: None (default) or path
+        :param multi_partner_learning_approach: 'fedavg' (default), 'seq-pure', 'seq-with-final-agg' or 'seqavg'
+                                                Define the multi-partner learning approach
+        :param aggregation_weighting: 'uniform' (default), 'data_volume' or 'local_score'
+        :param gradient_updates_per_pass_count: int
+        :param minibatch_count: int
+        :param epoch_count: int
+        :param is_early_stopping: boolean. Stop the training if scores on val_set reach a plateau
+        :param methods: A declarative list `[]` of the contributivity measurement methods to be executed.
+        :param is_quick_demo: boolean. Useful for debugging
+        :param experiment_path: path
+        :param scenario_id: str
+        :param repeats_count: int
+        :param is_dry_run: boolean
+        :param **kwargs:
+        """
         # ---------------------------------------------------------------------
         # Initialization of the dataset defined in the config of the experiment
         # ---------------------------------------------------------------------
@@ -198,8 +228,9 @@ class Scenario:
         # -------------
 
         # Scenario id and number of repetition
+
         self.scenario_id = scenario_id
-        self.n_repeat = n_repeat
+        self.n_repeat = repeats_count
 
         self.is_quick_demo = is_quick_demo
         if self.is_quick_demo and self.dataset_proportion < 1:
@@ -296,8 +327,7 @@ class Scenario:
     def split_data_advanced(self, is_logging_enabled=True):
         """Advanced split: Populates the partners with their train and test data (not pre-processed)"""
 
-        x_train = self.dataset.x_train
-        y_train = self.dataset.y_train
+        y_train = LabelEncoder().fit_transform([str(y) for y in self.dataset.y_train])
         partners_list = self.partners_list
         amounts_per_partner = self.amounts_per_partner
         advanced_split_description = self.samples_split_description
@@ -334,8 +364,8 @@ class Scenario:
         x_train_for_cluster, y_train_for_cluster, nb_samples_per_cluster = {}, {}, {}
         for label in labels:
             idx_in_full_trainset = np.where(y_train == label)
-            x_train_for_cluster[label] = x_train[idx_in_full_trainset]
-            y_train_for_cluster[label] = y_train[idx_in_full_trainset]
+            x_train_for_cluster[label] = self.dataset.x_train[idx_in_full_trainset]
+            y_train_for_cluster[label] = self.dataset.y_train[idx_in_full_trainset]
             nb_samples_per_cluster[label] = len(y_train_for_cluster[label])
 
         # For each partner compose the list of clusters from which they will draw data samples
@@ -436,8 +466,8 @@ class Scenario:
         """Populates the partners with their train and test data (not pre-processed)"""
 
         # Fetch parameters of scenario
-        x_train = self.dataset.x_train
-        y_train = self.dataset.y_train
+
+        y_train = LabelEncoder().fit_transform([str(y) for y in self.dataset.y_train])
 
         # Configure the desired splitting scenario - Datasets sizes
         # Should the partners receive an equivalent amount of samples each...
@@ -463,19 +493,14 @@ class Scenario:
             splitting_indices_train = (splitting_indices * len(y_train)).astype(int)
 
         # Configure the desired data distribution scenario
-
-        # Create a list of indexes of the samples
-        train_idx = np.arange(len(y_train))
-
         # In the 'stratified' scenario we sort by labels
         if self.samples_split_description == "stratified":
             # Sort by labels
-            y_sorted_idx = y_train.argsort()
-            y_train = y_train[y_sorted_idx]
-            x_train = x_train[y_sorted_idx]
+            train_idx = y_train.argsort()
 
         # In the 'random' scenario we shuffle randomly the indexes
         elif self.samples_split_description == "random":
+            train_idx = np.arange(len(y_train))
             np.random.seed(42)
             np.random.shuffle(train_idx)
 
@@ -487,8 +512,7 @@ class Scenario:
                 + "] is not recognized."
             )
 
-        # Do the splitting among partners according to desired scenarios
-
+        # Do the partitioning among partners according to desired scenarios
         # Split data between partners
         train_idx_idx_list = np.split(train_idx, splitting_indices_train)
 
@@ -498,12 +522,9 @@ class Scenario:
             p = self.partners_list[partner_idx]
 
             # Finalize selection of train data
-            x_partner_train = x_train[train_idx, :]
-            y_partner_train = y_train[train_idx]
-
             # Populate the partner's train dataset
-            p.x_train = x_partner_train
-            p.y_train = y_partner_train
+            p.x_train = self.dataset.x_train[train_idx, :]
+            p.y_train = self.dataset.y_train[train_idx]
 
             # Create local validation and test datasets from the partner train data
             p.x_train, p.x_test, p.y_train, p.y_test = self.dataset.train_test_split_local(p.x_train, p.y_train)
@@ -511,13 +532,13 @@ class Scenario:
 
             # Update other attributes from partner
             p.final_nb_samples = len(p.x_train)
-            p.clusters_list = list(set(p.y_train))
+            p.clusters_list = list(set(y_train[train_idx]))
 
             # Move on to the next partner
             partner_idx += 1
 
         # Check coherence of number of mini-batches versus smaller partner
-        assert self.minibatch_count <= (min(self.amounts_per_partner) * len(x_train)), "Error: in the provided config \
+        assert self.minibatch_count <= (min(self.amounts_per_partner) * len(y_train)), "Error: in the provided config \
             file and dataset, a partner doesn't have enough data samples to create the minibatches"
 
         self.nb_samples_used = sum([len(p.x_train) for p in self.partners_list])
@@ -535,11 +556,11 @@ class Scenario:
         return 0
 
     def plot_data_distribution(self):
-
+        lb = LabelEncoder().fit([str(y) for y in self.dataset.y_train])
         for i, partner in enumerate(self.partners_list):
 
             plt.subplot(self.partners_count, 1, i + 1)  # TODO share y axis
-            data_count = np.bincount(partner.y_train)
+            data_count = np.bincount(lb.transform([str(y) for y in partner.y_train]))
 
             # Fill with 0
             while len(data_count) < self.dataset.num_classes:
@@ -577,21 +598,8 @@ class Scenario:
     def preprocess_scenarios_data(self):
         """Return scenario with central datasets (val, test) and distributed datasets (partners) pre-processed"""
 
-        logger.debug("## Pre-processing datasets of the scenario for keras CNN:")
-
-        # First, the scenario central dataset of the scenario
-        self.dataset.y_val = self.dataset.preprocess_dataset_labels(self.dataset.y_val)
-        logger.debug("   Central early stopping validation set: done.")
-        self.dataset.y_test = self.dataset.preprocess_dataset_labels(self.dataset.y_test)
-        logger.debug("   Central testset: done.")
-
         # Then, datasets of each partner
         for partner_index, partner in enumerate(self.partners_list):
-
-            # Pre-process labels (y) data
-            partner.y_train = self.dataset.preprocess_dataset_labels(partner.y_train)
-            partner.y_val = self.dataset.preprocess_dataset_labels(partner.y_val)
-            partner.y_test = self.dataset.preprocess_dataset_labels(partner.y_test)
 
             # If a data corruption is configured, apply it
             if self.corrupted_datasets[partner_index] == "corrupted":

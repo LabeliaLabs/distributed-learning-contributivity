@@ -15,8 +15,7 @@ from keras.utils import to_categorical
 from loguru import logger
 from sklearn.model_selection import train_test_split
 
-from . import dataset
-from .. import constants
+from .. import constants, dataset
 
 # Init dataset-specific variables
 img_rows = 28
@@ -51,6 +50,9 @@ def generate_new_dataset():
     x_train = preprocess_dataset_inputs(x_train)
     x_test = preprocess_dataset_inputs(x_test)
 
+    y_train = preprocess_dataset_labels(y_train)
+    y_test = preprocess_dataset_labels(y_test)
+
     dataset_obj = dataset.Dataset(
         "mnist",
         x_train,
@@ -59,7 +61,6 @@ def generate_new_dataset():
         y_test,
         input_shape,
         num_classes,
-        preprocess_dataset_labels,
         generate_new_model_for_dataset,
         train_val_split_global,
         train_test_split_local,

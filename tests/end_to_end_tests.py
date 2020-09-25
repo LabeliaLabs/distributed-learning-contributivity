@@ -8,7 +8,7 @@ from pathlib import Path
 
 import pandas as pd
 
-from subtest import constants  # noqa: E402
+from mplc import constants  # noqa: E402
 
 
 class Test_EndToEndTest:

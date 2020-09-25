@@ -67,8 +67,8 @@ deactivate
 
 Once inside your new virtual environment, you can install the project dependencies with the commands:
 
-- pip setup: `pip3 install -r requirements.txt`
-- anaconda setup: `conda install --file requirements.txt`
+- pip setup: `pip3 install -r dev-requirements.txt`
+- anaconda setup: `conda install --file dev-requirements.txt`
 
 What is installed inside a virtual environment is separated from your general Python setup.
 
@@ -86,7 +86,7 @@ Please note that you can then select your new virtual environment as any other P
 
 #### Black formatter
 
-This tool might seem a little bit radical, but it is based on PEPs and offers several possibilies of customization. It will help you learn and improve your code
+This tool might seem a little bit radical, but it is based on PEPs and offers several possibilities of customization. It will help you learn and improve your code
 
 You don't have to take all the suggested modifications (with the help of `git diff`) but it is a good reference based on PEP rules that will ensure **validity**, **maintainability** and **readability** of the code: [Package Repository](https://github.com/psf/black)
 

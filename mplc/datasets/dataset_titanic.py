@@ -14,8 +14,7 @@ from loguru import logger
 from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import train_test_split
 
-from . import dataset
-from .. import constants
+from .. import constants, dataset
 
 
 def generate_new_dataset():
@@ -34,7 +33,6 @@ def generate_new_dataset():
         y_test,
         input_shape,
         num_classes,
-        preprocess_dataset_labels,
         generate_new_model_for_dataset,
         train_val_split_global,
         train_test_split_local,

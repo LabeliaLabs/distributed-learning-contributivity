@@ -3,8 +3,9 @@
 This enables to parameterize the partners that participate to the simulated federated learning scenario.
 """
 
-import numpy as np
 from random import shuffle
+
+import numpy as np
 
 from . import constants
 
