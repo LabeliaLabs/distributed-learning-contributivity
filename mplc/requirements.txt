@@ -10,3 +10,4 @@ seaborn==0.10.0
 loguru==0.4.1
 tensorflow==2.2.1
 ruamel.yaml==0.16.10
+joblib==0.15.1

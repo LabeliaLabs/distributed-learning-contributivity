@@ -47,7 +47,7 @@ $ pip install -e .
 
 ## Quick start
 
-First a few words of context ! This library enables to run a multi-partner learning and contributivity measurement experiment. This breaks down into three relatively independent blocks:
+First a few words of context! This library enables to run a multi-partner learning and contributivity measurement experiment. This breaks down into three relatively independent blocks:
 
 1. Creating a mock collaborative multi-partner learning scenario
 1. Running a multi-partner ML algorithm to learn a model on all partners respective 
