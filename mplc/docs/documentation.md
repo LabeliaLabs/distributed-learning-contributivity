@@ -316,7 +316,7 @@ All methods available are:
 - "WR_SMC"
 ```
 
-The methods are detailed below : 
+The methods are detailed below: 
 
 - [done, short name "Independent scores"] **Performance scores** of models trained independently on each partner
 
@@ -364,8 +364,7 @@ The methods are detailed below :
 
 - [future prospect] [**Partner Valuation by Reinforcement Learning**] (PVRL):
 
-  With PVRL, we modify the learning process of the main model so it includes a dataset's partner valuation part. Namely we use a small neural network to assign weight to each dataset, and at each learning step these weights are used to sample the learning batch. These weight are updated at each learning iteration of the main model using the REINFORCE method.
-
+With PVRL, we modify the learning process of the main model so it includes a dataset's partner valuation part. Namely we assign weight to each dataset, and at each learning step these weights are used to sample the learning batch. These weight are updated at each learning iteration of the main model using the REINFORCE method.
 - [future prospect] **Federated step-by-step increments**:
 
   See open [issue #105](https://github.com/SubstraFoundation/distributed-learning-contributivity/issues/105).
