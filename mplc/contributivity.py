@@ -62,18 +62,17 @@ class krigingModel:
 
 
 class Contributivity:
-    def __init__(self, name="", scenario=None):
+    def __init__(self, scenario, name=""):
         self.name = name
-        n = len(scenario.partners_list)
-        self.contributivity_scores = np.zeros(n)
-        self.scores_std = np.zeros(n)
-        self.normalized_scores = np.zeros(n)
+        self.scenario = scenario
+        nb_partners = len(self.scenario.partners_list)
+        self.contributivity_scores = np.zeros(nb_partners)
+        self.scores_std = np.zeros(nb_partners)
+        self.normalized_scores = np.zeros(nb_partners)
         self.computation_time_sec = 0.0
         self.first_charac_fct_calls_count = 0
         self.charac_fct_values = {(): 0}
-        self.increments_values = []
-        for i in range(n):
-            self.increments_values.append(dict())
+        self.increments_values = [{} for _ in self.scenario.partners_list]
 
     def __str__(self):
         computation_time_sec = str(datetime.timedelta(seconds=self.computation_time_sec))
@@ -937,6 +936,11 @@ class Contributivity:
             self.normalized_scores = self.contributivity_scores / np.sum(self.contributivity_scores)
             end = timer()
             self.computation_time_sec = end - start
+
+    def Flip_label(self):
+        mpl = multi_partner_learning.MplLabelFlip(self.scenario)
+        mpl.fit()
+        pass
 
     def compute_contributivity(
             self,

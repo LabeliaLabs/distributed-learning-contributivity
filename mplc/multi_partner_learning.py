@@ -16,6 +16,7 @@ from loguru import logger
 from sklearn.externals.joblib import dump, load
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import log_loss
+from sklearn.preprocessing import normalize
 
 from . import constants
 
@@ -654,3 +655,86 @@ def init_multi_partner_learning_from_scenario(scenario, is_save_data=True):
     )
 
     return mpl
+
+
+class MplLabelFlip(MultiPartnerLearning):
+
+    def __init__(self, scenario, is_save_data=False, epsilon=0.001):
+        super().__init__(
+            scenario.partners_list,
+            scenario.epoch_count,
+            scenario.minibatch_count,
+            scenario.dataset,
+            scenario.multi_partner_learning_approach,
+            scenario.aggregation_weighting,
+            scenario.is_early_stopping,
+            is_save_data,
+            scenario.save_folder,
+            scenario.init_model_from,
+            scenario.use_saved_weights,
+        )
+        self.epsilon = epsilon
+        self.K = self.dataset.num_classes
+        self.theta = np.array(
+            ([[np.zeros((self.K, self.K)) for _ in self.partners_list] for _ in range(self.epoch_count)]))
+        self.theta_ = self.theta.copy()
+        self.theta[0] = [self.init_flip_proba() for _ in self.partners_list]
+
+    def init_flip_proba(self):
+        identity = np.identity(self.K)
+        return identity * (1 - self.epsilon) + (1 - identity) * (self.epsilon / (self.K - 1))
+
+    def fit(self):
+        # initialization of the parameters
+        partners_models = self.init_with_models()
+
+        while True:
+            for partner_index, partner in enumerate(self.partners_list):
+                # Reference the partner's model
+                model = partners_models[partner_index]
+                K = [i for i in range(self.dataset.num_classes)]
+                self.split_in_minibatches()
+                for x_batch, y_batch in zip(self.minibatched_x_train[partner_index],
+                                            self.minibatched_y_train[partner_index]):
+                    self.theta_[self.epoch_count] = self.theta[self.epoch_count]
+                    for y in range(self.K):  # vectorize ?
+                        for idx, x in enumerate(x_batch):
+                            self.theta_[self.epoch_count,
+                                        partner_index,
+                                        y,
+                                        np.argmax(y_batch[idx])] *= np.max(model.predict(x))
+                    self.theta_[self.epoch_count, partner_index] = normalize(
+                        self.theta[self.epoch_count, partner_index],
+                        axis=1,
+                        norm='l1')
+
+                    for y in range(self.K):
+                        for z in range(self.K):
+                            temp = 0
+                            norm = 0
+                            for idx, z_i in enumerate(y_batch):
+                                temp += self.theta_[self.epoch_count, partner_index, y, z_i] * (z == z_i)
+                                norm += self.theta_[self.epoch_count, partner_index, y, z_i]
+                            self.theta[self.epoch_count + 1, partner_index, y, z] = temp / norm
+                        self.theta_[self.epoch_count + 1] = self.theta[self.epoch_count + 1]
+                        for idx, x in enumerate(x_batch):
+                            self.theta_[self.epoch_count + 1,
+                                        partner_index,
+                                        y,
+                                        np.argmax(y_batch[idx])] *= np.max(model.predict(x))
+                    self.theta_[self.epoch_count, partner_index] = normalize(
+                        self.theta[self.epoch_count, partner_index],
+                        axis=1,
+                        norm='l1')
+
+                    flipped_minibatch_x_train = None  # TODO
+                    flipped_minibatch_y_train = None
+
+                    train_data_for_fit_iteration = flipped_minibatch_x_train, flipped_minibatch_y_train
+
+                    history = self.fit_model(
+                        model, train_data_for_fit_iteration, self.val_data, partner.batch_size)
+
+                # Log results of the round
+
+            partners_models = self.init_with_agg_models()
