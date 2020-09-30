@@ -938,11 +938,18 @@ class Contributivity:
             self.computation_time_sec = end - start
 
     def Flip_label(self):
+        start = timer()
         mpl = multi_partner_learning.MplLabelFlip(self.scenario)
         mpl.fit()
-        self.contributivity_scores = [np.linalg.norm(
+        self.contributivity_scores = np.exp(- np.array([np.linalg.norm(
             mpl.theta[-1][i] - np.identity(mpl.theta[-1][i].shape[0])
-        ) for i in range(len(self.scenario.partners_list))]
+        ) for i in range(len(self.scenario.partners_list))]))
+
+        self.name = "Label Flip"
+        self.scores_std = np.std(self.contributivity_scores)
+        self.normalized_scores = self.contributivity_scores / np.sum(self.contributivity_scores)
+        end = timer()
+        self.computation_time_sec = end - start
 
     def compute_contributivity(
             self,

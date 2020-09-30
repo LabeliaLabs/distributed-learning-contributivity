@@ -713,10 +713,9 @@ class MplLabelFlip(MultiPartnerLearning):
                             self.theta_[self.epoch_index,
                                         partner_index,
                                         y,
-                                        np.argmax(y_batch[idx])] *= np.max(partner_model.predict(np.expand_dims(x,
-                                                                                                                axis=0)
-                                                                                                 )
-                                                                           )
+                                        np.argmax(y_batch[idx])] *= partner_model.predict(np.expand_dims(x, axis=0))[
+                                0, y]
+
                     self.theta_[self.epoch_index, partner_index] = normalize(
                         self.theta[self.epoch_index, partner_index],
                         axis=1,
@@ -736,10 +735,8 @@ class MplLabelFlip(MultiPartnerLearning):
                             self.theta_[self.epoch_index + 1,
                                         partner_index,
                                         y,
-                                        np.argmax(y_batch[idx])] *= np.max(partner_model.predict(np.expand_dims(x,
-                                                                                                                axis=0)
-                                                                                                 )
-                                                                           )
+                                        np.argmax(y_batch[idx])] *= partner_model.predict(np.expand_dims(x, axis=0))[
+                                0, y]
                             # TODO vectorise, and use batch
                     self.theta_[self.epoch_index, partner_index] = normalize(
                         self.theta[self.epoch_index, partner_index],
