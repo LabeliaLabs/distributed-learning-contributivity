@@ -296,6 +296,9 @@ All methods available are:
 - "AIS_Kriging_S"
 - "SMCS"
 - "WR_SMC"
+- "Federated SBS linear"
+- "Federated SBS quadratic",
+- "Federated SBS constant"
 ```
 
 See below section [Contributivity measurement approaches studied and implemented](#contributivity-measurement-approaches-studied-and-implemented) for explanation of the different methods.  
