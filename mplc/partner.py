@@ -11,7 +11,6 @@ from . import constants
 
 
 class Partner:
-
     def __init__(self, partner_id):
 
         self.id = partner_id

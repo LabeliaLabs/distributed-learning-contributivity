@@ -19,33 +19,41 @@ from sklearn.preprocessing import LabelEncoder
 
 from . import contributivity, constants, dataset as dataset_mod
 from . import multi_partner_learning
-from .datasets import dataset_mnist, dataset_titanic, dataset_esc50, dataset_cifar10, dataset_imdb
+from .datasets import (
+    dataset_mnist,
+    dataset_titanic,
+    dataset_esc50,
+    dataset_cifar10,
+    dataset_imdb,
+)
 from .partner import Partner
 
 
 class Scenario:
-    def __init__(self,
-                 partners_count,
-                 amounts_per_partner,
-                 dataset=None,
-                 dataset_name=constants.MNIST,
-                 dataset_proportion=1,
-                 samples_split_option=None,
-                 corrupted_datasets=None,
-                 init_model_from="random_initialization",
-                 multi_partner_learning_approach='fedavg',
-                 aggregation_weighting="uniform",
-                 gradient_updates_per_pass_count=constants.DEFAULT_GRADIENT_UPDATES_PER_PASS_COUNT,
-                 minibatch_count=constants.DEFAULT_BATCH_COUNT,
-                 epoch_count=constants.DEFAULT_EPOCH_COUNT,
-                 is_early_stopping=True,
-                 methods=None,
-                 is_quick_demo=False,
-                 experiment_path=Path(r"./experiments"),
-                 scenario_id=1,
-                 repeats_count=1,
-                 is_dry_run=False,
-                 **kwargs):
+    def __init__(
+        self,
+        partners_count,
+        amounts_per_partner,
+        dataset=None,
+        dataset_name=constants.MNIST,
+        dataset_proportion=1,
+        samples_split_option=None,
+        corrupted_datasets=None,
+        init_model_from="random_initialization",
+        multi_partner_learning_approach="fedavg",
+        aggregation_weighting="uniform",
+        gradient_updates_per_pass_count=constants.DEFAULT_GRADIENT_UPDATES_PER_PASS_COUNT,
+        minibatch_count=constants.DEFAULT_BATCH_COUNT,
+        epoch_count=constants.DEFAULT_EPOCH_COUNT,
+        is_early_stopping=True,
+        methods=None,
+        is_quick_demo=False,
+        experiment_path=Path(r"./experiments"),
+        scenario_id=1,
+        repeats_count=1,
+        is_dry_run=False,
+        **kwargs,
+    ):
         """
 
         :param partners_count: int, number of partners. Example: partners_count = 3
@@ -85,13 +93,28 @@ class Scenario:
 
         # Raise Exception if unknown parameters in the config of the scenario
 
-        params_known = ["dataset", "dataset_name", "dataset_proportion"]  # Dataset related
-        params_known += ["methods", "multi_partner_learning_approach",
-                         "aggregation_weighting"]  # federated learning related
-        params_known += ["partners_count", "amounts_per_partner",
-                         "corrupted_datasets", "samples_split_option"]  # Partners related
-        params_known += ["gradient_updates_per_pass_count", "epoch_count",
-                         "minibatch_count", "is_early_stopping"]  # Computation related
+        params_known = [
+            "dataset",
+            "dataset_name",
+            "dataset_proportion",
+        ]  # Dataset related
+        params_known += [
+            "methods",
+            "multi_partner_learning_approach",
+            "aggregation_weighting",
+        ]  # federated learning related
+        params_known += [
+            "partners_count",
+            "amounts_per_partner",
+            "corrupted_datasets",
+            "samples_split_option",
+        ]  # Partners related
+        params_known += [
+            "gradient_updates_per_pass_count",
+            "epoch_count",
+            "minibatch_count",
+            "is_early_stopping",
+        ]  # Computation related
         params_known += ["init_model_from"]  # Model related
         params_known += ["is_quick_demo"]
 
@@ -99,7 +122,9 @@ class Scenario:
         if len(unrecognised_parameters) > 0:
             for x in unrecognised_parameters:
                 logger.debug(f"Unrecognised parameter: {x}")
-            raise Exception(f"Unrecognised parameters {unrecognised_parameters}, check your configuration")
+            raise Exception(
+                f"Unrecognised parameters {unrecognised_parameters}, check your configuration"
+            )
 
         # Get and verify which dataset is configured
         if isinstance(dataset, dataset_mod.Dataset):
@@ -117,8 +142,10 @@ class Scenario:
             elif dataset_name == constants.IMDB:
                 self.dataset = dataset_imdb.generate_new_dataset()
             else:
-                raise Exception(f"Dataset named '{dataset_name}' is not supported (yet). You can construct your own "
-                                f"dataset object, or even add it by contributing to the project !")
+                raise Exception(
+                    f"Dataset named '{dataset_name}' is not supported (yet). You can construct your own "
+                    f"dataset object, or even add it by contributing to the project !"
+                )
             logger.debug(f"Dataset selected: {dataset_name}")
 
         # The train set is split into a train set and a validation set (used in particular for early stopping)
@@ -126,13 +153,19 @@ class Scenario:
         # The proportion of the dataset the computation will used
 
         self.dataset_proportion = dataset_proportion
-        assert self.dataset_proportion > 0, "Error in the config file, dataset_proportion should be > 0"
-        assert self.dataset_proportion <= 1, "Error in the config file, dataset_proportion should be <= 1"
+        assert (
+            self.dataset_proportion > 0
+        ), "Error in the config file, dataset_proportion should be > 0"
+        assert (
+            self.dataset_proportion <= 1
+        ), "Error in the config file, dataset_proportion should be <= 1"
 
         if self.dataset_proportion < 1:
             self.dataset.shorten_dataset_proportion(self.dataset_proportion)
         else:
-            logger.debug(f"Computation use the full dataset for scenario #{scenario_id}")
+            logger.debug(
+                f"Computation use the full dataset for scenario #{scenario_id}"
+            )
 
         self.nb_samples_used = len(self.dataset.x_train)
         self.final_relative_nb_samples = []
@@ -157,9 +190,15 @@ class Scenario:
         # For configuring if data samples are split between partners randomly or in a stratified way...
         # ... so that they cover distinct areas of the samples space
         if samples_split_option is not None:
-            (self.samples_split_type, self.samples_split_description) = samples_split_option
+            (
+                self.samples_split_type,
+                self.samples_split_description,
+            ) = samples_split_option
         else:
-            (self.samples_split_type, self.samples_split_description) = ("basic", "random")  # default
+            (self.samples_split_type, self.samples_split_description) = (
+                "basic",
+                "random",
+            )  # default
 
         # For configuring if the data of the partners are corrupted or not (useful for testing contributivity measures)
         if corrupted_datasets is not None:
@@ -175,29 +214,41 @@ class Scenario:
 
         # Multi-partner learning approach
 
-        if multi_partner_learning_approach in constants.MULTI_PARTNER_LEARNING_APPROACHES:
+        if (
+            multi_partner_learning_approach
+            in constants.MULTI_PARTNER_LEARNING_APPROACHES
+        ):
             self.multi_partner_learning_approach = multi_partner_learning_approach
         else:
             raise Exception(
-                f"Multi-partner learning approach '{multi_partner_learning_approach}' is not a valid approach.")
+                f"Multi-partner learning approach '{multi_partner_learning_approach}' is not a valid approach."
+            )
 
         # Define how federated learning aggregation steps are weighted. Toggle between 'uniform' and 'data_volume'
         # Default is 'uniform'
-        if aggregation_weighting in ['uniform', 'data_volume']:
+        if aggregation_weighting in ["uniform", "data_volume"]:
             self.aggregation_weighting = aggregation_weighting
         else:
-            raise ValueError(f"aggregation_weighting approach'{self.aggregation_weighting}' is not a valid approach. ")
+            raise ValueError(
+                f"aggregation_weighting approach'{self.aggregation_weighting}' is not a valid approach. "
+            )
 
         # Number of epochs, mini-batches and fit_batches in ML training
         self.epoch_count = epoch_count
-        assert self.epoch_count > 0, "Error: in the provided config file, epoch_count should be > 0"
+        assert (
+            self.epoch_count > 0
+        ), "Error: in the provided config file, epoch_count should be > 0"
 
         self.minibatch_count = minibatch_count
-        assert self.minibatch_count > 0, "Error: in the provided config file, minibatch_count should be > 0"
+        assert (
+            self.minibatch_count > 0
+        ), "Error: in the provided config file, minibatch_count should be > 0"
 
         self.gradient_updates_per_pass_count = gradient_updates_per_pass_count
-        assert self.gradient_updates_per_pass_count > 0, "Error: in the provided config file, " \
-                                                         "gradient_updates_per_pass_count should be > 0 "
+        assert self.gradient_updates_per_pass_count > 0, (
+            "Error: in the provided config file, "
+            "gradient_updates_per_pass_count should be > 0 "
+        )
 
         # Early stopping stops ML training when performance increase is not significant anymore
         # It is used to optimize the number of epochs and the execution time
@@ -225,7 +276,9 @@ class Scenario:
                 if method in constants.CONTRIBUTIVITY_METHODS:
                     self.methods.append(method)
                 else:
-                    raise Exception(f"Contributivity method '{method}' is not in methods list.")
+                    raise Exception(
+                        f"Contributivity method '{method}' is not in methods list."
+                    )
 
         # -------------
         # Miscellaneous
@@ -245,15 +298,21 @@ class Scenario:
             # Use less data and/or less epochs to speed up the computations
             logger.info("Quick demo: limit number of data and number of epochs.")
             if len(self.dataset.x_train) > constants.TRAIN_SET_MAX_SIZE_QUICK_DEMO:
-                index_train = np.random.choice(self.dataset.x_train.shape[0],
-                                               constants.TRAIN_SET_MAX_SIZE_QUICK_DEMO,
-                                               replace=False)
-                index_val = np.random.choice(self.dataset.x_val.shape[0],
-                                             constants.VAL_SET_MAX_SIZE_QUICK_DEMO,
-                                             replace=False)
-                index_test = np.random.choice(self.dataset.x_test.shape[0],
-                                              constants.TEST_SET_MAX_SIZE_QUICK_DEMO,
-                                              replace=False)
+                index_train = np.random.choice(
+                    self.dataset.x_train.shape[0],
+                    constants.TRAIN_SET_MAX_SIZE_QUICK_DEMO,
+                    replace=False,
+                )
+                index_val = np.random.choice(
+                    self.dataset.x_val.shape[0],
+                    constants.VAL_SET_MAX_SIZE_QUICK_DEMO,
+                    replace=False,
+                )
+                index_test = np.random.choice(
+                    self.dataset.x_test.shape[0],
+                    constants.TEST_SET_MAX_SIZE_QUICK_DEMO,
+                    replace=False,
+                )
                 self.dataset.x_train = self.dataset.x_train[index_train]
                 self.dataset.y_train = self.dataset.y_train[index_train]
                 self.dataset.x_val = self.dataset.x_val[index_val]
@@ -270,24 +329,22 @@ class Scenario:
         now = datetime.datetime.now()
         now_str = now.strftime("%Y-%m-%d_%Hh%M")
         self.scenario_name = (
-                "scenario_"
-                + str(self.scenario_id)
-                + "_"
-                + "repeat"
-                + "_"
-                + str(self.n_repeat)
-                + "_"
-                + now_str
-                + "_"
-                + uuid.uuid4().hex[
-                  :3
-                  ]  # This is to be sure 2 distinct scenarios do no have the same name
+            "scenario_"
+            + str(self.scenario_id)
+            + "_"
+            + "repeat"
+            + "_"
+            + str(self.n_repeat)
+            + "_"
+            + now_str
+            + "_"
+            + uuid.uuid4().hex[
+                :3
+            ]  # This is to be sure 2 distinct scenarios do no have the same name
         )
 
         self.short_scenario_name = (
-                str(self.partners_count)
-                + " "
-                + str(self.amounts_per_partner)
+            str(self.partners_count) + " " + str(self.amounts_per_partner)
         )
 
         self.save_folder = experiment_path / self.scenario_name
@@ -302,19 +359,31 @@ class Scenario:
             # Describe scenario
             logger.info("### Description of data scenario configured:")
             logger.info(f"   Number of partners defined: {self.partners_count}")
-            logger.info(f"   Data distribution scenario chosen: {self.samples_split_description}")
-            logger.info(f"   Multi-partner learning approach: {self.multi_partner_learning_approach}")
+            logger.info(
+                f"   Data distribution scenario chosen: {self.samples_split_description}"
+            )
+            logger.info(
+                f"   Multi-partner learning approach: {self.multi_partner_learning_approach}"
+            )
             logger.info(f"   Weighting option: {self.aggregation_weighting}")
-            logger.info(f"   Iterations parameters: "
-                        f"{self.epoch_count} epochs > "
-                        f"{self.minibatch_count} mini-batches > "
-                        f"{self.gradient_updates_per_pass_count} gradient updates per pass")
+            logger.info(
+                f"   Iterations parameters: "
+                f"{self.epoch_count} epochs > "
+                f"{self.minibatch_count} mini-batches > "
+                f"{self.gradient_updates_per_pass_count} gradient updates per pass"
+            )
 
             # Describe data
             logger.info(f"### Data loaded: {self.dataset.name}")
-            logger.info(f"   {len(self.dataset.x_train)} train data with {len(self.dataset.y_train)} labels")
-            logger.info(f"   {len(self.dataset.x_val)} val data with {len(self.dataset.y_val)} labels")
-            logger.info(f"   {len(self.dataset.x_test)} test data with {len(self.dataset.y_test)} labels")
+            logger.info(
+                f"   {len(self.dataset.x_train)} train data with {len(self.dataset.y_train)} labels"
+            )
+            logger.info(
+                f"   {len(self.dataset.x_val)} val data with {len(self.dataset.y_val)} labels"
+            )
+            logger.info(
+                f"   {len(self.dataset.x_test)} test data with {len(self.dataset.y_test)} labels"
+            )
 
     def append_contributivity(self, contributivity):
 
@@ -340,10 +409,18 @@ class Scenario:
         for p in partners_list:
             p.cluster_count = int(advanced_split_description[p.id][0])
             p.cluster_split_option = advanced_split_description[p.id][1]
-        partners_with_shared_clusters = [p for p in partners_list if p.cluster_split_option == 'shared']
-        partners_with_specific_clusters = [p for p in partners_list if p.cluster_split_option == 'specific']
-        partners_with_shared_clusters.sort(key=operator.attrgetter("cluster_count"), reverse=True)
-        partners_with_specific_clusters.sort(key=operator.attrgetter("cluster_count"), reverse=True)
+        partners_with_shared_clusters = [
+            p for p in partners_list if p.cluster_split_option == "shared"
+        ]
+        partners_with_specific_clusters = [
+            p for p in partners_list if p.cluster_split_option == "specific"
+        ]
+        partners_with_shared_clusters.sort(
+            key=operator.attrgetter("cluster_count"), reverse=True
+        )
+        partners_with_specific_clusters.sort(
+            key=operator.attrgetter("cluster_count"), reverse=True
+        )
 
         # Compose the list of different labels in the dataset
         labels = list(set(y_train))
@@ -352,12 +429,18 @@ class Scenario:
 
         # Check coherence of the split option:
         nb_diff_labels = len(labels)
-        specific_clusters_count = sum([p.cluster_count for p in partners_with_specific_clusters])
+        specific_clusters_count = sum(
+            [p.cluster_count for p in partners_with_specific_clusters]
+        )
         if partners_with_shared_clusters:
-            shared_clusters_count = max([p.cluster_count for p in partners_with_shared_clusters])
+            shared_clusters_count = max(
+                [p.cluster_count for p in partners_with_shared_clusters]
+            )
         else:
             shared_clusters_count = 0
-        assert specific_clusters_count + shared_clusters_count <= nb_diff_labels, "Error: data samples from the \
+        assert (
+            specific_clusters_count + shared_clusters_count <= nb_diff_labels
+        ), "Error: data samples from the \
             initial dataset are split in clusters per data labels - Incompatibility between the split arguments \
             and the dataset provided \
             - Example: ['advanced', [[7, 'shared'], [6, 'shared'], [2, 'specific'], [1, 'specific']]] \
@@ -375,10 +458,10 @@ class Scenario:
         # For each partner compose the list of clusters from which they will draw data samples
         index = 0
         for p in partners_with_specific_clusters:
-            p.clusters_list = labels[index:index + p.cluster_count]
+            p.clusters_list = labels[index : index + p.cluster_count]
             index += p.cluster_count
 
-        shared_clusters = labels[index:index + shared_clusters_count]
+        shared_clusters = labels[index : index + shared_clusters_count]
         for p in partners_with_shared_clusters:
             p.clusters_list = random.sample(shared_clusters, k=p.cluster_count)
 
@@ -391,7 +474,9 @@ class Scenario:
         # ... compare the nb of available samples vs. the nb of samples initially configured
         resize_factor_specific = 1
         for p in partners_with_specific_clusters:
-            nb_available_samples = sum([nb_samples_per_cluster[cl] for cl in p.clusters_list])
+            nb_available_samples = sum(
+                [nb_samples_per_cluster[cl] for cl in p.clusters_list]
+            )
             nb_samples_requested = int(amounts_per_partner[p.id] * len(y_train))
             ratio = nb_available_samples / nb_samples_requested
             resize_factor_specific = min(resize_factor_specific, ratio)
@@ -403,24 +488,33 @@ class Scenario:
         resize_factor_shared = 1
         nb_samples_needed_per_cluster = dict.fromkeys(shared_clusters, 0)
         for p in partners_with_shared_clusters:
-            initial_amount_resized = int(amounts_per_partner[p.id] * len(y_train) * resize_factor_specific)
-            initial_amount_resized_per_cluster = int(initial_amount_resized / p.cluster_count)
+            initial_amount_resized = int(
+                amounts_per_partner[p.id] * len(y_train) * resize_factor_specific
+            )
+            initial_amount_resized_per_cluster = int(
+                initial_amount_resized / p.cluster_count
+            )
             for cl in p.clusters_list:
                 nb_samples_needed_per_cluster[cl] += initial_amount_resized_per_cluster
         for cl in nb_samples_needed_per_cluster:
-            resize_factor_shared = min(resize_factor_shared,
-                                       nb_samples_per_cluster[cl] / nb_samples_needed_per_cluster[cl],
-                                       )
+            resize_factor_shared = min(
+                resize_factor_shared,
+                nb_samples_per_cluster[cl] / nb_samples_needed_per_cluster[cl],
+            )
 
         # Compute the final resize factor
         final_resize_factor = resize_factor_specific * resize_factor_shared
 
         # Size correctly each partner's subset. For each partner:
         for p in partners_list:
-            p.final_nb_samples = int(amounts_per_partner[p.id] * len(y_train) * final_resize_factor)
+            p.final_nb_samples = int(
+                amounts_per_partner[p.id] * len(y_train) * final_resize_factor
+            )
             p.final_nb_samples_p_cluster = int(p.final_nb_samples / p.cluster_count)
         self.nb_samples_used = sum([p.final_nb_samples for p in partners_list])
-        self.final_relative_nb_samples = [p.final_nb_samples / self.nb_samples_used for p in partners_list]
+        self.final_relative_nb_samples = [
+            p.final_nb_samples / self.nb_samples_used for p in partners_list
+        ]
 
         # Partners receive their subsets
         shared_clusters_index = dict.fromkeys(shared_clusters, 0)
@@ -431,13 +525,25 @@ class Scenario:
             if p in partners_with_shared_clusters:
                 for cl in p.clusters_list:
                     idx = shared_clusters_index[cl]
-                    list_arrays_x.append(x_train_for_cluster[cl][idx:idx + p.final_nb_samples_p_cluster])
-                    list_arrays_y.append(y_train_for_cluster[cl][idx:idx + p.final_nb_samples_p_cluster])
+                    list_arrays_x.append(
+                        x_train_for_cluster[cl][
+                            idx : idx + p.final_nb_samples_p_cluster
+                        ]
+                    )
+                    list_arrays_y.append(
+                        y_train_for_cluster[cl][
+                            idx : idx + p.final_nb_samples_p_cluster
+                        ]
+                    )
                     shared_clusters_index[cl] += p.final_nb_samples_p_cluster
             elif p in partners_with_specific_clusters:
                 for cl in p.clusters_list:
-                    list_arrays_x.append(x_train_for_cluster[cl][:p.final_nb_samples_p_cluster])
-                    list_arrays_y.append(y_train_for_cluster[cl][:p.final_nb_samples_p_cluster])
+                    list_arrays_x.append(
+                        x_train_for_cluster[cl][: p.final_nb_samples_p_cluster]
+                    )
+                    list_arrays_y.append(
+                        y_train_for_cluster[cl][: p.final_nb_samples_p_cluster]
+                    )
 
             p.x_train = np.concatenate(list_arrays_x)
             p.y_train = np.concatenate(list_arrays_y)
@@ -451,18 +557,26 @@ class Scenario:
             )
 
         # Check coherence of number of mini-batches versus partner with small dataset
-        assert self.minibatch_count <= min([len(p.x_train) for p in self.partners_list]), "Error: in the provided \
+        assert self.minibatch_count <= min(
+            [len(p.x_train) for p in self.partners_list]
+        ), "Error: in the provided \
             config file and the provided dataset, a partner doesn't have enough data samples to create the minibatches "
 
         if is_logging_enabled:
             logger.info("### Splitting data among partners:")
             logger.info("   Advanced split performed.")
-            logger.info(f"   Nb of samples split amongst partners: {self.nb_samples_used}")
-            logger.info(f"   Partners' relative nb of samples: {[round(p, 2) for p in self.final_relative_nb_samples]} "
-                        f"   (versus initially configured: {amounts_per_partner})")
+            logger.info(
+                f"   Nb of samples split amongst partners: {self.nb_samples_used}"
+            )
+            logger.info(
+                f"   Partners' relative nb of samples: {[round(p, 2) for p in self.final_relative_nb_samples]} "
+                f"   (versus initially configured: {amounts_per_partner})"
+            )
             for partner in self.partners_list:
-                logger.info(f"   Partner #{partner.id}: {len(partner.x_train)} "
-                            f"samples with labels {partner.clusters_list}")
+                logger.info(
+                    f"   Partner #{partner.id}: {len(partner.x_train)} "
+                    f"samples with labels {partner.clusters_list}"
+                )
 
         return 0
 
@@ -478,9 +592,13 @@ class Scenario:
         # ... or receive different amounts?
 
         # Check the percentages of samples per partner and control its coherence
-        assert len(self.amounts_per_partner) == self.partners_count, "Error: in the provided config file, \
+        assert (
+            len(self.amounts_per_partner) == self.partners_count
+        ), "Error: in the provided config file, \
             amounts_per_partner list should have a size equals to partners_count"
-        assert np.sum(self.amounts_per_partner) == 1, "Error: in the provided config file, \
+        assert (
+            np.sum(self.amounts_per_partner) == 1
+        ), "Error: in the provided config file, \
             amounts_per_partner argument: the sum of the proportions you provided isn't equal to 1"
 
         # Then we parameterize this via the splitting_indices to be passed to np.split
@@ -492,7 +610,7 @@ class Scenario:
             splitting_indices[0] = self.amounts_per_partner[0]
             for i in range(self.partners_count - 2):
                 splitting_indices[i + 1] = (
-                        splitting_indices[i] + self.amounts_per_partner[i + 1]
+                    splitting_indices[i] + self.amounts_per_partner[i + 1]
                 )
             splitting_indices_train = (splitting_indices * len(y_train)).astype(int)
 
@@ -531,8 +649,15 @@ class Scenario:
             p.y_train = self.dataset.y_train[train_idx]
 
             # Create local validation and test datasets from the partner train data
-            p.x_train, p.x_test, p.y_train, p.y_test = self.dataset.train_test_split_local(p.x_train, p.y_train)
-            p.x_train, p.x_val, p.y_train, p.y_val = self.dataset.train_val_split_local(p.x_train, p.y_train)
+            (
+                p.x_train,
+                p.x_test,
+                p.y_train,
+                p.y_test,
+            ) = self.dataset.train_test_split_local(p.x_train, p.y_train)
+            p.x_train, p.x_val, p.y_train, p.y_val = self.dataset.train_val_split_local(
+                p.x_train, p.y_train
+            )
 
             # Update other attributes from partner
             p.final_nb_samples = len(p.x_train)
@@ -542,20 +667,28 @@ class Scenario:
             partner_idx += 1
 
         # Check coherence of number of mini-batches versus smaller partner
-        assert self.minibatch_count <= (min(self.amounts_per_partner) * len(y_train)), "Error: in the provided config \
+        assert self.minibatch_count <= (
+            min(self.amounts_per_partner) * len(y_train)
+        ), "Error: in the provided config \
             file and dataset, a partner doesn't have enough data samples to create the minibatches"
 
         self.nb_samples_used = sum([len(p.x_train) for p in self.partners_list])
-        self.final_relative_nb_samples = [p.final_nb_samples / self.nb_samples_used for p in self.partners_list]
+        self.final_relative_nb_samples = [
+            p.final_nb_samples / self.nb_samples_used for p in self.partners_list
+        ]
 
         if is_logging_enabled:
             logger.info("### Splitting data among partners:")
             logger.info("   Simple split performed.")
-            logger.info(f"   Nb of samples split amongst partners: {self.nb_samples_used}")
+            logger.info(
+                f"   Nb of samples split amongst partners: {self.nb_samples_used}"
+            )
             for partner in self.partners_list:
-                logger.info(f"   Partner #{partner.id}: "
-                            f"{partner.final_nb_samples} samples "
-                            f"with labels {partner.clusters_list}")
+                logger.info(
+                    f"   Partner #{partner.id}: "
+                    f"{partner.final_nb_samples} samples "
+                    f"with labels {partner.clusters_list}"
+                )
 
         return 0
 
@@ -576,8 +709,8 @@ class Scenario:
         plt.suptitle("Data distribution")
         plt.xlabel("Digits")
 
-        if not os.path.exists(self.save_folder / 'graphs/'):
-            os.makedirs(self.save_folder / 'graphs/')
+        if not os.path.exists(self.save_folder / "graphs/"):
+            os.makedirs(self.save_folder / "graphs/")
         plt.savefig(self.save_folder / "graphs/data_distribution.png")
         plt.close()
 
@@ -593,7 +726,10 @@ class Scenario:
             p.batch_size = np.clip(batch_size, batch_size_min, batch_size_max)
         else:
             for p in self.partners_list:
-                batch_size = int(len(p.x_train) / (self.minibatch_count * self.gradient_updates_per_pass_count))
+                batch_size = int(
+                    len(p.x_train)
+                    / (self.minibatch_count * self.gradient_updates_per_pass_count)
+                )
                 p.batch_size = np.clip(batch_size, batch_size_min, batch_size_max)
 
         for p in self.partners_list:
@@ -607,12 +743,16 @@ class Scenario:
 
             # If a data corruption is configured, apply it
             if self.corrupted_datasets[partner_index][0] == "corrupted":
-                logger.debug(f"   ... Corrupting (by offsetting labels) {self.corrupted_datasets[partner_index][1]} percent of the data of partner #{partner.id}")
+                logger.debug(
+                    f"   ... Corrupting (by offsetting labels) {self.corrupted_datasets[partner_index][1]} percent of the data of partner #{partner.id}"
+                )
                 partner.corrupt_labels(self.corrupted_datasets[partner_index][1])
             elif self.corrupted_datasets[partner_index][0] == "shuffled":
-                logger.debug(f"   ... Corrupting (by shuffling labels) {self.corrupted_datasets[partner_index][1]} percent of the data of partner #{partner.id}")
+                logger.debug(
+                    f"   ... Corrupting (by shuffling labels) {self.corrupted_datasets[partner_index][1]} percent of the data of partner #{partner.id}"
+                )
                 partner.shuffle_labels(self.corrupted_datasets[partner_index][1])
-            elif self.corrupted_datasets[partner_index]  == "not_corrupted":
+            elif self.corrupted_datasets[partner_index] == "not_corrupted":
                 pass
             else:
                 logger.debug("Unexpected label of corruption, no corruption performed!")
@@ -637,15 +777,21 @@ class Scenario:
         dict_results["final_relative_nb_samples"] = self.final_relative_nb_samples
 
         # Multi-partner learning approach parameters
-        dict_results["multi_partner_learning_approach"] = self.multi_partner_learning_approach
+        dict_results[
+            "multi_partner_learning_approach"
+        ] = self.multi_partner_learning_approach
         dict_results["aggregation_weighting"] = self.aggregation_weighting
         dict_results["epoch_count"] = self.epoch_count
         dict_results["minibatch_count"] = self.minibatch_count
-        dict_results["gradient_updates_per_pass_count"] = self.gradient_updates_per_pass_count
+        dict_results[
+            "gradient_updates_per_pass_count"
+        ] = self.gradient_updates_per_pass_count
         dict_results["is_early_stopping"] = self.is_early_stopping
         dict_results["mpl_test_score"] = self.mpl.test_score
         dict_results["mpl_nb_epochs_done"] = self.mpl.nb_epochs_done
-        dict_results["learning_computation_time_sec"] = self.mpl.learning_computation_time
+        dict_results[
+            "learning_computation_time_sec"
+        ] = self.mpl.learning_computation_time
 
         if not self.contributivity_list:
             df = df.append(dict_results, ignore_index=True)
@@ -657,12 +803,16 @@ class Scenario:
             dict_results["contributivity_scores"] = contrib.contributivity_scores
             dict_results["contributivity_stds"] = contrib.scores_std
             dict_results["computation_time_sec"] = contrib.computation_time_sec
-            dict_results["first_characteristic_calls_count"] = contrib.first_charac_fct_calls_count
+            dict_results[
+                "first_characteristic_calls_count"
+            ] = contrib.first_charac_fct_calls_count
 
             for i in range(self.partners_count):
                 # Partner-specific data
                 dict_results["partner_id"] = i
-                dict_results["dataset_fraction_of_partner"] = self.amounts_per_partner[i]
+                dict_results["dataset_fraction_of_partner"] = self.amounts_per_partner[
+                    i
+                ]
                 dict_results["contributivity_score"] = contrib.contributivity_scores[i]
                 dict_results["contributivity_std"] = contrib.scores_std[i]
 
@@ -678,9 +828,9 @@ class Scenario:
         self.instantiate_scenario_partners()
         # Split data according to scenario and then pre-process successively...
         # ... train data, early stopping validation data, test data
-        if self.samples_split_type == 'basic':
+        if self.samples_split_type == "basic":
             self.split_data()
-        elif self.samples_split_type == 'advanced':
+        elif self.samples_split_type == "advanced":
             self.split_data_advanced()
         self.plot_data_distribution()
         self.compute_batch_sizes()
@@ -691,8 +841,7 @@ class Scenario:
         # --------------------------------------------
 
         self.mpl = multi_partner_learning.init_multi_partner_learning_from_scenario(
-            self,
-            is_save_data=True,
+            self, is_save_data=True,
         )
         self.mpl.compute_test_score()
 
