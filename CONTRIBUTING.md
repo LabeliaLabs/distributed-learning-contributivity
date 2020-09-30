@@ -164,20 +164,16 @@ Notebooks now have really efficient ways to share your code and display your out
 - [Voila](https://github.com/voila-dashboards/voila) is a newcomer that will allow to build dashboads for your presentations!
 
 #### 2.6 Release a new build 
-To release a new version on Pypi, go at the root of the repository, and trigger the build with pip.
-You will need all the dev-requirements installed.
-
+To release a new version on Pypi, go at the root of the repository, and trigger the build with `pip`.
+You will need all the `dev-requirements` installed.
 ```bash
-
-$pip install -r dev-requirements.txt
-
+$ pip install -r dev-requirements.txt
 ``` 
 
 Make sure that you have the right access to pypi, and enable the 2FA for safety purpose. 
-
 ```bash
 $ python3 setup.py sdist bdist_wheel
-$python3 twine upload dist/*
+$ python3 twine upload dist/*
 ```
 
 ## 3. Further Resources
