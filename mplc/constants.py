@@ -38,6 +38,7 @@ CONTRIBUTIVITY_METHODS = [
     "Federated SBS linear",
     "Federated SBS quadratic",
     "Federated SBS constant"
+    "LFlip"
 ]
 
 # Datasets' Tags
