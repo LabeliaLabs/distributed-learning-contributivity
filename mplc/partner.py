@@ -39,7 +39,6 @@ class Partner:
 
         # Select the indices where the label will be off-set
         n = int(len(self.y_train) * proportion_corrupted)
-        print()
         idx = sample(list(range(len(self.y_train))), n)
 
         # Off-set  the labels
