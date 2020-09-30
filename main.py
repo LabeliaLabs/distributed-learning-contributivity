@@ -15,7 +15,7 @@ from mplc import scenario
 from mplc import utils
 from mplc.utils import parse_command_line_arguments
 
-DEFAULT_CONFIG_FILE = "./config_quick_debug.yml"
+DEFAULT_CONFIG_FILE = "./config.yml"
 
 
 @logger.catch
