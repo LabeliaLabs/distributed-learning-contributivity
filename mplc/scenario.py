@@ -165,7 +165,7 @@ class Scenario:
         if corrupted_datasets is not None:
             self.corrupted_datasets = corrupted_datasets
         else:
-            self.corrupted_datasets = ["not_corrupted" ] * self.partners_count  # default
+            self.corrupted_datasets = ["not_corrupted"] * self.partners_count  # default
 
         # ---------------------------------------------------
         #  Configuration of the distributed learning approach
