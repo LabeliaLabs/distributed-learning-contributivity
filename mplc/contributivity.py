@@ -940,7 +940,9 @@ class Contributivity:
     def Flip_label(self):
         mpl = multi_partner_learning.MplLabelFlip(self.scenario)
         mpl.fit()
-        pass
+        self.contributivity_scores = [np.linalg.norm(
+            mpl.theta[-1][i] - np.identity(mpl.theta[-1][i].shape[0])
+        ) for i in range(len(self.scenario.partners_list))]
 
     def compute_contributivity(
             self,
@@ -983,6 +985,8 @@ class Contributivity:
         elif method_to_compute == "WR_SMC":
             # Contributivity 9: Without replacement Stratified Monte Carlo
             self.without_replacment_SMC(current_scenario, sv_accuracy=sv_accuracy, alpha=alpha)
+        elif method_to_compute == "LFlip":
+            self.Flip_label()
         else:
             logger.warning("Unrecognized name of method, statement ignored!")
 

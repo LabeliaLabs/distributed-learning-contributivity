@@ -35,6 +35,7 @@ CONTRIBUTIVITY_METHODS = [
     "AIS_Kriging_S",
     "SMCS",
     "WR_SMC",
+    "LFlip"
 ]
 
 # Datasets' Tags

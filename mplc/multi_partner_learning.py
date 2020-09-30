@@ -673,12 +673,14 @@ class MplLabelFlip(MultiPartnerLearning):
             scenario.init_model_from,
             scenario.use_saved_weights,
         )
+
         self.epsilon = epsilon
-        self.K = self.dataset.num_classes
+        self.K = scenario.dataset.num_classes
         self.theta = np.array(
-            ([[np.zeros((self.K, self.K)) for _ in self.partners_list] for _ in range(self.epoch_count)]))
+            ([[np.zeros((self.K, self.K)) for _ in self.partners_list] for _ in range(self.epoch_count + 1)]))
         self.theta_ = self.theta.copy()
         self.theta[0] = [self.init_flip_proba() for _ in self.partners_list]
+        # self.labels_map = LabelEncoder().fit_transform([str(y) for y in scenario.dataset.y_train])
 
     def init_flip_proba(self):
         identity = np.identity(self.K)
@@ -688,23 +690,35 @@ class MplLabelFlip(MultiPartnerLearning):
         # initialization of the parameters
         partners_models = self.init_with_models()
 
-        while True:
-            for partner_index, partner in enumerate(self.partners_list):
-                # Reference the partner's model
-                model = partners_models[partner_index]
-                K = [i for i in range(self.dataset.num_classes)]
-                self.split_in_minibatches()
-                for x_batch, y_batch in zip(self.minibatched_x_train[partner_index],
-                                            self.minibatched_y_train[partner_index]):
-                    self.theta_[self.epoch_count] = self.theta[self.epoch_count]
-                    for y in range(self.K):  # vectorize ?
+        while self.epoch_index < self.epoch_count:
+            self.split_in_minibatches()
+            self.minibatch_index = 0
+            while self.minibatch_index < self.minibatch_count:
+
+                # Evaluate and store accuracy of mini-batch start model
+                model_to_evaluate = partners_models[0]
+                model_evaluation_val_data = self.evaluate_model(model_to_evaluate, self.val_data)
+                self.score_matrix_collective_models[self.epoch_index,
+                                                    self.minibatch_index] = model_evaluation_val_data[1]
+
+                for partner_index, partner in enumerate(self.partners_list):
+                    # Reference the partner's model
+                    partner_model = partners_models[partner_index]
+                    x_batch = self.minibatched_x_train[partner_index][self.minibatch_index]
+                    y_batch = self.minibatched_y_train[partner_index][self.minibatch_index]
+
+                    self.theta_[self.epoch_index] = self.theta[self.epoch_index]  # Initialize the theta_
+                    for y in range(self.K):  # TODO ? vectorize
                         for idx, x in enumerate(x_batch):
-                            self.theta_[self.epoch_count,
+                            self.theta_[self.epoch_index,
                                         partner_index,
                                         y,
-                                        np.argmax(y_batch[idx])] *= np.max(model.predict(x))
-                    self.theta_[self.epoch_count, partner_index] = normalize(
-                        self.theta[self.epoch_count, partner_index],
+                                        np.argmax(y_batch[idx])] *= np.max(partner_model.predict(np.expand_dims(x,
+                                                                                                                axis=0)
+                                                                                                 )
+                                                                           )
+                    self.theta_[self.epoch_index, partner_index] = normalize(
+                        self.theta[self.epoch_index, partner_index],
                         axis=1,
                         norm='l1')
 
@@ -713,28 +727,50 @@ class MplLabelFlip(MultiPartnerLearning):
                             temp = 0
                             norm = 0
                             for idx, z_i in enumerate(y_batch):
-                                temp += self.theta_[self.epoch_count, partner_index, y, z_i] * (z == z_i)
-                                norm += self.theta_[self.epoch_count, partner_index, y, z_i]
-                            self.theta[self.epoch_count + 1, partner_index, y, z] = temp / norm
-                        self.theta_[self.epoch_count + 1] = self.theta[self.epoch_count + 1]
+                                z_i = np.argmax(z_i)
+                                temp += self.theta_[self.epoch_index, partner_index, y, z_i] * (z == z_i)
+                                norm += self.theta_[self.epoch_index, partner_index, y, z_i]
+                            self.theta[self.epoch_index + 1, partner_index, y, z] = temp / norm
+                        self.theta_[self.epoch_index + 1] = self.theta[self.epoch_index + 1]
                         for idx, x in enumerate(x_batch):
-                            self.theta_[self.epoch_count + 1,
+                            self.theta_[self.epoch_index + 1,
                                         partner_index,
                                         y,
-                                        np.argmax(y_batch[idx])] *= np.max(model.predict(x))
-                    self.theta_[self.epoch_count, partner_index] = normalize(
-                        self.theta[self.epoch_count, partner_index],
+                                        np.argmax(y_batch[idx])] *= np.max(partner_model.predict(np.expand_dims(x,
+                                                                                                                axis=0)
+                                                                                                 )
+                                                                           )
+                            # TODO vectorise, and use batch
+                    self.theta_[self.epoch_index, partner_index] = normalize(
+                        self.theta[self.epoch_index, partner_index],
                         axis=1,
                         norm='l1')
-
-                    flipped_minibatch_x_train = None  # TODO
-                    flipped_minibatch_y_train = None
+                    # draw of x_i
+                    rand_idx = np.random.randint(low=0, high=len(x_batch), size=(len(x_batch)))
+                    flipped_minibatch_x_train = x_batch[rand_idx]
+                    flipped_minibatch_y_train = np.zeros(y_batch.shape)
+                    for i, idx in enumerate(rand_idx):
+                        repartition = np.cumsum(
+                            self.theta_[self.epoch_index + 1, partner_index, :, np.argmax(y_batch[idx])])
+                        a = np.random.random() - repartition  # draw
+                        flipped_minibatch_y_train[i][np.argmin(np.where(a > 0, a, 0))] = 1
+                        # not responsive to labels type.
 
                     train_data_for_fit_iteration = flipped_minibatch_x_train, flipped_minibatch_y_train
 
                     history = self.fit_model(
-                        model, train_data_for_fit_iteration, self.val_data, partner.batch_size)
+                        partner_model, train_data_for_fit_iteration, self.val_data, partner.batch_size)
 
-                # Log results of the round
+                    # Log results of the round
+                    model_evaluation_val_data = history.history['val_accuracy'][0]
+                    self.log_collaborative_round_partner_result(partner, partner_index, model_evaluation_val_data)
 
-            partners_models = self.init_with_agg_models()
+                    # Update the partner's model in the models' list
+                    self.save_model_for_partner(partner_model, partner_index)
+
+                    # Update iterative results
+                    self.update_iterative_results(partner_index, history)
+
+                partners_models = self.init_with_agg_models()
+                self.minibatch_index += 1
+            self.epoch_index += 1
