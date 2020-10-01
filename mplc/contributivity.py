@@ -942,7 +942,7 @@ class Contributivity:
         mpl = multi_partner_learning.MplLabelFlip(self.scenario)
         mpl.fit()
         self.contributivity_scores = np.exp(- np.array([np.linalg.norm(
-            mpl.theta[-1][i] - np.identity(mpl.theta[-1][i].shape[0])
+            mpl.history_theta[-1][i] - np.identity(mpl.history_theta[-1][i].shape[0])
         ) for i in range(len(self.scenario.partners_list))]))
 
         self.name = "Label Flip"
