@@ -1081,22 +1081,19 @@ class Contributivity:
             if current_scenario.multi_partner_learning_approach != "fedavg":
                 logger.warning("Step by step linear contributivity method is only suited for federated "
                                "averaging learning approach")
-            self.federated_SBS_linear(
-                current_scenario)
+            self.federated_SBS_linear(current_scenario)
         elif method_to_compute == "Federated SBS quadratic":
             # Contributivity 11: step by step increments with quadratic importance increase
             if current_scenario.multi_partner_learning_approach != "fedavg":
                 logger.warning("Step by step quadratic contributivity method is only suited for federated "
                                "averaging learning approach")
-            self.federated_SBS_quadratic(
-                current_scenario)
+            self.federated_SBS_quadratic current_scenario)
         elif method_to_compute == "Federated SBS constant":
             # Contributivity 12: step by step increments with constant importance
             if current_scenario.multi_partner_learning_approach != "fedavg":
                 logger.warning("Step by step constant contributivity method is only suited for federated "
                                "averaging learning approach")
-            self.federated_SBS_constant(
-                current_scenario)
+            self.federated_SBS_constant(current_scenario)
         else:
             logger.warning("Unrecognized name of method, statement ignored!")
 
