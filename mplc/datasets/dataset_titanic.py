@@ -78,7 +78,7 @@ def load_data():
     path = Path(__file__).resolve().parents[0]
     folder = path / 'local_data' / 'titanic'
     if not folder.is_dir():
-        Path.mkdir(folder)
+        Path.mkdir(folder, parents=True)
         logger.info('Titanic dataset not found. Downloading it...')
         attempts = 0
         while True:
