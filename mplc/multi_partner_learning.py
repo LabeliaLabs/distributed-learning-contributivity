@@ -688,13 +688,19 @@ class MplLabelFlip(MultiPartnerLearning):
         return identity * (1 - self.epsilon) + (1 - identity) * (self.epsilon / (self.K - 1))
 
     def fit(self):
-        # initialization of the parameters
+        start = timer()
+        logger.info(
+            f"## Training and evaluating model on partners with ids: {['#' + str(p.id) for p in self.partners_list]}")
+
+        logger.info("(LFlip) Very first minibatch, init new models for each partner")
         partners_models = self.init_with_models()
 
         while self.epoch_index < self.epoch_count:
             self.split_in_minibatches()
             self.minibatch_index = 0
             while self.minibatch_index < self.minibatch_count:
+                logger.info(f"(LFLip) Minibatch n°{self.minibatch_index} of epoch n°{self.epoch_index}, "
+                            f"init aggregated model for each partner with models from previous round")
 
                 # Evaluate and store accuracy of mini-batch start model
                 model_to_evaluate = partners_models[0]
@@ -709,20 +715,14 @@ class MplLabelFlip(MultiPartnerLearning):
                     y_batch = self.minibatched_y_train[partner_index][self.minibatch_index]
 
                     self.theta_[self.epoch_index] = self.theta[self.epoch_index]  # Initialize the theta_
-                    for y in range(self.K):  # TODO ? vectorize
-                        for idx, x in enumerate(x_batch):
-                            self.theta_[self.epoch_index,
-                                        partner_index,
-                                        y,
-                                        np.argmax(y_batch[idx])] *= partner_model.predict(np.expand_dims(x, axis=0))[
-                                0, y]
-
+                    predictions = partner_model.predict(x_batch)
+                    for idx, x in enumerate(x_batch):
+                        self.theta_[self.epoch_index, partner_index, :, np.argmax(y_batch[idx])] *= predictions[idx]
                     self.theta_[self.epoch_index, partner_index] = normalize(
                         self.theta[self.epoch_index, partner_index],
                         axis=1,
                         norm='l1')
-
-                    for y in range(self.K):
+                    for y in range(self.K):  # TODO vectorize
                         for z in range(self.K):
                             temp = 0
                             norm = 0
@@ -732,22 +732,18 @@ class MplLabelFlip(MultiPartnerLearning):
                                 norm += self.theta_[self.epoch_index, partner_index, y, z_i]
                             self.theta[self.epoch_index + 1, partner_index, y, z] = temp / norm
                         self.theta_[self.epoch_index + 1] = self.theta[self.epoch_index + 1]
-                        for idx, x in enumerate(x_batch):
-                            self.theta_[self.epoch_index + 1,
-                                        partner_index,
-                                        y,
-                                        np.argmax(y_batch[idx])] *= partner_model.predict(np.expand_dims(x, axis=0))[
-                                0, y]
-                            # TODO vectorise, and use batch
+                    for idx, x in enumerate(x_batch):
+                        self.theta_[self.epoch_index + 1, partner_index, :, np.argmax(y_batch[idx])] *= predictions[idx]
                     self.theta_[self.epoch_index, partner_index] = normalize(
                         self.theta[self.epoch_index, partner_index],
                         axis=1,
                         norm='l1')
                     # draw of x_i
-                    rand_idx = np.random.randint(low=0, high=len(x_batch), size=(len(x_batch)))
-                    flipped_minibatch_x_train = x_batch[rand_idx]
+                    rand_idx = np.arange(len(x_batch))
+                    # rand_idx =  np.random.randint(low=0, high=len(x_batch), size=(len(x_batch)))
+                    flipped_minibatch_x_train = x_batch
                     flipped_minibatch_y_train = np.zeros(y_batch.shape)
-                    for i, idx in enumerate(rand_idx):
+                    for i, idx in enumerate(rand_idx):  # TODO vectorize
                         repartition = np.cumsum(
                             self.theta_[self.epoch_index + 1, partner_index, :, np.argmax(y_batch[idx])])
                         a = np.random.random() - repartition  # draw
@@ -771,4 +767,46 @@ class MplLabelFlip(MultiPartnerLearning):
 
                 partners_models = self.init_with_agg_models()
                 self.minibatch_index += 1
+
+            # At the end of each epoch, evaluate the model for early stopping on a global validation set
+            model_to_evaluate = partners_models[0]
+            model_evaluation_val_data = self.evaluate_model(model_to_evaluate, self.val_data)
+
+            current_val_loss = model_evaluation_val_data[0]
+            current_val_metric = model_evaluation_val_data[1]
+
+            self.score_matrix_collective_models[self.epoch_index, self.minibatch_count] = current_val_metric
+            self.loss_collective_models.append(current_val_loss)
+
+            logger.info(f"   Model evaluation at the end of the epoch: "
+                        f"{['%.3f' % elem for elem in model_evaluation_val_data]}")
+
+            logger.debug("      Checking if early stopping criteria are met:")
+            if self.is_early_stopping:
+                # Early stopping parameters
+                if (
+                        self.epoch_index >= constants.PATIENCE
+                        and current_val_loss > self.loss_collective_models[-constants.PATIENCE]
+                ):
+                    logger.debug("         -> Early stopping criteria are met, stopping here.")
+                    break
+                else:
+                    logger.debug("         -> Early stopping criteria are not met, continuing with training.")
             self.epoch_index += 1
+
+        logger.info("### Evaluating model on test data:")
+        model_evaluation_test_data = self.evaluate_model(model_to_evaluate, self.test_data)
+        logger.info(f"   Model metrics names: {model_to_evaluate.metrics_names}")
+        logger.info(f"   Model metrics values: {['%.3f' % elem for elem in model_evaluation_test_data]}")
+        self.test_score = model_evaluation_test_data[1]  # 0 is for the loss
+        self.nb_epochs_done = self.epoch_index + 1
+
+        # Plot training history
+        if self.is_save_data:
+            self.save_data()
+
+        self.save_final_model_weights(model_to_evaluate)
+
+        logger.info("Training and evaluation on multiple partners: done.")
+        end = timer()
+        self.learning_computation_time = end - start
