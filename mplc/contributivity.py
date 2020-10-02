@@ -1087,7 +1087,7 @@ class Contributivity:
             if current_scenario.multi_partner_learning_approach != "fedavg":
                 logger.warning("Step by step quadratic contributivity method is only suited for federated "
                                "averaging learning approach")
-            self.federated_SBS_quadratic current_scenario)
+            self.federated_SBS_quadratic(current_scenario)
         elif method_to_compute == "Federated SBS constant":
             # Contributivity 12: step by step increments with constant importance
             if current_scenario.multi_partner_learning_approach != "fedavg":
