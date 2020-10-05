@@ -744,12 +744,14 @@ class Scenario:
             # If a data corruption is configured, apply it
             if self.corrupted_datasets[partner_index][0] == "corrupted":
                 logger.debug(
-                    f"   ... Corrupting (by offsetting labels) {self.corrupted_datasets[partner_index][1]} percent of the data of partner #{partner.id}"
+                    f"   ... Corrupting (by offsetting labels) {self.corrupted_datasets[partner_index][1]} \
+                    percent of the data of partner #{partner.id}"
                 )
                 partner.corrupt_labels(self.corrupted_datasets[partner_index][1])
             elif self.corrupted_datasets[partner_index][0] == "shuffled":
                 logger.debug(
-                    f"   ... Corrupting (by shuffling labels) {self.corrupted_datasets[partner_index][1]} percent of the data of partner #{partner.id}"
+                    f"   ... Corrupting (by shuffling labels) {self.corrupted_datasets[partner_index][1]} \
+                    percent of the data of partner #{partner.id}"
                 )
                 partner.shuffle_labels(self.corrupted_datasets[partner_index][1])
             elif self.corrupted_datasets[partner_index] == "not_corrupted":
