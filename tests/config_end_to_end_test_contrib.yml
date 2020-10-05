@@ -7,7 +7,7 @@ scenario_params_list:
    partners_count:
      - 2
    amounts_per_partner: 
-     - [0.05, 0.95]
+     - [0.1, 0.9]
    samples_split_option: 
      - ['basic', 'random']
    multi_partner_learning_approach:
