@@ -66,11 +66,12 @@ class Scenario:
         :param samples_split_option: ['basic', 'random'] (default),
                                      ['basic', 'stratified']
                                      or ['advanced', [[nb of clusters (int), 'shared' or 'specific']]].
-        :param corrupted_datasets: ['not_corrupted' (default), ['shuffled', proportion_suffled] or ['corrupted', proportion_corrupted]].
+        :param corrupted_datasets: ['not_corrupted' (default), ['shuffled', proportion_suffled] or
+                                      ['corrupted', proportion_corrupted]].
                                    Enables to artificially corrupt the data of one or several partners.
                                    The size of the list must be equal to the number of partners
                                    proportion_suffled or proportion_corrupted is a  float between 0 and 1 indicating 
-                                    the proportion of label to suffle or corrupt within the partner
+                                   the proportion of label to suffle or corrupt within the partner
         :param init_model_from: None (default) or path
         :param multi_partner_learning_approach: 'fedavg' (default), 'seq-pure', 'seq-with-final-agg' or 'seqavg'
                                                 Define the multi-partner learning approach
