@@ -70,7 +70,7 @@ class Scenario:
                                       ['corrupted', proportion_corrupted]].
                                    Enables to artificially corrupt the data of one or several partners.
                                    The size of the list must be equal to the number of partners
-                                   proportion_suffled or proportion_corrupted is a  float between 0 and 1 indicating 
+                                   proportion_suffled or proportion_corrupted is a float between 0 and 1 indicating
                                    the proportion of label to suffle or corrupt within the partner
         :param init_model_from: None (default) or path
         :param multi_partner_learning_approach: 'fedavg' (default), 'seq-pure', 'seq-with-final-agg' or 'seqavg'
@@ -459,10 +459,10 @@ class Scenario:
         # For each partner compose the list of clusters from which they will draw data samples
         index = 0
         for p in partners_with_specific_clusters:
-            p.clusters_list = labels[index : index + p.cluster_count]
+            p.clusters_list = labels[index: index + p.cluster_count]
             index += p.cluster_count
 
-        shared_clusters = labels[index : index + shared_clusters_count]
+        shared_clusters = labels[index: index + shared_clusters_count]
         for p in partners_with_shared_clusters:
             p.clusters_list = random.sample(shared_clusters, k=p.cluster_count)
 
@@ -528,12 +528,12 @@ class Scenario:
                     idx = shared_clusters_index[cl]
                     list_arrays_x.append(
                         x_train_for_cluster[cl][
-                            idx : idx + p.final_nb_samples_p_cluster
+                            idx: idx + p.final_nb_samples_p_cluster
                         ]
                     )
                     list_arrays_y.append(
                         y_train_for_cluster[cl][
-                            idx : idx + p.final_nb_samples_p_cluster
+                            idx: idx + p.final_nb_samples_p_cluster
                         ]
                     )
                     shared_clusters_index[cl] += p.final_nb_samples_p_cluster
@@ -646,7 +646,7 @@ class Scenario:
 
             # Finalize selection of train data
             # Populate the partner's train dataset
-            p.x_train = self.dataset.x_train[train_idx, :]
+            p.x_train = self.dataset.x_train[train_idx,:]
             p.y_train = self.dataset.y_train[train_idx]
 
             # Create local validation and test datasets from the partner train data
