@@ -297,7 +297,7 @@ All methods available are:
 - "SMCS"
 - "WR_SMC"
 - "Federated SBS linear"
-- "Federated SBS quadratic",
+- "Federated SBS quadratic"
 - "Federated SBS constant"
 ```
 
