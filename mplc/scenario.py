@@ -646,7 +646,7 @@ class Scenario:
 
             # Finalize selection of train data
             # Populate the partner's train dataset
-            p.x_train = self.dataset.x_train[train_idx,:]
+            p.x_train = self.dataset.x_train[train_idx, :]
             p.y_train = self.dataset.y_train[train_idx]
 
             # Create local validation and test datasets from the partner train data
