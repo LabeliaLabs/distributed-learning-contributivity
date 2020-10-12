@@ -719,18 +719,18 @@ class MplLabelFlip(MultiPartnerLearning):
 
                     for idx, y in enumerate(y_batch):
                         self.theta_[idx, :] *= self.theta[:, np.argmax(y)]
-                        self.theta_ = normalize(self.theta_, axis=1, norm='l1')
-                    self.history_theta_[self.epoch_index][partner_index] = self.theta
+                    self.theta_ = normalize(self.theta_, axis=0, norm='l1')
+                    self.history_theta_[self.epoch_index][partner_index] = self.theta_
 
                     self.theta = self.theta_.T.dot(y_batch)
                     self.theta = normalize(self.theta, axis=1, norm='l1')
-
+                    logger.debug(f"(LFlip) theta : {self.theta}")
                     self.history_theta[self.epoch_index][partner_index] = self.theta
 
                     self.theta_ = predictions
                     for idx, y in enumerate(y_batch):
                         self.theta_[idx, :] *= self.theta[:, np.argmax(y)]
-                        self.theta_ = normalize(self.theta_, axis=1, norm='l1')
+                    self.theta_ = normalize(self.theta_, axis=0, norm='l1')
 
                     # draw of x_i
                     rand_idx = np.arange(len(x_batch))
