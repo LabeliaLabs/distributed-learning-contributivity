@@ -659,7 +659,7 @@ def init_multi_partner_learning_from_scenario(scenario, is_save_data=True):
 
 class MplLabelFlip(MultiPartnerLearning):
 
-    def __init__(self, scenario, is_save_data=False, epsilon=0.001):
+    def __init__(self, scenario, is_save_data=False, epsilon=0.01):
         super().__init__(
             scenario.partners_list,
             scenario.epoch_count,
@@ -678,8 +678,8 @@ class MplLabelFlip(MultiPartnerLearning):
         self.K = scenario.dataset.num_classes
         self.history_theta = [[None for _ in self.partners_list] for _ in range(self.epoch_count)]
         self.history_theta_ = [[None for _ in self.partners_list] for _ in range(self.epoch_count)]
-        self.theta = self.init_flip_proba()
-        self.theta_ = None
+        self.theta = [self.init_flip_proba() for _ in self.partners_list]
+        self.theta_ = [None for _ in self.partners_list]
         # self.labels_map = LabelEncoder().fit_transform([str(y) for y in scenario.dataset.y_train])
 
     def init_flip_proba(self):
@@ -714,22 +714,22 @@ class MplLabelFlip(MultiPartnerLearning):
                     y_batch = self.minibatched_y_train[partner_index][self.minibatch_index]
 
                     predictions = partner_model.predict(x_batch)
-                    self.theta_ = predictions  # Initialize the theta_
+                    self.theta_[partner_index] = predictions  # Initialize the theta_
 
                     for idx, y in enumerate(y_batch):
-                        self.theta_[idx, :] *= self.theta[:, np.argmax(y)]
-                    self.theta_ = normalize(self.theta_, axis=0, norm='l1')
-                    self.history_theta_[self.epoch_index][partner_index] = self.theta_
+                        self.theta_[partner_index][idx, :] *= self.theta[partner_index][:, np.argmax(y)]
+                    self.theta_[partner_index] = normalize(self.theta_[partner_index], axis=0, norm='l1')
+                    self.history_theta_[self.epoch_index][partner_index] = self.theta_[partner_index]
 
-                    self.theta = self.theta_.T.dot(y_batch)
-                    self.theta = normalize(self.theta, axis=1, norm='l1')
-                    logger.debug(f"(LFlip) theta : {self.theta}")
-                    self.history_theta[self.epoch_index][partner_index] = self.theta
+                    self.theta[partner_index] = self.theta_[partner_index].T.dot(y_batch)
+                    self.theta[partner_index] = normalize(self.theta[partner_index], axis=1, norm='l1')
+                    logger.debug(f"(LFlip) theta : {self.theta[partner_index]}")
+                    self.history_theta[self.epoch_index][partner_index] = self.theta[partner_index]
 
-                    self.theta_ = predictions
+                    self.theta_[partner_index] = predictions
                     for idx, y in enumerate(y_batch):
-                        self.theta_[idx, :] *= self.theta[:, np.argmax(y)]
-                    self.theta_ = normalize(self.theta_, axis=0, norm='l1')
+                        self.theta_[partner_index][idx, :] *= self.theta[partner_index][:, np.argmax(y)]
+                    self.theta_[partner_index] = normalize(self.theta_[partner_index], axis=0, norm='l1')
 
                     # draw of x_i
                     rand_idx = np.arange(len(x_batch))
@@ -738,7 +738,7 @@ class MplLabelFlip(MultiPartnerLearning):
                     flipped_minibatch_y_train = np.zeros(y_batch.shape)
                     for i, idx in enumerate(rand_idx):  # TODO vectorize
                         repartition = np.cumsum(
-                            self.theta_[idx, :])
+                            self.theta_[partner_index][idx, :])
                         a = np.random.random() - repartition  # draw
                         flipped_minibatch_y_train[i][np.argmin(np.where(a > 0, a, 0))] = 1
                         # not responsive to labels type.
