@@ -301,23 +301,6 @@ All methods available are:
 - "Federated SBS constant"
 ```
 
-##### Configuration of contributivity measurement methods to be tested
-
-`methods`:  
-A declarative list `[]` of the contributivity measurement methods to be executed.
-All methods available are:
-
-```
-- "Shapley values"
-- "Independent scores"
-- "TMCS"
-- "ITMCS"
-- "IS_lin_S"
-- "IS_reg_S"
-- "AIS_Kriging_S"
-- "SMCS"
-- "WR_SMC"
-```
 
 The methods are detailed below: 
 
@@ -368,9 +351,18 @@ The methods are detailed below:
 - [In progress] [**Partner Valuation by Reinforcement Learning**] (PVRL):
 
 With PVRL, we modify the learning process of the main model so it includes a dataset's partner valuation part. Namely we assign weight to each dataset, and at each learning step these weights are used to sample the learning batch. These weight are updated at each learning iteration of the main model using the REINFORCE method.
-- [In progress] [**Federated step-by-step increments**]:
+- [In progress] [**Federated step-by-step**]:
 
-  See open [issue #105](https://github.com/SubstraFoundation/distributed-learning-contributivity/issues/105).
+    Federated step by step contributivity methodes measure the performance variation on the global validation dataset after each minibatch training - These methods give an estimation on how the model improved on every node
+    The methods are best suited for federated averaging learning
+    For each computation round, the contributivity for each partner is calculated as the ratio between the validation score of the newly trained model for each partner and the validation score from the previously trained collective model
+    Initial rounds (10%) and final rounds (10%) are discarded from calculation as performance increments from the first minibatches might be huge and increments form the last minibatches might be very noisy. Discarded proportions are for now set in the code.
+
+    3 contributivity methods are proposed to adjust the importance of last computation rounds compared to the first ones:
+    - ["Federated SBS linear"] - Linear importance increase between computation rounds (1000th round weights 1000 times first round)
+    - ["Federated SBS quadratic"] - Quadratic importance increase between computation rounds (1000th round weights 10e6 times first round)
+    - ["Federated SBS constant"] - Constant importance increase between computation rounds (1000th round weights same as first round)
+
 **Note:** When `methods` is omitted in the config file only the distributed learning is run.  
 Example: `["Shapley values", "Independent scores", "TMCS"]`
 
