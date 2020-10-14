@@ -2,6 +2,7 @@
 # Work in progress
 
 ## Summary
+
 - [Prerequisites](#prerequisites)
 - [Quick start](#quick-start)
   * [My first scenario](#my-first-scenario)
@@ -36,7 +37,7 @@ Note: This is the temporary package for our library.
 
 ## Quick start
 
-First a few words of context! This library enables to run a multi-partner learning and contributivity measurement experiment. This breaks down into three relatively independent blocks:
+First a few words of context ! This library enables to run a multi-partner learning and contributivity measurement experiment. This breaks down into three relatively independent blocks:
 
 1. Creating a mock collaborative multi-partner learning scenario
 1. Running a multi-partner ML algorithm to learn a model on all partners respective 
@@ -50,12 +51,12 @@ To run a multi-partner learning and contributivity measurement experiment, you h
 - what multi-partner learning approach will be used, with what options
 - what contributivity measurement approach(es) will be run
 
-There are only 2 mandatory parameters to define a scenario: `partners_count` and `amounts_per_partner`. Many more exists but are optional as default values are configured. You can browse them all in below section [Scenario parameters](#scenario-parameters).
+There are only 2 mandatory parameters to define a scenario: `partners_count` and `amounts_per_partner`. Many more exist but are optional as default values are configured. You can browse them all in below section [Scenario parameters](#scenario-parameters).
 
 For this very first scenario, you could for example want to see what is happening with 3 partners, where the first one gets 20% of the total dataset, the second one 50% and the third one 30% (for a total of 100%!):
 
 ```python
-from subtest.scenario import Scenario
+from mplc.scenario import Scenario
 
 my_scenario = Scenario(partners_count=3,
                        amounts_per_partner=[0.2, 0.3, 0.5])
@@ -304,7 +305,7 @@ All methods available are:
 
 The methods are detailed below: 
 
-- [done, short name "Independent scores"] **Performance scores** of models trained independently on each partner
+- `["Independent scores"]` **Performance scores** of models trained independently on each partner
 
 - [**Shapley values**](https://arxiv.org/pdf/1902.10275.pdf):  
 
@@ -316,25 +317,25 @@ The methods are detailed below:
 
   The computation of the Shapley Values quickly becomes intensive when the number of players increases. Indeed to compute the increment of a coalition, we need to fit two federated model, and we need to do this for every possible coalitions. If *N* is the number of players we have to do *2^N* fits to compute the Shapley values of each players. As this is quickly too costly, we are considering estimating the Shapley values rather then computing it exactly. The estimation methods considered are:
 
-  - [done, short name "Shapley values"] **The exact Shapley Values computation**:  
+  - `["Shapley values"]` **The exact Shapley Values computation**:  
   Given the limited number of data partners we consider at that stage it is possible to actually compute the Shapley Values with a reasonable amount of resources.
 
   - **[Monte-Carlo Shapley](https://arxiv.org/pdf/1902.10275.pdf) approximation** (also called permutation sampling):  
   As the Shapley value is an average we can estimate it using the Monte-Carlo method. Here it consists in sampling a reasonable number of increments (says a hundred per player) and to take the average of the sampled increments of a player as the estimation of the Shapley value of that player.
 
-  - [done, short name "TMCS"] **[Truncated Monte-Carlo Shapley](https://arxiv.org/pdf/1904.02868.pdf) approximation**:  
+  - `["TMCS"]` **[Truncated Monte-Carlo Shapley](https://arxiv.org/pdf/1904.02868.pdf) approximation**:  
   The idea of Truncated Monte-Carlo is that, for a large coalition, the increments of a player are usually small, therefore we can consider their value is null instead of spending computational power to compute it. This reduce the number of times we have to fit a model, but adds a small bias in the estimation.
 
-  - [done, short name "ITMCS"] **Interpolated Truncated Monte-Carlo Shapley**:  
+  - `["ITMCS"]` **Interpolated Truncated Monte-Carlo Shapley**:  
   This method is an attempt to reduce the bias of the Truncated Monte-Carlo Shapley method. Here we do not consider that the value of an increment of a large coalition is null, but we do a linear interpolation to better approximate its value.
 
 - **Importance sampling methods**:
 
   Importance sampling is a method to reduce the number of sampled increments in the Monte-Carlo method while keeping the same accuracy. It consists in sampling the increments according to non-uniform distribution, giving more chance for big increment than for small increment to be sampled. The bias induced by altering the sampling distribution is canceled by properly weighting each sample: if an increment is sampled with *X* times more chances, then we weight it by *1/X*. Note that this require to know the value of increment before computing them, so in practice we try to guess the value of the increment. We inflate, resp. deflate, the probability of sampling an increment if we guess that its value is high, resp. small. We designed three ways to guess the value of increments, which lead to three different importance sampling methods:
 
-  - [done, short name "IS_lin_S"] **Linear importance sampling**
-  - [done, short name "IS_reg_S"] **Regression importance sampling**
-  - [done, short name "AIS_Kriging_S"] **Adaptative Kriging importance sampling**
+  - `["IS_lin_S"]` **Linear importance sampling**
+  - `["IS_reg_S"]` **Regression importance sampling**
+  - `["AIS_Kriging_S"]` **Adaptative Kriging importance sampling**
 
 - **[Stratified Monte Carlo Shapley](https://arxiv.org/pdf/1904.02868.pdf)**:
 
@@ -345,23 +346,23 @@ The methods are detailed below:
 
   As we can estimate the mean of a strata by sampling with replacement of without replacement, it gives two approximation methods:
 
-  - [done, short name "SMCS"] **Stratified Monte Carlo Shapley with replacement**
-  - [done, short name "WR_SMC"] **Stratified Monte Carlo Shapley without replacement**
+  - `["SMCS"]` **Stratified Monte Carlo Shapley with replacement**
+  - `["WR_SMC"]` **Stratified Monte Carlo Shapley without replacement**
 
-- [In progress] [**Partner Valuation by Reinforcement Learning**] (PVRL):
+- [In progress] `["PVRL"]` **Partner Valuation by Reinforcement Learning** :
 
 With PVRL, we modify the learning process of the main model so it includes a dataset's partner valuation part. Namely we assign weight to each dataset, and at each learning step these weights are used to sample the learning batch. These weight are updated at each learning iteration of the main model using the REINFORCE method.
-- [In progress] [**Federated step-by-step**]:
+- [In progress] **Federated step-by-step**:
 
-    Federated step by step contributivity methodes measure the performance variation on the global validation dataset after each minibatch training - These methods give an estimation on how the model improved on every node
-    The methods are best suited for federated averaging learning
-    For each computation round, the contributivity for each partner is calculated as the ratio between the validation score of the newly trained model for each partner and the validation score from the previously trained collective model
+    Federated step by step contributivity methods measure the performance variation on the global validation dataset after each minibatch training - These methods give an estimation on how the model improved on every node.
+    The methods are best suited for federated averaging learning.
+    For each computation round, the contributivity for each partner is calculated as the ratio between the validation score of the newly trained model for each partner and the validation score from the previously trained collective model.
     Initial rounds (10%) and final rounds (10%) are discarded from calculation as performance increments from the first minibatches might be huge and increments form the last minibatches might be very noisy. Discarded proportions are for now set in the code.
 
     3 contributivity methods are proposed to adjust the importance of last computation rounds compared to the first ones:
-    - ["Federated SBS linear"] - Linear importance increase between computation rounds (1000th round weights 1000 times first round)
-    - ["Federated SBS quadratic"] - Quadratic importance increase between computation rounds (1000th round weights 10e6 times first round)
-    - ["Federated SBS constant"] - Constant importance increase between computation rounds (1000th round weights same as first round)
+    - `["Federated SBS linear"]` - Linear importance increase between computation rounds (1000th round weights 1000 times first round)
+    - `["Federated SBS quadratic"]` - Quadratic importance increase between computation rounds (1000th round weights 10e6 times first round)
+    - `["Federated SBS constant"]`- Constant importance increase between computation rounds (1000th round weights same as first round)
 
 **Note:** When `methods` is omitted in the config file only the distributed learning is run.  
 Example: `["Shapley values", "Independent scores", "TMCS"]`
@@ -398,7 +399,7 @@ dataset = dataset.Dataset(
 ```
 
 ### Model generator
-This function provides the model use, which will be trained by the scenario object. 
+This function provides the model which will be trained by the scenario object. Currently the library handles compiled Keras' model (see MNIST, ESC50, IMDB and CIFAR10 datasets), and Scikit-Learn Linear Regression (see the TITANIC dataset).  
 
 ```python
 def generate_new_model_for_dataset():

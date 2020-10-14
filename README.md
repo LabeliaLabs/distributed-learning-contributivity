@@ -89,6 +89,7 @@ $ git clone https://github.com/SubstraFoundation/distributed-learning-contributi
 $ cd distributed-learning-contributivity
 $ pip install -e . 
 ```
+
 ### Run an experiment
 
 There are two ways to run an experiment. You can first use the mplc library in a notebook, or regular python script, as it is demonstrated in the [tutorials](./notebooks/tutorials).
