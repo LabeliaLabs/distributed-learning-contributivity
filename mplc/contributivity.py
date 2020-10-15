@@ -7,7 +7,7 @@ from __future__ import print_function
 
 import bisect
 import datetime
-import os
+import pathlib
 from itertools import combinations
 from math import factorial
 from timeit import default_timer as timer
@@ -977,9 +977,9 @@ class Contributivity:
             # apply one epoch with the selected partner to the previous model/ do the action
             small_partner_list = [partner for partner, is_in in zip(the_scenario.partners_list, is_partner_in) if
                                   is_in == 1]
-            weights_folder = os.path.join(the_scenario.save_folder, 'model',
-                                          the_scenario.dataset.name + '_final_weights'
-                                                                      '.h5')
+            weights_folder = pathlib.PurePath.joinpath(pathlib.Path(the_scenario.save_folder), 'model',
+                                                       the_scenario.dataset.name + '_final_weights'
+                                                                                   '.h5')
             mpl = multi_partner_learning.MultiPartnerLearning(
                 small_partner_list,
                 1,
