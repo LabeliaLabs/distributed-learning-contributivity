@@ -287,7 +287,7 @@ Example: `is_early_stopping = False`
 A declarative list `[]` of the contributivity measurement methods to be executed.
 All methods available are:
 
-```
+```sh
 - "Shapley values"
 - "Independent scores"
 - "TMCS"
@@ -304,8 +304,9 @@ All methods available are:
 
 
 The methods are detailed below: 
+- **Independent training**:
 
-- `["Independent scores"]` **Performance scores** of models trained independently on each partner
+  - `["Independent scores"]` **Performance scores** of models trained independently on each partner
 
 - [**Shapley values**](https://arxiv.org/pdf/1902.10275.pdf):  
 
@@ -335,7 +336,7 @@ The methods are detailed below:
 
   - `["IS_lin_S"]` **Linear importance sampling**
   - `["IS_reg_S"]` **Regression importance sampling**
-  - `["AIS_Kriging_S"]` **Adaptative Kriging importance sampling**
+  - `["AIS_Kriging_S"]` **Adaptive Kriging importance sampling**
 
 - **[Stratified Monte Carlo Shapley](https://arxiv.org/pdf/1904.02868.pdf)**:
 
@@ -349,9 +350,12 @@ The methods are detailed below:
   - `["SMCS"]` **Stratified Monte Carlo Shapley with replacement**
   - `["WR_SMC"]` **Stratified Monte Carlo Shapley without replacement**
 
-- [In progress] `["PVRL"]` **Partner Valuation by Reinforcement Learning** :
+- [In progress]  **Partner Valuation by Reinforcement Learning** :
 
-With PVRL, we modify the learning process of the main model so it includes a dataset's partner valuation part. Namely we assign weight to each dataset, and at each learning step these weights are used to sample the learning batch. These weight are updated at each learning iteration of the main model using the REINFORCE method.
+    With PVRL, we modify the learning process of the main model so it includes a dataset's partner valuation part. Namely we assign weight to each dataset, and at each learning step these weights are used to sample the learning batch. These weight are updated at each learning iteration of the main model using the REINFORCE method.
+
+   - `["PVRL"]` **Partner Valuation by Reinforcement Learning** 
+    
 - [In progress] **Federated step-by-step**:
 
     Federated step by step contributivity methods measure the performance variation on the global validation dataset after each minibatch training - These methods give an estimation on how the model improved on every node.
