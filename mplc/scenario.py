@@ -66,12 +66,17 @@ class Scenario:
         :param samples_split_option: ['basic', 'random'] (default),
                                      ['basic', 'stratified']
                                      or ['advanced', [[nb of clusters (int), 'shared' or 'specific']]].
-        :param corrupted_datasets: ['not_corrupted' (default), ['shuffled', proportion_suffled] or
-                                      ['corrupted', proportion_corrupted]].
+        :param corrupted_datasets: ['not_corrupted' (default), 'shuffled' or 'corrupted'].
                                    Enables to artificially corrupt the data of one or several partners.
                                    The size of the list must be equal to the number of partners
-                                   proportion_suffled or proportion_corrupted is a float between 0 and 1 indicating
-                                   the proportion of label to suffle or corrupt within the partner
+
+                                   If one wants to shuffle only a part of the partner's data
+                                   it is possible to replace 'shuffled' by ['shuffled', proportion_shuffled]
+                                   where proportion_shuffled is a float between 0 and 1 indicating the
+                                   proportion of label to shuffle or corrupt within the partner.
+                                   Similarly for corruption it is possible to replace 'corrupted'
+                                   by ['corrupted', proportion_corrupted] where proportion_corrupted is a float
+                                   between 0 and 1 indicating the proportion of label to corrupt within the partner.
         :param init_model_from: None (default) or path
         :param multi_partner_learning_approach: 'fedavg' (default), 'seq-pure', 'seq-with-final-agg' or 'seqavg'
                                                 Define the multi-partner learning approach
@@ -736,22 +741,34 @@ class Scenario:
         for p in self.partners_list:
             logger.debug(f"   Compute batch sizes, partner #{p.id}: {p.batch_size}")
 
-    def preprocess_scenarios_data(self):
+    def data_corruption(self):
         """Return scenario with central datasets (val, test) and distributed datasets (partners) pre-processed"""
 
         # Then, datasets of each partner
         for partner_index, partner in enumerate(self.partners_list):
 
             # If a data corruption is configured, apply it
-            if self.corrupted_datasets[partner_index][0] == "corrupted":
+            if self.corrupted_datasets[partner_index] == "corrupted":
                 logger.debug(
-                    f"   ... Corrupting (by offsetting labels) {self.corrupted_datasets[partner_index][1]} \
+                    f"   ... Corrupting (by offsetting labels) 100.0 \
+                    percent of the data of partner #{partner.id}"
+                )
+                partner.corrupt_labels(1.0)
+            elif self.corrupted_datasets[partner_index] == "shuffled":
+                logger.debug(
+                    f"   ... Corrupting (by shuffling labels) 100.0 \
+                    percent of the data of partner #{partner.id}"
+                )
+                partner.shuffle_labels(1.0)
+            elif self.corrupted_datasets[partner_index][0] == "corrupted":
+                logger.debug(
+                    f"   ... Corrupting (by offsetting labels) {self.corrupted_datasets[partner_index][1]*100} \
                     percent of the data of partner #{partner.id}"
                 )
                 partner.corrupt_labels(self.corrupted_datasets[partner_index][1])
             elif self.corrupted_datasets[partner_index][0] == "shuffled":
                 logger.debug(
-                    f"   ... Corrupting (by shuffling labels) {self.corrupted_datasets[partner_index][1]} \
+                    f"   ... Corrupting (by shuffling labels) {self.corrupted_datasets[partner_index][1]*100} \
                     percent of the data of partner #{partner.id}"
                 )
                 partner.shuffle_labels(self.corrupted_datasets[partner_index][1])
@@ -837,7 +854,7 @@ class Scenario:
             self.split_data_advanced()
         self.plot_data_distribution()
         self.compute_batch_sizes()
-        self.preprocess_scenarios_data()
+        self.data_corruption()
 
         # --------------------------------------------
         # Instantiate and run a multi-partner learning

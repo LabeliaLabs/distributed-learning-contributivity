@@ -32,9 +32,9 @@ class Partner:
         self.y_test = None
 
     def corrupt_labels(self, proportion_corrupted):
-        if not 0 < proportion_corrupted < 1:
+        if not 0 <= proportion_corrupted <= 1:
             raise ValueError(
-                f"The proportion of labels to corrupted  {proportion_corrupted} must be between 0 and 1."
+                f"The proportion of labels to corrupted was {proportion_corrupted} but it must be between 0 and 1."
             )
 
         # Select the indices where the label will be off-set
@@ -42,15 +42,17 @@ class Partner:
         idx = sample(list(range(len(self.y_train))), n)
 
         # Off-set  the labels
-        for label in self.y_train[idx]:
-            idx_max = np.argmax(label)
-            label[idx_max] = 0.0
-            label[idx_max - 1] = 1.0
+        for i in idx:
+            new_label = self.y_train[i]
+            idx_max = np.argmax(new_label)
+            new_label[idx_max] = 0.0
+            new_label[idx_max - 1] = 1.0
+            self.y_train[i] = new_label
 
     def shuffle_labels(self, proportion_shuffled):
-        if not 0 < proportion_shuffled < 1:
+        if not 0 <= proportion_shuffled <= 1:
             raise ValueError(
-                f"The proportion of labels to corrupted  {proportion_shuffled}  must be between 0 and 1."
+                f"The proportion of labels to corrupted was {proportion_shuffled} but it must be between 0 and 1."
             )
 
         # Select the indices where the label will be shuffled
@@ -58,7 +60,8 @@ class Partner:
         idx = sample(list(range(len(self.y_train))), n)
 
         # Suffle the labels
-        for label in self.y_train[idx]:
+        for i in idx:
+            label = self.y_train[i]
             # Suffle the label
             new_label = shuffle(label)
 
@@ -66,4 +69,4 @@ class Partner:
             while np.all(new_label == label):
                 new_label = shuffle(label)
 
-            label = new_label
+            self.y_train[i] = new_label
