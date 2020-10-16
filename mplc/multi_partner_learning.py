@@ -14,9 +14,6 @@ import numpy as np
 from keras.backend.tensorflow_backend import clear_session
 from keras.callbacks import EarlyStopping
 from loguru import logger
-from sklearn.externals.joblib import dump, load
-from sklearn.linear_model import LogisticRegression
-from sklearn.metrics import log_loss
 from sklearn.preprocessing import normalize
 
 from . import constants
@@ -91,21 +88,10 @@ class MultiPartnerLearning(abc.ABC):
         if not os.path.isdir(model_folder):
             os.makedirs(model_folder)
 
-        if isinstance(model_to_save, type(LogisticRegression())):
-            dump(model_to_save, os.path.join(model_folder, self.dataset_name + '_final_weights.joblib'))
-            coefs = np.array(model_to_save.coef_)
-            intercepts = np.array(model_to_save.intercept_)
+        model_to_save.save_weights(os.path.join(model_folder, self.dataset_name + '_final_weights.h5'))
 
-            np.savez(os.path.join(model_folder, self.dataset_name + '_final_weights.npy'),
-                     coefs=coefs,
-                     intercepts=intercepts,
-                     )
-
-        else:
-            model_to_save.save_weights(os.path.join(model_folder, self.dataset_name + '_final_weights.h5'))
-            model_weights = model_to_save.get_weights()
-
-            np.save(os.path.join(model_folder, self.dataset_name + '_final_weights.npy'), model_weights)
+        model_weights = model_to_save.get_weights()
+        np.save(os.path.join(model_folder, self.dataset_name + '_final_weights.npy'), model_weights)
 
     def save_data(self):
         """Save figures, losses and metrics to disk"""
@@ -163,7 +149,7 @@ class MultiPartnerLearning(abc.ABC):
             self.minibatched_x_train[partner_index] = np.split(x_train, (split_indices[:-1] * len(x_train)).astype(int))
             self.minibatched_y_train[partner_index] = np.split(y_train, (split_indices[:-1] * len(y_train)).astype(int))
 
-    def prepare_aggregation_weights(self):
+    def prepare_aggregation_weights(self):  # we can maybe think about a aggregator object
         """Returns a list of weights for the weighted average aggregation of model weights"""
 
         if self.aggregation_weighting == "uniform":
@@ -179,44 +165,25 @@ class MultiPartnerLearning(abc.ABC):
     def aggregate_model_weights(self):
         """Aggregate model weights from the list of models, with a weighted average"""
 
-        # SKL models weigths are tuples while Keras model's weights are list
-        if type(self.models_weights_list[0]) is tuple:  # Check weights type for aggregation
-            # Unpack values
-            coefs = [weights[0] for weights in self.models_weights_list]
-            intercepts = [weights[1] for weights in self.models_weights_list]
+        weights_per_layer = list(zip(*self.models_weights_list))
+        new_weights = list()
 
-            agg_coef = np.average(np.array(coefs), axis=0, weights=self.aggregation_weights)
-            agg_intercepts = np.average(np.array(intercepts), axis=0, weights=self.aggregation_weights)
-
-            new_weights = (agg_coef, agg_intercepts)
-        else:
-            weights_per_layer = list(zip(*self.models_weights_list))
-            new_weights = list()
-
-            for weights_for_layer in weights_per_layer:
-                avg_weights_for_layer = np.average(
-                    np.array(weights_for_layer), axis=0, weights=self.aggregation_weights
-                )
-                new_weights.append(list(avg_weights_for_layer))
+        for weights_for_layer in weights_per_layer:
+            avg_weights_for_layer = np.average(
+                np.array(weights_for_layer), axis=0, weights=self.aggregation_weights
+            )
+            new_weights.append(list(avg_weights_for_layer))
 
         return new_weights
 
     def save_model_for_partner(self, model, partner_index):
         """save a model with weight"""
-        if isinstance(model, type(LogisticRegression())):
-            self.models_weights_list[partner_index] = (model.coef_, model.intercept_)
-        else:
-            self.models_weights_list[partner_index] = model.get_weights()
+        self.models_weights_list[partner_index] = model.get_weights()
 
     def build_model_from_weights(self, new_weights):
         """Generate a new model initialized with weights passed as arguments"""
-
         new_model = self.generate_new_model()
-
-        if isinstance(new_model, type(LogisticRegression())):
-            new_model.coef_, new_model.intercept_ = new_weights
-        else:
-            new_model.set_weights(new_weights)
+        new_model.set_weights(new_weights)
         return new_model
 
     def init_with_models(self):
@@ -226,28 +193,18 @@ class MultiPartnerLearning(abc.ABC):
         partners_model_list = []
 
         # Generate a new model and add it to the list
+        new_model = self.generate_new_model()
         if self.use_saved_weights:
-            new_model = self.generate_new_model()
-            if isinstance(new_model, type(LogisticRegression())):
-                new_model = load(self.init_model_from)
-            else:
-                new_model.load_weights(self.init_model_from)
-        else:
-            new_model = self.generate_new_model()
+            new_model.load_weights(self.init_model_from)
 
         # For each partner, create a new model and add it to the list
-        if isinstance(new_model, type(LogisticRegression())):
-            partners_model_list.append(new_model)
-            # For each remaining partner, create a new model and add it to the list
-            for i in range(len(self.partners_list) - 1):
-                partners_model_list.append(self.generate_new_model())
-        else:
-            partners_model_list.append(new_model)
 
-            # For each remaining partner, duplicate the new model and add it to the list
-            new_model_weights = new_model.get_weights()
-            for i in range(len(self.partners_list) - 1):
-                partners_model_list.append(self.build_model_from_weights(new_model_weights))
+        partners_model_list.append(new_model)
+
+        # For each remaining partner, duplicate the new model and add it to the list
+        new_model_weights = new_model.get_weights()
+        for i in range(len(self.partners_list) - 1):
+            partners_model_list.append(self.build_model_from_weights(new_model_weights))
 
         return partners_model_list
 
@@ -255,10 +212,7 @@ class MultiPartnerLearning(abc.ABC):
         new_model = self.generate_new_model()
 
         if self.use_saved_weights:
-            if isinstance(new_model, type(LogisticRegression())):
-                new_model = load(self.init_model_from)
-            else:
-                new_model.load_weights(self.init_model_from)
+            new_model.load_weights(self.init_model_from)
 
         return new_model
 
@@ -299,51 +253,24 @@ class MultiPartnerLearning(abc.ABC):
         return model
 
     @staticmethod
-    def fit_model(model_to_fit, train_data, val_data, batch_size, epoch_count=1):
+    def fit_model(model_to_fit, train_data, val_data, batch_size, epoch_count=1):  # TODO can probably be deleted
         """Fit the model with arguments passed as parameters and returns the history object"""
 
         x_train, y_train = train_data
-        if isinstance(model_to_fit, type(LogisticRegression())):
-            history = model_to_fit.fit(x_train, y_train)
-            [loss, acc] = MultiPartnerLearning.evaluate_model(model_to_fit, train_data)
-            [val_loss, val_acc] = MultiPartnerLearning.evaluate_model(model_to_fit, val_data)
-            # Mimic Keras' history
-            history.history = {
-                'loss': [loss],
-                'accuracy': [acc],
-                'val_loss': [val_loss],
-                'val_accuracy': [val_acc]
-            }
-        else:
-            history = model_to_fit.fit(
-                x_train,
-                y_train,
-                batch_size=batch_size,
-                epochs=epoch_count,
-                verbose=0,
-                validation_data=val_data,
-            )
+        history = model_to_fit.fit(y_train, x_train, batch_size=batch_size, epochs=epoch_count, verbose=0,
+                                   validation_data=val_data)
         return history
 
     @staticmethod
-    def evaluate_model(model_to_evaluate, evaluation_data):
+    def evaluate_model(model_to_evaluate, evaluation_data):  # TODO can probably be deleted
         """Evaluate the model with arguments passed as parameters and returns [loss, accuracy]"""
 
         x_eval, y_eval = evaluation_data
-
-        if isinstance(model_to_evaluate, type(LogisticRegression())):
-            if not hasattr(model_to_evaluate, 'coef_'):
-                model_evaluation = [0] * 2
-            else:
-                loss = log_loss(y_eval, model_to_evaluate.predict(x_eval))  # mimic keras model evaluation
-                accuracy = model_to_evaluate.score(x_eval, y_eval)
-                model_evaluation = [loss, accuracy]
-        else:
-            model_evaluation = model_to_evaluate.evaluate(x_eval,
-                                                          y_eval,
-                                                          batch_size=constants.DEFAULT_BATCH_SIZE,
-                                                          verbose=0,
-                                                          )
+        model_evaluation = model_to_evaluate.evaluate(x_eval,
+                                                      y_eval,
+                                                      batch_size=constants.DEFAULT_BATCH_SIZE,
+                                                      verbose=0,
+                                                      )
         return model_evaluation
 
     def update_iterative_results(self, partner_index, fit_history):
@@ -794,7 +721,6 @@ def init_multi_partner_learning_from_scenario(scenario, is_save_data=True):
         scenario.epoch_count,
         scenario.minibatch_count,
         scenario.dataset,
-        scenario.multi_partner_learning_approach,
         scenario.aggregation_weighting,
         scenario.is_early_stopping,
         is_save_data,

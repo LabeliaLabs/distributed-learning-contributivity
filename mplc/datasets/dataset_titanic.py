@@ -10,8 +10,10 @@ from urllib.error import HTTPError, URLError
 
 import numpy as np
 import pandas as pd
+from joblib import dump, load
 from loguru import logger
-from sklearn.linear_model import LogisticRegression
+from sklearn.linear_model import LogisticRegression as skLR
+from sklearn.metrics import log_loss
 from sklearn.model_selection import train_test_split
 
 from .. import constants, dataset
@@ -119,7 +121,7 @@ def load_data():
 def generate_new_model_for_dataset():
     """Return a LogisticRegression Classifier"""
 
-    clf = LogisticRegression(max_iter=10000, warm_start=1, random_state=0)
+    clf = LogisticRegression()
     clf.classes_ = np.array([0, 1])
     clf.metrics_names = ["log_loss", "Accuracy"]  # Mimic Keras's
     return clf
@@ -141,3 +143,74 @@ def train_val_split_global(x, y):
 
 def train_test_split_global(x, y):
     return train_test_split(x, y, test_size=0.1, random_state=42)
+
+
+class LogisticRegression(skLR):
+    def __init__(self):
+        super(LogisticRegression, self).__init__(max_iter=10000, warm_start=1, random_state=0)
+        self.coef_ = None
+        self.intercept_ = None
+
+    def fit(self, x_train,
+            y_train,
+            batch_size,
+            epochs,
+            verbose,
+            validation_data):
+        history = super(LogisticRegression, self).fit(x_train, y_train)
+        [loss, acc] = self.evaluate(x_train, y_train)
+        [val_loss, val_acc] = self.evaluate(*validation_data)
+        # Mimic Keras' history
+        history.history = {
+            'loss': [loss],
+            'accuracy': [acc],
+            'val_loss': [val_loss],
+            'val_accuracy': [val_acc]
+        }
+
+        return history
+
+    def evaluate(self, x_eval, y_eval, **kwargs):
+        if self.coef_ is None:
+            model_evaluation = [0] * 2
+        else:
+            loss = log_loss(y_eval, self.predict(x_eval))  # mimic keras model evaluation
+            accuracy = self.score(x_eval, y_eval)
+            model_evaluation = [loss, accuracy]
+
+        return model_evaluation
+
+    def save_weight(self, path):
+        if self.coef_ is None:
+            raise ValueError('The model has never been fit, coef and intercept are set to None')
+        if '.h5' in path:
+            logger.debug('Automatically switch file format from .h5 to .npy')
+            path.replace('.h5', '.npy')
+        np.save(path, self.get_weights())
+
+    def load_weights(self, path):
+        if '.h5' in path:
+            logger.debug('Automatically switch file format from .h5 to .npy')
+            path.replace('.h5', '.npy')
+        weights = load(path)
+        self.set_weight(weights)
+
+    def get_weights(self):
+        return np.concatenate((self.coef_, self.intercept_.reshape(1, 1)), axis=1)
+
+    def set_weight(self, weights):
+        self.coef_ = weights[0][:-1].reshape(1, -1)
+        self.intercept_ = weights[0][-1].reshape(1)
+
+    def save_model(self, path):
+        if '.h5' in path:
+            logger.debug('Automatically switch file format from .h5 to .joblib')
+            path.replace('.h5', '.joblib')
+        dump(self, path)
+
+    @staticmethod
+    def load_model(path):
+        if '.h5' in path:
+            logger.debug('Automatically switch file format from .h5 to .joblib')
+            path.replace('.h5', '.joblib')
+        return load(path)
