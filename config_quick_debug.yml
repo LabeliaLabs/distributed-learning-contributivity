@@ -17,7 +17,7 @@ scenario_params_list:
    aggregation_weighting:
     - 'uniform'
    methods:
-    - ["Shapley values", "Independent scores"]
+    - ["Federated SBS constant", "Federated SBS linear", "Federated SBS quadratic", "Shapley values", "Independent scores", "TMCS"]
    gradient_updates_per_pass_count:
     - 5
    is_quick_demo:
