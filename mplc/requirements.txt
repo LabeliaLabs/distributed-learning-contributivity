@@ -1,3 +1,4 @@
+joblib==0.15.1
 librosa==0.8.0
 Keras==2.3.1
 matplotlib==3.1.3
