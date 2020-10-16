@@ -219,16 +219,15 @@ class Scenario:
         self.mpl = None
 
         # Multi-partner learning approach
-
-        if (
-            multi_partner_learning_approach
-            in constants.MULTI_PARTNER_LEARNING_APPROACHES
-        ):
-            self.multi_partner_learning_approach = multi_partner_learning_approach
-        else:
-            raise Exception(
-                f"Multi-partner learning approach '{multi_partner_learning_approach}' is not a valid approach."
-            )
+        try:
+            self.multi_partner_learning_approach = constants.MULTI_PARTNER_LEARNING_APPROACHES[
+                multi_partner_learning_approach]
+        except KeyError:
+            text_error = f"Multi-partner learning approach '{multi_partner_learning_approach}' is not a valid "
+            text_error += f"approach. List of supported approach : "
+            for key in constants.MULTI_PARTNER_LEARNING_APPROACHES.keys():
+                text_error += f"{key},"
+            raise KeyError(text_error)
 
         # Define how federated learning aggregation steps are weighted. Toggle between 'uniform' and 'data_volume'
         # Default is 'uniform'
@@ -863,7 +862,7 @@ class Scenario:
         self.mpl = multi_partner_learning.init_multi_partner_learning_from_scenario(
             self, is_save_data=True,
         )
-        self.mpl.compute_test_score()
+        self.mpl.fit()
 
         # ----------------------------------------------------------
         # Instantiate and run the contributivity measurement methods

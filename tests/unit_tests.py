@@ -52,7 +52,7 @@ from mplc import multi_partner_learning, constants, utils
 from mplc.contributivity import Contributivity
 from mplc.datasets import dataset_cifar10 as data_cf
 from mplc.datasets import dataset_mnist as data_mn
-from mplc.multi_partner_learning import MultiPartnerLearning
+from mplc.multi_partner_learning import FederatedAverageLearning
 from mplc.partner import Partner
 from mplc.scenario import Scenario
 
@@ -124,12 +124,11 @@ def create_MultiPartnerLearning(create_Dataset):
     # Create partners_list (this is not a fixture):
     part_list = create_partners_list(data.name, 3)
 
-    mpl = MultiPartnerLearning(
+    mpl = FederatedAverageLearning(
         partners_list=part_list,
         epoch_count=2,
         minibatch_count=2,
         dataset=data,
-        multi_partner_learning_approach="fedavg",
         aggregation_weighting="uniform",
         is_early_stopping=True,
         is_save_data=False,
@@ -275,7 +274,7 @@ class Test_Dataset:
 class Test_Mpl:
     def test_Mpl(self, create_MultiPartnerLearning):
         mpl = create_MultiPartnerLearning
-        assert type(mpl) == MultiPartnerLearning
+        assert type(mpl) == FederatedAverageLearning
 
 
 class Test_Scenario:

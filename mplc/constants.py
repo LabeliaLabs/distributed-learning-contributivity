@@ -2,6 +2,7 @@
 """
 Declaration of constants.
 """
+from . import multi_partner_learning
 
 # ML constants
 DEFAULT_BATCH_SIZE = 256
@@ -54,9 +55,9 @@ SUPPORTED_DATASETS_NAMES = [MNIST, CIFAR10, TITANIC, ESC50, IMDB]
 NUMBER_OF_DOWNLOAD_ATTEMPTS = 3
 
 # Supported multipartner learning approaches
-MULTI_PARTNER_LEARNING_APPROACHES = [
-    "fedavg",
-    "seq-pure",
-    "seq-with-final-agg",
-    "seqavg",
-]
+MULTI_PARTNER_LEARNING_APPROACHES = {
+    "fedavg": multi_partner_learning.FederatedAverageLearning,
+    "seq-pure": multi_partner_learning.SequentialLearning,
+    "seq-with-final-agg": multi_partner_learning.SequentialWithFinalAggLearning,
+    "seqavg": multi_partner_learning.SequentialAverageLearning
+}
