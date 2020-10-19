@@ -36,7 +36,9 @@ class MultiPartnerLearning(ABC):
 
         # Attributes related to partners
         self.partners_list = partners_list
-
+        partners_list = sorted(partners_list, key=operator.attrgetter("id"))
+        logger.info(
+            f"## Preparation of model's training on partners with ids: {['#' + str(p.id) for p in partners_list]}")
         # Attributes related to the data and the model
         self.val_data = (dataset.x_val, dataset.y_val)
         self.test_data = (dataset.x_test, dataset.y_test)
@@ -44,6 +46,7 @@ class MultiPartnerLearning(ABC):
         self.generate_new_model = dataset.generate_new_model
         self.init_model_from = init_model_from
         self.use_saved_weights = use_saved_weights
+
         # Initialize the model
         if self.use_saved_weights:
             logger.info("Init model with previous coalition model")
@@ -244,7 +247,7 @@ class MultiPartnerLearning(ABC):
 
         logger.debug(f"{epoch_nb_str} > {mb_nb_str} > {partner_id_str} > val_acc: {val_acc_str}")
 
-    def update_iterative_results(self, partner_index, fit_history):
+    def update_iterative_results(self, partner_index, fit_history):  # TODO
         """Update the results arrays with results from the collaboration round"""
 
         validation_score = fit_history.history["val_accuracy"][0]
@@ -272,15 +275,6 @@ class MultiPartnerLearning(ABC):
         """Return the score on test data of a final aggregated model trained in a federated way on each partner"""
 
         start = timer()
-
-        partners_list = self.partners_list
-        partners_count = self.partners_count
-
-        # Else, continue onto a federated learning procedure
-        partners_list = sorted(partners_list, key=operator.attrgetter("id"))
-        logger.info(
-            f"## Training and evaluating model on partners with ids: {['#' + str(p.id) for p in partners_list]}")
-
         # Train model (iterate for each epoch and mini-batch)
         while self.epoch_index < self.epoch_count:
 
@@ -291,7 +285,7 @@ class MultiPartnerLearning(ABC):
                                                             batch_size=constants.DEFAULT_BATCH_SIZE,
                                                             verbose=0,
                                                             )
-
+            # TODO pour le partner aggreged
             current_val_loss = model_evaluation_val_data[0]
             current_val_metric = model_evaluation_val_data[1]
 
@@ -320,7 +314,8 @@ class MultiPartnerLearning(ABC):
         self.nb_epochs_done = self.epoch_index + 1
 
         # Plot training history
-        if self.is_save_data:
+        if self.is_save_data:  # TODO on peut surement mettre le tout dans une fonction fin de fit, avec le test et le
+            # reste
             self.save_data()
 
         self.save_final_model_weights(self.model)
@@ -338,6 +333,17 @@ class MultiPartnerLearning(ABC):
     @abstractmethod
     def fit_minibatch(self):
         pass
+
+
+class History():
+    def __init__(self, mpl):
+        """
+
+        :type mpl: MultiPartnerLearning
+        """
+        self.mpl = mpl
+        self.score = None  # Final score evaluted on the test dataset at the end of the training
+        self.history = {partner.id for partner in mpl.partners_list}
 
 
 class SinglePartnerLearning(MultiPartnerLearning):
@@ -610,10 +616,11 @@ class SequentialWithFinalAggLearning(SequentialLearning):
                                                              init_model_from,
                                                              use_saved_weights)
 
-    def fit(self):
-        super(SequentialWithFinalAggLearning, self).fit()
-        self.prepare_aggregation_weights()
-        self.model = self.build_model_from_weights(self.aggregate_model_weights())
+    def fit_epoch(self):
+        super(SequentialWithFinalAggLearning, self).fit_epoch()
+        if self.minibatch_index >= self.minibatch_count and self.epoch_index >= self.epoch_count:
+            self.prepare_aggregation_weights()
+            self.model = self.build_model_from_weights(self.aggregate_model_weights())
 
 
 class SequentialAverageLearning(MultiPartnerLearning):  # TODO maybe this class can inherit from federatedAveraged
