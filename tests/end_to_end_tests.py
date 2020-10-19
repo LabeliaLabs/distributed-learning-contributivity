@@ -40,6 +40,20 @@ class Test_EndToEndTest:
 
         assert min_test_score > 0.95
 
+    def test_titanic(self):
+        """
+        Test performance on titanic dataset
+        """
+        # run test
+        subprocess.run(["python", "main.py", "-f", "tests/config_end_to_end_test_titanic.yml"])
+
+        df = Test_EndToEndTest.get_latest_dataframe("*end_to_end_test*")
+
+        # Extract score
+        min_test_score = df["mpl_test_score"].min()
+
+        assert min_test_score > 0.85
+
     def test_contrib(self):
         """
         Test contrib score
