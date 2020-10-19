@@ -224,9 +224,9 @@ class Scenario:
                 multi_partner_learning_approach]
         except KeyError:
             text_error = f"Multi-partner learning approach '{multi_partner_learning_approach}' is not a valid "
-            text_error += f"approach. List of supported approach : "
+            text_error += "approach. List of supported approach : "
             for key in constants.MULTI_PARTNER_LEARNING_APPROACHES.keys():
-                text_error += f"{key},"
+                text_error += f"{key}, "
             raise KeyError(text_error)
 
         # Define how federated learning aggregation steps are weighted. Toggle between 'uniform' and 'data_volume'
