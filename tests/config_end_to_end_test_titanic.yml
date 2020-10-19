@@ -14,7 +14,7 @@ scenario_params_list:
      - 'fedavg'
      - 'seq-pure'
    epoch_count: 
-     - 10
+     - 3
    minibatch_count: 
      - 10
    gradient_updates_per_pass_count:

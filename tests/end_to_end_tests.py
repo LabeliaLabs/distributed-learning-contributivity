@@ -52,7 +52,7 @@ class Test_EndToEndTest:
         # Extract score
         min_test_score = df["mpl_test_score"].min()
 
-        assert min_test_score > 0.85
+        assert min_test_score > 0.6
 
     def test_contrib(self):
         """
