@@ -36,7 +36,6 @@ class MultiPartnerLearning(ABC):
 
         # Attributes related to partners
         self.partners_list = partners_list
-        self.partners_count = len(partners_list)
 
         # Attributes related to the data and the model
         self.val_data = (dataset.x_val, dataset.y_val)
@@ -79,6 +78,10 @@ class MultiPartnerLearning(ABC):
         self.learning_computation_time = None
 
         logger.debug("MultiPartnerLearning object instantiated.")
+
+    @property
+    def partners_count(self):
+        return len(self.partners_list)
 
     def save_final_model_weights(self, model_to_save):
         """Save final model weights"""
@@ -251,6 +254,20 @@ class MultiPartnerLearning(ABC):
         # At the end of each mini-batch, for each partner, populate the score matrix per partner
         self.score_matrix_per_partner[self.epoch_index, self.minibatch_index, partner_index] = validation_score
 
+    def early_stop(self):
+        if self.is_early_stopping:
+            # Early stopping parameters
+            if (
+                    self.epoch_index >= constants.PATIENCE
+                    and self.loss_collective_models[-1] > self.loss_collective_models[-constants.PATIENCE]
+            ):
+                logger.debug("         -> Early stopping criteria are met, stopping here.")
+                return True
+            else:
+                logger.debug("         -> Early stopping criteria are not met, continuing with training.")
+        else:
+            return False
+
     def fit(self):
         """Return the score on test data of a final aggregated model trained in a federated way on each partner"""
 
@@ -258,12 +275,6 @@ class MultiPartnerLearning(ABC):
 
         partners_list = self.partners_list
         partners_count = self.partners_count
-
-        is_early_stopping = self.is_early_stopping
-
-        # First, if only one partner, fall back to dedicated single partner function
-        if partners_count == 1:
-            raise ValueError('Only one partner is provided. Please use the dedicated SinglePartnerLearning class')
 
         # Else, continue onto a federated learning procedure
         partners_list = sorted(partners_list, key=operator.attrgetter("id"))
@@ -291,16 +302,8 @@ class MultiPartnerLearning(ABC):
                         f"{['%.3f' % elem for elem in model_evaluation_val_data]}")
 
             logger.debug("      Checking if early stopping criteria are met:")
-            if is_early_stopping:
-                # Early stopping parameters
-                if (
-                        self.epoch_index >= constants.PATIENCE
-                        and current_val_loss > self.loss_collective_models[-constants.PATIENCE]
-                ):
-                    logger.debug("         -> Early stopping criteria are met, stopping here.")
-                    break
-                else:
-                    logger.debug("         -> Early stopping criteria are not met, continuing with training.")
+            if self.early_stop():
+                break
             self.epoch_index += 1
 
         # After last epoch or if early stopping was triggered, evaluate model on the global testset
@@ -348,6 +351,8 @@ class SinglePartnerLearning(MultiPartnerLearning):
                  save_folder="",
                  init_model_from="random_initialization",
                  use_saved_weights=False, ):
+        if self.partners_count > 1:
+            raise ValueError('More than one partner is provided')
         super(SinglePartnerLearning, self).__init__([partner],
                                                     epoch_count,
                                                     minibatch_count,
@@ -416,6 +421,9 @@ class FederatedAverageLearning(MultiPartnerLearning):
                  init_model_from="random_initialization",
                  use_saved_weights=False,
                  ):
+        # First, if only one partner, fall back to dedicated single partner function
+        if self.partners_count == 1:
+            raise ValueError('Only one partner is provided. Please use the dedicated SinglePartnerLearning class')
         super(FederatedAverageLearning, self).__init__(partners_list,
                                                        epoch_count,
                                                        minibatch_count,
@@ -512,6 +520,8 @@ class SequentialLearning(MultiPartnerLearning):  # seq-pure
                  init_model_from="random_initialization",
                  use_saved_weights=False,
                  ):
+        if self.partners_count == 1:
+            raise ValueError('Only one partner is provided. Please use the dedicated SinglePartnerLearning class')
         super(SequentialLearning, self).__init__(partners_list,
                                                  epoch_count,
                                                  minibatch_count,
@@ -619,6 +629,8 @@ class SequentialAverageLearning(MultiPartnerLearning):  # TODO maybe this class 
                  init_model_from="random_initialization",
                  use_saved_weights=False,
                  ):
+        if self.partners_count == 1:
+            raise ValueError('Only one partner is provided. Please use the dedicated SinglePartnerLearning class')
         super(SequentialAverageLearning, self).__init__(partners_list,
                                                         epoch_count,
                                                         minibatch_count,
