@@ -871,7 +871,7 @@ class Scenario:
         for method in self.methods:
             logger.info(f"{method}")
             contrib = contributivity.Contributivity(scenario=self)
-            contrib.compute_contributivity(method, self)
+            contrib.compute_contributivity(method)
             self.append_contributivity(contrib)
             logger.info(f"## Evaluating contributivity with {method}: {contrib}")
 

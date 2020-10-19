@@ -1134,7 +1134,6 @@ class Contributivity:
     def compute_contributivity(
             self,
             method_to_compute,
-            current_scenario,
             sv_accuracy=0.01,
             alpha=0.95,
             truncation=0.05,

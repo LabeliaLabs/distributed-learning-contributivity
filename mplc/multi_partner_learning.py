@@ -259,8 +259,6 @@ class MultiPartnerLearning(ABC):
         partners_list = self.partners_list
         partners_count = self.partners_count
 
-        epoch_count = self.epoch_count
-        minibatch_count = self.minibatch_count
         is_early_stopping = self.is_early_stopping
 
         # First, if only one partner, fall back to dedicated single partner function
@@ -273,9 +271,7 @@ class MultiPartnerLearning(ABC):
             f"## Training and evaluating model on partners with ids: {['#' + str(p.id) for p in partners_list]}")
 
         # Train model (iterate for each epoch and mini-batch)
-        for epoch_index in range(epoch_count):
-
-            self.epoch_index = epoch_index
+        while self.epoch_index < self.epoch_count:
 
             self.fit_epoch()  # perform an epoch on the self.model
 
@@ -288,7 +284,7 @@ class MultiPartnerLearning(ABC):
             current_val_loss = model_evaluation_val_data[0]
             current_val_metric = model_evaluation_val_data[1]
 
-            self.score_matrix_collective_models[epoch_index, minibatch_count] = current_val_metric
+            self.score_matrix_collective_models[self.epoch_index, self.minibatch_count] = current_val_metric
             self.loss_collective_models.append(current_val_loss)
 
             logger.info(f"   Model evaluation at the end of the epoch: "
@@ -298,13 +294,14 @@ class MultiPartnerLearning(ABC):
             if is_early_stopping:
                 # Early stopping parameters
                 if (
-                        epoch_index >= constants.PATIENCE
+                        self.epoch_index >= constants.PATIENCE
                         and current_val_loss > self.loss_collective_models[-constants.PATIENCE]
                 ):
                     logger.debug("         -> Early stopping criteria are met, stopping here.")
                     break
                 else:
                     logger.debug("         -> Early stopping criteria are not met, continuing with training.")
+            self.epoch_index += 1
 
         # After last epoch or if early stopping was triggered, evaluate model on the global testset
         logger.info("### Evaluating model on test data:")
@@ -331,8 +328,9 @@ class MultiPartnerLearning(ABC):
 
     @abstractmethod
     def fit_epoch(self):
-        for minibatch_index in range(self.minibatch_count):
+        while self.minibatch_index < self.minibatch_count:
             self.fit_minibatch()
+            self.minibatch_index += 1
 
     @abstractmethod
     def fit_minibatch(self):
@@ -437,11 +435,11 @@ class FederatedAverageLearning(MultiPartnerLearning):
         self.split_in_minibatches()
 
         # Iterate over mini-batches and train
-        for minibatch_index in range(self.minibatch_count):
-            self.minibatch_index = minibatch_index
+        while self.minibatch_index < self.minibatch_count:
             self.fit_minibatch()
+            self.minibatch_index += 1
 
-        # At the end of each epoch,aggregate the models
+            # At the end of each epoch,aggregate the models
         self.prepare_aggregation_weights()
         self.model = self.build_model_from_weights(self.aggregate_model_weights())
 
@@ -451,19 +449,19 @@ class FederatedAverageLearning(MultiPartnerLearning):
         logger.debug("Start new fedavg collaborative round ...")
 
         # Initialize variables
-        epoch_index, minibatch_index = self.epoch_index, self.minibatch_index
-        is_very_first_minibatch = (epoch_index == 0 and minibatch_index == 0)
+        is_very_first_minibatch = (self.epoch_index == 0 and self.minibatch_index == 0)
 
         # Starting model for each partner is the aggregated model from the previous mini-batch iteration
         if is_very_first_minibatch:  # Except for the very first mini-batch where it is a new model
             if self.use_saved_weights:
-                logger.info(f"(fedavg) Very first minibatch of epoch n°{epoch_index}, "
+                logger.info(f"(fedavg) Very first minibatch of epoch n°{self.epoch_index}, "
                             f"init models with previous coalition model for each partner")
             else:
-                logger.info(f"(fedavg) Very first minibatch of epoch n°{epoch_index}, init new models for each partner")
+                logger.info(
+                    f"(fedavg) Very first minibatch of epoch n°{self.epoch_index}, init new models for each partner")
             partners_model_list_for_iteration = self.init_with_models()
         else:
-            logger.info(f"(fedavg) Minibatch n°{minibatch_index} of epoch n°{epoch_index}, "
+            logger.info(f"(fedavg) Minibatch n°{self.minibatch_index} of epoch n°{self.epoch_index}, "
                         f"init aggregated model for each partner with models from previous round")
             partners_model_list_for_iteration = self.init_with_agg_models()  # TODO change that by self.model.copy
 
@@ -474,7 +472,7 @@ class FederatedAverageLearning(MultiPartnerLearning):
                                                                batch_size=constants.DEFAULT_BATCH_SIZE,
                                                                verbose=0,
                                                                )
-        self.score_matrix_collective_models[epoch_index, minibatch_index] = model_evaluation_val_data[1]
+        self.score_matrix_collective_models[self.epoch_index, self.minibatch_index] = model_evaluation_val_data[1]
 
         # Iterate over partners for training each individual model
         for partner_index, partner in enumerate(self.partners_list):
@@ -482,8 +480,8 @@ class FederatedAverageLearning(MultiPartnerLearning):
             partner_model = partners_model_list_for_iteration[partner_index]
 
             # Train on partner local data set
-            history = partner_model.fit(self.minibatched_x_train[partner_index][minibatch_index],
-                                        self.minibatched_y_train[partner_index][minibatch_index],
+            history = partner_model.fit(self.minibatched_x_train[partner_index][self.minibatch_index],
+                                        self.minibatched_y_train[partner_index][self.minibatch_index],
                                         batch_size=partner.batch_size,
                                         verbose=0,
                                         validation_data=self.val_data)
@@ -530,9 +528,9 @@ class SequentialLearning(MultiPartnerLearning):  # seq-pure
         self.split_in_minibatches()
 
         # Iterate over mini-batches and train
-        for minibatch_index in range(self.minibatch_count):
-            self.minibatch_index = minibatch_index
+        while self.minibatch_index < self.minibatch_count:
             self.fit_minibatch()
+            self.minibatch_index += 1
 
     def fit_minibatch(self):
         """Proceed to a collaborative round with a sequential approach"""
@@ -540,8 +538,7 @@ class SequentialLearning(MultiPartnerLearning):  # seq-pure
         logger.debug("Start new sequential collaborative round ...")
 
         # Initialize variables
-        epoch_index, minibatch_index = self.epoch_index, self.minibatch_index
-        is_last_round = minibatch_index == self.minibatch_count - 1
+        is_last_round = self.minibatch_index == self.minibatch_count - 1
 
         # Evaluate and store accuracy of mini-batch start model
         model_evaluation_val_data = self.model.evaluate(self.val_data[0],
@@ -549,7 +546,7 @@ class SequentialLearning(MultiPartnerLearning):  # seq-pure
                                                         batch_size=constants.DEFAULT_BATCH_SIZE,
                                                         verbose=0,
                                                         )
-        self.score_matrix_collective_models[epoch_index, minibatch_index] = model_evaluation_val_data[1]
+        self.score_matrix_collective_models[self.epoch_index, self.minibatch_index] = model_evaluation_val_data[1]
 
         # Iterate over partners for training the model sequentially
         shuffled_indexes = np.random.permutation(self.partners_count)
@@ -559,8 +556,8 @@ class SequentialLearning(MultiPartnerLearning):  # seq-pure
             partner = self.partners_list[partner_index]
 
             # Train on partner local data set
-            history = self.model.fit(self.minibatched_x_train[partner_index][minibatch_index],
-                                     self.minibatched_y_train[partner_index][minibatch_index],
+            history = self.model.fit(self.minibatched_x_train[partner_index][self.minibatch_index],
+                                     self.minibatched_y_train[partner_index][self.minibatch_index],
                                      batch_size=partner.batch_size,
                                      verbose=0,
                                      validation_data=self.val_data)
@@ -638,9 +635,9 @@ class SequentialAverageLearning(MultiPartnerLearning):  # TODO maybe this class 
         self.split_in_minibatches()
 
         # Iterate over mini-batches and train
-        for minibatch_index in range(self.minibatch_count):
-            self.minibatch_index = minibatch_index
+        while self.minibatch_index < self.minibatch_count:
             self.fit_minibatch()
+            self.minibatch_index += 1
 
         # At the end of each epoch,aggregate the models
         self.prepare_aggregation_weights()
@@ -652,19 +649,19 @@ class SequentialAverageLearning(MultiPartnerLearning):  # TODO maybe this class 
         logger.debug("Start new seqavg collaborative round ...")
 
         # Initialize variables
-        epoch_index, minibatch_index = self.epoch_index, self.minibatch_index
-        is_very_first_minibatch = (epoch_index == 0 and minibatch_index == 0)
+        is_very_first_minibatch = (self.epoch_index == 0 and self.minibatch_index == 0)
 
         # Starting model for each partner is the aggregated model from the previous collaborative round
         if is_very_first_minibatch:  # Except for the very first mini-batch where it is a new model
             if self.use_saved_weights:
-                logger.info(f"(seqavg) Very first minibatch of epoch n°{epoch_index}, "
+                logger.info(f"(seqavg) Very first minibatch of epoch n°{self.epoch_index}, "
                             f"init model with previous coalition model for each partner")
             else:
-                logger.info(f"(seqavg) Very first minibatch of epoch n°{epoch_index}, init new model for each partner")
+                logger.info(
+                    f"(seqavg) Very first minibatch of epoch n°{self.epoch_index}, init new model for each partner")
             model_for_round = self.init_with_model()
         else:
-            logger.info(f"(seqavg) Minibatch n°{minibatch_index} of epoch n°{epoch_index}, "
+            logger.info(f"(seqavg) Minibatch n°{self.minibatch_index} of epoch n°{self.epoch_index}, "
                         f"init model by aggregating models from previous round")
             model_for_round = self.init_with_agg_model()
 
@@ -674,7 +671,7 @@ class SequentialAverageLearning(MultiPartnerLearning):  # TODO maybe this class 
                                                              batch_size=constants.DEFAULT_BATCH_SIZE,
                                                              verbose=0,
                                                              )
-        self.score_matrix_collective_models[epoch_index, minibatch_index] = model_evaluation_val_data[1]
+        self.score_matrix_collective_models[self.epoch_index, self.minibatch_index] = model_evaluation_val_data[1]
 
         # Iterate over partners for training each individual model
         shuffled_indexes = np.random.permutation(self.partners_count)
@@ -683,8 +680,8 @@ class SequentialAverageLearning(MultiPartnerLearning):  # TODO maybe this class 
             partner = self.partners_list[partner_index]
 
             # Train on partner local data set
-            history = model_for_round.fit(self.minibatched_x_train[partner_index][minibatch_index],
-                                          self.minibatched_y_train[partner_index][minibatch_index],
+            history = model_for_round.fit(self.minibatched_x_train[partner_index][self.minibatch_index],
+                                          self.minibatched_y_train[partner_index][self.minibatch_index],
                                           batch_size=partner.batch_size,
                                           verbose=0,
                                           validation_data=self.val_data)
