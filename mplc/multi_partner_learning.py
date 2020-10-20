@@ -5,18 +5,17 @@ Functions for model training and evaluation (single-partner and multi-partner ca
 
 import operator
 import os
-import pickle
 from abc import ABC, abstractmethod
 from timeit import default_timer as timer
 
-import matplotlib.pyplot as plt
 import numpy as np
-from keras.backend.tensorflow_backend import clear_session
+from keras.backend import clear_session
 from keras.callbacks import EarlyStopping
 from loguru import logger
 from sklearn.preprocessing import normalize
 
 from . import constants
+from .history import History
 
 
 class MultiPartnerLearning(ABC):
@@ -48,13 +47,11 @@ class MultiPartnerLearning(ABC):
         self.use_saved_weights = use_saved_weights
 
         # Initialize the model
-        if self.use_saved_weights:
-            logger.info("Init model with previous coalition model")
-        else:
-            logger.info("Init new model")
-        self.model = self.init_with_model()
+        model = self.init_model()
+        self.model_weight = model.get_weights()
+        self.metrics_names = model.metrics_names
 
-        # Attributes related to the multi-partner learning approach
+        # Attributes related to the aggregation approach
         self.aggregation_weighting = aggregation_weighting
 
         # Attributes related to iterating at different levels
@@ -64,27 +61,35 @@ class MultiPartnerLearning(ABC):
         self.minibatch_index = 0
         self.is_early_stopping = is_early_stopping
 
-        # Attributes for storing intermediate artefacts and results
+        # Attributes for storing intermediate artefacts
         self.minibatched_x_train = [None] * self.partners_count
         self.minibatched_y_train = [None] * self.partners_count
         self.aggregation_weights = []
         self.models_weights_list = [None] * self.partners_count
         self.scores_last_learning_round = [None] * self.partners_count
-        self.score_matrix_per_partner = np.nan * np.zeros(
-            shape=(self.epoch_count, self.minibatch_count, self.partners_count))
-        self.score_matrix_collective_models = np.nan * np.zeros(shape=(self.epoch_count, self.minibatch_count + 1))
-        self.loss_collective_models = []
-        self.test_score = None
-        self.nb_epochs_done = int
+
+        # Attributes to store results
         self.is_save_data = is_save_data
         self.save_folder = save_folder
         self.learning_computation_time = None
+        self.history = History(self)
 
         logger.debug("MultiPartnerLearning object instantiated.")
 
     @property
     def partners_count(self):
         return len(self.partners_list)
+
+    # TODO
+    # @property
+    # def model()
+    #    model = self.generate_new_model()
+    #    return model.set_weights(self.model_weight)
+
+    def get_model(self):
+        model = self.generate_new_model()
+        model.set_weights(self.model_weight)
+        return model
 
     def save_final_model_weights(self, model_to_save):
         """Save final model weights"""
@@ -98,46 +103,6 @@ class MultiPartnerLearning(ABC):
 
         model_weights = model_to_save.get_weights()
         np.save(os.path.join(model_folder, self.dataset_name + '_final_weights.npy'), model_weights)
-
-    def save_data(self):
-        """Save figures, losses and metrics to disk"""
-
-        history_data = {
-            "loss_collective_models": self.loss_collective_models,
-            "score_matrix_per_partner": self.score_matrix_per_partner,
-            "score_matrix_collective_models": self.score_matrix_collective_models,
-        }
-        with open(self.save_folder / "history_data.p", 'wb') as f:
-            pickle.dump(history_data, f)
-
-        if not os.path.exists(self.save_folder / 'graphs/'):
-            os.makedirs(self.save_folder / 'graphs/')
-        plt.figure()
-        plt.plot(self.loss_collective_models)
-        plt.ylabel("Loss")
-        plt.xlabel("Epoch")
-        plt.savefig(self.save_folder / "graphs/federated_training_loss.png")
-        plt.close()
-
-        plt.figure()
-        plt.plot(self.score_matrix_collective_models[: self.epoch_index + 1, self.minibatch_count])
-        plt.ylabel("Accuracy")
-        plt.xlabel("Epoch")
-        # plt.yscale('log')
-        plt.ylim([0, 1])
-        plt.savefig(self.save_folder / "graphs/federated_training_acc.png")
-        plt.close()
-
-        plt.figure()
-        plt.plot(self.score_matrix_per_partner[: self.epoch_index + 1, self.minibatch_count - 1, ])
-        plt.title("Model accuracy")
-        plt.ylabel("Accuracy")
-        plt.xlabel("Epoch")
-        plt.legend(["partner " + str(i) for i in range(self.partners_count)])
-        # plt.yscale('log')
-        plt.ylim([0, 1])
-        plt.savefig(self.save_folder / "graphs/all_partners.png")
-        plt.close()
 
     def split_in_minibatches(self):
         """Split the dataset passed as argument in mini-batches"""
@@ -214,11 +179,14 @@ class MultiPartnerLearning(ABC):
 
         return partners_model_list
 
-    def init_with_model(self):
+    def init_model(self):
         new_model = self.generate_new_model()
 
         if self.use_saved_weights:
+            logger.info("Init model with previous coalition model")
             new_model.load_weights(self.init_model_from)
+        else:
+            logger.info("Init new model")
 
         return new_model
 
@@ -228,36 +196,16 @@ class MultiPartnerLearning(ABC):
         self.prepare_aggregation_weights()
         return self.build_model_from_weights(self.aggregate_model_weights())
 
-    def init_with_agg_models(self):
+    def init_with_self_model(self):
         """Return a list with the aggregated model duplicated for each partner"""
 
-        self.prepare_aggregation_weights()
         partners_model_list = []
         for _ in self.partners_list:
-            partners_model_list.append(self.build_model_from_weights(self.aggregate_model_weights()))
+            partners_model_list.append(self.get_model())
         return partners_model_list
 
-    def log_collaborative_round_partner_result(self, partner, partner_index, validation_score):
-        """Print the validation accuracy of the collaborative round"""
-
-        epoch_nb_str = f"Epoch {str(self.epoch_index).zfill(2)}/{str(self.epoch_count - 1).zfill(2)}"
-        mb_nb_str = f"Minibatch {str(self.minibatch_index).zfill(2)}/{str(self.minibatch_count - 1).zfill(2)}"
-        partner_id_str = f"Partner id #{partner.id} ({partner_index}/{self.partners_count - 1})"
-        val_acc_str = f"{round(validation_score, 2)}"
-
-        logger.debug(f"{epoch_nb_str} > {mb_nb_str} > {partner_id_str} > val_acc: {val_acc_str}")
-
-    def update_iterative_results(self, partner_index, fit_history):  # TODO
-        """Update the results arrays with results from the collaboration round"""
-
-        validation_score = fit_history.history["val_accuracy"][0]
-
-        self.scores_last_learning_round[partner_index] = validation_score  # TO DO check if coherent
-
-        # At the end of each mini-batch, for each partner, populate the score matrix per partner
-        self.score_matrix_per_partner[self.epoch_index, self.minibatch_index, partner_index] = validation_score
-
     def early_stop(self):
+        logger.debug("      Checking if early stopping criteria are met:")
         if self.is_early_stopping:
             # Early stopping parameters
             if (
@@ -280,70 +228,30 @@ class MultiPartnerLearning(ABC):
 
             self.fit_epoch()  # perform an epoch on the self.model
 
-            model_evaluation_val_data = self.model.evaluate(self.val_data[0],
-                                                            self.val_data[1],
-                                                            batch_size=constants.DEFAULT_BATCH_SIZE,
-                                                            verbose=0,
-                                                            )
-            # TODO pour le partner aggreged
-            current_val_loss = model_evaluation_val_data[0]
-            current_val_metric = model_evaluation_val_data[1]
-
-            self.score_matrix_collective_models[self.epoch_index, self.minibatch_count] = current_val_metric
-            self.loss_collective_models.append(current_val_loss)
-
-            logger.info(f"   Model evaluation at the end of the epoch: "
-                        f"{['%.3f' % elem for elem in model_evaluation_val_data]}")
-
-            logger.debug("      Checking if early stopping criteria are met:")
             if self.early_stop():
                 break
             self.epoch_index += 1
 
         # After last epoch or if early stopping was triggered, evaluate model on the global testset
-        logger.info("### Evaluating model on test data:")
-        model_evaluation_test_data = self.model.evaluate(self.test_data[0],
-                                                         self.test_data[1],
-                                                         batch_size=constants.DEFAULT_BATCH_SIZE,
-                                                         verbose=0,
-                                                         )
+        self.history.log_final_model_perf()
+        # Save the model's weights
+        self.save_final_model_weights(self.get_model())
 
-        logger.info(f"   Model metrics names: {self.model.metrics_names}")
-        logger.info(f"   Model metrics values: {['%.3f' % elem for elem in model_evaluation_test_data]}")
-        self.test_score = model_evaluation_test_data[1]  # 0 is for the loss
-        self.nb_epochs_done = self.epoch_index + 1
-
-        # Plot training history
-        if self.is_save_data:  # TODO on peut surement mettre le tout dans une fonction fin de fit, avec le test et le
-            # reste
-            self.save_data()
-
-        self.save_final_model_weights(self.model)
-
-        logger.info("Training and evaluation on multiple partners: done.")
         end = timer()
         self.learning_computation_time = end - start
+        logger.info(f"Training and evaluation on multiple partners: "
+                    f"done. ({np.round(self.learning_computation_time, 3)} seconds)")
 
     @abstractmethod
     def fit_epoch(self):
         while self.minibatch_index < self.minibatch_count:
             self.fit_minibatch()
             self.minibatch_index += 1
+            self.history.log_model_val_perf()
 
     @abstractmethod
     def fit_minibatch(self):
         pass
-
-
-class History():
-    def __init__(self, mpl):
-        """
-
-        :type mpl: MultiPartnerLearning
-        """
-        self.mpl = mpl
-        self.score = None  # Final score evaluted on the test dataset at the end of the training
-        self.history = {partner.id for partner in mpl.partners_list}
 
 
 class SinglePartnerLearning(MultiPartnerLearning):
@@ -375,7 +283,7 @@ class SinglePartnerLearning(MultiPartnerLearning):
         """Return the score on test data of a model trained on a single partner"""
 
         start = timer()
-        logger.info(f"## Training and evaluating model on partner with id #{self.partner.id}")
+        logger.info(f"## Training and evaluating model on partner with partner_id #{self.partner.id}")
 
         # Set if early stopping if needed
         cb = []
@@ -428,8 +336,6 @@ class FederatedAverageLearning(MultiPartnerLearning):
                  use_saved_weights=False,
                  ):
         # First, if only one partner, fall back to dedicated single partner function
-        if self.partners_count == 1:
-            raise ValueError('Only one partner is provided. Please use the dedicated SinglePartnerLearning class')
         super(FederatedAverageLearning, self).__init__(partners_list,
                                                        epoch_count,
                                                        minibatch_count,
@@ -440,6 +346,8 @@ class FederatedAverageLearning(MultiPartnerLearning):
                                                        save_folder,
                                                        init_model_from,
                                                        use_saved_weights)
+        if self.partners_count == 1:
+            raise ValueError('Only one partner is provided. Please use the dedicated SinglePartnerLearning class')
 
     def fit_epoch(self):
         # Clear Keras' old models
@@ -453,40 +361,23 @@ class FederatedAverageLearning(MultiPartnerLearning):
             self.fit_minibatch()
             self.minibatch_index += 1
 
-            # At the end of each epoch,aggregate the models
-        self.prepare_aggregation_weights()
-        self.model = self.build_model_from_weights(self.aggregate_model_weights())
+            # At the end of each minibatch,aggregate the models
+            self.prepare_aggregation_weights()
+            self.model_weight = self.aggregate_model_weights()
+        self.minibatch_index = 0
 
     def fit_minibatch(self):
         """Proceed to a collaborative round with a federated averaging approach"""
 
         logger.debug("Start new fedavg collaborative round ...")
 
-        # Initialize variables
-        is_very_first_minibatch = (self.epoch_index == 0 and self.minibatch_index == 0)
-
         # Starting model for each partner is the aggregated model from the previous mini-batch iteration
-        if is_very_first_minibatch:  # Except for the very first mini-batch where it is a new model
-            if self.use_saved_weights:
-                logger.info(f"(fedavg) Very first minibatch of epoch n°{self.epoch_index}, "
-                            f"init models with previous coalition model for each partner")
-            else:
-                logger.info(
-                    f"(fedavg) Very first minibatch of epoch n°{self.epoch_index}, init new models for each partner")
-            partners_model_list_for_iteration = self.init_with_models()
-        else:
-            logger.info(f"(fedavg) Minibatch n°{self.minibatch_index} of epoch n°{self.epoch_index}, "
-                        f"init aggregated model for each partner with models from previous round")
-            partners_model_list_for_iteration = self.init_with_agg_models()  # TODO change that by self.model.copy
+        logger.info(f"(fedavg) Minibatch n°{self.minibatch_index} of epoch n°{self.epoch_index}, "
+                    f"init each partner's models with a copy of the global model")
+        partners_model_list_for_iteration = self.init_with_self_model()  # TODO change that by self.model.copy
 
         # Evaluate and store accuracy of mini-batch start model
-        model_to_evaluate = partners_model_list_for_iteration[0]
-        model_evaluation_val_data = model_to_evaluate.evaluate(self.val_data[0],
-                                                               self.val_data[1],
-                                                               batch_size=constants.DEFAULT_BATCH_SIZE,
-                                                               verbose=0,
-                                                               )
-        self.score_matrix_collective_models[self.epoch_index, self.minibatch_index] = model_evaluation_val_data[1]
+        self.history.log_model_val_perf()
 
         # Iterate over partners for training each individual model
         for partner_index, partner in enumerate(self.partners_list):
@@ -501,14 +392,13 @@ class FederatedAverageLearning(MultiPartnerLearning):
                                         validation_data=self.val_data)
 
             # Log results of the round
-            model_evaluation_val_data = history.history['val_accuracy'][0]
-            self.log_collaborative_round_partner_result(partner, partner_index, model_evaluation_val_data)
+            self.history.log_partner_perf(partner.id, partner_index, history.history)
 
             # Update the partner's model in the models' list
             self.save_model_for_partner(partner_model, partner_index)
 
             # Update iterative results
-            self.update_iterative_results(partner_index, history)
+            # TODO the aggregator can need the score
 
         logger.debug("End of fedavg collaborative round.")
 
@@ -526,8 +416,6 @@ class SequentialLearning(MultiPartnerLearning):  # seq-pure
                  init_model_from="random_initialization",
                  use_saved_weights=False,
                  ):
-        if self.partners_count == 1:
-            raise ValueError('Only one partner is provided. Please use the dedicated SinglePartnerLearning class')
         super(SequentialLearning, self).__init__(partners_list,
                                                  epoch_count,
                                                  minibatch_count,
@@ -538,6 +426,8 @@ class SequentialLearning(MultiPartnerLearning):  # seq-pure
                                                  save_folder,
                                                  init_model_from,
                                                  use_saved_weights)
+        if self.partners_count == 1:
+            raise ValueError('Only one partner is provided. Please use the dedicated SinglePartnerLearning class')
 
     def fit_epoch(self):
         # Split the train dataset in mini-batches
@@ -615,6 +505,8 @@ class SequentialWithFinalAggLearning(SequentialLearning):
                                                              save_folder,
                                                              init_model_from,
                                                              use_saved_weights)
+        if self.partners_count == 1:
+            raise ValueError('Only one partner is provided. Please use the dedicated SinglePartnerLearning class')
 
     def fit_epoch(self):
         super(SequentialWithFinalAggLearning, self).fit_epoch()
@@ -636,8 +528,6 @@ class SequentialAverageLearning(MultiPartnerLearning):  # TODO maybe this class 
                  init_model_from="random_initialization",
                  use_saved_weights=False,
                  ):
-        if self.partners_count == 1:
-            raise ValueError('Only one partner is provided. Please use the dedicated SinglePartnerLearning class')
         super(SequentialAverageLearning, self).__init__(partners_list,
                                                         epoch_count,
                                                         minibatch_count,
@@ -648,6 +538,8 @@ class SequentialAverageLearning(MultiPartnerLearning):  # TODO maybe this class 
                                                         save_folder,
                                                         init_model_from,
                                                         use_saved_weights)
+        if self.partners_count == 1:
+            raise ValueError('Only one partner is provided. Please use the dedicated SinglePartnerLearning class')
 
     def fit_epoch(self):
         # Split the train dataset in mini-batches

@@ -289,7 +289,7 @@ class Scenario:
         # Miscellaneous
         # -------------
 
-        # Scenario id and number of repetition
+        # Scenario partner_id and number of repetition
 
         self.scenario_id = scenario_id
         self.n_repeat = repeats_count
@@ -806,11 +806,9 @@ class Scenario:
             "gradient_updates_per_pass_count"
         ] = self.gradient_updates_per_pass_count
         dict_results["is_early_stopping"] = self.is_early_stopping
-        dict_results["mpl_test_score"] = self.mpl.test_score
-        dict_results["mpl_nb_epochs_done"] = self.mpl.nb_epochs_done
-        dict_results[
-            "learning_computation_time_sec"
-        ] = self.mpl.learning_computation_time
+        dict_results["mpl_test_score"] = self.mpl.history.score
+        dict_results["mpl_nb_epochs_done"] = self.mpl.history.nb_epochs_done
+        dict_results["learning_computation_time_sec"] = self.mpl.learning_computation_time
 
         if not self.contributivity_list:
             df = df.append(dict_results, ignore_index=True)
