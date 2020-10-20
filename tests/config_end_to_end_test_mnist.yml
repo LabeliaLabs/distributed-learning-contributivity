@@ -1,4 +1,4 @@
-experiment_name: end_to_end_test
+experiment_name: end_to_end_test_mnist
 n_repeats: 1
 scenario_params_list:
  - dataset_name:
