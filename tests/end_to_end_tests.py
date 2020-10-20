@@ -50,7 +50,7 @@ class Test_EndToEndTest:
         titanic_scenario = Scenario(2, [0.4, 0.6], epoch_count=3, minibatch_count=1, dataset_name='titanic')
         titanic_scenario.run()
 
-        assert np.min(titanic_scenario.mpl.test_score) > 0.8
+        assert np.min(titanic_scenario.mpl.test_score) > 0.65
 
     def test_contrib(self):
         """
