@@ -19,5 +19,3 @@ scenario_params_list:
      - 10
    gradient_updates_per_pass_count:
      - 8
-   dataset_proportion:
-     - 0.2
