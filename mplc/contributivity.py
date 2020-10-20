@@ -944,11 +944,12 @@ class Contributivity:
         self.thetas_history = mpl.history_theta
         self.test_score = mpl.test_score
         self.contributivity_scores = np.exp(- np.array([np.linalg.norm(
-            mpl.history_theta[-1][i] - np.identity(mpl.history_theta[-1][i].shape[0])
+            mpl.history_theta[mpl.nb_epochs_done - 1][i] - np.identity(
+                mpl.history_theta[mpl.nb_epochs_done - 1][i].shape[0])
         ) for i in range(len(self.scenario.partners_list))]))
 
         self.name = "Label Flip"
-        self.scores_std = np.std(self.contributivity_scores)
+        self.scores_std = np.zeros(mpl.partners_count)
         self.normalized_scores = self.contributivity_scores / np.sum(self.contributivity_scores)
         end = timer()
         self.computation_time_sec = end - start
