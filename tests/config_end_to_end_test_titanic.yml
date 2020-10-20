@@ -16,6 +16,6 @@ scenario_params_list:
    epoch_count: 
      - 3
    minibatch_count: 
-     - 10
+     - 4
    gradient_updates_per_pass_count:
      - 8
