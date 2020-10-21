@@ -58,3 +58,50 @@ class Partner:
         idx = np.random.choice(len(self.y_train), size=n, replace=False)
         for i in idx:
             np.random.shuffle(self.y_train[i])
+
+
+class PartnerMpl:
+
+    def __init__(self, partner, mpl):
+        """
+        :type partner: Partner
+        :type mpl: MultiPartnerLearning
+        """
+        self.mpl = mpl
+        self.id = partner.id
+        self.batch_size = partner.batch_size
+        self.minibatch_count = mpl.minibatch_count
+        self.partner_parent = partner
+        self.model_weight = None
+
+        self.minibatched_x_train = np.nan * np.zeros((self.minibatch_count, self.batch_size))
+        self.minibatched_y_train = np.nan * np.zeros((self.minibatch_count, self.batch_size))
+
+    @property
+    def data_volume(self):
+        return len(self.partner_parent.y_train)
+
+    @property
+    def last_round_score(self):
+        return self.mpl.history.history[self.id]['val_accuracy'][self.mpl.epoch_index, self.mpl.minibatch_index]
+
+    @property
+    def history(self):
+        return self.mpl.history.history[self.id]
+
+    def split_minibatches(self):
+        """Split the dataset of the partner parent in mini-batches"""
+
+        # Create the indices where to split
+        split_indices = np.arange(1, self.minibatch_count + 1) / self.minibatch_count
+
+        # Shuffle the dataset
+        idx = np.random.permutation(len(self.partner_parent.x_train))
+        x_train, y_train = self.partner_parent.x_train[idx], self.partner_parent.y_train[idx]
+
+        # Split the samples and labels
+        self.minibatched_x_train = np.split(x_train, (split_indices[:-1] * len(x_train)).astype(int))
+        self.minibatched_y_train = np.split(y_train, (split_indices[:-1] * len(y_train)).astype(int))
+
+    def get_model(self):
+        return self.mpl.build_model_from_weights(self.model_weight)
