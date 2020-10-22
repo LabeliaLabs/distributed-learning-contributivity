@@ -789,7 +789,6 @@ class MplLabelFlip(MultiPartnerLearning):
                 else:
                     logger.debug("         -> Early stopping criteria are not met, continuing with training.")
 
-
         logger.info("### Evaluating model on test data:")
         model_evaluation_test_data = self.evaluate_model(model_to_evaluate, self.test_data)
         logger.info(f"   Model metrics names: {model_to_evaluate.metrics_names}")
