@@ -76,7 +76,7 @@ Finally, with given scenarios and multi-partner learning approaches, we can addr
 $ pip install mplc
 ```
 
-This installs the last packaged version on pypi. If the installation fails on your platform, please open an issue to let us know.
+This installs the last packaged version on PyPI. If the installation fails on your platform, please open an issue to let us know.
 
 ##### Build from Source 
 

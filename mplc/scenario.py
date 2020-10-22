@@ -107,7 +107,7 @@ class Scenario:
         params_known += [
             "methods",
             "multi_partner_learning_approach",
-            "aggregation_weighting",
+            "aggregation",
         ]  # federated learning related
         params_known += [
             "partners_count",
@@ -231,12 +231,10 @@ class Scenario:
 
         # Define how federated learning aggregation steps are weighted. Toggle between 'uniform' and 'data_volume'
         # Default is 'uniform'
-        if aggregation_weighting in ["uniform", "data_volume"]:
-            self.aggregation_weighting = aggregation_weighting
-        else:
-            raise ValueError(
-                f"aggregation_weighting approach'{self.aggregation_weighting}' is not a valid approach. "
-            )
+        try:
+            self.aggregation = constants.AGGREGATORS[aggregation_weighting]
+        except KeyError:
+            raise ValueError(f"aggregation approach'{aggregation_weighting}' is not a valid approach. ")
 
         # Number of epochs, mini-batches and fit_batches in ML training
         self.epoch_count = epoch_count
@@ -364,19 +362,13 @@ class Scenario:
             # Describe scenario
             logger.info("### Description of data scenario configured:")
             logger.info(f"   Number of partners defined: {self.partners_count}")
-            logger.info(
-                f"   Data distribution scenario chosen: {self.samples_split_description}"
-            )
-            logger.info(
-                f"   Multi-partner learning approach: {self.multi_partner_learning_approach}"
-            )
-            logger.info(f"   Weighting option: {self.aggregation_weighting}")
-            logger.info(
-                f"   Iterations parameters: "
-                f"{self.epoch_count} epochs > "
-                f"{self.minibatch_count} mini-batches > "
-                f"{self.gradient_updates_per_pass_count} gradient updates per pass"
-            )
+            logger.info(f"   Data distribution scenario chosen: {self.samples_split_description}")
+            logger.info(f"   Multi-partner learning approach: {self.multi_partner_learning_approach}")
+            logger.info(f"   Weighting option: {self.aggregation}")
+            logger.info(f"   Iterations parameters: "
+                        f"{self.epoch_count} epochs > "
+                        f"{self.minibatch_count} mini-batches > "
+                        f"{self.gradient_updates_per_pass_count} gradient updates per pass")
 
             # Describe data
             logger.info(f"### Data loaded: {self.dataset.name}")
@@ -796,10 +788,8 @@ class Scenario:
         dict_results["final_relative_nb_samples"] = self.final_relative_nb_samples
 
         # Multi-partner learning approach parameters
-        dict_results[
-            "multi_partner_learning_approach"
-        ] = self.multi_partner_learning_approach
-        dict_results["aggregation_weighting"] = self.aggregation_weighting
+        dict_results["multi_partner_learning_approach"] = self.multi_partner_learning_approach
+        dict_results["aggregation"] = self.aggregation
         dict_results["epoch_count"] = self.epoch_count
         dict_results["minibatch_count"] = self.minibatch_count
         dict_results[

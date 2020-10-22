@@ -170,7 +170,7 @@ class LogisticRegression(skLR):
 
         return history
 
-    def evaluate(self, x_eval, y_eval, **kwargs):
+    def evaluate(self, x_eval, y_eval):
         if self.coef_ is None:
             model_evaluation = [0] * 2
         else:

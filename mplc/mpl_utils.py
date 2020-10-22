@@ -1,5 +1,6 @@
 import os
 import pickle
+from abc import ABC
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -9,7 +10,7 @@ from loguru import logger
 from . import constants
 
 
-class History():
+class History:
     def __init__(self, mpl):
         """
         This object tracks the loss and the accuracy of the different models, partner's and global.
@@ -28,7 +29,7 @@ class History():
                                  'val_loss': np.zeros((mpl.epoch_count, mpl.minibatch_count))}
 
     def log_model_val_perf(self):
-        model = self.mpl.get_model()
+        model = self.mpl.build_model()
         hist = model.evaluate(self.mpl.val_data[0],
                               self.mpl.val_data[1],
                               batch_size=constants.DEFAULT_BATCH_SIZE,
@@ -54,7 +55,7 @@ class History():
 
     def log_final_model_perf(self):
         logger.info("### Evaluating model on test data:")
-        model = self.mpl.get_model()
+        model = self.mpl.build_model()
         hist = model.evaluate(self.mpl.test_data[0],
                               self.mpl.test_data[1],
                               batch_size=constants.DEFAULT_BATCH_SIZE,
@@ -66,20 +67,20 @@ class History():
         logger.info(f"   Model metrics values: {['%.3f' % elem for elem in hist]}")
 
     def partners_to_dataframe(self):
-        dict = {'Partner': [],
-                'Epoch': [],
-                'Minibatch': []}
+        temp_dict = {'Partner': [],
+                     'Epoch': [],
+                     'Minibatch': []}
         for key in self.metrics:
-            dict[key] = []
+            temp_dict[key] = []
         for partner_id, hist in [(key, value) for key, value in self.history.items() if key != 'model']:
             for metric, matrix in hist.items():
                 for epoch in range(matrix.shape[0]):
                     for mb in range(matrix.shape[1]):
-                        dict['Partner'].append(partner_id)
-                        dict['Epoch'].append(epoch)
-                        dict['Minibatch'].append(mb)
-                        dict[metric].append(matrix[epoch, mb])
-        return pd.DataFrame.from_dict(dict)
+                        temp_dict['Partner'].append(partner_id)
+                        temp_dict['Epoch'].append(epoch)
+                        temp_dict['Minibatch'].append(mb)
+                        temp_dict[metric].append(matrix[epoch, mb])
+        return pd.DataFrame.from_dict(temp_dict)
 
     def save_data(self):
         """Save figures, losses and metrics to disk"""
@@ -100,7 +101,6 @@ class History():
         plt.plot(self.history['model']['val_accuracy'][:self.mpl.epoch_index + 1, self.mpl.minibatch_count])
         plt.ylabel("Accuracy")
         plt.xlabel("Epoch")
-        # plt.yscale('log')
         plt.ylim([0, 1])
         plt.savefig(self.save_folder / "graphs/federated_training_acc.png")
         plt.close()
@@ -113,7 +113,56 @@ class History():
         plt.ylabel("Accuracy")
         plt.xlabel("Epoch")
         plt.legend()
-        # plt.yscale('log')
         plt.ylim([0, 1])
         plt.savefig(self.save_folder / "graphs/all_partners.png")
         plt.close()
+
+
+class Aggregator(ABC):
+    def __init__(self, mpl):
+        """
+
+        :type mpl: MultiPartnerLearning
+        """
+        self.mpl = mpl
+        self.aggregation_weights = np.zeros(self.mpl.partners_count)
+
+    def aggregate_model_weights(self):
+        """Aggregate model weights from the list of partner's models, with a weighted average"""
+
+        weights_per_layer = list(zip(*[partner.model_weights for partner in self.mpl.partners_list]))
+        new_weights = list()
+
+        for weights_for_layer in weights_per_layer:
+            avg_weights_for_layer = np.average(
+                np.array(weights_for_layer), axis=0, weights=self.aggregation_weights
+            )
+            new_weights.append(list(avg_weights_for_layer))
+
+        return new_weights
+
+
+class UniformAggregator(Aggregator):
+    def __init__(self, mpl):
+        super(UniformAggregator, self).__init__(mpl)
+        self.aggregation_weights = [1 / self.mpl.partners_count] * self.mpl.partners_count
+
+
+class DatavolumeAggregator(Aggregator):
+    def __init__(self, mpl):
+        super(DatavolumeAggregator, self).__init__(mpl)
+        partners_sizes = [partner.data_volume for partner in self.mpl.partners_list]
+        self.aggregation_weights = partners_sizes / np.sum(partners_sizes)
+
+
+class ScoresAggregator(Aggregator):
+    def __init__(self, mpl):
+        super(ScoresAggregator, self).__init__(mpl)
+
+    def prepare_aggregation_weights(self):
+        last_scores = [partner.last_round_score for partner in self.mpl.partners_list]
+        self.aggregation_weights = last_scores / np.sum(last_scores)
+
+    def aggregate_model_weights(self):
+        self.prepare_aggregation_weights()
+        super(ScoresAggregator, self).aggregate_model_weights()

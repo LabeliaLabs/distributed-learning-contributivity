@@ -103,7 +103,7 @@ class Contributivity:
                 self.scenario.epoch_count,
                 self.scenario.minibatch_count,
                 self.scenario.dataset,
-                self.scenario.aggregation_weighting,
+                self.scenario.aggregation,
                 is_early_stopping=True,
                 is_save_data=False,
                 save_folder=self.scenario.save_folder,

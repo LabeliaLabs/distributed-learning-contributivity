@@ -72,7 +72,7 @@ class PartnerMpl:
         self.batch_size = partner_parent.batch_size
         self.minibatch_count = mpl.minibatch_count
         self.partner_parent = partner_parent
-        self.model_weight = None
+        self.model_weights = None
 
         self.minibatched_x_train = np.nan * np.zeros(self.minibatch_count)
         self.minibatched_y_train = np.nan * np.zeros(self.minibatch_count)
@@ -103,5 +103,5 @@ class PartnerMpl:
         self.minibatched_x_train = np.split(x_train, (split_indices[:-1] * len(x_train)).astype(int))
         self.minibatched_y_train = np.split(y_train, (split_indices[:-1] * len(y_train)).astype(int))
 
-    def get_model(self):
-        return self.mpl.build_model_from_weights(self.model_weight)
+    def build_model(self):
+        return self.mpl.build_model_from_weights(self.model_weights)

@@ -156,7 +156,7 @@ def create_Scenario(iterate_dataset_name, iterate_samples_split_option):
         {
             "methods": ["Shapley values", "Independent scores"],
             "multi_partner_learning_approach": "fedavg",
-            "aggregation_weighting": "uniform",
+            "aggregation": "uniform",
         }
     )
     params.update(
