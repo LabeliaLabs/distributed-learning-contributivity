@@ -52,6 +52,7 @@ from mplc import multi_partner_learning, constants, utils
 from mplc.contributivity import Contributivity
 from mplc.datasets import dataset_cifar10 as data_cf
 from mplc.datasets import dataset_mnist as data_mn
+from mplc.mpl_utils import UniformAggregator
 from mplc.multi_partner_learning import FederatedAverageLearning
 from mplc.partner import Partner
 from mplc.scenario import Scenario
@@ -129,7 +130,7 @@ def create_MultiPartnerLearning(create_Dataset):
         epoch_count=2,
         minibatch_count=2,
         dataset=data,
-        aggregation_weighting="uniform",
+        aggregation=UniformAggregator,
         is_early_stopping=True,
         is_save_data=False,
         save_folder="",

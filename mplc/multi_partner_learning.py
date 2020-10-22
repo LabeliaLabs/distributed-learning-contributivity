@@ -47,9 +47,6 @@ class MultiPartnerLearning(ABC):
         self.model_weights = model.get_weights()
         self.metrics_names = model.metrics_names
 
-        # Attributes related to the aggregation approach
-        self.aggregator = aggregation(self)
-
         # Attributes related to iterating at different levels
         self.epoch_count = epoch_count
         self.epoch_index = 0
@@ -62,6 +59,9 @@ class MultiPartnerLearning(ABC):
         partners_list = sorted(partners_list, key=operator.attrgetter("id"))
         logger.info(
             f"## Preparation of model's training on partners with ids: {['#' + str(p.id) for p in partners_list]}")
+
+        # Attributes related to the aggregation approach
+        self.aggregator = aggregation(self)
 
         # Attributes to store results
         self.is_save_data = is_save_data
