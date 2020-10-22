@@ -289,7 +289,7 @@ class Scenario:
         # Miscellaneous
         # -------------
 
-        # Scenario partner_id and number of repetition
+        # Scenario id and number of repetition
 
         self.scenario_id = scenario_id
         self.n_repeat = repeats_count

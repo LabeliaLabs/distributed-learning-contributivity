@@ -62,20 +62,20 @@ class Partner:
 
 class PartnerMpl:
 
-    def __init__(self, partner, mpl):
+    def __init__(self, partner_parent, mpl):
         """
-        :type partner: Partner
+        :type partner_parent: Partner
         :type mpl: MultiPartnerLearning
         """
         self.mpl = mpl
-        self.id = partner.id
-        self.batch_size = partner.batch_size
+        self.id = partner_parent.id
+        self.batch_size = partner_parent.batch_size
         self.minibatch_count = mpl.minibatch_count
-        self.partner_parent = partner
+        self.partner_parent = partner_parent
         self.model_weight = None
 
-        self.minibatched_x_train = np.nan * np.zeros((self.minibatch_count, self.batch_size))
-        self.minibatched_y_train = np.nan * np.zeros((self.minibatch_count, self.batch_size))
+        self.minibatched_x_train = np.nan * np.zeros(self.minibatch_count)
+        self.minibatched_y_train = np.nan * np.zeros(self.minibatch_count)
 
     @property
     def data_volume(self):

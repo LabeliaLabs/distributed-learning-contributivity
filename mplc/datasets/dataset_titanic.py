@@ -182,7 +182,7 @@ class LogisticRegression(skLR):
 
     def save_weight(self, path):
         if self.coef_ is None:
-            raise ValueError('The model has never been fit, coef and intercept are set to None')
+            raise ValueError('Coef and intercept are set to None, it seems the model has not been fit properly.')
         if '.h5' in path:
             logger.debug('Automatically switch file format from .h5 to .npy')
             path.replace('.h5', '.npy')

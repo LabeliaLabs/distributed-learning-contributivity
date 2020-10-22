@@ -390,6 +390,8 @@ class SequentialLearning(MultiPartnerLearning):  # seq-pure
         self.history.log_model_val_perf()
 
         # Iterate over partners for training the model sequentially
+        logger.info(f"(seq-pure Minibatch n°{self.minibatch_index} of epoch n°{self.epoch_index}, "
+                    f"init model with a copy of the global model")
         shuffled_indexes = np.random.permutation(self.partners_count)
         logger.debug(f"(seq) Shuffled order for this sequential collaborative round: {shuffled_indexes}")
 
