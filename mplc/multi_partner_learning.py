@@ -109,7 +109,9 @@ class MultiPartnerLearning:
 
         # Save model score on test data
         self.test_score = model_evaluation_test_data[1]  # 0 is for the loss
-        self.nb_epochs_done = (es.stopped_epoch + 1) if es.stopped_epoch != 0 else self.epoch_count
+        self.loss_collective_models.append(model_evaluation_test_data[0])  # store the loss for PVRL
+        self.nb_epochs_done = (es.stopped_epoch + 1) if (
+                    self.is_early_stopping and es.stopped_epoch != 0) else self.epoch_count
 
         end = timer()
         self.learning_computation_time = end - start
@@ -209,7 +211,6 @@ class MultiPartnerLearning:
         self.nb_epochs_done = self.epoch_index + 1
 
         # Plot training history
-        # TODO: move the data saving and plotting in dedicated functions
         if self.is_save_data:
             self.save_data()
 
