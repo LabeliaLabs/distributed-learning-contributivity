@@ -963,12 +963,12 @@ class Contributivity:
         )
         mpl.compute_test_score()
         previous_loss = mpl.loss_collective_models[-1]
-        t = 0
-        while (t < the_scenario.epoch_count * the_scenario.partners_count or np.sum(
+        PVRL_epoch = 0
+        while (PVRL_epoch < the_scenario.epoch_count * the_scenario.partners_count or np.sum(
                 np.abs(partner_values - previous_partner_values)) / the_scenario.partners_count > epsilon):
-            t += 1
-            logger.info("t:", t)
-            logger.info("partner_values:", partner_values)
+            PVRL_epoch += 1
+            logger.info(f"t:{PVRL_epoch}")
+            logger.info(f"partner_values: {partner_values}")
             # Select the partner / the action
             is_partner_in = np.random.binomial(1, p=partner_values)
             while np.sum(is_partner_in) == 0:
