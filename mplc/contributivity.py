@@ -218,7 +218,7 @@ class Contributivity:
             # Check if the length of the confidence interval
             # is below the value of sv_accuracy*characteristic_all_partners
             while (
-                    t < 100 or t < q ** 2 * v_max / (sv_accuracy) ** 2
+                    t < 100 or t < q ** 2 * v_max / sv_accuracy ** 2
             ):
                 t += 1
 
@@ -937,7 +937,6 @@ class Contributivity:
             end = timer()
             self.computation_time_sec = end - start
 
-
     def flip_label(self):
         start = timer()
         mpl = multi_partner_learning.MplLabelFlip(self.scenario)
@@ -955,7 +954,6 @@ class Contributivity:
         end = timer()
         self.computation_time_sec = end - start
 
-   
     def federated_SBS_linear(self, the_scenario):
         start = timer()
         logger.info(
@@ -1052,7 +1050,6 @@ class Contributivity:
         relative_perf_matrix = score_matrix_performance_rel[first_comp_round_kept: last_comp_round_kept, :]
 
         return relative_perf_matrix
-
 
     def compute_contributivity(
             self,

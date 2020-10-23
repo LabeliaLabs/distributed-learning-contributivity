@@ -370,6 +370,16 @@ The methods are detailed below:
     - `["Federated SBS linear"]` - Linear importance increase between computation rounds (1000th round weights 1000 times first round)
     - `["Federated SBS quadratic"]` - Quadratic importance increase between computation rounds (1000th round weights 10e6 times first round)
     - `["Federated SBS constant"]`- Constant importance increase between computation rounds (1000th round weights same as first round)
+    
+- [In progress] **Label Flipping**
+    
+    Label Flipping method provides a way to detect mislabelled datasets.
+    The main idea is, while training the model, to learn the probability of a label to be flipped in another, inside each partner dataset. 
+    Then, we flip the label of the noisy data to the most likely right label and train the main model on these likely right data.  
+    A contributivity measure can be inferred from partner's matrices of flip-probability, by computing the exponential inverse of the Frobenius distance to the identity. 
+    However this measure is to be handle carefully, the method is not designed specifically for contributivity measurement, but for mislabelled dataset detection. 
+    
+    - `["LFip]` - Label flipping method
 
 
 **Note:** When `methods` is omitted in the config file only the distributed learning is run.  
