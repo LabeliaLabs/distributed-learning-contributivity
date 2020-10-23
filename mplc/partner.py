@@ -3,7 +3,7 @@
 This enables to parameterize the partners that participate to the simulated federated learning scenario.
 """
 
-from random import shuffle
+from random import shuffle, sample
 
 import numpy as np
 
@@ -11,7 +11,6 @@ from . import constants
 
 
 class Partner:
-
     def __init__(self, partner_id):
 
         self.id = partner_id
@@ -32,12 +31,42 @@ class Partner:
         self.y_val = None
         self.y_test = None
 
-    def corrupt_labels(self):
-        for label in self.y_train:
-            idx_max = np.argmax(label)
-            label[idx_max] = 0.0
-            label[idx_max - 1] = 1.0
+    def corrupt_labels(self, proportion_corrupted):
+        if not 0 <= proportion_corrupted <= 1:
+            raise ValueError(
+                f"The proportion of labels to corrupted was {proportion_corrupted} but it must be between 0 and 1."
+            )
 
-    def shuffle_labels(self):
-        for label in self.y_train:
-            label = shuffle(label)
+        # Select the indices where the label will be off-set
+        n = int(len(self.y_train) * proportion_corrupted)
+        idx = sample(list(range(len(self.y_train))), n)
+
+        # Off-set  the labels
+        for i in idx:
+            new_label = self.y_train[i]
+            idx_max = np.argmax(new_label)
+            new_label[idx_max] = 0.0
+            new_label[idx_max - 1] = 1.0
+            self.y_train[i] = new_label
+
+    def shuffle_labels(self, proportion_shuffled):
+        if not 0 <= proportion_shuffled <= 1:
+            raise ValueError(
+                f"The proportion of labels to corrupted was {proportion_shuffled} but it must be between 0 and 1."
+            )
+
+        # Select the indices where the label will be shuffled
+        n = int(len(self.y_train) * proportion_shuffled)
+        idx = sample(list(range(len(self.y_train))), n)
+
+        # Suffle the labels
+        for i in idx:
+            label = self.y_train[i]
+            # Suffle the label
+            new_label = shuffle(label)
+
+            # Force the label to be different
+            while np.all(new_label == label):
+                new_label = shuffle(label)
+
+            self.y_train[i] = new_label

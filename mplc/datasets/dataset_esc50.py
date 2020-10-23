@@ -92,7 +92,7 @@ def load_data():
     path = Path(__file__).resolve().parents[0]
     folder = path / 'local_data' / 'esc50'
     if not folder.is_dir():
-        Path.mkdir(folder)
+        Path.mkdir(folder, parents=True)
         logger.info('ESC-50 dataset not found.')
         _download_data(str(folder))
     else:
