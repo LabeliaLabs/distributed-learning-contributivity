@@ -680,7 +680,6 @@ class MplLabelFlip(MultiPartnerLearning):
         self.history_theta_ = [[None for _ in self.partners_list] for _ in range(self.epoch_count)]
         self.theta = [self.init_flip_proba() for _ in self.partners_list]
         self.theta_ = [None for _ in self.partners_list]
-        # self.labels_map = LabelEncoder().fit_transform([str(y) for y in scenario.dataset.y_train])
 
     def init_flip_proba(self):
         identity = np.identity(self.K)
