@@ -1,5 +1,6 @@
 # Distributed learning contributivity
-# Work in progress
+
+*Work in progress*
 
 ## Summary
 
@@ -72,7 +73,7 @@ You might also want to consider other parameters such as the dataset to be used,
 Currently MNIST, CIFAR10, TITANIC, IMDB and ESC50 are supported. You can use one of those by simply passing the parameter dataset_name to your scenario object
 
 ```python
-from subtest.scenario import Scenario
+from mplc.scenario import Scenario
 my_scenario = Scenario(partners_count=3,
                        amounts_per_partner=[0.2, 0.3, 0.5],
                         dataset_name='mnist')
@@ -83,12 +84,11 @@ Note that this parameter is not mandatory as the MNIST dataset is selected by de
 
 ### Set some ML parameters
 
-Even if default training values are provided, it is strongly advised to adapt these to your case. 
-For instance you can want your training to go for 10 epochs and 3 minibatches per epoch. 
-Please be aware that in a context of multi partner learning, the notion of minibatch is quite differente from the 
+Even if default training values are provided, it is strongly advised to adapt these to your particular use case. 
+For instance you might want your training to go for 10 epochs and 3 minibatches per epoch.
 
 ```python
-from subtest.scenario import Scenario
+from mplc.scenario import Scenario
 my_scenario = Scenario(partners_count=3,
                        amounts_per_partner=[0.2, 0.3, 0.5],
                        dataset_name='mnist',
@@ -148,7 +148,7 @@ Check out our [Tutorial 3](https://github.com/SubstraFoundation/distributed-lear
 To use contributivity measurement tools, you will have to change the parameters of your `Scenario` object
 
 ```python
-from subtest.scenario import Scenario
+from mplc.scenario import Scenario
 my_scenario = Scenario(partners_count=3,
                        amounts_per_partner=[0.2, 0.3, 0.5],
                        dataset_name='mnist',
@@ -350,13 +350,13 @@ The methods are detailed below:
   - `["SMCS"]` **Stratified Monte Carlo Shapley with replacement**
   - `["WR_SMC"]` **Stratified Monte Carlo Shapley without replacement**
 
-- [In progress]  **Partner Valuation by Reinforcement Learning** :
+- **Partner Valuation by Reinforcement Learning** :
 
     With PVRL, we modify the learning process of the main model so it includes a dataset's partner valuation part. Namely we assign weight to each dataset, and at each learning step these weights are used to sample the learning batch. These weight are updated at each learning iteration of the main model using the REINFORCE method.
 
    - `["PVRL"]` **Partner Valuation by Reinforcement Learning** 
     
-- [In progress] **Federated step-by-step**:
+- **Federated step-by-step**:
 
     Federated step by step contributivity methods measure the performance variation on the global validation dataset after each minibatch training - These methods give an estimation on how the model improved on every node.
     The methods are best suited for federated averaging learning.
@@ -434,15 +434,12 @@ For each partner, the local dataset will be split into separated train, validati
 These are not mandatory, by default the local dataset will not be split. 
 Denote that currently, the local validation and test set are not used, but they are available for further developments of multi-partner learning and contributivity measurement approaches.
 
-
-
 ## Contacts, contributions, collaborations
+
 Should you be interested in this open effort and would like to share any question, suggestion or input, you can use the following channels:
 
 - This Github repository (issues or PRs)
 - Substra Foundation's Slack workspace, channel #workgroup-mpl-contributivity
 - Email: hello@substra.org
-- Come meet with us at La Paillasse (Paris, France), Le Palace (Nantes, France) or Studio Iconosquare (Limoges, France)
-
 
 *Work in progress*
