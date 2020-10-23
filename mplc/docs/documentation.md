@@ -27,14 +27,23 @@
 
 ## Prerequisites
 
-At root folder:
+You need to install mplc. All the dependencies will be installed automatically. 
 
 ```bash
-pip install -r requirements.txt
-pip install -i https://test.pypi.org/simple/ subtest==0.0.0.18
+$ pip install mplc
 ```
-The requirements can be found in the subtest folder. The installation will work with the dev-requirements as well, but you will install extra dependencies, as pytest and flake8, which are optional.  
-Note: This is the temporary package for our library.
+
+This installs the last packaged version on pypi.
+
+If you want to install mplc from the repository, make sure that you got the latest version of pip. 
+Then clone the repository, and trigger the installation using pip.
+
+```bash
+$ git clone https://github.com/SubstraFoundation/distributed-learning-contributivity.git
+$ cd distributed-learning-contributivity
+$ pip install -e . 
+```
+
 
 ## Quick start
 
@@ -350,7 +359,7 @@ The methods are detailed below:
   - `["SMCS"]` **Stratified Monte Carlo Shapley with replacement**
   - `["WR_SMC"]` **Stratified Monte Carlo Shapley without replacement**
 
-- **Partner Valuation by Reinforcement Learning** :
+- **Partner Valuation by Reinforcement Learning**:
 
     With PVRL, we modify the learning process of the main model so it includes a dataset's partner valuation part. Namely we assign weight to each dataset, and at each learning step these weights are used to sample the learning batch. These weight are updated at each learning iteration of the main model using the REINFORCE method.
 
