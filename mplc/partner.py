@@ -61,7 +61,6 @@ class Partner:
 
 
 class PartnerMpl:
-
     def __init__(self, partner_parent, mpl):
         """
         :type partner_parent: Partner

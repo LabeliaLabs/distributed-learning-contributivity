@@ -20,7 +20,6 @@ from .partner import PartnerMpl
 
 
 class MultiPartnerLearning(ABC):
-
     def __init__(self,
                  partners_list,
                  epoch_count,
@@ -268,7 +267,6 @@ class FederatedAverageLearning(MultiPartnerLearning):
             self.fit_minibatch()
 
             # At the end of each minibatch,aggregate the models
-
             self.model_weights = self.aggregator.aggregate_model_weights()
         self.minibatch_index = 0
 

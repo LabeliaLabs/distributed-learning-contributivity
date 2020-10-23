@@ -46,8 +46,6 @@ The objective is to compare the contributivity figures obtained with the differe
 
 The public datasets currently supported are: MNIST, CIFAR10, TITANIC, ESC50 and IMDB.
 
-
-
 ### Structure of the library
 
 This library can be broken down into 3 blocks:
@@ -62,7 +60,7 @@ From the start of this work it seemed very useful to be able to simulate differe
 
 #### Multi-partner learning approaches
 
-Once a given scenario configured, it seemed useful to choose how the multi-partner learning would be done. So far, 3 different approaches are implemented (federated averaging, sequential learning, sequential averaging). See related documentation's section [Configuration of the collaborative and distributed learning](./mplc/docs/documentation.md#configuration-of-the-collaborative-and-distributed-learning) for descriptive schemas and additional ML-related parameters.
+Once a given scenario configured, it seemed useful to choose how the multi-partner learning would be done. So far, 3 different approaches are implemented (federated averaging, sequential learning, sequential averaging). See the related documentation section [Configuration of the collaborative and distributed learning](./mplc/docs/documentation.md#configuration-of-the-collaborative-and-distributed-learning) for descriptive schemas and additional ML-related parameters.
 
 #### Contributivity measurement approaches
 
@@ -76,13 +74,13 @@ Finally, with given scenarios and multi-partner learning approaches, we can addr
 $ pip install mplc
 ```
 
-This installs the last packaged version on PyPI. If the installation fails on your platform, please open an issue to let us know.
+This installs the last packaged version on PyPI.
 
 ##### Build from Source 
 
 If you want to install mplc from the repository, make sure that you got the latest version of pip. 
 
-Then clone the repository, and trigger the installation using pip.
+Then clone the repository, and trigger the installation from local sources.
 
 ```bash
 $ git clone https://github.com/SubstraFoundation/distributed-learning-contributivity.git

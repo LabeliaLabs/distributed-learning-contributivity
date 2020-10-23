@@ -234,7 +234,7 @@ class Scenario:
         try:
             self.aggregation = constants.AGGREGATORS[aggregation_weighting]
         except KeyError:
-            raise ValueError(f"aggregation approach'{aggregation_weighting}' is not a valid approach. ")
+            raise ValueError(f"aggregation approach '{aggregation_weighting}' is not a valid approach. ")
 
         # Number of epochs, mini-batches and fit_batches in ML training
         self.epoch_count = epoch_count
