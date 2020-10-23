@@ -18,7 +18,7 @@ from scipy.stats import norm
 from sklearn.linear_model import LinearRegression
 
 
-class krigingModel:
+class KrigingModel:
     def __init__(self, degre, covariance_func):
         self.X = np.array([[]])
         self.Y = np.array([[]])
@@ -82,10 +82,9 @@ class Contributivity:
                 + str(self.first_charac_fct_calls_count)
                 + "\n"
         )
-        # TODO print only 3 digits
-        output += "Contributivity scores: " + str(self.contributivity_scores) + "\n"
-        output += "Std of the contributivity scores: " + str(self.scores_std) + "\n"
-        output += "Normalized contributivity scores: " + str(self.normalized_scores) + "\n"
+        output += f"Contributivity scores: {np.round(self.contributivity_scores, 3)}\n"
+        output += f"Std of the contributivity scores: {np.round(self.scores_std, 3)}\n"
+        output += f"Normalized contributivity scores: {np.round(self.normalized_scores, 3)}\n"
 
         return output
 
@@ -153,7 +152,7 @@ class Contributivity:
         characteristic_function = []
 
         for coalition in coalitions:
-            characteristic_function.append(self.not_twice_characteristic(coalition, self.scenario))
+            characteristic_function.append(self.not_twice_characteristic(coalition))
 
         # Compute Shapley Value for each partner
         # We are using this python implementation: https://github.com/susobhang70/shapley_value
@@ -181,7 +180,7 @@ class Contributivity:
 
         # Train models independently on each partner and append perf. score to list of perf. scores
         for i in range(len(self.scenario.partners_list)):
-            performance_scores.append(self.not_twice_characteristic(np.array([i]), self.scenario))
+            performance_scores.append(self.not_twice_characteristic(np.array([i])))
         self.name = "Independent scores raw"
         self.contributivity_scores = np.array(performance_scores)
         self.scores_std = np.zeros(len(performance_scores))
@@ -636,7 +635,7 @@ class Contributivity:
             # fit the kriging
             models = []
             for k in range(n):
-                model_k = krigingModel(2, cov[k])
+                model_k = KrigingModel(2, cov[k])
                 model_k.fit(datasets[k], outputs[k])
                 models.append(model_k)
             all_models.append(models)
@@ -1217,8 +1216,8 @@ def shapley_value(partners_count, char_func_list):  # Updated by @arthurPignet
         logger.info("No players, exiting")  # Updated by @bowni
         quit()
 
-    tempList = list([i for i in range(n)])
-    N = power_set(tempList)
+    temp_list = list([i for i in range(n)])
+    N = power_set(temp_list)
 
     shapley_values = []
     for i in range(n):

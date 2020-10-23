@@ -121,7 +121,6 @@ class History:
 class Aggregator(ABC):
     def __init__(self, mpl):
         """
-
         :type mpl: MultiPartnerLearning
         """
         self.mpl = mpl
