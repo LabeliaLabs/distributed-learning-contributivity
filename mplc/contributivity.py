@@ -938,7 +938,6 @@ class Contributivity:
             end = timer()
             self.computation_time_sec = end - start
 
-
     # %% compute Partner value by reinforcement learning
 
     def PVRL(self, the_scenario, learning_rate):
@@ -1018,6 +1017,8 @@ class Contributivity:
         self.normalized_scores = self.contributivity_scores / np.sum(
             self.contributivity_scores
         )
+        end = timer()
+        self.computation_time_sec = end - start
 
     def federated_SBS_linear(self, the_scenario):
         start = timer()
