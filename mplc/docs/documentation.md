@@ -309,8 +309,8 @@ All methods available are:
 - "Federated SBS linear"
 - "Federated SBS quadratic"
 - "Federated SBS constant"
+- "LFlip"
 ```
-
 
 The methods are detailed below: 
 - **Independent training**:
@@ -328,6 +328,7 @@ The methods are detailed below:
   The computation of the Shapley Values quickly becomes intensive when the number of players increases. Indeed to compute the increment of a coalition, we need to fit two federated model, and we need to do this for every possible coalitions. If *N* is the number of players we have to do *2^N* fits to compute the Shapley values of each players. As this is quickly too costly, we are considering estimating the Shapley values rather then computing it exactly. The estimation methods considered are:
 
   - `["Shapley values"]` **The exact Shapley Values computation**:  
+
   Given the limited number of data partners we consider at that stage it is possible to actually compute the Shapley Values with a reasonable amount of resources.
 
   - **[Monte-Carlo Shapley](https://arxiv.org/pdf/1902.10275.pdf) approximation** (also called permutation sampling):  
@@ -337,6 +338,7 @@ The methods are detailed below:
   The idea of Truncated Monte-Carlo is that, for a large coalition, the increments of a player are usually small, therefore we can consider their value is null instead of spending computational power to compute it. This reduce the number of times we have to fit a model, but adds a small bias in the estimation.
 
   - `["ITMCS"]` **Interpolated Truncated Monte-Carlo Shapley**:  
+
   This method is an attempt to reduce the bias of the Truncated Monte-Carlo Shapley method. Here we do not consider that the value of an increment of a large coalition is null, but we do a linear interpolation to better approximate its value.
 
 - **Importance sampling methods**:
@@ -346,6 +348,7 @@ The methods are detailed below:
   - `["IS_lin_S"]` **Linear importance sampling**
   - `["IS_reg_S"]` **Regression importance sampling**
   - `["AIS_Kriging_S"]` **Adaptive Kriging importance sampling**
+
 
 - **[Stratified Monte Carlo Shapley](https://arxiv.org/pdf/1904.02868.pdf)**:
 
@@ -376,6 +379,17 @@ The methods are detailed below:
     - `["Federated SBS linear"]` - Linear importance increase between computation rounds (1000th round weights 1000 times first round)
     - `["Federated SBS quadratic"]` - Quadratic importance increase between computation rounds (1000th round weights 10e6 times first round)
     - `["Federated SBS constant"]`- Constant importance increase between computation rounds (1000th round weights same as first round)
+    
+- [In progress] **Label Flipping**
+    
+    Label Flipping method provides a way to detect mislabelled datasets.
+    The main idea is, while training the model, to learn the probability of a label to be flipped in another, inside each partner dataset. 
+    Then, we flip the label of the noisy data to the most likely right label and train the main model on these likely right data.  
+    A contributivity measure can be inferred from partner's matrices of flip-probability, by computing the exponential inverse of the Frobenius distance to the identity. 
+    However this measure is to be handle carefully, the method is not designed specifically for contributivity measurement, but for mislabelled dataset detection. 
+    
+    - `["LFip]` - Label flipping method
+
 
 **Note:** When `methods` is omitted in the config file only the distributed learning is run.  
 Example: `["Shapley values", "Independent scores", "TMCS"]`

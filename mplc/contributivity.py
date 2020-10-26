@@ -219,7 +219,7 @@ class Contributivity:
             # Check if the length of the confidence interval
             # is below the value of sv_accuracy*characteristic_all_partners
             while (
-                    t < 100 or t < q ** 2 * v_max / (sv_accuracy) ** 2
+                    t < 100 or t < q ** 2 * v_max / sv_accuracy ** 2
             ):
                 t += 1
 

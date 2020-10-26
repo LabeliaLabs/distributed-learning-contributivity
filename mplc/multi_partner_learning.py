@@ -681,7 +681,6 @@ class MplLabelFlip(MultiPartnerLearning):
         self.history_theta_ = [[None for _ in self.partners_list] for _ in range(self.epoch_count)]
         self.theta = [self.init_flip_proba() for _ in self.partners_list]
         self.theta_ = [None for _ in self.partners_list]
-        # self.labels_map = LabelEncoder().fit_transform([str(y) for y in scenario.dataset.y_train])
 
     def init_flip_proba(self):
         identity = np.identity(self.K)
@@ -695,6 +694,7 @@ class MplLabelFlip(MultiPartnerLearning):
         logger.info("(LFlip) Very first minibatch, init new models for each partner")
         partners_models = self.init_with_models()
 
+        self.epoch_index = 0
         while self.epoch_index < self.epoch_count:
             self.split_in_minibatches()
             self.minibatch_index = 0
@@ -775,6 +775,8 @@ class MplLabelFlip(MultiPartnerLearning):
             logger.info(f"   Model evaluation at the end of the epoch: "
                         f"{['%.3f' % elem for elem in model_evaluation_val_data]}")
 
+            self.epoch_index += 1
+
             logger.debug("      Checking if early stopping criteria are met:")
             if self.is_early_stopping:
                 # Early stopping parameters
@@ -786,14 +788,13 @@ class MplLabelFlip(MultiPartnerLearning):
                     break
                 else:
                     logger.debug("         -> Early stopping criteria are not met, continuing with training.")
-            self.epoch_index += 1
 
         logger.info("### Evaluating model on test data:")
         model_evaluation_test_data = self.evaluate_model(model_to_evaluate, self.test_data)
         logger.info(f"   Model metrics names: {model_to_evaluate.metrics_names}")
         logger.info(f"   Model metrics values: {['%.3f' % elem for elem in model_evaluation_test_data]}")
         self.test_score = model_evaluation_test_data[1]  # 0 is for the loss
-        self.nb_epochs_done = self.epoch_index + 1
+        self.nb_epochs_done = self.epoch_index
 
         # Plot training history
         if self.is_save_data:
