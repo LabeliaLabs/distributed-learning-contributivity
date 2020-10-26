@@ -174,7 +174,7 @@ class SinglePartnerLearning(MultiPartnerLearning):
                  save_folder="",
                  init_model_from="random_initialization",
                  use_saved_weights=False, ):
-        if self.partners_count > 1:
+        if len(partner) > 1:
             raise ValueError('More than one partner is provided')
         super(SinglePartnerLearning, self).__init__([partner],
                                                     epoch_count,

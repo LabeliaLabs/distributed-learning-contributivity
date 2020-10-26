@@ -17,7 +17,7 @@ from scipy.stats import norm
 from sklearn.linear_model import LinearRegression
 
 from . import multi_partner_learning, constants
-from .multi_partner_learning import FederatedAverageLearning
+from .multi_partner_learning import FederatedAverageLearning, SinglePartnerLearning
 
 
 class KrigingModel:
@@ -99,16 +99,27 @@ class Contributivity:
             # ... so we compute, store, and return characteristic_func(permut)
             self.first_charac_fct_calls_count += 1
             small_partners_list = np.array([self.scenario.partners_list[i] for i in subset])
-            mpl = self.scenario.multi_partner_learning_approach(
-                small_partners_list,
-                self.scenario.epoch_count,
-                self.scenario.minibatch_count,
-                self.scenario.dataset,
-                self.scenario.aggregation,
-                is_early_stopping=True,
-                is_save_data=False,
-                save_folder=self.scenario.save_folder,
-            )
+            if len(small_partners_list) > 1:
+                mpl = self.scenario.multi_partner_learning_approach(
+                    small_partners_list,
+                    self.scenario.epoch_count,
+                    self.scenario.minibatch_count,
+                    self.scenario.dataset,
+                    self.scenario.aggregation,
+                    is_early_stopping=True,
+                    is_save_data=False,
+                    save_folder=self.scenario.save_folder,
+                )
+            else:
+                mpl = SinglePartnerLearning(
+                    small_partners_list[0],
+                    self.scenario.epoch_count,
+                    self.scenario.minibatch_count,
+                    self.scenario.dataset,
+                    is_early_stopping=True,
+                    is_save_data=False,
+                    save_folder=self.scenario.save_folder,
+                )
             mpl.fit()
             self.charac_fct_values[tuple(subset)] = mpl.history.score
             # we add the new increments

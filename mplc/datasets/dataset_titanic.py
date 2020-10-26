@@ -151,12 +151,7 @@ class LogisticRegression(skLR):
         self.coef_ = None
         self.intercept_ = None
 
-    def fit(self, x_train,
-            y_train,
-            batch_size,
-            epochs,
-            verbose,
-            validation_data):
+    def fit(self, x_train, y_train, batch_size, validation_data, epochs=1, verbose=False):
         history = super(LogisticRegression, self).fit(x_train, y_train)
         [loss, acc] = self.evaluate(x_train, y_train)
         [val_loss, val_acc] = self.evaluate(*validation_data)
@@ -170,7 +165,7 @@ class LogisticRegression(skLR):
 
         return history
 
-    def evaluate(self, x_eval, y_eval):
+    def evaluate(self, x_eval, y_eval, **kwargs):
         if self.coef_ is None:
             model_evaluation = [0] * 2
         else:
@@ -180,7 +175,7 @@ class LogisticRegression(skLR):
 
         return model_evaluation
 
-    def save_weight(self, path):
+    def save_weights(self, path):
         if self.coef_ is None:
             raise ValueError('Coef and intercept are set to None, it seems the model has not been fit properly.')
         if '.h5' in path:
@@ -196,11 +191,18 @@ class LogisticRegression(skLR):
         self.set_weight(weights)
 
     def get_weights(self):
-        return np.concatenate((self.coef_, self.intercept_.reshape(1, 1)), axis=1)
+        if self.coef_ is None:
+            return None
+        else:
+            return np.concatenate((self.coef_, self.intercept_.reshape(1, 1)), axis=1)
 
-    def set_weight(self, weights):
-        self.coef_ = weights[0][:-1].reshape(1, -1)
-        self.intercept_ = weights[0][-1].reshape(1)
+    def set_weights(self, weights):
+        if weights is None:
+            self.coef_ = None
+            self.intercept_ = None
+        else:
+            self.coef_ = np.array(weights[0][:-1]).reshape(1, -1)
+            self.intercept_ = np.array(weights[0][-1]).reshape(1)
 
     def save_model(self, path):
         if '.h5' in path:
