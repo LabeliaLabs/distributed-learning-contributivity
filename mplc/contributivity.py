@@ -17,6 +17,9 @@ from loguru import logger
 from scipy.stats import norm
 from sklearn.linear_model import LinearRegression
 
+from . import multi_partner_learning
+from .multi_partner_learning import FederatedAverageLearning
+
 
 class KrigingModel:
     def __init__(self, degre, covariance_func):
@@ -108,7 +111,7 @@ class Contributivity:
                 save_folder=self.scenario.save_folder,
             )
             mpl.fit()
-            self.charac_fct_values[tuple(subset)] = mpl.test_score
+            self.charac_fct_values[tuple(subset)] = mpl.history.score
             # we add the new increments
             for i in range(len(self.scenario.partners_list)):
                 if i in subset:
@@ -936,31 +939,31 @@ class Contributivity:
 
     # %% compute Partner value by reinforcement learning
 
-    def PVRL(self, the_scenario, learning_rate):
+    def PVRL(self, learning_rate):  # TODO refacto
         start = timer()
-        w = np.zeros(the_scenario.partners_count)
+        w = np.zeros(self.scenario.partners_count)
         partner_values = np.exp(w) / (1.0 + np.exp(w))
-        previous_partner_values = np.zeros(the_scenario.partners_count)
+        previous_partner_values = np.zeros(self.scenario.partners_count)
         epsilon = 0.002
 
         mpl = multi_partner_learning.MultiPartnerLearning(
-            the_scenario.partners_list,
+            self.scenario.partners_list,
             1,
-            the_scenario.minibatch_count,
-            the_scenario.dataset,
-            the_scenario.multi_partner_learning_approach,
-            the_scenario.aggregation_weighting,
+            self.scenario.minibatch_count,
+            self.scenario.dataset,
+            self.scenario.multi_partner_learning_approach,
+            self.scenario.aggregation_weighting,
             is_early_stopping=False,
             is_save_data=True,
-            save_folder=the_scenario.save_folder,
+            save_folder=self.scenario.save_folder,
             init_model_from="random_initialization",
             use_saved_weights=False,
         )
         mpl.compute_test_score()
         previous_loss = mpl.loss_collective_models[-1]
         PVRL_epoch = 0
-        while (PVRL_epoch < the_scenario.epoch_count * the_scenario.partners_count or np.sum(
-                np.abs(partner_values - previous_partner_values)) / the_scenario.partners_count > epsilon):
+        while (PVRL_epoch < self.scenario.epoch_count * self.scenario.partners_count or np.sum(
+                np.abs(partner_values - previous_partner_values)) / self.scenario.partners_count > epsilon):
             PVRL_epoch += 1
             logger.info(f"t:{PVRL_epoch}")
             logger.info(f"partner_values: {partner_values}")
@@ -970,21 +973,21 @@ class Contributivity:
                 is_partner_in = np.random.binomial(1, p=partner_values)
 
             # apply one epoch with the selected partner to the previous model/ do the action
-            small_partner_list = [partner for partner, is_in in zip(the_scenario.partners_list, is_partner_in) if
+            small_partner_list = [partner for partner, is_in in zip(self.scenario.partners_list, is_partner_in) if
                                   is_in == 1]
-            weights_folder = pathlib.PurePath.joinpath(pathlib.Path(the_scenario.save_folder), 'model',
-                                                       the_scenario.dataset.name + '_final_weights'
-                                                                                   '.h5')
+            weights_folder = pathlib.PurePath.joinpath(pathlib.Path(self.scenario.save_folder), 'model',
+                                                       self.scenario.dataset.name + '_final_weights'
+                                                                                    '.h5')
             mpl = multi_partner_learning.MultiPartnerLearning(
                 small_partner_list,
                 1,
-                the_scenario.minibatch_count,
-                the_scenario.dataset,
-                the_scenario.multi_partner_learning_approach,
-                the_scenario.aggregation_weighting,
+                self.scenario.minibatch_count,
+                self.scenario.dataset,
+                self.scenario.multi_partner_learning_approach,
+                self.scenario.aggregation_weighting,
                 is_early_stopping=False,
                 is_save_data=True,
-                save_folder=the_scenario.save_folder,
+                save_folder=self.scenario.save_folder,
                 init_model_from=weights_folder,
                 use_saved_weights=True,
             )
@@ -995,8 +998,8 @@ class Contributivity:
             dp_dw = np.exp(w) / (1 + np.exp(w)) ** 2
             prodp = np.prod(partner_values)
             # Update the weight according to the REINFORCE method
-            new_w = np.zeros(the_scenario.partners_count)
-            for i in range(the_scenario.partners_count):
+            new_w = np.zeros(self.scenario.partners_count)
+            for i in range(self.scenario.partners_count):
                 grad = is_partner_in[i] / partner_values[i] - (1.0 - is_partner_in[i]) / (
                         1.0 - partner_values[i]) - prodp / (1.0 - prodp) / (1.0 - partner_values[i])
                 new_w[i] = w[i] + learning_rate * G * dp_dw[i] * grad
@@ -1009,20 +1012,20 @@ class Contributivity:
         self.name = "PVRL"
         print(f"PVRL: the final accuracy is  {mpl.test_score}")
         self.contributivity_scores = partner_values
-        self.scores_std = np.zeros(the_scenario.partners_count)
+        self.scores_std = np.zeros(self.scenario.partners_count)
         self.normalized_scores = self.contributivity_scores / np.sum(
             self.contributivity_scores
         )
         end = timer()
         self.computation_time_sec = end - start
 
-    def federated_SBS_linear(self, the_scenario):
+    def federated_SBS_linear(self):
         start = timer()
         logger.info(
             "# Launching computation of perf. scores of linear "
             "performance increase compared to previous collective model")
 
-        relative_perf_matrix = self.compute_relative_perf_matrix(the_scenario)
+        relative_perf_matrix = self.compute_relative_perf_matrix()
         comp_rounds_kept = relative_perf_matrix.shape[0]
 
         # Calculate contributivity score with linear importance function
@@ -1038,13 +1041,13 @@ class Contributivity:
         end = timer()
         self.computation_time_sec = end - start
 
-    def federated_SBS_quadratic(self, the_scenario):
+    def federated_SBS_quadratic(self):
         start = timer()
         logger.info(
             "# Launching computation of perf. scores of"
             "quadratic performance increase compared to previous collective model")
 
-        relative_perf_matrix = self.compute_relative_perf_matrix(the_scenario)
+        relative_perf_matrix = self.compute_relative_perf_matrix()
         comp_rounds_kept = relative_perf_matrix.shape[0]
 
         # Calculate contributivity score with quadratic importance function
@@ -1060,13 +1063,13 @@ class Contributivity:
         end = timer()
         self.computation_time_sec = end - start
 
-    def federated_SBS_constant(self, the_scenario):
+    def federated_SBS_constant(self):
         start = timer()
         logger.info(
             "# Launching computation of perf. scores of constant"
             "performance increase compared to previous collective model")
 
-        relative_perf_matrix = self.compute_relative_perf_matrix(the_scenario)
+        relative_perf_matrix = self.compute_relative_perf_matrix()
 
         # Calculate contributivity score as average of the relative performance for each round for each partner
         contributivity_scores = np.nanmean(relative_perf_matrix, axis=0)
@@ -1080,16 +1083,21 @@ class Contributivity:
         end = timer()
         self.computation_time_sec = end - start
 
-    def compute_relative_perf_matrix(self, the_scenario):
+    def compute_relative_perf_matrix(self):
 
         # Define proportion of initial and final computation rounds to skip (default 10% each)
         init_comp_rounds_skipped = 0.1
         final_comp_rounds_skipped = 0.1
 
         # Fetch score matrices from computation and scenario characteristics
-        multi_partner_learning = the_scenario.mpl
-        score_matrix_collective_models = multi_partner_learning.score_matrix_collective_models[:, 1:]
-        score_matrix_per_partner = multi_partner_learning.score_matrix_per_partner
+        multi_partner_learning = self.scenario.mpl
+        score_matrix_collective_models = multi_partner_learning.history.history['model']['val_accuracy'][:, 1:]
+        partner_score_matrix = [value['val_accuracy'] for key, value in multi_partner_learning.history.history.items()
+                                if key != 'model']
+        # the shape of the matrix created is (partners_count, epoch_count, minibatch_count).
+        score_matrix_per_partner = np.swapaxes(np.swapaxes(partner_score_matrix, 0, 2), 0, 1)
+        # We swap twice the axis to end with a matrix with shape (epoch_count, minibatch_count, partners_count)
+
         partners_count = multi_partner_learning.partners_count
         epoch_count = multi_partner_learning.epoch_count
         minibatch_count = multi_partner_learning.minibatch_count
@@ -1113,12 +1121,12 @@ class Contributivity:
 
         return relative_perf_matrix
 
-    def flip_label(self):
+    def flip_label(self):  # TOD refacto
         start = timer()
         mpl = multi_partner_learning.MplLabelFlip(self.scenario)
         mpl.fit()
         self.thetas_history = mpl.history_theta
-        self.test_score = mpl.test_score
+        self.score = mpl.history.score
         self.contributivity_scores = np.exp(- np.array([np.linalg.norm(
             mpl.history_theta[mpl.nb_epochs_done - 1][i] - np.identity(
                 mpl.history_theta[mpl.nb_epochs_done - 1][i].shape[0])
@@ -1172,27 +1180,25 @@ class Contributivity:
             self.without_replacment_SMC(sv_accuracy=sv_accuracy, alpha=alpha)
         elif method_to_compute == "Federated SBS linear":
             # Contributivity 10: step by step increments with linear importance increase
-            if current_scenario.multi_partner_learning_approach != "fedavg":
+            if self.scenario.multi_partner_learning_approach != FederatedAverageLearning:
                 logger.warning("Step by step linear contributivity method is only suited for federated "
                                "averaging learning approach")
-            self.federated_SBS_linear(current_scenario)
+            self.federated_SBS_linear()
         elif method_to_compute == "Federated SBS quadratic":
             # Contributivity 11: step by step increments with quadratic importance increase
-            if current_scenario.multi_partner_learning_approach != "fedavg":
+            if self.scenario.multi_partner_learning_approach != FederatedAverageLearning:
                 logger.warning("Step by step quadratic contributivity method is only suited for federated "
                                "averaging learning approach")
-            self.federated_SBS_quadratic(current_scenario)
+            self.federated_SBS_quadratic()
         elif method_to_compute == "Federated SBS constant":
             # Contributivity 12: step by step increments with constant importance
-            if current_scenario.multi_partner_learning_approach != "fedavg":
+            if self.scenario.multi_partner_learning_approach != FederatedAverageLearning:
                 logger.warning("Step by step constant contributivity method is only suited for federated "
                                "averaging learning approach")
-            self.federated_SBS_constant(current_scenario)
+            self.federated_SBS_constant()
         elif method_to_compute == "PVRL":
             # Contributivity 10: Partner valuation by reinforcement learning
-            self.PVRL(
-                current_scenario, learning_rate=0.2
-            )
+            self.PVRL(learning_rate=0.2)
         elif method_to_compute == "LFlip":
             self.flip_label()
         else:

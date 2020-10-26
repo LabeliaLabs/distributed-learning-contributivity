@@ -484,7 +484,7 @@ def init_multi_partner_learning_from_scenario(scenario, is_save_data=True):
     return mpl
 
 
-class MplLabelFlip(MultiPartnerLearning):
+class MplLabelFlip(MultiPartnerLearning):  # TODO refacto
 
     def __init__(self, scenario, is_save_data=False, epsilon=0.01):
         super().__init__(
