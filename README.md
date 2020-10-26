@@ -90,6 +90,31 @@ $ cd distributed-learning-contributivity
 $ pip install -e . 
 ```
 
+### Installation 
+
+##### Using pip
+
+```bash
+
+$ pip install mplc
+
+```
+
+This installs the last packaged version on pypi. If your platform doesn't have a ready package, please open an issue to let us know.
+
+##### Build from Source 
+
+If you want to install mplc from the repository, make sure that you got the latest version of pip. 
+
+Then clone the repository, and trigger the installation using pip.
+
+```bash
+
+$ git clone https://github.com/SubstraFoundation/distributed-learning-contributivity.git
+$ cd distributed-learning-contributivity
+$ pip install -e . 
+
+```
 ### Run an experiment
 
 There are two ways to run an experiment. You can first use the mplc library in a notebook, or regular python script, as it is demonstrated in the [tutorials](./notebooks/tutorials).
