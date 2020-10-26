@@ -724,7 +724,6 @@ class MplLabelFlip(MultiPartnerLearning):
 
                     self.theta[partner_index] = self.theta_[partner_index].T.dot(y_batch)
                     self.theta[partner_index] = normalize(self.theta[partner_index], axis=1, norm='l1')
-                    logger.debug(f"(LFlip) theta : {self.theta[partner_index]}")
                     self.history_theta[self.epoch_index][partner_index] = self.theta[partner_index]
 
                     self.theta_[partner_index] = predictions

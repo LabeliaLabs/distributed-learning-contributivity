@@ -938,6 +938,7 @@ class Contributivity:
             end = timer()
             self.computation_time_sec = end - start
 
+
     # %% compute Partner value by reinforcement learning
 
     def PVRL(self, the_scenario, learning_rate):
@@ -1017,8 +1018,6 @@ class Contributivity:
         self.normalized_scores = self.contributivity_scores / np.sum(
             self.contributivity_scores
         )
-        end = timer()
-        self.computation_time_sec = end - start
 
     def federated_SBS_linear(self, the_scenario):
         start = timer()
@@ -1117,14 +1116,15 @@ class Contributivity:
 
         return relative_perf_matrix
 
-    def Flip_label(self):
+    def flip_label(self):
         start = timer()
         mpl = multi_partner_learning.MplLabelFlip(self.scenario)
         mpl.fit()
         self.thetas_history = mpl.history_theta
         self.test_score = mpl.test_score
         self.contributivity_scores = np.exp(- np.array([np.linalg.norm(
-            mpl.history_theta[mpl.nb_epochs_done-1][i] - np.identity(mpl.history_theta[mpl.nb_epochs_done-1][i].shape[0])
+            mpl.history_theta[mpl.nb_epochs_done - 1][i] - np.identity(
+                mpl.history_theta[mpl.nb_epochs_done - 1][i].shape[0])
         ) for i in range(len(self.scenario.partners_list))]))
 
         self.name = "Label Flip"
@@ -1198,7 +1198,7 @@ class Contributivity:
                 current_scenario, learning_rate=0.2
             )
         elif method_to_compute == "LFlip":
-            self.Flip_label()
+            self.flip_label()
         else:
             logger.warning("Unrecognized name of method, statement ignored!")
 

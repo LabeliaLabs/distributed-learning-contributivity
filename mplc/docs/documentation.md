@@ -349,7 +349,6 @@ The methods are detailed below:
   - `["IS_reg_S"]` **Regression importance sampling**
   - `["AIS_Kriging_S"]` **Adaptive Kriging importance sampling**
 
-
 - **[Stratified Monte Carlo Shapley](https://arxiv.org/pdf/1904.02868.pdf)**:
 
   "Stratification and with proper allocation" is another method to reduce the number of sampled increments in the Monte-Carlo method while keeping the same accuracy. There are two ideas behind this method:
@@ -389,7 +388,6 @@ The methods are detailed below:
     However this measure is to be handle carefully, the method is not designed specifically for contributivity measurement, but for mislabelled dataset detection. 
     
     - `["LFip]` - Label flipping method
-
 
 **Note:** When `methods` is omitted in the config file only the distributed learning is run.  
 Example: `["Shapley values", "Independent scores", "TMCS"]`
