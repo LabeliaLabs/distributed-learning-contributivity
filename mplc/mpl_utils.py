@@ -1,6 +1,7 @@
 import os
 import pickle
 from abc import ABC
+from copy import deepcopy
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -24,7 +25,7 @@ class History:
         self.score = None  # Final score evaluated on the test dataset at the end of the training
         self.metrics = ['val_accuracy', 'val_loss', 'loss', 'accuracy']
         tab = {key: np.nan * np.zeros((mpl.epoch_count, mpl.minibatch_count)) for key in self.metrics}
-        self.history = {partner.id: tab.copy() for partner in mpl.partners_list}
+        self.history = {partner.id: deepcopy(tab) for partner in mpl.partners_list}
         self.history['model'] = {'val_accuracy': np.zeros((mpl.epoch_count, mpl.minibatch_count)),
                                  'val_loss': np.zeros((mpl.epoch_count, mpl.minibatch_count))}
 

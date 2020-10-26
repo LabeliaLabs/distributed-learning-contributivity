@@ -7,7 +7,6 @@ from __future__ import print_function
 
 import bisect
 import datetime
-import pathlib
 from itertools import combinations
 from math import factorial
 from timeit import default_timer as timer
@@ -17,7 +16,7 @@ from loguru import logger
 from scipy.stats import norm
 from sklearn.linear_model import LinearRegression
 
-from . import multi_partner_learning
+from . import multi_partner_learning, constants
 from .multi_partner_learning import FederatedAverageLearning
 
 
@@ -946,53 +945,41 @@ class Contributivity:
         previous_partner_values = np.zeros(self.scenario.partners_count)
         epsilon = 0.002
 
-        mpl = multi_partner_learning.MultiPartnerLearning(
+        mpl = self.scenario.multi_partner_learning_approach(
             self.scenario.partners_list,
-            1,
+            self.scenario.epoch_count,
             self.scenario.minibatch_count,
             self.scenario.dataset,
-            self.scenario.multi_partner_learning_approach,
-            self.scenario.aggregation_weighting,
+            self.scenario.aggregation,
             is_early_stopping=False,
-            is_save_data=True,
-            save_folder=self.scenario.save_folder,
             init_model_from="random_initialization",
             use_saved_weights=False,
         )
-        mpl.compute_test_score()
-        previous_loss = mpl.loss_collective_models[-1]
-        PVRL_epoch = 0
-        while (PVRL_epoch < self.scenario.epoch_count * self.scenario.partners_count or np.sum(
-                np.abs(partner_values - previous_partner_values)) / self.scenario.partners_count > epsilon):
-            PVRL_epoch += 1
-            logger.info(f"t:{PVRL_epoch}")
-            logger.info(f"partner_values: {partner_values}")
-            # Select the partner / the action
-            is_partner_in = np.random.binomial(1, p=partner_values)
-            while np.sum(is_partner_in) == 0:
+        full_partners_list = mpl.partners_list  # this list must be a list of PartnerMpl
+        initial_model = mpl.build_model()
+        hist = initial_model.evaluate(mpl.val_data[0],
+                                      mpl.val_data[1],
+                                      batch_size=constants.DEFAULT_BATCH_SIZE,
+                                      verbose=0,
+                                      )
+        previous_loss = hist[0]
+        while (mpl.epoch_index < mpl.epoch_count):
+            # or (np.sum(np.abs(partner_values - previous_partner_values)) / self.scenario.partners_count > epsilon):
+
+            # Select the partners / the action
+            mpl.partners_list = []
+            while mpl.partners_count <= 1:
                 is_partner_in = np.random.binomial(1, p=partner_values)
+                mpl.partners_list = [partner for partner, is_in in zip(full_partners_list, is_partner_in) if
+                                     is_in == 1]
+            logger.info(f"Partner_values: {partner_values}")
+            logger.info(f"Partners selected for the next epoch : {[p.id for p in mpl.partners_list]}")
 
             # apply one epoch with the selected partner to the previous model/ do the action
-            small_partner_list = [partner for partner, is_in in zip(self.scenario.partners_list, is_partner_in) if
-                                  is_in == 1]
-            weights_folder = pathlib.PurePath.joinpath(pathlib.Path(self.scenario.save_folder), 'model',
-                                                       self.scenario.dataset.name + '_final_weights'
-                                                                                    '.h5')
-            mpl = multi_partner_learning.MultiPartnerLearning(
-                small_partner_list,
-                1,
-                self.scenario.minibatch_count,
-                self.scenario.dataset,
-                self.scenario.multi_partner_learning_approach,
-                self.scenario.aggregation_weighting,
-                is_early_stopping=False,
-                is_save_data=True,
-                save_folder=self.scenario.save_folder,
-                init_model_from=weights_folder,
-                use_saved_weights=True,
-            )
-            mpl.compute_test_score()
-            loss = mpl.loss_collective_models[-1]
+            mpl.aggregator = self.scenario.aggregation(mpl)  # we have to reset the weight of aggregation
+            mpl.fit_epoch()
+            loss = mpl.history.history['model']['val_loss'][mpl.epoch_index, -1]
+            mpl.epoch_index += 1
 
             G = - loss + previous_loss
             dp_dw = np.exp(w) / (1 + np.exp(w)) ** 2
@@ -1005,12 +992,17 @@ class Contributivity:
                 new_w[i] = w[i] + learning_rate * G * dp_dw[i] * grad
             w = new_w
             # Update values before the next round
-            previous_partner_values = partner_values
             partner_values = np.exp(w) / (1.0 + np.exp(w))
             previous_loss = loss
 
+        mpl.history.log_final_model_perf()
+        mpl.save_final_model()
+        end = timer()
+        mpl.learning_computation_time = end - start
+        logger.info(f"Training and evaluation on multiple partners: "
+                    f"done. ({np.round(mpl.learning_computation_time, 3)} seconds)")
+
         self.name = "PVRL"
-        print(f"PVRL: the final accuracy is  {mpl.test_score}")
         self.contributivity_scores = partner_values
         self.scores_std = np.zeros(self.scenario.partners_count)
         self.normalized_scores = self.contributivity_scores / np.sum(
