@@ -46,6 +46,8 @@ The objective is to compare the contributivity figures obtained with the differe
 
 The public datasets currently supported are: MNIST, CIFAR10, TITANIC, ESC50 and IMDB.
 
+
+
 ### Structure of the library
 
 This library can be broken down into 3 blocks:
@@ -60,12 +62,59 @@ From the start of this work it seemed very useful to be able to simulate differe
 
 #### Multi-partner learning approaches
 
-Once a given scenario configured, it seemed useful to choose how the multi-partner learning would be done. So far, 3 different approaches are implemented (federated averaging, sequential learning, sequential averaging). See below section [Configuration of the collaborative and distributed learning](./mplc/docs/documentation.md#configuration-of-the-collaborative-and-distributed-learning) for descriptive schemas and additional ML-related parameters.
+Once a given scenario configured, it seemed useful to choose how the multi-partner learning would be done. So far, 3 different approaches are implemented (federated averaging, sequential learning, sequential averaging). See related documentation's section [Configuration of the collaborative and distributed learning](./mplc/docs/documentation.md#configuration-of-the-collaborative-and-distributed-learning) for descriptive schemas and additional ML-related parameters.
 
 #### Contributivity measurement approaches
 
-Finally, with given scenarios and multi-partner learning approaches, we can address contributivity measurement approaches. See below sections [Configuration of contributivity measurement methods to be tested](./mplc/docs/documentation.md#scenario-parameters) and [Contributivity measurement approaches studied and implemented](./mplc/docs/documentation.md#configuration-of-contributivity-measurement-methods-to-be-tested).
+Finally, with given scenarios and multi-partner learning approaches, we can address contributivity measurement approaches. See documentation's sections [Configuration of contributivity measurement methods to be tested](./mplc/docs/documentation.md#scenario-parameters) and [Contributivity measurement approaches studied and implemented](./mplc/docs/documentation.md#configuration-of-contributivity-measurement-methods-to-be-tested).
 
+### Installation 
+
+##### Using pip
+
+```bash
+$ pip install mplc
+```
+
+This installs the last packaged version on pypi. If the installation fails on your platform, please open an issue to let us know.
+
+##### Build from Source 
+
+If you want to install mplc from the repository, make sure that you got the latest version of pip. 
+
+Then clone the repository, and trigger the installation using pip.
+
+```bash
+$ git clone https://github.com/SubstraFoundation/distributed-learning-contributivity.git
+$ cd distributed-learning-contributivity
+$ pip install -e . 
+```
+
+### Installation 
+
+##### Using pip
+
+```bash
+
+$ pip install mplc
+
+```
+
+This installs the last packaged version on pypi. If your platform doesn't have a ready package, please open an issue to let us know.
+
+##### Build from Source 
+
+If you want to install mplc from the repository, make sure that you got the latest version of pip. 
+
+Then clone the repository, and trigger the installation using pip.
+
+```bash
+
+$ git clone https://github.com/SubstraFoundation/distributed-learning-contributivity.git
+$ cd distributed-learning-contributivity
+$ pip install -e . 
+
+```
 ### Run an experiment
 
 There are two ways to run an experiment. You can first use the mplc library in a notebook, or regular python script, as it is demonstrated in the [tutorials](./notebooks/tutorials).
