@@ -1128,11 +1128,11 @@ class Contributivity:
         start = timer()
         mpl = multi_partner_learning.MplLabelFlip(self.scenario)
         mpl.fit()
-        self.thetas_history = mpl.history_theta
+        self.thetas_history = mpl.history.theta
         self.score = mpl.history.score
         self.contributivity_scores = np.exp(- np.array([np.linalg.norm(
-            mpl.history_theta[mpl.nb_epochs_done - 1][i] - np.identity(
-                mpl.history_theta[mpl.nb_epochs_done - 1][i].shape[0])
+            mpl.history.theta[mpl.epoch_index - 1][i] - np.identity(
+                mpl.history.theta[mpl.epoch_index - 1][i].shape[0])
         ) for i in range(len(self.scenario.partners_list))]))
 
         self.name = "Label Flip"
