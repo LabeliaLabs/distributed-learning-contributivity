@@ -949,12 +949,12 @@ class Contributivity:
 
     # %% compute Partner value by reinforcement learning
 
-    def PVRL(self, learning_rate):  # TODO refacto
+    def PVRL(self, learning_rate):
         start = timer()
         w = np.zeros(self.scenario.partners_count)
         partner_values = np.exp(w) / (1.0 + np.exp(w))
-        previous_partner_values = np.zeros(self.scenario.partners_count)
-        epsilon = 0.002
+        # previous_partner_values = np.zeros(self.scenario.partners_count)
+        # epsilon = 0.002
 
         mpl = self.scenario.multi_partner_learning_approach(
             self.scenario.partners_list,

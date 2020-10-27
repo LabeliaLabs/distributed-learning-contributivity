@@ -174,7 +174,7 @@ class SinglePartnerLearning(MultiPartnerLearning):
                  save_folder="",
                  init_model_from="random_initialization",
                  use_saved_weights=False, ):
-        if len(partner) > 1:
+        if type(partner) == list:
             raise ValueError('More than one partner is provided')
         super(SinglePartnerLearning, self).__init__([partner],
                                                     epoch_count,
@@ -484,16 +484,14 @@ def init_multi_partner_learning_from_scenario(scenario, is_save_data=True):
     return mpl
 
 
-class MplLabelFlip(MultiPartnerLearning):  # TODO refacto
-
+class MplLabelFlip(FederatedAverageLearning):
     def __init__(self, scenario, is_save_data=False, epsilon=0.01):
-        super().__init__(
+        super(MplLabelFlip, self).__init__(
             scenario.partners_list,
             scenario.epoch_count,
             scenario.minibatch_count,
             scenario.dataset,
-            scenario.multi_partner_learning_approach,
-            scenario.aggregation_weighting,
+            scenario.aggregation,
             scenario.is_early_stopping,
             is_save_data,
             scenario.save_folder,
@@ -503,130 +501,78 @@ class MplLabelFlip(MultiPartnerLearning):  # TODO refacto
 
         self.epsilon = epsilon
         self.K = scenario.dataset.num_classes
-        self.history_theta = [[None for _ in self.partners_list] for _ in range(self.epoch_count)]
-        self.history_theta_ = [[None for _ in self.partners_list] for _ in range(self.epoch_count)]
-        self.theta = [self.init_flip_proba() for _ in self.partners_list]
-        self.theta_ = [None for _ in self.partners_list]
+        self.history.theta = [[None for _ in self.partners_list] for _ in range(self.epoch_count)]
+        self.history.theta_ = [[None for _ in self.partners_list] for _ in range(self.epoch_count)]
+        for partner in self.partners_list:
+            partner.theta = self.init_flip_proba()
+            partner.theta_ = None
 
     def init_flip_proba(self):
         identity = np.identity(self.K)
         return identity * (1 - self.epsilon) + (1 - identity) * (self.epsilon / (self.K - 1))
 
-    def fit(self):
-        start = timer()
-        logger.info(
-            f"## Training and evaluating model on partners with ids: {['#' + str(p.id) for p in self.partners_list]}")
+    def fit_minibatch(self):
+        """Proceed to a collaborative round with a label flipped federated averaging approach"""
 
-        logger.info("(LFlip) Very first minibatch, init new models for each partner")
-        partners_models = self.init_with_models()
+        logger.debug("Start new LFlip collaborative round ...")
 
-        self.epoch_index = 0
-        while self.epoch_index < self.epoch_count:
-            self.split_in_minibatches()
-            self.minibatch_index = 0
-            while self.minibatch_index < self.minibatch_count:
-                logger.info(f"(LFLip) Minibatch n°{self.minibatch_index} of epoch n°{self.epoch_index}, "
-                            f"init aggregated model for each partner with models from previous round")
+        # Starting model for each partner is the aggregated model from the previous mini-batch iteration
+        logger.info(f"(LFlip) Minibatch n°{self.minibatch_index} of epoch n°{self.epoch_index}, "
+                    f"init each partner's models with a copy of the global model")
 
-                # Evaluate and store accuracy of mini-batch start model
-                model_to_evaluate = partners_models[0]
-                model_evaluation_val_data = self.evaluate_model(model_to_evaluate, self.val_data)
-                self.score_matrix_collective_models[self.epoch_index,
-                                                    self.minibatch_index] = model_evaluation_val_data[1]
+        for partner in self.partners_list:
+            partner.model_weights = self.model_weights
 
-                for partner_index, partner in enumerate(self.partners_list):
-                    # Reference the partner's model
-                    partner_model = partners_models[partner_index]
-                    x_batch = self.minibatched_x_train[partner_index][self.minibatch_index]
-                    y_batch = self.minibatched_y_train[partner_index][self.minibatch_index]
+        # Evaluate and store accuracy of mini-batch start model
+        self.history.log_model_val_perf()
 
-                    predictions = partner_model.predict(x_batch)
-                    self.theta_[partner_index] = predictions  # Initialize the theta_
+        # Iterate over partners for training each individual model
+        for partner_index, partner in enumerate(self.partners_list):
+            # Reference the partner's model
+            partner_model = partner.build_model()
 
-                    for idx, y in enumerate(y_batch):
-                        self.theta_[partner_index][idx, :] *= self.theta[partner_index][:, np.argmax(y)]
-                    self.theta_[partner_index] = normalize(self.theta_[partner_index], axis=0, norm='l1')
-                    self.history_theta_[self.epoch_index][partner_index] = self.theta_[partner_index]
+            x_batch = partner.minibatched_x_train[self.minibatch_index]
+            y_batch = partner.minibatched_y_train[self.minibatch_index]
 
-                    self.theta[partner_index] = self.theta_[partner_index].T.dot(y_batch)
-                    self.theta[partner_index] = normalize(self.theta[partner_index], axis=1, norm='l1')
-                    self.history_theta[self.epoch_index][partner_index] = self.theta[partner_index]
+            predictions = partner_model.predict(x_batch)
+            partner.theta_ = predictions  # Initialize the theta_
 
-                    self.theta_[partner_index] = predictions
-                    for idx, y in enumerate(y_batch):
-                        self.theta_[partner_index][idx, :] *= self.theta[partner_index][:, np.argmax(y)]
-                    self.theta_[partner_index] = normalize(self.theta_[partner_index], axis=0, norm='l1')
+            for idx, y in enumerate(y_batch):
+                partner.theta_[idx, :] *= partner.theta[:, np.argmax(y)]
+            partner.theta_ = normalize(partner.theta_, axis=0, norm='l1')
+            self.history.theta_[self.epoch_index][partner_index] = partner.theta_
 
-                    # draw of x_i
-                    rand_idx = np.arange(len(x_batch))
-                    # rand_idx =  np.random.randint(low=0, high=len(x_batch), size=(len(x_batch)))
-                    flipped_minibatch_x_train = x_batch
-                    flipped_minibatch_y_train = np.zeros(y_batch.shape)
-                    for i, idx in enumerate(rand_idx):  # TODO vectorize
-                        repartition = np.cumsum(
-                            self.theta_[partner_index][idx, :])
-                        a = np.random.random() - repartition  # draw
-                        flipped_minibatch_y_train[i][np.argmin(np.where(a > 0, a, 0))] = 1
-                        # not responsive to labels type.
+            partner.theta = partner.theta_.T.dot(y_batch)
+            partner.theta = normalize(partner.theta, axis=1, norm='l1')
+            self.history.theta[self.epoch_index][partner_index] = partner.theta
 
-                    train_data_for_fit_iteration = flipped_minibatch_x_train, flipped_minibatch_y_train
+            partner.theta_ = predictions
+            for idx, y in enumerate(y_batch):
+                partner.theta_[idx, :] *= partner.theta[:, np.argmax(y)]
+            partner.theta_ = normalize(partner.theta_, axis=0, norm='l1')
 
-                    history = self.fit_model(
-                        partner_model, train_data_for_fit_iteration, self.val_data, partner.batch_size)
+            # draw of x_i
+            rand_idx = np.arange(len(x_batch))
+            # rand_idx =  np.random.randint(low=0, high=len(x_batch), size=(len(x_batch)))
+            flipped_minibatch_x_train = x_batch
+            flipped_minibatch_y_train = np.zeros(y_batch.shape)
+            for i, idx in enumerate(rand_idx):  # TODO vectorize
+                repartition = np.cumsum(
+                    partner.theta_[idx, :])
+                a = np.random.random() - repartition  # draw
+                flipped_minibatch_y_train[i][np.argmin(np.where(a > 0, a, 0))] = 1
+                # not responsive to labels type.
+            # Train on partner local data set
+            history = partner_model.fit(flipped_minibatch_x_train,
+                                        flipped_minibatch_y_train,
+                                        batch_size=partner.batch_size,
+                                        verbose=0,
+                                        validation_data=self.val_data)
 
-                    # Log results of the round
-                    model_evaluation_val_data = history.history['val_accuracy'][0]
-                    self.log_collaborative_round_partner_result(partner, partner_index, model_evaluation_val_data)
+            # Log results of the round
+            self.history.log_partner_perf(partner.id, partner_index, history.history)
 
-                    # Update the partner's model in the models' list
-                    self.save_model_for_partner(partner_model, partner_index)
+            # Update the partner's model in the models' list
+            partner.model_weights = partner_model.get_weights()
 
-                    # Update iterative results
-                    self.update_iterative_results(partner_index, history)
-
-                partners_models = self.init_with_agg_models()
-                self.minibatch_index += 1
-
-            # At the end of each epoch, evaluate the model for early stopping on a global validation set
-            model_to_evaluate = partners_models[0]
-            model_evaluation_val_data = self.evaluate_model(model_to_evaluate, self.val_data)
-
-            current_val_loss = model_evaluation_val_data[0]
-            current_val_metric = model_evaluation_val_data[1]
-
-            self.score_matrix_collective_models[self.epoch_index, self.minibatch_count] = current_val_metric
-            self.loss_collective_models.append(current_val_loss)
-
-            logger.info(f"   Model evaluation at the end of the epoch: "
-                        f"{['%.3f' % elem for elem in model_evaluation_val_data]}")
-
-            self.epoch_index += 1
-
-            logger.debug("      Checking if early stopping criteria are met:")
-            if self.is_early_stopping:
-                # Early stopping parameters
-                if (
-                        self.epoch_index >= constants.PATIENCE
-                        and current_val_loss > self.loss_collective_models[-constants.PATIENCE]
-                ):
-                    logger.debug("         -> Early stopping criteria are met, stopping here.")
-                    break
-                else:
-                    logger.debug("         -> Early stopping criteria are not met, continuing with training.")
-
-        logger.info("### Evaluating model on test data:")
-        model_evaluation_test_data = self.evaluate_model(model_to_evaluate, self.test_data)
-        logger.info(f"   Model metrics names: {model_to_evaluate.metrics_names}")
-        logger.info(f"   Model metrics values: {['%.3f' % elem for elem in model_evaluation_test_data]}")
-        self.test_score = model_evaluation_test_data[1]  # 0 is for the loss
-        self.nb_epochs_done = self.epoch_index
-
-        # Plot training history
-        if self.is_save_data:
-            self.save_data()
-
-        self.save_final_model_weights(model_to_evaluate)
-
-        logger.info("Training and evaluation on multiple partners: done.")
-        end = timer()
-        self.learning_computation_time = end - start
+        logger.debug("End of LFlip collaborative round.")
