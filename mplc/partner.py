@@ -56,4 +56,5 @@ class Partner:
             )
         # Select the indices where the label will be shuffled
         n = int(len(self.y_train) * proportion_shuffled)
-        np.random.shuffle(self.y_train[:n])
+        for label in self.y_train[:n]:
+            np.random.shuffle(label)
