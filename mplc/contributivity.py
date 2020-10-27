@@ -979,7 +979,7 @@ class Contributivity:
 
             # Select the partners / the action
             mpl.partners_list = []
-            while mpl.partners_count <= 1:
+            while mpl.partners_count == 0:
                 is_partner_in = np.random.binomial(1, p=partner_values)
                 mpl.partners_list = [partner for partner, is_in in zip(full_partners_list, is_partner_in) if
                                      is_in == 1]
