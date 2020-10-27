@@ -1094,7 +1094,7 @@ class Contributivity:
 
         # Fetch score matrices from computation and scenario characteristics
         multi_partner_learning = self.scenario.mpl
-        score_matrix_collective_models = multi_partner_learning.history.history['model']['val_accuracy'][:, 1:]
+        score_matrix_collective_models = multi_partner_learning.history.history['model']['val_accuracy']
         partner_score_matrix = [value['val_accuracy'] for key, value in multi_partner_learning.history.history.items()
                                 if key != 'model']
         # the shape of the matrix created is (partners_count, epoch_count, minibatch_count).

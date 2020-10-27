@@ -15,7 +15,7 @@ from loguru import logger
 from sklearn.preprocessing import normalize
 
 from . import constants
-from .mpl_utils import History, UniformAggregator
+from .mpl_utils import History, DatavolumeAggregator
 from .partner import PartnerMpl
 
 
@@ -25,7 +25,7 @@ class MultiPartnerLearning(ABC):
                  epoch_count,
                  minibatch_count,
                  dataset,
-                 aggregation=UniformAggregator,
+                 aggregation=DatavolumeAggregator,
                  is_early_stopping=True,
                  is_save_data=False,
                  save_folder="",
@@ -119,7 +119,8 @@ class MultiPartnerLearning(ABC):
             # Early stopping parameters
             if (
                     self.epoch_index >= constants.PATIENCE
-                    and self.history.history['loss'][-1] > self.history.history['loss'][-constants.PATIENCE]
+                    and self.history.history['model']['loss'][-1, -1] >
+                    self.history.history['model']['loss'][-constants.PATIENCE, -1]
             ):
                 logger.debug("         -> Early stopping criteria are met, stopping here.")
                 return True
@@ -233,7 +234,7 @@ class FederatedAverageLearning(MultiPartnerLearning):
                  epoch_count,
                  minibatch_count,
                  dataset,
-                 aggregation=UniformAggregator,
+                 aggregation=DataAggregator,
                  is_early_stopping=True,
                  is_save_data=False,
                  save_folder="",
@@ -312,7 +313,7 @@ class SequentialLearning(MultiPartnerLearning):  # seq-pure
                  epoch_count,
                  minibatch_count,
                  dataset,
-                 aggregation=UniformAggregator,
+                 aggregation=DatavolumeAggregator,
                  is_early_stopping=True,
                  is_save_data=False,
                  save_folder="",
@@ -385,7 +386,7 @@ class SequentialWithFinalAggLearning(SequentialLearning):
                  epoch_count,
                  minibatch_count,
                  dataset,
-                 aggregation=UniformAggregator,
+                 aggregation=DatavolumeAggregator,
                  is_early_stopping=True,
                  is_save_data=False,
                  save_folder="",
@@ -429,7 +430,7 @@ class SequentialAverageLearning(SequentialLearning):
                  epoch_count,
                  minibatch_count,
                  dataset,
-                 aggregation=UniformAggregator,
+                 aggregation=DatavolumeAggregator,
                  is_early_stopping=True,
                  is_save_data=False,
                  save_folder="",

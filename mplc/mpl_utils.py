@@ -29,6 +29,17 @@ class History:
         self.history['model'] = {'val_accuracy': np.zeros((mpl.epoch_count, mpl.minibatch_count)),
                                  'val_loss': np.zeros((mpl.epoch_count, mpl.minibatch_count))}
 
+    def log_partner_perf(self, partner_id, partner_index, history):
+        for key in self.metrics:
+            self.history[partner_id][key][self.mpl.epoch_index, self.mpl.minibatch_index] = history[key][-1]
+
+        epoch_nb_str = f"Epoch {str(self.mpl.epoch_index).zfill(2)}/{str(self.mpl.epoch_count - 1).zfill(2)}"
+        mb_nb_str = f"Minibatch {str(self.mpl.minibatch_index).zfill(2)}/{str(self.mpl.minibatch_count - 1).zfill(2)}"
+        partner_id_str = f"Partner partner_id #{partner_id} ({partner_index}/{self.mpl.partners_count - 1})"
+        val_acc_str = f"{round(history['val_accuracy'][-1], 2)}"
+
+        logger.debug(f"{epoch_nb_str} > {mb_nb_str} > {partner_id_str} > val_acc: {val_acc_str}")
+
     def log_model_val_perf(self):
         model = self.mpl.build_model()
         hist = model.evaluate(self.mpl.val_data[0],
@@ -42,17 +53,6 @@ class History:
         if self.mpl.minibatch_index >= self.mpl.minibatch_count - 1:
             logger.info(f"   Model evaluation at the end of the epoch: "
                         f"{['%.3f' % elem for elem in hist]}")
-
-    def log_partner_perf(self, partner_id, partner_index, history):
-        for key in self.metrics:
-            self.history[partner_id][key][self.mpl.epoch_index, self.mpl.minibatch_index] = history[key][-1]
-
-        epoch_nb_str = f"Epoch {str(self.mpl.epoch_index).zfill(2)}/{str(self.mpl.epoch_count - 1).zfill(2)}"
-        mb_nb_str = f"Minibatch {str(self.mpl.minibatch_index).zfill(2)}/{str(self.mpl.minibatch_count - 1).zfill(2)}"
-        partner_id_str = f"Partner partner_id #{partner_id} ({partner_index}/{self.mpl.partners_count - 1})"
-        val_acc_str = f"{round(history['val_accuracy'][-1], 2)}"
-
-        logger.debug(f"{epoch_nb_str} > {mb_nb_str} > {partner_id_str} > val_acc: {val_acc_str}")
 
     def log_final_model_perf(self):
         logger.info("### Evaluating model on test data:")
