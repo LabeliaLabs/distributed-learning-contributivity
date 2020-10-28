@@ -119,8 +119,8 @@ class MultiPartnerLearning(ABC):
             # Early stopping parameters
             if (
                     self.epoch_index >= constants.PATIENCE
-                    and self.history.history['model']['loss'][-1, -1] >
-                    self.history.history['model']['loss'][-constants.PATIENCE, -1]
+                    and self.history.history['mpl_model']['loss'][-1, -1] >
+                    self.history.history['mpl_model']['loss'][-constants.PATIENCE, -1]
             ):
                 logger.debug("         -> Early stopping criteria are met, stopping here.")
                 return True
@@ -213,7 +213,7 @@ class SinglePartnerLearning(MultiPartnerLearning):
                             validation_data=self.val_data)
         self.model_weights = model.get_weights()
         self.history.log_partner_perf(self.partner.id, 0, history.history)
-        del self.history.history['model']
+        del self.history.history['mpl_model']
         # Evaluate trained model on test data
         self.history.log_final_model_perf()
         self.history.nb_epochs_done = (es.stopped_epoch + 1) if es.stopped_epoch != 0 else self.epoch_count
@@ -234,7 +234,7 @@ class FederatedAverageLearning(MultiPartnerLearning):
                  epoch_count,
                  minibatch_count,
                  dataset,
-                 aggregation=DataAggregator,
+                 aggregation=DatavolumeAggregator,
                  is_early_stopping=True,
                  is_save_data=False,
                  save_folder="",
@@ -351,8 +351,6 @@ class SequentialLearning(MultiPartnerLearning):  # seq-pure
 
         logger.debug("Start new seq collaborative round ...")
 
-        # Starting model for each partner is the aggregated model from the previous mini-batch iteration
-
         model_for_round = self.build_model()
 
         # Evaluate and store accuracy of mini-batch start model
@@ -364,7 +362,7 @@ class SequentialLearning(MultiPartnerLearning):  # seq-pure
             partner = self.partners_list[partner_index]
 
             # Train on partner local data set
-            history = model_for_round.fit(partner.minibatched_y_train[self.minibatch_index],
+            history = model_for_round.fit(partner.minibatched_x_train[self.minibatch_index],
                                           partner.minibatched_y_train[self.minibatch_index],
                                           batch_size=partner.batch_size,
                                           verbose=0,

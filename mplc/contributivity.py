@@ -989,7 +989,7 @@ class Contributivity:
             # apply one epoch with the selected partner to the previous model/ do the action
             mpl.aggregator = self.scenario.aggregation(mpl)  # we have to reset the weight of aggregation
             mpl.fit_epoch()
-            loss = mpl.history.history['model']['val_loss'][mpl.epoch_index, -1]
+            loss = mpl.history.history['mpl_model']['val_loss'][mpl.epoch_index, -1]
             mpl.epoch_index += 1
 
             G = - loss + previous_loss
@@ -1094,9 +1094,9 @@ class Contributivity:
 
         # Fetch score matrices from computation and scenario characteristics
         multi_partner_learning = self.scenario.mpl
-        score_matrix_collective_models = multi_partner_learning.history.history['model']['val_accuracy']
+        score_matrix_collective_models = multi_partner_learning.history.history['mpl_model']['val_accuracy']
         partner_score_matrix = [value['val_accuracy'] for key, value in multi_partner_learning.history.history.items()
-                                if key != 'model']
+                                if key != 'mpl_model']
         # the shape of the matrix created is (partners_count, epoch_count, minibatch_count).
         score_matrix_per_partner = np.swapaxes(np.swapaxes(partner_score_matrix, 0, 2), 0, 1)
         # We swap twice the axis to end with a matrix with shape (epoch_count, minibatch_count, partners_count)

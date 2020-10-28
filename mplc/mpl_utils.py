@@ -26,8 +26,8 @@ class History:
         self.metrics = ['val_accuracy', 'val_loss', 'loss', 'accuracy']
         tab = {key: np.nan * np.zeros((mpl.epoch_count, mpl.minibatch_count)) for key in self.metrics}
         self.history = {partner.id: deepcopy(tab) for partner in mpl.partners_list}
-        self.history['model'] = {'val_accuracy': np.zeros((mpl.epoch_count, mpl.minibatch_count)),
-                                 'val_loss': np.zeros((mpl.epoch_count, mpl.minibatch_count))}
+        self.history['mpl_model'] = {'val_accuracy': np.zeros((mpl.epoch_count, mpl.minibatch_count)),
+                                     'val_loss': np.zeros((mpl.epoch_count, mpl.minibatch_count))}
 
     def log_partner_perf(self, partner_id, partner_index, history):
         for key in self.metrics:
@@ -47,8 +47,8 @@ class History:
                               batch_size=constants.DEFAULT_BATCH_SIZE,
                               verbose=0,
                               )
-        self.history['model']['val_loss'][self.mpl.epoch_index, self.mpl.minibatch_index] = hist[0]
-        self.history['model']['val_accuracy'][self.mpl.epoch_index, self.mpl.minibatch_index] = hist[1]
+        self.history['mpl_model']['val_loss'][self.mpl.epoch_index, self.mpl.minibatch_index] = hist[0]
+        self.history['mpl_model']['val_accuracy'][self.mpl.epoch_index, self.mpl.minibatch_index] = hist[1]
 
         if self.mpl.minibatch_index >= self.mpl.minibatch_count - 1:
             logger.info(f"   Model evaluation at the end of the epoch: "
@@ -73,13 +73,14 @@ class History:
                      'Minibatch': []}
         for key in self.metrics:
             temp_dict[key] = []
-        for partner_id, hist in [(key, value) for key, value in self.history.items() if key != 'model']:
-            for metric, matrix in hist.items():
-                for epoch in range(matrix.shape[0]):
-                    for mb in range(matrix.shape[1]):
-                        temp_dict['Partner'].append(partner_id)
-                        temp_dict['Epoch'].append(epoch)
-                        temp_dict['Minibatch'].append(mb)
+        for partner_id, hist in [(key, value) for key, value in self.history.items() if key != 'mpl_model']:
+            epoch_count, minibatch_count = self.history['mpl_model']['val_loss'].shape
+            for epoch in range(epoch_count):
+                for mb in range(minibatch_count):
+                    temp_dict['Partner'].append(partner_id)
+                    temp_dict['Epoch'].append(epoch)
+                    temp_dict['Minibatch'].append(mb)
+                    for metric, matrix in hist.items():
                         temp_dict[metric].append(matrix[epoch, mb])
         return pd.DataFrame.from_dict(temp_dict)
 
@@ -92,14 +93,14 @@ class History:
         if not os.path.exists(self.save_folder / 'graphs/'):
             os.makedirs(self.save_folder / 'graphs/')
         plt.figure()
-        plt.plot(self.history['model']['val_loss'][:self.mpl.epoch_index + 1, self.mpl.minibatch_count])
+        plt.plot(self.history['mpl_model']['val_loss'][:self.mpl.epoch_index + 1, self.mpl.minibatch_count])
         plt.ylabel("Loss")
         plt.xlabel("Epoch")
         plt.savefig(self.save_folder / "graphs/federated_training_loss.png")
         plt.close()
 
         plt.figure()
-        plt.plot(self.history['model']['val_accuracy'][:self.mpl.epoch_index + 1, self.mpl.minibatch_count])
+        plt.plot(self.history['mpl_model']['val_accuracy'][:self.mpl.epoch_index + 1, self.mpl.minibatch_count])
         plt.ylabel("Accuracy")
         plt.xlabel("Epoch")
         plt.ylim([0, 1])
@@ -109,7 +110,7 @@ class History:
         plt.figure()
         for key, value in self.history.items():
             plt.plot(value['val_accuracy'][:self.mpl.epoch_index + 1, self.mpl.minibatch_count],
-                     label=(f'partner {key}' if key != 'model' else key))
+                     label=(f'partner {key}' if key != 'mpl_model' else key))
         plt.title("Model accuracy")
         plt.ylabel("Accuracy")
         plt.xlabel("Epoch")
