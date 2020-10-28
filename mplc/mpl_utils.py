@@ -167,3 +167,11 @@ class ScoresAggregator(Aggregator):
     def aggregate_model_weights(self):
         self.prepare_aggregation_weights()
         super(ScoresAggregator, self).aggregate_model_weights()
+
+
+# Supported aggregation weights approaches
+AGGREGATORS = {
+    "uniform": UniformAggregator,
+    "data-volume": DatavolumeAggregator,
+    "local-score": ScoresAggregator
+}

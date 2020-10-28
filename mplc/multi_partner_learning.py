@@ -15,57 +15,77 @@ from loguru import logger
 from sklearn.preprocessing import normalize
 
 from . import constants
-from .mpl_utils import History, DatavolumeAggregator
-from .partner import PartnerMpl
+from .mpl_utils import History, Aggregator
+from .partner import Partner, PartnerMpl
+
+ALLOWED_PARAMETERS = ('partners_list',
+                      'epoch_count',
+                      'minibatch_count',
+                      'dataset',
+                      'aggregation_method',
+                      'is_early_stopping',
+                      'is_save_data',
+                      'save_folder',
+                      'init_model_from',
+                      'use_saved_weights')
 
 
 class MultiPartnerLearning(ABC):
-    def __init__(self,
-                 partners_list,
-                 epoch_count,
-                 minibatch_count,
-                 dataset,
-                 aggregation=DatavolumeAggregator,
-                 is_early_stopping=True,
-                 is_save_data=False,
-                 save_folder="",
-                 init_model_from="random_initialization",
-                 use_saved_weights=False,
-                 ):
+    def __init__(self, scenario, **kwargs):
+        """
 
+        :type scenario: Scenario
+        """
         # Attributes related to the data and the model
-        self.val_data = (dataset.x_val, dataset.y_val)
-        self.test_data = (dataset.x_test, dataset.y_test)
-        self.dataset_name = dataset.name
-        self.generate_new_model = dataset.generate_new_model
-        self.init_model_from = init_model_from
-        self.use_saved_weights = use_saved_weights
+        self.dataset = scenario.dataset
+        self.partners_list = scenario.partners_list
+        self.init_model_from = scenario.init_model_from
+        self.use_saved_weights = scenario.use_saved_weights
+
+        # Attributes related to iterating at different levels
+        self.epoch_count = scenario.epoch_count
+        self.minibatch_count = scenario.minibatch_count
+        self.is_early_stopping = scenario.is_early_stopping
+
+        # Attributes related to the aggregation approach
+        self.aggregation_method = scenario.aggregation
+
+        # Attributes to store results
+        self.is_save_data = False  # default value
+        self.save_folder = scenario.save_folder
+
+        # Erase the default parameters (which mostly come from the scenario) if some parameters have been specified
+        self.__dict__.update((k, v) for k, v in kwargs.items() if k in ALLOWED_PARAMETERS)
+
+        # Unpack dataset-related parameters
+        self.val_data = (self.dataset.x_val, self.dataset.y_val)
+        self.test_data = (self.dataset.x_test, self.dataset.y_test)
+        self.dataset_name = self.dataset.name
+        self.generate_new_model = self.dataset.generate_new_model
 
         # Initialize the model
         model = self.init_model()
         self.model_weights = model.get_weights()
         self.metrics_names = model.metrics_names
 
-        # Attributes related to iterating at different levels
-        self.epoch_count = epoch_count
+        # Initialize iterators
         self.epoch_index = 0
-        self.minibatch_count = minibatch_count
         self.minibatch_index = 0
-        self.is_early_stopping = is_early_stopping
+        self.learning_computation_time = 0
 
-        # Attributes related to partners
-        self.partners_list = [PartnerMpl(partner, self) for partner in partners_list]
-        partners_list = sorted(partners_list, key=operator.attrgetter("id"))
+        # Convert partners to Mpl partners
+        for partner in self.partners_list:
+            assert isinstance(partner, Partner)
+        partners_list = sorted(self.partners_list, key=operator.attrgetter("id"))
         logger.info(
             f"## Preparation of model's training on partners with ids: {['#' + str(p.id) for p in partners_list]}")
+        self.partners_list = [PartnerMpl(partner, self) for partner in self.partners_list]
 
-        # Attributes related to the aggregation approach
-        self.aggregator = aggregation(self)
+        # Initialize aggregator
+        self.aggregator = self.aggregation_method(self)
+        assert isinstance(self.aggregator, Aggregator)
 
-        # Attributes to store results
-        self.is_save_data = is_save_data
-        self.save_folder = save_folder
-        self.learning_computation_time = None
+        # Initialize History
         self.history = History(self)
 
         logger.debug("MultiPartnerLearning object instantiated.")
@@ -119,8 +139,8 @@ class MultiPartnerLearning(ABC):
             # Early stopping parameters
             if (
                     self.epoch_index >= constants.PATIENCE
-                    and self.history.history['mpl_model']['loss'][-1, -1] >
-                    self.history.history['mpl_model']['loss'][-constants.PATIENCE, -1]
+                    and self.history.history['mpl_model']['val_loss'][-1, -1] >
+                    self.history.history['mpl_model']['val_loss'][-constants.PATIENCE, -1]
             ):
                 logger.debug("         -> Early stopping criteria are met, stopping here.")
                 return True
@@ -165,28 +185,11 @@ class MultiPartnerLearning(ABC):
 
 
 class SinglePartnerLearning(MultiPartnerLearning):
-    def __init__(self,
-                 partner,
-                 epoch_count,
-                 minibatch_count,
-                 dataset,
-                 is_early_stopping=True,
-                 is_save_data=False,
-                 save_folder="",
-                 init_model_from="random_initialization",
-                 use_saved_weights=False, ):
+    def __init__(self, scenario, partner, **kwargs):
+        kwargs['partners_list'] = [partner]
+        super(SinglePartnerLearning, self).__init__(scenario, **kwargs)
         if type(partner) == list:
             raise ValueError('More than one partner is provided')
-        super(SinglePartnerLearning, self).__init__([partner],
-                                                    epoch_count,
-                                                    1,
-                                                    dataset,
-                                                    is_early_stopping=is_early_stopping,
-                                                    is_save_data=is_save_data,
-                                                    save_folder=save_folder,
-                                                    init_model_from=init_model_from,
-                                                    use_saved_weights=use_saved_weights,
-                                                    )
         self.partner = partner
 
     def fit(self):
@@ -229,29 +232,9 @@ class SinglePartnerLearning(MultiPartnerLearning):
 
 
 class FederatedAverageLearning(MultiPartnerLearning):
-    def __init__(self,
-                 partners_list,
-                 epoch_count,
-                 minibatch_count,
-                 dataset,
-                 aggregation=DatavolumeAggregator,
-                 is_early_stopping=True,
-                 is_save_data=False,
-                 save_folder="",
-                 init_model_from="random_initialization",
-                 use_saved_weights=False,
-                 ):
+    def __init__(self, scenario, **kwargs):
         # First, if only one partner, fall back to dedicated single partner function
-        super(FederatedAverageLearning, self).__init__(partners_list,
-                                                       epoch_count,
-                                                       minibatch_count,
-                                                       dataset,
-                                                       aggregation,
-                                                       is_early_stopping,
-                                                       is_save_data,
-                                                       save_folder,
-                                                       init_model_from,
-                                                       use_saved_weights)
+        super(FederatedAverageLearning, self).__init__(scenario, **kwargs)
         if self.partners_count == 1:
             raise ValueError('Only one partner is provided. Please use the dedicated SinglePartnerLearning class')
 
@@ -308,28 +291,8 @@ class FederatedAverageLearning(MultiPartnerLearning):
 
 
 class SequentialLearning(MultiPartnerLearning):  # seq-pure
-    def __init__(self,
-                 partners_list,
-                 epoch_count,
-                 minibatch_count,
-                 dataset,
-                 aggregation=DatavolumeAggregator,
-                 is_early_stopping=True,
-                 is_save_data=False,
-                 save_folder="",
-                 init_model_from="random_initialization",
-                 use_saved_weights=False,
-                 ):
-        super(SequentialLearning, self).__init__(partners_list,
-                                                 epoch_count,
-                                                 minibatch_count,
-                                                 dataset,
-                                                 aggregation,
-                                                 is_early_stopping,
-                                                 is_save_data,
-                                                 save_folder,
-                                                 init_model_from,
-                                                 use_saved_weights)
+    def __init__(self, scenario, **kwargs):
+        super(SequentialLearning, self).__init__(scenario, **kwargs)
         if self.partners_count == 1:
             raise ValueError('Only one partner is provided. Please use the dedicated SinglePartnerLearning class')
 
@@ -379,28 +342,8 @@ class SequentialLearning(MultiPartnerLearning):  # seq-pure
 
 
 class SequentialWithFinalAggLearning(SequentialLearning):
-    def __init__(self,
-                 partners_list,
-                 epoch_count,
-                 minibatch_count,
-                 dataset,
-                 aggregation=DatavolumeAggregator,
-                 is_early_stopping=True,
-                 is_save_data=False,
-                 save_folder="",
-                 init_model_from="random_initialization",
-                 use_saved_weights=False,
-                 ):
-        super(SequentialWithFinalAggLearning, self).__init__(partners_list,
-                                                             epoch_count,
-                                                             minibatch_count,
-                                                             dataset,
-                                                             aggregation,
-                                                             is_early_stopping,
-                                                             is_save_data,
-                                                             save_folder,
-                                                             init_model_from,
-                                                             use_saved_weights)
+    def __init__(self, scenario, **kwargs):
+        super(SequentialWithFinalAggLearning, self).__init__(scenario, **kwargs)
         if self.partners_count == 1:
             raise ValueError('Only one partner is provided. Please use the dedicated SinglePartnerLearning class')
 
@@ -423,28 +366,8 @@ class SequentialWithFinalAggLearning(SequentialLearning):
 
 
 class SequentialAverageLearning(SequentialLearning):
-    def __init__(self,
-                 partners_list,
-                 epoch_count,
-                 minibatch_count,
-                 dataset,
-                 aggregation=DatavolumeAggregator,
-                 is_early_stopping=True,
-                 is_save_data=False,
-                 save_folder="",
-                 init_model_from="random_initialization",
-                 use_saved_weights=False,
-                 ):
-        super(SequentialAverageLearning, self).__init__(partners_list,
-                                                        epoch_count,
-                                                        minibatch_count,
-                                                        dataset,
-                                                        aggregation,
-                                                        is_early_stopping,
-                                                        is_save_data,
-                                                        save_folder,
-                                                        init_model_from,
-                                                        use_saved_weights)
+    def __init__(self, scenario, **kwargs):
+        super(SequentialAverageLearning, self).__init__(scenario, **kwargs)
         if self.partners_count == 1:
             raise ValueError('Only one partner is provided. Please use the dedicated SinglePartnerLearning class')
 
@@ -466,40 +389,12 @@ class SequentialAverageLearning(SequentialLearning):
             self.model_weights = self.aggregator.aggregate_model_weights()
 
 
-def init_multi_partner_learning_from_scenario(scenario, is_save_data=True):
-    mpl = scenario.multi_partner_learning_approach(
-        scenario.partners_list,
-        scenario.epoch_count,
-        scenario.minibatch_count,
-        scenario.dataset,
-        scenario.aggregation,
-        scenario.is_early_stopping,
-        is_save_data,
-        scenario.save_folder,
-        scenario.init_model_from,
-        scenario.use_saved_weights,
-    )
-
-    return mpl
-
-
 class MplLabelFlip(FederatedAverageLearning):
-    def __init__(self, scenario, is_save_data=False, epsilon=0.01):
-        super(MplLabelFlip, self).__init__(
-            scenario.partners_list,
-            scenario.epoch_count,
-            scenario.minibatch_count,
-            scenario.dataset,
-            scenario.aggregation,
-            scenario.is_early_stopping,
-            is_save_data,
-            scenario.save_folder,
-            scenario.init_model_from,
-            scenario.use_saved_weights,
-        )
+    def __init__(self, scenario, epsilon=0.01, **kwargs):
+        super(MplLabelFlip, self).__init__(scenario, **kwargs)
 
         self.epsilon = epsilon
-        self.K = scenario.dataset.num_classes
+        self.K = self.dataset.num_classes
         self.history.theta = [[None for _ in self.partners_list] for _ in range(self.epoch_count)]
         self.history.theta_ = [[None for _ in self.partners_list] for _ in range(self.epoch_count)]
         for partner in self.partners_list:
@@ -575,3 +470,13 @@ class MplLabelFlip(FederatedAverageLearning):
             partner.model_weights = partner_model.get_weights()
 
         logger.debug("End of LFlip collaborative round.")
+
+
+# Supported multipartner learning approaches
+
+MULTI_PARTNER_LEARNING_APPROACHES = {
+    "fedavg": FederatedAverageLearning,
+    "seq-pure": SequentialLearning,
+    "seq-with-final-agg": SequentialWithFinalAggLearning,
+    "seqavg": SequentialAverageLearning
+}

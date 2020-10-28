@@ -17,7 +17,6 @@ from scipy.stats import norm
 from sklearn.linear_model import LinearRegression
 
 from . import multi_partner_learning, constants
-from .multi_partner_learning import FederatedAverageLearning, SinglePartnerLearning
 
 
 class KrigingModel:
@@ -100,26 +99,17 @@ class Contributivity:
             self.first_charac_fct_calls_count += 1
             small_partners_list = np.array([self.scenario.partners_list[i] for i in subset])
             if len(small_partners_list) > 1:
-                mpl = self.scenario.multi_partner_learning_approach(
-                    small_partners_list,
-                    self.scenario.epoch_count,
-                    self.scenario.minibatch_count,
-                    self.scenario.dataset,
-                    self.scenario.aggregation,
-                    is_early_stopping=True,
-                    is_save_data=False,
-                    save_folder=self.scenario.save_folder,
-                )
+                mpl = self.scenario.multi_partner_learning_approach(self.scenario,
+                                                                    partners_list=small_partners_list,
+                                                                    is_early_stopping=True,
+                                                                    is_save_data=False,
+                                                                    )
             else:
-                mpl = SinglePartnerLearning(
-                    small_partners_list[0],
-                    self.scenario.epoch_count,
-                    self.scenario.minibatch_count,
-                    self.scenario.dataset,
-                    is_early_stopping=True,
-                    is_save_data=False,
-                    save_folder=self.scenario.save_folder,
-                )
+                mpl = multi_partner_learning.SinglePartnerLearning(self.scenario,
+                                                                   partner=small_partners_list[0],
+                                                                   is_early_stopping=True,
+                                                                   is_save_data=False,
+                                                                   )
             mpl.fit()
             self.charac_fct_values[tuple(subset)] = mpl.history.score
             # we add the new increments
@@ -1183,19 +1173,19 @@ class Contributivity:
             self.without_replacment_SMC(sv_accuracy=sv_accuracy, alpha=alpha)
         elif method_to_compute == "Federated SBS linear":
             # Contributivity 10: step by step increments with linear importance increase
-            if self.scenario.multi_partner_learning_approach != FederatedAverageLearning:
+            if self.scenario.multi_partner_learning_approach != multi_partner_learning.FederatedAverageLearning:
                 logger.warning("Step by step linear contributivity method is only suited for federated "
                                "averaging learning approach")
             self.federated_SBS_linear()
         elif method_to_compute == "Federated SBS quadratic":
             # Contributivity 11: step by step increments with quadratic importance increase
-            if self.scenario.multi_partner_learning_approach != FederatedAverageLearning:
+            if self.scenario.multi_partner_learning_approach != multi_partner_learning.FederatedAverageLearning:
                 logger.warning("Step by step quadratic contributivity method is only suited for federated "
                                "averaging learning approach")
             self.federated_SBS_quadratic()
         elif method_to_compute == "Federated SBS constant":
             # Contributivity 12: step by step increments with constant importance
-            if self.scenario.multi_partner_learning_approach != FederatedAverageLearning:
+            if self.scenario.multi_partner_learning_approach != multi_partner_learning.FederatedAverageLearning:
                 logger.warning("Step by step constant contributivity method is only suited for federated "
                                "averaging learning approach")
             self.federated_SBS_constant()

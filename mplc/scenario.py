@@ -17,8 +17,8 @@ from loguru import logger
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelEncoder
 
-from . import contributivity, constants, dataset as dataset_mod
-from . import multi_partner_learning
+from . import contributivity, constants
+from . import dataset as dataset_mod
 from .datasets import (
     dataset_mnist,
     dataset_titanic,
@@ -26,6 +26,8 @@ from .datasets import (
     dataset_cifar10,
     dataset_imdb,
 )
+from .mpl_utils import AGGREGATORS
+from .multi_partner_learning import MULTI_PARTNER_LEARNING_APPROACHES
 from .partner import Partner
 
 
@@ -52,7 +54,7 @@ class Scenario:
             scenario_id=1,
             repeats_count=1,
             is_dry_run=False,
-        **kwargs,
+            **kwargs,
     ):
         """
 
@@ -160,10 +162,10 @@ class Scenario:
 
         self.dataset_proportion = dataset_proportion
         assert (
-            self.dataset_proportion > 0
+                self.dataset_proportion > 0
         ), "Error in the config file, dataset_proportion should be > 0"
         assert (
-            self.dataset_proportion <= 1
+                self.dataset_proportion <= 1
         ), "Error in the config file, dataset_proportion should be <= 1"
 
         if self.dataset_proportion < 1:
@@ -220,31 +222,31 @@ class Scenario:
 
         # Multi-partner learning approach
         try:
-            self.multi_partner_learning_approach = constants.MULTI_PARTNER_LEARNING_APPROACHES[
+            self.multi_partner_learning_approach = MULTI_PARTNER_LEARNING_APPROACHES[
                 multi_partner_learning_approach]
         except KeyError:
             text_error = f"Multi-partner learning approach '{multi_partner_learning_approach}' is not a valid "
             text_error += "approach. List of supported approach : "
-            for key in constants.MULTI_PARTNER_LEARNING_APPROACHES.keys():
+            for key in MULTI_PARTNER_LEARNING_APPROACHES.keys():
                 text_error += f"{key}, "
             raise KeyError(text_error)
 
         # Define how federated learning aggregation steps are weighted. Toggle between 'uniform' and 'data_volume'
         # Default is 'uniform'
         try:
-            self.aggregation = constants.AGGREGATORS[aggregation_weighting]
+            self.aggregation = AGGREGATORS[aggregation_weighting]
         except KeyError:
             raise ValueError(f"aggregation approach '{aggregation_weighting}' is not a valid approach. ")
 
         # Number of epochs, mini-batches and fit_batches in ML training
         self.epoch_count = epoch_count
         assert (
-            self.epoch_count > 0
+                self.epoch_count > 0
         ), "Error: in the provided config file, epoch_count should be > 0"
 
         self.minibatch_count = minibatch_count
         assert (
-            self.minibatch_count > 0
+                self.minibatch_count > 0
         ), "Error: in the provided config file, minibatch_count should be > 0"
 
         self.gradient_updates_per_pass_count = gradient_updates_per_pass_count
@@ -332,22 +334,22 @@ class Scenario:
         now = datetime.datetime.now()
         now_str = now.strftime("%Y-%m-%d_%Hh%M")
         self.scenario_name = (
-            "scenario_"
-            + str(self.scenario_id)
-            + "_"
-            + "repeat"
-            + "_"
-            + str(self.n_repeat)
-            + "_"
-            + now_str
-            + "_"
-            + uuid.uuid4().hex[
-                :3
-            ]  # This is to be sure 2 distinct scenarios do no have the same name
+                "scenario_"
+                + str(self.scenario_id)
+                + "_"
+                + "repeat"
+                + "_"
+                + str(self.n_repeat)
+                + "_"
+                + now_str
+                + "_"
+                + uuid.uuid4().hex[
+                  :3
+                  ]  # This is to be sure 2 distinct scenarios do no have the same name
         )
 
         self.short_scenario_name = (
-            str(self.partners_count) + " " + str(self.amounts_per_partner)
+                str(self.partners_count) + " " + str(self.amounts_per_partner)
         )
 
         self.save_folder = experiment_path / self.scenario_name
@@ -436,7 +438,7 @@ class Scenario:
         else:
             shared_clusters_count = 0
         assert (
-            specific_clusters_count + shared_clusters_count <= nb_diff_labels
+                specific_clusters_count + shared_clusters_count <= nb_diff_labels
         ), "Error: data samples from the \
             initial dataset are split in clusters per data labels - Incompatibility between the split arguments \
             and the dataset provided \
@@ -523,14 +525,10 @@ class Scenario:
                 for cl in p.clusters_list:
                     idx = shared_clusters_index[cl]
                     list_arrays_x.append(
-                        x_train_for_cluster[cl][
-                            idx: idx + p.final_nb_samples_p_cluster
-                        ]
+                        x_train_for_cluster[cl][idx: idx + p.final_nb_samples_p_cluster]
                     )
                     list_arrays_y.append(
-                        y_train_for_cluster[cl][
-                            idx: idx + p.final_nb_samples_p_cluster
-                        ]
+                        y_train_for_cluster[cl][idx: idx + p.final_nb_samples_p_cluster]
                     )
                     shared_clusters_index[cl] += p.final_nb_samples_p_cluster
             elif p in partners_with_specific_clusters:
@@ -590,11 +588,11 @@ class Scenario:
 
         # Check the percentages of samples per partner and control its coherence
         assert (
-            len(self.amounts_per_partner) == self.partners_count
+                len(self.amounts_per_partner) == self.partners_count
         ), "Error: in the provided config file, \
             amounts_per_partner list should have a size equals to partners_count"
         assert (
-            np.sum(self.amounts_per_partner) == 1
+                np.sum(self.amounts_per_partner) == 1
         ), "Error: in the provided config file, \
             amounts_per_partner argument: the sum of the proportions you provided isn't equal to 1"
 
@@ -607,7 +605,7 @@ class Scenario:
             splitting_indices[0] = self.amounts_per_partner[0]
             for i in range(self.partners_count - 2):
                 splitting_indices[i + 1] = (
-                    splitting_indices[i] + self.amounts_per_partner[i + 1]
+                        splitting_indices[i] + self.amounts_per_partner[i + 1]
                 )
             splitting_indices_train = (splitting_indices * len(y_train)).astype(int)
 
@@ -665,7 +663,7 @@ class Scenario:
 
         # Check coherence of number of mini-batches versus smaller partner
         assert self.minibatch_count <= (
-            min(self.amounts_per_partner) * len(y_train)
+                min(self.amounts_per_partner) * len(y_train)
         ), "Error: in the provided config \
             file and dataset, a partner doesn't have enough data samples to create the minibatches"
 
@@ -753,13 +751,13 @@ class Scenario:
                 partner.shuffle_labels(1.0)
             elif self.corrupted_datasets[partner_index][0] == "corrupted":
                 logger.debug(
-                    f"   ... Corrupting (by offsetting labels) {self.corrupted_datasets[partner_index][1]*100} \
+                    f"   ... Corrupting (by offsetting labels) {self.corrupted_datasets[partner_index][1] * 100} \
                     percent of the data of partner #{partner.id}"
                 )
                 partner.corrupt_labels(self.corrupted_datasets[partner_index][1])
             elif self.corrupted_datasets[partner_index][0] == "shuffled":
                 logger.debug(
-                    f"   ... Corrupting (by shuffling labels) {self.corrupted_datasets[partner_index][1]*100} \
+                    f"   ... Corrupting (by shuffling labels) {self.corrupted_datasets[partner_index][1] * 100} \
                     percent of the data of partner #{partner.id}"
                 )
                 partner.shuffle_labels(self.corrupted_datasets[partner_index][1])
@@ -847,9 +845,7 @@ class Scenario:
         # Instantiate and run a multi-partner learning
         # --------------------------------------------
 
-        self.mpl = multi_partner_learning.init_multi_partner_learning_from_scenario(
-            self, is_save_data=True,
-        )
+        self.mpl = self.multi_partner_learning_approach(self, is_save_data=True)
         self.mpl.fit()
 
         # ----------------------------------------------------------

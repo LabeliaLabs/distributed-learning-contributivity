@@ -48,7 +48,7 @@ import pytest
 import yaml
 from tensorflow.keras.datasets import cifar10, mnist
 
-from mplc import multi_partner_learning, constants, utils
+from mplc import constants, utils
 from mplc.contributivity import Contributivity
 from mplc.datasets import dataset_cifar10 as data_cf
 from mplc.datasets import dataset_mnist as data_mn
@@ -115,17 +115,17 @@ def create_Dataset(iterate_dataset_name):
     if dataset_name == "mnist":
         dataset = data_mn.generate_new_dataset()
 
-    yield dataset
+    return dataset
 
 
 @pytest.fixture(scope="class")
 def create_MultiPartnerLearning(create_Dataset):
     data = create_Dataset
-
     # Create partners_list (this is not a fixture):
     part_list = create_partners_list(data.name, 3)
-
+    scenario = Scenario(3, [0.3, 0.3, 0.4], dataset=data)
     mpl = FederatedAverageLearning(
+        scenario,
         partners_list=part_list,
         epoch_count=2,
         minibatch_count=2,
@@ -140,11 +140,11 @@ def create_MultiPartnerLearning(create_Dataset):
 
 
 @pytest.fixture(scope="class")
-def create_Scenario(iterate_dataset_name, iterate_samples_split_option):
-    dataset_name = iterate_dataset_name
+def create_Scenario(create_Dataset, iterate_samples_split_option):
+    dataset = create_Dataset
     samples_split_option = iterate_samples_split_option
 
-    params = {"dataset_name": dataset_name}
+    params = {"dataset": dataset}
     params.update(
         {
             "partners_count": 3,
@@ -185,9 +185,7 @@ def create_Scenario(iterate_dataset_name, iterate_samples_split_option):
         scenar.dataset.name, scenar.partners_count
     )
 
-    scenar.mpl = multi_partner_learning.init_multi_partner_learning_from_scenario(
-        scenario=scenar, is_save_data=True
-    )
+    scenar.mpl = scenar.multi_partner_learning_approach(scenar, is_save_data=True)
 
     yield scenar
 
@@ -209,7 +207,6 @@ def create_Contributivity(create_Scenario):
 # This is not a pytest.fixture!
 def create_partners_list(dataset_name, partners_count):
     partners_list = []
-
     for i in range(partners_count):
         part = Partner(partner_id=i)
 
