@@ -54,7 +54,7 @@ class Partner:
             raise ValueError(
                 f"The proportion of labels to corrupted was {proportion_shuffled} but it must be between 0 and 1."
             )
-        # Select the indices where the label will be shuffled
         n = int(len(self.y_train) * proportion_shuffled)
-        for label in self.y_train[:n]:
-            np.random.shuffle(label)
+        idx = np.random.choice(len(self.y_train), size=n, replace=False)
+        for i in idx:
+            np.random.shuffle(self.y_train[i])
