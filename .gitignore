@@ -120,4 +120,3 @@ experiments/
 mplc/datasets/local_data/
 
 *.zip
-*.csv
