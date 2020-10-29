@@ -3,7 +3,7 @@
 This enables to parameterize the partners that participate to the simulated federated learning scenario.
 """
 
-from random import shuffle, sample
+from random import sample
 
 import numpy as np
 
@@ -54,19 +54,7 @@ class Partner:
             raise ValueError(
                 f"The proportion of labels to corrupted was {proportion_shuffled} but it must be between 0 and 1."
             )
-
-        # Select the indices where the label will be shuffled
         n = int(len(self.y_train) * proportion_shuffled)
-        idx = sample(list(range(len(self.y_train))), n)
-
-        # Suffle the labels
+        idx = np.random.choice(len(self.y_train), size=n, replace=False)
         for i in idx:
-            label = self.y_train[i]
-            # Suffle the label
-            new_label = shuffle(label)
-
-            # Force the label to be different
-            while np.all(new_label == label):
-                new_label = shuffle(label)
-
-            self.y_train[i] = new_label
+            np.random.shuffle(self.y_train[i])
