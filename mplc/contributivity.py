@@ -974,7 +974,7 @@ class Contributivity:
                 mpl.partners_list = [partner for partner, is_in in zip(full_partners_list, is_partner_in) if
                                      is_in == 1]
             logger.info(f"Partner_values: {partner_values}")
-            logger.info(f"Partners selected for the next epoch : {[p.id for p in mpl.partners_list]}")
+            logger.info(f"Partners selected for the next epoch: {[p.id for p in mpl.partners_list]}")
 
             # apply one epoch with the selected partner to the previous model/ do the action
             mpl.aggregator = self.scenario.aggregation(mpl)  # we have to reset the weight of aggregation
@@ -996,7 +996,7 @@ class Contributivity:
             partner_values = np.exp(w) / (1.0 + np.exp(w))
             previous_loss = loss
 
-        mpl.history.log_final_model_perf()
+        mpl.log_final_model_perf()
         mpl.save_final_model()
         end = timer()
         mpl.learning_computation_time = end - start

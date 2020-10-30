@@ -17,8 +17,8 @@ scenario_params_list:
      - 'seq-pure'
      - 'seq-with-final-agg'
      - 'seqavg'
-   aggregation_weighting: 
-     - 'data_volume' 
+   aggregation_weighting:
+     - 'data-volume'
      - 'uniform'
    epoch_count: 
      - 38

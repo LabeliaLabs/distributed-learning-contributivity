@@ -18,7 +18,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelEncoder
 
 from . import contributivity, constants
-from . import dataset as dataset_mod
+from . import dataset as dataset_module
 from .datasets import (
     dataset_mnist,
     dataset_titanic,
@@ -135,7 +135,7 @@ class Scenario:
             )
 
         # Get and verify which dataset is configured
-        if isinstance(dataset, dataset_mod.Dataset):
+        if isinstance(dataset, dataset_module.Dataset):
             self.dataset = dataset
         else:
             # Reference the module corresponding to the dataset selected and initialize the Dataset object
