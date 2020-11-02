@@ -306,7 +306,7 @@ class FederatedAverageLearning(MultiPartnerLearning):
             partner.model_weights = self.model_weights
 
         # Evaluate and store accuracy of mini-batch start model
-        self.history.log_model_val_perf()
+        self.log_model_val_perf()
 
         # Iterate over partners for training each individual model
         for partner_index, partner in enumerate(self.partners_list):
