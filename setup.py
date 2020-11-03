@@ -8,7 +8,7 @@ with open("mplc/requirements.txt", "r") as fh:
 
 setup(
     name="mplc",
-    version='0.1',
+    version='0.2',
     author="SubstraFoundation",
     author_email="contact@substra.org",
     description="A distributed learning contributivity package",

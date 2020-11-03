@@ -139,7 +139,7 @@ class MultiPartnerLearning(ABC):
 
         logger.debug(f"{epoch_nb_str} > {mb_nb_str} > {partner_id_str} > val_acc: {val_acc_str}")
 
-    def log_model_val_perf(self):
+    def eval_and_log_model_val_perf(self):
         model = self.build_model()
         hist = model.evaluate(self.val_data[0],
                               self.val_data[1],
@@ -153,7 +153,7 @@ class MultiPartnerLearning(ABC):
             logger.info(f"   Model evaluation at the end of the epoch: "
                         f"{['%.3f' % elem for elem in hist]}")
 
-    def log_final_model_perf(self):
+    def eval_and_log_final_model__test_perf(self):
         logger.info("### Evaluating model on test data:")
         model = self.build_model()
         hist = model.evaluate(self.test_data[0],
@@ -202,7 +202,7 @@ class MultiPartnerLearning(ABC):
             self.epoch_index += 1
 
         # After last epoch or if early stopping was triggered, evaluate model on the global testset
-        self.log_final_model_perf()
+        self.eval_and_log_final_model__test_perf()
         # Save the model's weights
         self.save_final_model()
 
@@ -216,7 +216,7 @@ class MultiPartnerLearning(ABC):
         while self.minibatch_index < self.minibatch_count:
             self.fit_minibatch()
             self.minibatch_index += 1
-            self.log_model_val_perf()
+            self.eval_and_log_model_val_perf()
 
     @abstractmethod
     def fit_minibatch(self):
@@ -257,7 +257,7 @@ class SinglePartnerLearning(MultiPartnerLearning):
         self.log_partner_perf(self.partner.id, 0, history.history)
         del self.history.history['mpl_model']
         # Evaluate trained model on test data
-        self.log_final_model_perf()
+        self.eval_and_log_final_model__test_perf()
         self.history.nb_epochs_done = (es.stopped_epoch + 1) if es.stopped_epoch != 0 else self.epoch_count
 
         end = timer()
@@ -306,7 +306,7 @@ class FederatedAverageLearning(MultiPartnerLearning):
             partner.model_weights = self.model_weights
 
         # Evaluate and store accuracy of mini-batch start model
-        self.log_model_val_perf()
+        self.eval_and_log_model_val_perf()
 
         # Iterate over partners for training each individual model
         for partner_index, partner in enumerate(self.partners_list):
@@ -356,7 +356,7 @@ class SequentialLearning(MultiPartnerLearning):  # seq-pure
         model_for_round = self.build_model()
 
         # Evaluate and store accuracy of mini-batch start model
-        self.log_model_val_perf()
+        self.eval_and_log_model_val_perf()
         # Iterate over partners for training each individual model
         shuffled_indexes = np.random.permutation(self.partners_count)
         logger.debug(f"(seq) Shuffled order for this seqavg collaborative round: {shuffled_indexes}")
@@ -457,7 +457,7 @@ class MplLabelFlip(FederatedAverageLearning):
             partner.model_weights = self.model_weights
 
         # Evaluate and store accuracy of mini-batch start model
-        self.log_model_val_perf()
+        self.eval_and_log_model_val_perf()
 
         # Iterate over partners for training each individual model
         for partner_index, partner in enumerate(self.partners_list):

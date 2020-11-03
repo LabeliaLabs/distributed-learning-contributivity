@@ -39,7 +39,6 @@ class Test_EndToEndTest:
 
         # Extract score
         min_test_score = df["mpl_test_score"].min()
-
         assert min_test_score > 0.95
 
     def test_titanic(self):
