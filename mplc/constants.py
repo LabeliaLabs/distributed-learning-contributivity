@@ -39,6 +39,7 @@ CONTRIBUTIVITY_METHODS = [
     "Federated SBS quadratic",
     "Federated SBS constant",
     "LFlip",
+    "PVRL",
 ]
 
 # Datasets' Tags
@@ -52,11 +53,3 @@ SUPPORTED_DATASETS_NAMES = [MNIST, CIFAR10, TITANIC, ESC50, IMDB]
 
 # Number of attempts allowed before raising an error while trying to download dataset
 NUMBER_OF_DOWNLOAD_ATTEMPTS = 3
-
-# Supported multipartner learning approaches
-MULTI_PARTNER_LEARNING_APPROACHES = [
-    "fedavg",
-    "seq-pure",
-    "seq-with-final-agg",
-    "seqavg",
-]

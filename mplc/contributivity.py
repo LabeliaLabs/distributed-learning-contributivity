@@ -7,7 +7,6 @@ from __future__ import print_function
 
 import bisect
 import datetime
-import pathlib
 from itertools import combinations
 from math import factorial
 from timeit import default_timer as timer
@@ -17,10 +16,10 @@ from loguru import logger
 from scipy.stats import norm
 from sklearn.linear_model import LinearRegression
 
-from . import multi_partner_learning
+from . import multi_partner_learning, constants
 
 
-class krigingModel:
+class KrigingModel:
     def __init__(self, degre, covariance_func):
         self.X = np.array([[]])
         self.Y = np.array([[]])
@@ -84,14 +83,13 @@ class Contributivity:
                 + str(self.first_charac_fct_calls_count)
                 + "\n"
         )
-        # TODO print only 3 digits
-        output += "Contributivity scores: " + str(self.contributivity_scores) + "\n"
-        output += "Std of the contributivity scores: " + str(self.scores_std) + "\n"
-        output += "Normalized contributivity scores: " + str(self.normalized_scores) + "\n"
+        output += f"Contributivity scores: {np.round(self.contributivity_scores, 3)}\n"
+        output += f"Std of the contributivity scores: {np.round(self.scores_std, 3)}\n"
+        output += f"Normalized contributivity scores: {np.round(self.normalized_scores, 3)}\n"
 
         return output
 
-    def not_twice_characteristic(self, subset, the_scenario):
+    def not_twice_characteristic(self, subset):
 
         if len(subset) > 0:
             subset = np.sort(subset)
@@ -99,22 +97,23 @@ class Contributivity:
             # Characteristic_func(permut) has not been computed yet...
             # ... so we compute, store, and return characteristic_func(permut)
             self.first_charac_fct_calls_count += 1
-            small_partners_list = np.array([the_scenario.partners_list[i] for i in subset])
-            mpl = multi_partner_learning.MultiPartnerLearning(
-                small_partners_list,
-                the_scenario.epoch_count,
-                the_scenario.minibatch_count,
-                the_scenario.dataset,
-                the_scenario.multi_partner_learning_approach,
-                the_scenario.aggregation_weighting,
-                is_early_stopping=True,
-                is_save_data=False,
-                save_folder=the_scenario.save_folder,
-            )
-            mpl.compute_test_score()
-            self.charac_fct_values[tuple(subset)] = mpl.test_score
+            small_partners_list = np.array([self.scenario.partners_list[i] for i in subset])
+            if len(small_partners_list) > 1:
+                mpl = self.scenario.multi_partner_learning_approach(self.scenario,
+                                                                    partners_list=small_partners_list,
+                                                                    is_early_stopping=True,
+                                                                    is_save_data=False,
+                                                                    )
+            else:
+                mpl = multi_partner_learning.SinglePartnerLearning(self.scenario,
+                                                                   partner=small_partners_list[0],
+                                                                   is_early_stopping=True,
+                                                                   is_save_data=False,
+                                                                   )
+            mpl.fit()
+            self.charac_fct_values[tuple(subset)] = mpl.history.score
             # we add the new increments
-            for i in range(len(the_scenario.partners_list)):
+            for i in range(len(self.scenario.partners_list)):
                 if i in subset:
                     subset_without_i = np.delete(subset, np.argwhere(subset == i))
                     if (
@@ -138,12 +137,12 @@ class Contributivity:
 
     # %% Generalization of Shapley Value computation
 
-    def compute_SV(self, the_scenario):
+    def compute_SV(self):
         start = timer()
         logger.info("# Launching computation of Shapley Value of all partners")
 
         # Initialize list of all players (partners) indexes
-        partners_count = len(the_scenario.partners_list)
+        partners_count = len(self.scenario.partners_list)
         partners_idx = np.arange(partners_count)
 
         # Define all possible coalitions of players
@@ -156,7 +155,7 @@ class Contributivity:
         characteristic_function = []
 
         for coalition in coalitions:
-            characteristic_function.append(self.not_twice_characteristic(coalition, the_scenario))
+            characteristic_function.append(self.not_twice_characteristic(coalition))
 
         # Compute Shapley Value for each partner
         # We are using this python implementation: https://github.com/susobhang70/shapley_value
@@ -172,7 +171,7 @@ class Contributivity:
         self.computation_time_sec = end - start
 
     # %% compute independent raw scores
-    def compute_independent_scores(self, the_scenario):
+    def compute_independent_scores(self):
         start = timer()
 
         logger.info(
@@ -183,8 +182,8 @@ class Contributivity:
         performance_scores = []
 
         # Train models independently on each partner and append perf. score to list of perf. scores
-        for i in range(len(the_scenario.partners_list)):
-            performance_scores.append(self.not_twice_characteristic(np.array([i]), the_scenario))
+        for i in range(len(self.scenario.partners_list)):
+            performance_scores.append(self.not_twice_characteristic(np.array([i])))
         self.name = "Independent scores raw"
         self.contributivity_scores = np.array(performance_scores)
         self.scores_std = np.zeros(len(performance_scores))
@@ -193,15 +192,15 @@ class Contributivity:
         self.computation_time_sec = end - start
 
     # %% compute Shapley values with the truncated Monte-carlo method
-    def truncated_MC(self, the_scenario, sv_accuracy=0.01, alpha=0.9, truncation=0.05):
+    def truncated_MC(self, sv_accuracy=0.01, alpha=0.9, truncation=0.05):
         """Return the vector of approximated Shapley value corresponding to a list of partner and
         a characteristic function using the truncated monte-carlo method."""
         start = timer()
-        n = len(the_scenario.partners_list)
+        n = len(self.scenario.partners_list)
 
-        characteristic_all_partners = self.not_twice_characteristic(
-            np.arange(n), the_scenario
-        )  # Characteristic function on all partners
+        # Characteristic function on all partners
+        characteristic_all_partners = self.not_twice_characteristic(np.arange(n))
+
         if n == 1:
             self.name = "TMC Shapley"
             self.contributivity_scores = np.array([characteristic_all_partners])
@@ -239,7 +238,7 @@ class Contributivity:
                         char_partnerlists[j + 1] = char_partnerlists[j]
                     else:
                         char_partnerlists[j + 1] = self.not_twice_characteristic(
-                            permutation[: j + 1], the_scenario
+                            permutation[: j + 1]
                         )
                     contributions[-1][permutation[j]] = (
                             char_partnerlists[j + 1] - char_partnerlists[j]
@@ -255,13 +254,13 @@ class Contributivity:
 
     # %% compute Shapley values with the truncated Monte-carlo method with a small bias correction
 
-    def interpol_TMC(self, the_scenario, sv_accuracy=0.01, alpha=0.9, truncation=0.05):
+    def interpol_TMC(self, sv_accuracy=0.01, alpha=0.9, truncation=0.05):
         """Return the vector of approximated Shapley value corresponding to a list of partner and a characteristic
         function using the interpolated truncated monte-carlo method."""
         start = timer()
-        n = len(the_scenario.partners_list)
+        n = len(self.scenario.partners_list)
         # Characteristic function on all partners
-        characteristic_all_partners = self.not_twice_characteristic(np.arange(n), the_scenario)
+        characteristic_all_partners = self.not_twice_characteristic(np.arange(n))
         if n == 1:
             self.name = "ITMCS"
             self.contributivity_scores = np.array([characteristic_all_partners])
@@ -298,17 +297,17 @@ class Contributivity:
                         if first:
                             size_of_rest = 0
                             for i in range(j, n):
-                                size_of_rest += len(the_scenario.partners_list[i].y_train)
+                                size_of_rest += len(self.scenario.partners_list[i].y_train)
                             a = (characteristic_all_partners - char_partnerlists[j]) / size_of_rest
                             first = False
 
-                        size_of_S = len(the_scenario.partners_list[j].y_train)
+                        size_of_S = len(self.scenario.partners_list[j].y_train)
 
                         char_partnerlists[j + 1] = char_partnerlists[j] + a * size_of_S
 
                     else:
                         char_partnerlists[j + 1] = self.not_twice_characteristic(
-                            permutation[: j + 1], the_scenario
+                            permutation[: j + 1]
                         )
                     contributions[-1][permutation[j]] = (
                             char_partnerlists[j + 1] - char_partnerlists[j]
@@ -324,14 +323,14 @@ class Contributivity:
 
     # # %% compute Shapley values with the importance sampling method
 
-    def IS_lin(self, the_scenario, sv_accuracy=0.01, alpha=0.95):
+    def IS_lin(self, sv_accuracy=0.01, alpha=0.95):
         """Return the vector of approximated Shapley value corresponding to a list of partner and \
             a characteristic function using the importance sampling method and a linear interpolation model."""
 
         start = timer()
-        n = len(the_scenario.partners_list)
+        n = len(self.scenario.partners_list)
         # Characteristic function on all partners
-        characteristic_all_partners = self.not_twice_characteristic(np.arange(n), the_scenario)
+        characteristic_all_partners = self.not_twice_characteristic(np.arange(n))
         if n == 1:
             self.name = "IS_lin Shapley"
             self.contributivity_scores = np.array([characteristic_all_partners])
@@ -355,21 +354,21 @@ class Contributivity:
             for k in range(n):
                 last_increments.append(
                     characteristic_all_partners
-                    - self.not_twice_characteristic(np.delete(np.arange(n), k), the_scenario)
+                    - self.not_twice_characteristic(np.delete(np.arange(n), k))
                 )
                 first_increments.append(
-                    self.not_twice_characteristic(np.array([k]), the_scenario)
+                    self.not_twice_characteristic(np.array([k]))
                     - characteristic_no_partner
                 )
 
             # ## definition of the number of data in all datasets
             size_of_I = 0
-            for partner in the_scenario.partners_list:
+            for partner in self.scenario.partners_list:
                 size_of_I += len(partner.y_train)
 
             def approx_increment(subset, k):
                 assert k not in subset, "" + str(k) + "is not in " + str(subset) + ""
-                small_partners_list = np.array([the_scenario.partners_list[i] for i in subset])
+                small_partners_list = np.array([self.scenario.partners_list[i] for i in subset])
                 # compute the size of subset : ||subset||
                 size_of_S = 0
                 for partner in small_partners_list:
@@ -424,8 +423,8 @@ class Contributivity:
                     # compute the increment
                     SUk = np.append(S, k)
                     increment = self.not_twice_characteristic(
-                        SUk, the_scenario
-                    ) - self.not_twice_characteristic(S, the_scenario)
+                        SUk
+                    ) - self.not_twice_characteristic(S)
                     # computed the weight p/g
                     contributions[t - 1][k] = (
                             increment * renorms[k] / np.abs(approx_increment(np.array(S), k))
@@ -441,16 +440,16 @@ class Contributivity:
 
     # # %% compute Shapley values with the regression importance sampling method
 
-    def IS_reg(self, the_scenario, sv_accuracy=0.01, alpha=0.95):
+    def IS_reg(self, sv_accuracy=0.01, alpha=0.95):
         """Return the vector of approximated Shapley value corresponding
         to a list of partner and a characteristic function using the
         importance sampling method and a regression model."""
         start = timer()
-        n = len(the_scenario.partners_list)
+        n = len(self.scenario.partners_list)
 
         if n < 4:
 
-            self.compute_SV(the_scenario)
+            self.compute_SV()
             self.name = "IS_reg Shapley values"
 
         else:
@@ -463,21 +462,21 @@ class Contributivity:
             # compute some  increments
             permutation = np.random.permutation(n)
             for j in range(n):
-                self.not_twice_characteristic(permutation[: j + 1], the_scenario)
+                self.not_twice_characteristic(permutation[: j + 1])
             permutation = np.flip(permutation)
             for j in range(n):
-                self.not_twice_characteristic(permutation[: j + 1], the_scenario)
+                self.not_twice_characteristic(permutation[: j + 1])
             for k in range(n):
                 permutation = np.append(permutation[-1], permutation[:-1])
                 for j in range(n):
-                    self.not_twice_characteristic(permutation[: j + 1], the_scenario)
+                    self.not_twice_characteristic(permutation[: j + 1])
 
             # do the regressions
 
             # make the datasets
             def makedata(subset):
                 # compute the size of subset : ||subset||
-                small_partners_list = np.array([the_scenario.partners_list[i] for i in subset])
+                small_partners_list = np.array([self.scenario.partners_list[i] for i in subset])
                 size_of_S = 0
                 for partner in small_partners_list:
                     size_of_S += len(partner.y_train)
@@ -555,8 +554,8 @@ class Contributivity:
                             break
                     SUk = np.append(S, k)
                     increment = self.not_twice_characteristic(
-                        SUk, the_scenario
-                    ) - self.not_twice_characteristic(S, the_scenario)
+                        SUk
+                    ) - self.not_twice_characteristic(S)
                     contributions[t - 1][k] = (
                             increment * renorms[k] / np.abs(approx_increment(np.array(S), k))
                     )
@@ -571,12 +570,12 @@ class Contributivity:
 
     # # %% compute Shapley values with the Kriging adaptive importance sampling method
 
-    def AIS_Kriging(self, the_scenario, sv_accuracy=0.01, alpha=0.95, update=50):
+    def AIS_Kriging(self, sv_accuracy=0.01, alpha=0.95, update=50):
         """Return the vector of approximated Shapley value corresponding to a list of partner
         and a characteristic function using the importance sampling method and a Kriging model."""
         start = timer()
 
-        n = len(the_scenario.partners_list)
+        n = len(self.scenario.partners_list)
 
         # definition of the original density
         def prob(subset):
@@ -586,25 +585,25 @@ class Contributivity:
         # definition of the approximation of the increment
         # compute some  increments to fuel the Kriging
         S = np.arange(n)
-        self.not_twice_characteristic(S, the_scenario)
+        self.not_twice_characteristic(S)
         for k1 in range(n):
             for k2 in range(n):
                 S = np.array([k1])
-                self.not_twice_characteristic(S, the_scenario)
+                self.not_twice_characteristic(S)
                 S = np.delete(np.arange(n), [k1])
-                self.not_twice_characteristic(S, the_scenario)
+                self.not_twice_characteristic(S)
                 if k1 != k2:
                     S = np.array([k1, k2])
-                    self.not_twice_characteristic(S, the_scenario)
+                    self.not_twice_characteristic(S)
                     S = np.delete(np.arange(n), [k1, k2])
-                    self.not_twice_characteristic(S, the_scenario)
+                    self.not_twice_characteristic(S)
 
         # ## do the regressions
         def make_coordinate(subset, k):
             assert k not in subset
             # compute the size of subset : ||subset||
             coordinate = np.zeros(n)
-            small_partners_list = np.array([the_scenario.partners_list[i] for i in subset])
+            small_partners_list = np.array([self.scenario.partners_list[i] for i in subset])
             for partner, i in zip(small_partners_list, subset):
                 coordinate[i] = len(partner.y_train)
             coordinate = np.delete(coordinate, k)
@@ -639,7 +638,7 @@ class Contributivity:
             # fit the kriging
             models = []
             for k in range(n):
-                model_k = krigingModel(2, cov[k])
+                model_k = KrigingModel(2, cov[k])
                 model_k.fit(datasets[k], outputs[k])
                 models.append(model_k)
             all_models.append(models)
@@ -705,8 +704,8 @@ class Contributivity:
                         break
                 SUk = np.append(S, k)
                 increment = self.not_twice_characteristic(
-                    SUk, the_scenario
-                ) - self.not_twice_characteristic(S, the_scenario)
+                    SUk
+                ) - self.not_twice_characteristic(S)
                 contributions[t - 1][k] = (
                         increment * all_renorms[j][k] / np.abs(approx_increment(S, k, j))
                 )
@@ -725,15 +724,15 @@ class Contributivity:
 
     # # %% compute Shapley values with the stratified sampling method
 
-    def Stratified_MC(self, the_scenario, sv_accuracy=0.01, alpha=0.95):
+    def Stratified_MC(self, sv_accuracy=0.01, alpha=0.95):
         """Return the vector of approximated Shapley values using the stratified monte-carlo method."""
 
         start = timer()
 
-        N = len(the_scenario.partners_list)
+        N = len(self.scenario.partners_list)
 
         characteristic_all_partners = self.not_twice_characteristic(
-            np.arange(N), the_scenario
+            np.arange(N)
         )  # Characteristic function on all partners
 
         if N == 1:
@@ -793,8 +792,8 @@ class Contributivity:
                             break
                     SUk = np.append(S, k)
                     increment = self.not_twice_characteristic(
-                        SUk, the_scenario
-                    ) - self.not_twice_characteristic(S, the_scenario)
+                        SUk
+                    ) - self.not_twice_characteristic(S)
                     contributions[k][strata].append(increment)
                     # computes the var and means of each strata
                     sigma2[k, strata] = np.var(contributions[k][strata])
@@ -821,14 +820,14 @@ class Contributivity:
 
     # %% compute Shapley values with the without replacement stratified sampling method
 
-    def without_replacment_SMC(self, the_scenario, sv_accuracy=0.01, alpha=0.95):
+    def without_replacment_SMC(self, sv_accuracy=0.01, alpha=0.95):
         """Return the vector of approximated Shapley values using the stratified monte-carlo method."""
 
         start = timer()
 
-        N = len(the_scenario.partners_list)
+        N = len(self.scenario.partners_list)
         # Characteristic function on all partners
-        characteristic_all_partners = self.not_twice_characteristic(np.arange(N), the_scenario)
+        characteristic_all_partners = self.not_twice_characteristic(np.arange(N))
 
         if N == 1:
             self.name = "WR_SMC Shapley"
@@ -887,8 +886,8 @@ class Contributivity:
                     S = np.array(list(eval(subset)), dtype=int)
                     SUk = np.append(S, k)
                     increment = self.not_twice_characteristic(
-                        SUk, the_scenario
-                    ) - self.not_twice_characteristic(S, the_scenario)
+                        SUk
+                    ) - self.not_twice_characteristic(S)
 
                     # store the increment
                     increments_generated[k][strata][subset] = increment
@@ -940,93 +939,86 @@ class Contributivity:
 
     # %% compute Partner value by reinforcement learning
 
-    def PVRL(self, the_scenario, learning_rate):
+    def PVRL(self, learning_rate):
         start = timer()
-        w = np.zeros(the_scenario.partners_count)
+        w = np.zeros(self.scenario.partners_count)
         partner_values = np.exp(w) / (1.0 + np.exp(w))
-        previous_partner_values = np.zeros(the_scenario.partners_count)
-        epsilon = 0.002
+        # previous_partner_values = np.zeros(self.scenario.partners_count)
+        # epsilon = 0.002
 
-        mpl = multi_partner_learning.MultiPartnerLearning(
-            the_scenario.partners_list,
-            1,
-            the_scenario.minibatch_count,
-            the_scenario.dataset,
-            the_scenario.multi_partner_learning_approach,
-            the_scenario.aggregation_weighting,
+        mpl = self.scenario.multi_partner_learning_approach(
+            self.scenario.partners_list,
+            self.scenario.epoch_count,
+            self.scenario.minibatch_count,
+            self.scenario.dataset,
+            self.scenario.aggregation,
             is_early_stopping=False,
-            is_save_data=True,
-            save_folder=the_scenario.save_folder,
             init_model_from="random_initialization",
             use_saved_weights=False,
         )
-        mpl.compute_test_score()
-        previous_loss = mpl.loss_collective_models[-1]
-        PVRL_epoch = 0
-        while (PVRL_epoch < the_scenario.epoch_count * the_scenario.partners_count or np.sum(
-                np.abs(partner_values - previous_partner_values)) / the_scenario.partners_count > epsilon):
-            PVRL_epoch += 1
-            logger.info(f"t:{PVRL_epoch}")
-            logger.info(f"partner_values: {partner_values}")
-            # Select the partner / the action
-            is_partner_in = np.random.binomial(1, p=partner_values)
-            while np.sum(is_partner_in) == 0:
+        full_partners_list = mpl.partners_list  # this list must be a list of PartnerMpl
+        initial_model = mpl.build_model()
+        hist = initial_model.evaluate(mpl.val_data[0],
+                                      mpl.val_data[1],
+                                      batch_size=constants.DEFAULT_BATCH_SIZE,
+                                      verbose=0,
+                                      )
+        previous_loss = hist[0]
+        while (mpl.epoch_index < mpl.epoch_count):
+            # or (np.sum(np.abs(partner_values - previous_partner_values)) / self.scenario.partners_count > epsilon):
+
+            # Select the partners / the action
+            mpl.partners_list = []
+            while mpl.partners_count == 0:
                 is_partner_in = np.random.binomial(1, p=partner_values)
+                mpl.partners_list = [partner for partner, is_in in zip(full_partners_list, is_partner_in) if
+                                     is_in == 1]
+            logger.info(f"Partner_values: {partner_values}")
+            logger.info(f"Partners selected for the next epoch: {[p.id for p in mpl.partners_list]}")
 
             # apply one epoch with the selected partner to the previous model/ do the action
-            small_partner_list = [partner for partner, is_in in zip(the_scenario.partners_list, is_partner_in) if
-                                  is_in == 1]
-            weights_folder = pathlib.PurePath.joinpath(pathlib.Path(the_scenario.save_folder), 'model',
-                                                       the_scenario.dataset.name + '_final_weights'
-                                                                                   '.h5')
-            mpl = multi_partner_learning.MultiPartnerLearning(
-                small_partner_list,
-                1,
-                the_scenario.minibatch_count,
-                the_scenario.dataset,
-                the_scenario.multi_partner_learning_approach,
-                the_scenario.aggregation_weighting,
-                is_early_stopping=False,
-                is_save_data=True,
-                save_folder=the_scenario.save_folder,
-                init_model_from=weights_folder,
-                use_saved_weights=True,
-            )
-            mpl.compute_test_score()
-            loss = mpl.loss_collective_models[-1]
+            mpl.aggregator = self.scenario.aggregation(mpl)  # we have to reset the weight of aggregation
+            mpl.fit_epoch()
+            loss = mpl.history.history['mpl_model']['val_loss'][mpl.epoch_index, -1]
+            mpl.epoch_index += 1
 
             G = - loss + previous_loss
             dp_dw = np.exp(w) / (1 + np.exp(w)) ** 2
             prodp = np.prod(partner_values)
             # Update the weight according to the REINFORCE method
-            new_w = np.zeros(the_scenario.partners_count)
-            for i in range(the_scenario.partners_count):
+            new_w = np.zeros(self.scenario.partners_count)
+            for i in range(self.scenario.partners_count):
                 grad = is_partner_in[i] / partner_values[i] - (1.0 - is_partner_in[i]) / (
                         1.0 - partner_values[i]) - prodp / (1.0 - prodp) / (1.0 - partner_values[i])
                 new_w[i] = w[i] + learning_rate * G * dp_dw[i] * grad
             w = new_w
             # Update values before the next round
-            previous_partner_values = partner_values
             partner_values = np.exp(w) / (1.0 + np.exp(w))
             previous_loss = loss
 
+        mpl.eval_and_log_final_model__test_perf()
+        mpl.save_final_model()
+        end = timer()
+        mpl.learning_computation_time = end - start
+        logger.info(f"Training and evaluation on multiple partners: "
+                    f"done. ({np.round(mpl.learning_computation_time, 3)} seconds)")
+
         self.name = "PVRL"
-        print(f"PVRL: the final accuracy is  {mpl.test_score}")
         self.contributivity_scores = partner_values
-        self.scores_std = np.zeros(the_scenario.partners_count)
+        self.scores_std = np.zeros(self.scenario.partners_count)
         self.normalized_scores = self.contributivity_scores / np.sum(
             self.contributivity_scores
         )
         end = timer()
         self.computation_time_sec = end - start
 
-    def federated_SBS_linear(self, the_scenario):
+    def federated_SBS_linear(self):
         start = timer()
         logger.info(
             "# Launching computation of perf. scores of linear "
             "performance increase compared to previous collective model")
 
-        relative_perf_matrix = self.compute_relative_perf_matrix(the_scenario)
+        relative_perf_matrix = self.compute_relative_perf_matrix()
         comp_rounds_kept = relative_perf_matrix.shape[0]
 
         # Calculate contributivity score with linear importance function
@@ -1042,13 +1034,13 @@ class Contributivity:
         end = timer()
         self.computation_time_sec = end - start
 
-    def federated_SBS_quadratic(self, the_scenario):
+    def federated_SBS_quadratic(self):
         start = timer()
         logger.info(
             "# Launching computation of perf. scores of"
             "quadratic performance increase compared to previous collective model")
 
-        relative_perf_matrix = self.compute_relative_perf_matrix(the_scenario)
+        relative_perf_matrix = self.compute_relative_perf_matrix()
         comp_rounds_kept = relative_perf_matrix.shape[0]
 
         # Calculate contributivity score with quadratic importance function
@@ -1064,13 +1056,13 @@ class Contributivity:
         end = timer()
         self.computation_time_sec = end - start
 
-    def federated_SBS_constant(self, the_scenario):
+    def federated_SBS_constant(self):
         start = timer()
         logger.info(
             "# Launching computation of perf. scores of constant"
             "performance increase compared to previous collective model")
 
-        relative_perf_matrix = self.compute_relative_perf_matrix(the_scenario)
+        relative_perf_matrix = self.compute_relative_perf_matrix()
 
         # Calculate contributivity score as average of the relative performance for each round for each partner
         contributivity_scores = np.nanmean(relative_perf_matrix, axis=0)
@@ -1084,16 +1076,21 @@ class Contributivity:
         end = timer()
         self.computation_time_sec = end - start
 
-    def compute_relative_perf_matrix(self, the_scenario):
+    def compute_relative_perf_matrix(self):
 
         # Define proportion of initial and final computation rounds to skip (default 10% each)
         init_comp_rounds_skipped = 0.1
         final_comp_rounds_skipped = 0.1
 
         # Fetch score matrices from computation and scenario characteristics
-        multi_partner_learning = the_scenario.mpl
-        score_matrix_collective_models = multi_partner_learning.score_matrix_collective_models[:, 1:]
-        score_matrix_per_partner = multi_partner_learning.score_matrix_per_partner
+        multi_partner_learning = self.scenario.mpl
+        score_matrix_collective_models = multi_partner_learning.history.history['mpl_model']['val_accuracy']
+        partner_score_matrix = [value['val_accuracy'] for key, value in multi_partner_learning.history.history.items()
+                                if key != 'mpl_model']
+        # the shape of the matrix created is (partners_count, epoch_count, minibatch_count).
+        score_matrix_per_partner = np.swapaxes(np.swapaxes(partner_score_matrix, 0, 2), 0, 1)
+        # We swap twice the axis to end with a matrix with shape (epoch_count, minibatch_count, partners_count)
+
         partners_count = multi_partner_learning.partners_count
         epoch_count = multi_partner_learning.epoch_count
         minibatch_count = multi_partner_learning.minibatch_count
@@ -1117,15 +1114,15 @@ class Contributivity:
 
         return relative_perf_matrix
 
-    def flip_label(self):
+    def flip_label(self):  # TOD refacto
         start = timer()
         mpl = multi_partner_learning.MplLabelFlip(self.scenario)
         mpl.fit()
-        self.thetas_history = mpl.history_theta
-        self.test_score = mpl.test_score
+        self.thetas_history = mpl.history.theta
+        self.score = mpl.history.score
         self.contributivity_scores = np.exp(- np.array([np.linalg.norm(
-            mpl.history_theta[mpl.nb_epochs_done - 1][i] - np.identity(
-                mpl.history_theta[mpl.nb_epochs_done - 1][i].shape[0])
+            mpl.history.theta[mpl.epoch_index - 1][i] - np.identity(
+                mpl.history.theta[mpl.epoch_index - 1][i].shape[0])
         ) for i in range(len(self.scenario.partners_list))]))
 
         self.name = "Label Flip"
@@ -1137,67 +1134,64 @@ class Contributivity:
     def compute_contributivity(
             self,
             method_to_compute,
-            current_scenario,
             sv_accuracy=0.01,
             alpha=0.95,
             truncation=0.05,
-            update=50,
+            update=50
     ):
 
         if method_to_compute == "Shapley values":
             # Contributivity 1: Baseline contributivity measurement (Shapley Value)
-            self.compute_SV(current_scenario)
+            self.compute_SV()
         elif method_to_compute == "Independent scores":
             # Contributivity 2: Performance scores of models trained independently on each partner
-            self.compute_independent_scores(current_scenario)
+            self.compute_independent_scores()
         elif method_to_compute == "TMCS":
             # Contributivity 3: Truncated Monte Carlo Shapley
             self.truncated_MC(
-                current_scenario, sv_accuracy=sv_accuracy, alpha=alpha, truncation=truncation,
+                sv_accuracy=sv_accuracy, alpha=alpha, truncation=truncation,
             )
         elif method_to_compute == "ITMCS":
             # Contributivity 4: interpolated monte-carlo
             self.interpol_TMC(
-                current_scenario, sv_accuracy=sv_accuracy, alpha=alpha, truncation=truncation,
+                sv_accuracy=sv_accuracy, alpha=alpha, truncation=truncation,
             )
         elif method_to_compute == "IS_lin_S":
             # Contributivity 5: Importance sampling with linear interpolation model
-            self.IS_lin(current_scenario, sv_accuracy=sv_accuracy, alpha=alpha)
+            self.IS_lin(sv_accuracy=sv_accuracy, alpha=alpha)
         elif method_to_compute == "IS_reg_S":
             # Contributivity 6: Importance sampling with regression model
-            self.IS_reg(current_scenario, sv_accuracy=sv_accuracy, alpha=alpha)
+            self.IS_reg(sv_accuracy=sv_accuracy, alpha=alpha)
         elif method_to_compute == "AIS_Kriging_S":
             # Contributivity 7: Adaptative importance sampling with Kriging model
-            self.AIS_Kriging(current_scenario, sv_accuracy=sv_accuracy, alpha=alpha, update=update)
+            self.AIS_Kriging(sv_accuracy=sv_accuracy, alpha=alpha, update=update)
         elif method_to_compute == "SMCS":
             # Contributivity 8:  Stratified Monte Carlo
-            self.Stratified_MC(current_scenario, sv_accuracy=sv_accuracy, alpha=alpha)
+            self.Stratified_MC(sv_accuracy=sv_accuracy, alpha=alpha)
         elif method_to_compute == "WR_SMC":
             # Contributivity 9: Without replacement Stratified Monte Carlo
-            self.without_replacment_SMC(current_scenario, sv_accuracy=sv_accuracy, alpha=alpha)
+            self.without_replacment_SMC(sv_accuracy=sv_accuracy, alpha=alpha)
         elif method_to_compute == "Federated SBS linear":
             # Contributivity 10: step by step increments with linear importance increase
-            if current_scenario.multi_partner_learning_approach != "fedavg":
+            if self.scenario.multi_partner_learning_approach != multi_partner_learning.FederatedAverageLearning:
                 logger.warning("Step by step linear contributivity method is only suited for federated "
                                "averaging learning approach")
-            self.federated_SBS_linear(current_scenario)
+            self.federated_SBS_linear()
         elif method_to_compute == "Federated SBS quadratic":
             # Contributivity 11: step by step increments with quadratic importance increase
-            if current_scenario.multi_partner_learning_approach != "fedavg":
+            if self.scenario.multi_partner_learning_approach != multi_partner_learning.FederatedAverageLearning:
                 logger.warning("Step by step quadratic contributivity method is only suited for federated "
                                "averaging learning approach")
-            self.federated_SBS_quadratic(current_scenario)
+            self.federated_SBS_quadratic()
         elif method_to_compute == "Federated SBS constant":
             # Contributivity 12: step by step increments with constant importance
-            if current_scenario.multi_partner_learning_approach != "fedavg":
+            if self.scenario.multi_partner_learning_approach != multi_partner_learning.FederatedAverageLearning:
                 logger.warning("Step by step constant contributivity method is only suited for federated "
                                "averaging learning approach")
-            self.federated_SBS_constant(current_scenario)
+            self.federated_SBS_constant()
         elif method_to_compute == "PVRL":
             # Contributivity 10: Partner valuation by reinforcement learning
-            self.PVRL(
-                current_scenario, learning_rate=0.2
-            )
+            self.PVRL(learning_rate=0.2)
         elif method_to_compute == "LFlip":
             self.flip_label()
         else:
@@ -1221,8 +1215,8 @@ def shapley_value(partners_count, char_func_list):  # Updated by @arthurPignet
         logger.info("No players, exiting")  # Updated by @bowni
         quit()
 
-    tempList = list([i for i in range(n)])
-    N = power_set(tempList)
+    temp_list = list([i for i in range(n)])
+    N = power_set(temp_list)
 
     shapley_values = []
     for i in range(n):

@@ -172,7 +172,7 @@ You will need all the `dev-requirements` installed.
 $ pip install -r dev-requirements.txt
 ``` 
 
-Make sure that you have the right access to pypi, and enable the 2FA for safety purpose. 
+Make sure that you have the right access to [PyPI](https://pypi.org/project/mplc/), and enable the 2FA for safety purpose. 
 
 ```bash
 $ python3 setup.py sdist bdist_wheel
