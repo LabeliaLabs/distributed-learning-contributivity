@@ -108,11 +108,13 @@ class Dataset(ABC):
 
 class Cifar10(Dataset):
     def __init__(self):
+        self.input_shape = (32, 32, 3)
+        self.num_classes = 10
         x_test, x_train, y_test, y_train = self.load_data()
 
         super(Cifar10, self).__init__(dataset_name='cifar10',
-                                      num_classes=10,
-                                      input_shape=(32, 32, 3),
+                                      num_classes=self.num_classes,
+                                      input_shape=self.input_shape,
                                       x_train=x_train,
                                       y_train=y_train,
                                       x_test=x_test,
@@ -209,12 +211,14 @@ class Cifar10(Dataset):
 
 class Titanic(Dataset):
     def __init__(self):
+        self.num_classes = 2
+        self.input_shape = (26,)
         # Load data
         (x_train, y_train), (x_test, y_test) = self.load_data()
 
         super(Titanic, self).__init__(dataset_name='titanic',
-                                      num_classes=2,
-                                      input_shape=(26,),
+                                      num_classes=self.num_classes,
+                                      input_shape=self.input_shape,
                                       x_train=x_train,
                                       y_train=y_train,
                                       x_test=x_test,
@@ -395,11 +399,12 @@ class Mnist(Dataset):
         # Init dataset-specific variables
         self.img_rows = 28
         self.img_cols = 28
-
+        self.input_shape = (self.img_rows, self.img_cols, 1)
+        self.num_classes = 10
         x_test, x_train, y_test, y_train = self.load_data()
 
         super(Mnist, self).__init__(dataset_name='mnist',
-                                    num_classes=10,
+                                    num_classes=self.num_classes,
                                     input_shape=(self.img_rows, self.img_cols, 1),
                                     x_train=x_train,
                                     y_train=y_train,
@@ -486,12 +491,13 @@ class Mnist(Dataset):
 class Imdb(Dataset):
     def __init__(self):
         self.num_words = 5000
-
+        self.num_classes = 2
+        self.input_shape = 500
         x_test, x_train, y_test, y_train = self.load_data()
 
         super(Imdb, self).__init__(dataset_name='imdb',
-                                   num_classes=2,
-                                   input_shape=500,
+                                   num_classes=self.num_classes,
+                                   input_shape=self.input_shape,
                                    x_train=x_train,
                                    y_train=y_train,
                                    x_test=x_test,
@@ -573,11 +579,14 @@ class Imdb(Dataset):
 class Esc50(Dataset):
     def __init__(self):
         # Load data
+        self.num_classes = 50
+        self.input_shape = (40, 431, 1)
+
         (x_train, y_train), (x_test, y_test) = self.load_data()
 
         super(Esc50, self).__init__(dataset_name='esc50',
-                                    num_classes=50,
-                                    input_shape=(40, 431, 1),
+                                    num_classes=self.num_classes,
+                                    input_shape=self.input_shape,
                                     x_train=x_train,
                                     y_train=y_train,
                                     x_test=x_test,
@@ -683,7 +692,7 @@ class Esc50(Dataset):
         shutil.rmtree(f'{path}/ESC-50-master')
 
     # Model structure and generation
-    def generate_new_model_for_dataset(self):
+    def generate_new_model(self):
         # The model is adapted from https://github.com/mikesmales/Udacity-ML-Capstone
         # It was initially design to work on the URBANSOUND8K DATASET
         model = Sequential()
