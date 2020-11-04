@@ -57,55 +57,14 @@ from mplc.scenario import Scenario
 
 
 ######
-# Fixture Iterate: to generate the combination of parameters
-# of the Scenario Partner MPL Dataset Objects
-######
-
-
-@pytest.fixture(scope="class", params=["cifar10", "mnist"])
-def iterate_dataset_name(request):
-    yield request.param
-
-
-@pytest.fixture(
-    scope="class",
-    params=[
-        ["basic", "random"],
-        ["advanced", [[4, "shared"], [6, "shared"], [4, "specific"]]],
-    ],
-    ids=["basic", "advanced"],
-)
-def iterate_samples_split_option(request):
-    yield request.param
-
-
-######
+# These are outdated comments, but they
 # Fixture Create: to generate the objects that are used in the test functions,
 #  use the 'iterate' fixtures to generate their parameters.
 # It's probably better to maintain their independence in order
-# to be free to create weird objects, then give them to the test functions
+# to be free to create weird objects, then give them to the test functions.
 ######
 
 # create_Mpl uses create_Dataset and create_Contributivity uses create_Scenario
-
-
-@pytest.fixture(scope="class")
-def create_Partner(create_Scenario):
-    """Instantiate partner object"""
-    yield create_Scenario.partners_list[0]
-
-
-@pytest.fixture(scope="class")
-def create_Dataset(iterate_dataset_name):
-    dataset_name = iterate_dataset_name
-
-    if dataset_name == "cifar10":
-        dataset = Cifar10()
-    if dataset_name == "mnist":
-        dataset = Mnist()
-
-    return dataset
-
 
 @pytest.fixture(scope="class", params=(Mnist, Cifar10, Titanic, Imdb, Esc50))
 def create_all_datasets(request):
@@ -113,8 +72,8 @@ def create_all_datasets(request):
 
 
 @pytest.fixture(scope="class")
-def create_MultiPartnerLearning(create_Dataset):
-    data = create_Dataset
+def create_MultiPartnerLearning(create_all_datasets):
+    data = create_all_datasets
     # Create partners_list (this is not a fixture):
     scenario = Scenario(3, [0.3, 0.3, 0.4], dataset=data)
     mpl = FederatedAverageLearning(
@@ -131,10 +90,15 @@ def create_MultiPartnerLearning(create_Dataset):
     yield mpl
 
 
-@pytest.fixture(scope="module")
-def create_Scenario(create_Dataset, iterate_samples_split_option):
-    dataset = create_Dataset
-    samples_split_option = iterate_samples_split_option
+@pytest.fixture(scope="class",
+                params=((Mnist, ["basic", "random"]),
+                        (Mnist, ["advanced", [[4, "shared"], [6, "shared"], [4, "specific"]]]),
+                        (Cifar10, ["basic", "random"]),
+                        (Cifar10, ["advanced", [[4, "shared"], [6, "shared"], [4, "specific"]]])),
+                ids=['Mnist - basic', 'Mnist - advanced', 'Cifar10 - basic', 'Cifar10 - advanced'])
+def create_Scenario(request):
+    dataset = request.param[0]()
+    samples_split_option = request.param[1]
 
     params = {"dataset": dataset}
     params.update(
@@ -202,63 +166,11 @@ def create_Contributivity(create_Scenario):
 #
 ######
 
-"""# This is not a pytest.fixture!
-def create_partners_list(dataset_name, partners_count):
-    partners_list = []
-    for i in range(partners_count):
-        part = Partner(partner_id=i)
-
-        if dataset_name == "cifar10":
-            (x_train, y_train), (x_test, y_test) = cifar10.load_data()
-            part.y_train = Cifar10.preprocess_dataset_labels(y_train)
-        if dataset_name == "mnist":
-            (x_train, y_train), (x_test, y_test) = mnist.load_data()
-            part.y_train = Mnist.preprocess_dataset_labels(y_train)
-        partners_list.append(part)
-
-    return partners_list
-"""
-
 ######
 #
 # Tests modules with Objects
 #
 ######
-
-
-class Test_Partner:
-    def test_corrupt_labels_type(self):
-        """partner.y_train should be a numpy.ndarray"""
-        with pytest.raises(TypeError):
-            part = Partner(partner_id=0)
-            part.corrupt_labels()
-
-    def test_corrupt_labels_type_elem(self, create_Partner):
-        """corrupt_labels raise TypeError if partner.y_train isn't float32"""
-        with pytest.raises(TypeError):
-            part = create_Partner
-            part.y_train = part.y_train.astype("float64")
-            part.corrupt_labels(part)
-
-    def test_shuffle_labels_type(self):
-        """shuffle_labels should be a numpy.ndarray"""
-        with pytest.raises(TypeError):
-            part = Partner(partner_id=0)
-            part.shuffle_labels(part)
-
-    def test_shuffle_labels_type_elem(self, create_Partner):
-        """shuffle_labels raise TypeError if partner.y_train isn't float32"""
-        with pytest.raises(TypeError):
-            part = create_Partner
-            part.y_train = part.y_train.astype("float64")
-            part.shuffle_labels(part)
-
-
-class Test_Mpl:
-    def test_Mpl(self, create_MultiPartnerLearning):
-        mpl = create_MultiPartnerLearning
-        assert type(mpl) == FederatedAverageLearning
-
 
 class Test_Scenario:
     def test_scenar(self, create_Scenario):
@@ -268,6 +180,40 @@ class Test_Scenario:
         scenar = create_Scenario
         with pytest.raises(Exception):
             scenar.instantiate_scenario_partners()
+
+    def test_corrupt_labels_type(self):
+        """partner.y_train should be a numpy.ndarray"""
+        with pytest.raises(TypeError):
+            part = Partner(partner_id=0)
+            part.corrupt_labels()
+
+    def test_corrupt_labels_type_elem(self, create_Scenario):
+        """corrupt_labels raise TypeError if partner.y_train isn't float32"""
+        scenar = create_Scenario
+        with pytest.raises(TypeError):
+            part = scenar.partners_list[0]
+            part.y_train = part.y_train.astype("float64")
+            part.corrupt_labels(part)
+
+    def test_shuffle_labels_type(self):
+        """shuffle_labels should be a numpy.ndarray"""
+        with pytest.raises(TypeError):
+            part = Partner(partner_id=0)
+            part.shuffle_labels(part)
+
+    def test_shuffle_labels_type_elem(self, create_Scenario):
+        """shuffle_labels raise TypeError if partner.y_train isn't float32"""
+        scenar = create_Scenario
+        with pytest.raises(TypeError):
+            part = scenar.partners_list[0]
+            part.y_train = part.y_train.astype("float64")
+            part.shuffle_labels(part)
+
+
+class Test_Mpl:
+    def test_Mpl(self, create_MultiPartnerLearning):
+        mpl = create_MultiPartnerLearning
+        assert type(mpl) == FederatedAverageLearning
 
 
 class Test_Contributivity:
@@ -325,6 +271,7 @@ class Test_Dataset:
         assert callable(model1.load_weights), ".load_weights() method is required for model"
         assert callable(model1.get_weights), ' .get_weights() method is required for model'
         assert callable(model1.set_weights), ".set_weights() method is required for model"
+
 
 #####
 #
