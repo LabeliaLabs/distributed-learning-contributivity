@@ -212,7 +212,7 @@ class Cifar10(Dataset):
 class Titanic(Dataset):
     def __init__(self):
         self.num_classes = 2
-        self.input_shape = (26,)
+        self.input_shape = (27,)
         # Load data
         (x_train, y_train), (x_test, y_test) = self.load_data()
 
@@ -255,7 +255,7 @@ class Titanic(Dataset):
         x.drop('Siblings/Spouses Aboard', axis=1, inplace=True)
         x.drop('Parents/Children Aboard', axis=1, inplace=True)
         x.drop('Title', axis=1, inplace=True)
-        return x.to_numpy()
+        return x.to_numpy(dtype='float32')
 
     def load_data(self):
         """Return a usable dataset"""
@@ -292,7 +292,7 @@ class Titanic(Dataset):
         x = raw_dataset.drop('Survived', axis=1)
         x = self.preprocess_dataset_inputs(x)
         y = raw_dataset['Survived']
-        y = y.to_numpy()
+        y = y.to_numpy(dtype='float32')
 
         x_train, x_test, y_train, y_test = self.train_test_split_global(x, y)
 
@@ -492,7 +492,7 @@ class Imdb(Dataset):
     def __init__(self):
         self.num_words = 5000
         self.num_classes = 2
-        self.input_shape = 500
+        self.input_shape = (500,)
         x_test, x_train, y_test, y_train = self.load_data()
 
         super(Imdb, self).__init__(dataset_name='imdb',
@@ -539,7 +539,7 @@ class Imdb(Dataset):
         return y
 
     def preprocess_dataset_inputs(self, x):
-        x = sequence.pad_sequences(x, maxlen=self.input_shape)
+        x = sequence.pad_sequences(x, maxlen=self.input_shape[0])
         return x
 
     # Model structure and generation

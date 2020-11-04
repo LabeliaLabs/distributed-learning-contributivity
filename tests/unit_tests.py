@@ -46,12 +46,10 @@ from pathlib import Path
 import numpy as np
 import pytest
 import yaml
-from tensorflow.keras.datasets import cifar10, mnist
 
 from mplc import constants, utils
 from mplc.contributivity import Contributivity
-from mplc.datasets import dataset_cifar10 as data_cf
-from mplc.datasets import dataset_mnist as data_mn
+from mplc.dataset import Mnist, Cifar10, Imdb, Titanic, Esc50
 from mplc.mpl_utils import UniformAggregator
 from mplc.multi_partner_learning import FederatedAverageLearning
 from mplc.partner import Partner
@@ -92,18 +90,9 @@ def iterate_samples_split_option(request):
 
 
 @pytest.fixture(scope="class")
-def create_Partner(iterate_dataset_name):
+def create_Partner(create_Scenario):
     """Instantiate partner object"""
-    part = Partner(partner_id=0)
-    dataset_name = iterate_dataset_name
-
-    if dataset_name == "cifar10":
-        (x_train, y_train), (x_test, y_test) = cifar10.load_data()
-        part.y_train = data_cf.preprocess_dataset_labels(y_train)
-    if dataset_name == "mnist":
-        (x_train, y_train), (x_test, y_test) = mnist.load_data()
-        part.y_train = data_mn.preprocess_dataset_labels(y_train)
-    yield part
+    yield create_Scenario.partners_list[0]
 
 
 @pytest.fixture(scope="class")
@@ -111,22 +100,25 @@ def create_Dataset(iterate_dataset_name):
     dataset_name = iterate_dataset_name
 
     if dataset_name == "cifar10":
-        dataset = data_cf.generate_new_dataset()
+        dataset = Cifar10()
     if dataset_name == "mnist":
-        dataset = data_mn.generate_new_dataset()
+        dataset = Mnist()
 
     return dataset
+
+
+@pytest.fixture(scope="class", params=(Mnist, Cifar10, Titanic, Imdb, Esc50))
+def create_all_datasets(request):
+    return request.param()
 
 
 @pytest.fixture(scope="class")
 def create_MultiPartnerLearning(create_Dataset):
     data = create_Dataset
     # Create partners_list (this is not a fixture):
-    part_list = create_partners_list(data.name, 3)
     scenario = Scenario(3, [0.3, 0.3, 0.4], dataset=data)
     mpl = FederatedAverageLearning(
         scenario,
-        partners_list=part_list,
         epoch_count=2,
         minibatch_count=2,
         dataset=data,
@@ -139,7 +131,7 @@ def create_MultiPartnerLearning(create_Dataset):
     yield mpl
 
 
-@pytest.fixture(scope="class")
+@pytest.fixture(scope="module")
 def create_Scenario(create_Dataset, iterate_samples_split_option):
     dataset = create_Dataset
     samples_split_option = iterate_samples_split_option
@@ -181,13 +173,19 @@ def create_Scenario(create_Dataset, iterate_samples_split_option):
         **params, experiment_path=experiment_path, scenario_id=0, repeats_count=1
     )
 
-    scenar.partners_list = create_partners_list(
-        scenar.dataset.name, scenar.partners_count
-    )
-
     scenar.mpl = scenar.multi_partner_learning_approach(scenar, is_save_data=True)
 
-    yield scenar
+    scenar.instantiate_scenario_partners()
+    # Split data according to scenario and then pre-process successively...
+    # ... train data, early stopping validation data, test data
+    if scenar.samples_split_type == "basic":
+        scenar.split_data()
+    elif scenar.samples_split_type == "advanced":
+        scenar.split_data_advanced()
+    scenar.compute_batch_sizes()
+    scenar.data_corruption()
+
+    return scenar
 
 
 @pytest.fixture(scope="class")
@@ -195,7 +193,7 @@ def create_Contributivity(create_Scenario):
     scenar = create_Scenario
     contri = Contributivity(scenario=scenar)
 
-    yield contri
+    return contri
 
 
 ######
@@ -204,7 +202,7 @@ def create_Contributivity(create_Scenario):
 #
 ######
 
-# This is not a pytest.fixture!
+"""# This is not a pytest.fixture!
 def create_partners_list(dataset_name, partners_count):
     partners_list = []
     for i in range(partners_count):
@@ -212,14 +210,14 @@ def create_partners_list(dataset_name, partners_count):
 
         if dataset_name == "cifar10":
             (x_train, y_train), (x_test, y_test) = cifar10.load_data()
-            part.y_train = data_cf.preprocess_dataset_labels(y_train)
+            part.y_train = Cifar10.preprocess_dataset_labels(y_train)
         if dataset_name == "mnist":
             (x_train, y_train), (x_test, y_test) = mnist.load_data()
-            part.y_train = data_mn.preprocess_dataset_labels(y_train)
+            part.y_train = Mnist.preprocess_dataset_labels(y_train)
         partners_list.append(part)
 
     return partners_list
-
+"""
 
 ######
 #
@@ -256,19 +254,6 @@ class Test_Partner:
             part.shuffle_labels(part)
 
 
-class Test_Dataset:
-    def test_generate_new_model(self, create_Dataset):
-        assert create_Dataset.name in {"cifar10", "mnist"}
-
-    def test_train_val_split(self, create_Dataset):
-        """train_val_split is used once, just after Dataset being instantiated
-         - this is written to prevent its call from another place"""
-        data = create_Dataset
-        data.x_val = data.x_train[::]
-        with pytest.raises(Exception):
-            data.train_val_split()
-
-
 class Test_Mpl:
     def test_Mpl(self, create_MultiPartnerLearning):
         mpl = create_MultiPartnerLearning
@@ -279,11 +264,10 @@ class Test_Scenario:
     def test_scenar(self, create_Scenario):
         assert type(create_Scenario) == Scenario
 
-    class Test_instantiate_scenario_partners:
-        def test_raiseException(self, create_Scenario):
-            scenar = create_Scenario
-            with pytest.raises(Exception):
-                scenar.instantiate_scenario_partners()
+    def test_raiseException(self, create_Scenario):
+        scenar = create_Scenario
+        with pytest.raises(Exception):
+            scenar.instantiate_scenario_partners()
 
 
 class Test_Contributivity:
@@ -298,72 +282,49 @@ class Test_Contributivity:
 #
 ######
 
+class Test_Dataset:
 
-@pytest.fixture(scope="class")
-def create_cifar10_x():
-    (x_train, y_train), (x_test, y_test) = cifar10.load_data()
-    x_train = data_cf.preprocess_dataset_inputs(x_train)
-    x_test = data_cf.preprocess_dataset_inputs(x_test)
-    return x_train, x_test
+    def test_train_split_global(self, create_all_datasets):
+        """train_val_split is used once, just after Dataset being instantiated
+         - this is written to prevent its call from another place"""
+        data = create_all_datasets
+        assert len(data.x_val) < len(data.x_train)
+        assert len(data.x_test) < len(data.x_train)
+        with pytest.raises(Exception):
+            data.train_val_split_global()
 
+    def test_local_split(self, create_all_datasets):
+        data = create_all_datasets
+        x_train, x_val, y_train, y_val = data.train_val_split_local(data.x_train, data.y_train)
+        assert len(x_train) == len(y_train)
+        assert len(x_val) == len(y_val)
+        x_train, x_test, y_train, y_test = data.train_val_split_local(data.x_train, data.y_train)
+        assert len(x_train) == len(y_train)
+        assert len(x_test) == len(y_test)
 
-@pytest.fixture(scope="class")
-def create_mnist_x():
-    (x_train, y_train), (x_test, y_test) = mnist.load_data()
-    x_train = data_mn.preprocess_dataset_inputs(x_train)
-    x_test = data_mn.preprocess_dataset_inputs(x_test)
-    return x_train, x_test
+    def test_data_shape(self, create_all_datasets):
+        data = create_all_datasets
+        assert len(data.x_train) == len(data.y_train), "Number of train label is not equal to the number of data"
+        assert len(data.x_val) == len(data.y_val), "Number of val label is not equal to the number of data"
+        assert len(data.x_test) == len(data.y_test), "Number of test label is not equal to the number of data"
 
+        if data.num_classes > 2:
+            assert data.y_train[np.random.randint(len(data.y_train))].shape == (data.num_classes,)
+            assert data.y_val[np.random.randint(len(data.y_val))].shape == (data.num_classes,)
+            assert data.y_test[np.random.randint(len(data.y_test))].shape == (data.num_classes,)
+        assert data.x_train[np.random.randint(len(data.x_train))].shape == data.input_shape
+        assert data.x_test[np.random.randint(len(data.x_test))].shape == data.input_shape
+        assert data.x_val[np.random.randint(len(data.x_val))].shape == data.input_shape
 
-class Test_dataset_cifar10:
-    def test_preprocess_dataset_inputs_type(self, create_cifar10_x):
-        """x_train and x_test type should be float32"""
-        x_train, x_test = create_cifar10_x
-        assert x_train.dtype == "float32"
-        assert x_test.dtype == "float32"
-
-    def test_preprocess_dataset_inputs_activation(self, create_cifar10_x):
-        """x_train and x_test activation should be >=0 and <=1"""
-        x_train, x_test = create_cifar10_x
-        greater_than_0 = np.greater_equal(x_train, 0).all()
-        lower_than_1 = np.less_equal(x_train, 1).all()
-        assert greater_than_0 and lower_than_1
-
-        greater_than_0 = np.greater_equal(x_test, 0).all()
-        lower_than_1 = np.less_equal(x_test, 1).all()
-        assert greater_than_0 and lower_than_1
-
-    def test_inputs_shape(self, create_cifar10_x):
-        """the shape of the elements of x_train and x_test should be equal to input_shape"""
-        x_train, x_test = create_cifar10_x
-        assert x_train.shape[1:] == data_cf.input_shape
-        assert x_test.shape[1:] == data_cf.input_shape
-
-
-class Test_dataset_mnist:
-    def test_preprocess_dataset_inputs_type(self, create_mnist_x):
-        """x_train and x_test type should be float32"""
-        x_train, x_test = create_mnist_x
-        assert x_train.dtype == "float32"
-        assert x_test.dtype == "float32"
-
-    def test_preprocess_dataset_inputs_activation(self, create_mnist_x):
-        """x_train and x_test activation should be >=0 and <=1"""
-        x_train, x_test = create_mnist_x
-        greater_than_0 = np.greater_equal(x_train, 0).all()
-        lower_than_1 = np.less_equal(x_train, 1).all()
-        assert greater_than_0 and lower_than_1
-
-        greater_than_0 = np.greater_equal(x_test, 0).all()
-        lower_than_1 = np.less_equal(x_test, 1).all()
-        assert greater_than_0 and lower_than_1
-
-    def test_inputs_shape(self, create_mnist_x):
-        """the shape of the elements of x_train and x_test should be equal to input_shape"""
-        x_train, x_test = create_mnist_x
-        assert x_train.shape[1:] == data_mn.input_shape
-        assert x_test.shape[1:] == data_mn.input_shape
-
+    def test_generate_new_model(self, create_all_datasets):
+        dataset = create_all_datasets
+        model1 = dataset.generate_new_model()
+        assert callable(model1.fit), ".fit() method is required for model"
+        assert callable(model1.evaluate), ".evaluate() method is required for model"
+        assert callable(model1.save_weights), ".save_weights() method is required for model"
+        assert callable(model1.load_weights), ".load_weights() method is required for model"
+        assert callable(model1.get_weights), ' .get_weights() method is required for model'
+        assert callable(model1.set_weights), ".set_weights() method is required for model"
 
 #####
 #
