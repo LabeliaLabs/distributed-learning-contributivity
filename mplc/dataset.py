@@ -547,7 +547,7 @@ class Imdb(Dataset):
         """ Return a CNN model from scratch based on given batch_size"""
 
         model = Sequential()
-        model.add(Embedding(self.num_words, 32, input_length=self.input_shape))
+        model.add(Embedding(self.num_words, 32, input_length=self.input_shape[0]))
         model.add(Conv1D(filters=32,
                          kernel_size=3,
                          padding='same',
