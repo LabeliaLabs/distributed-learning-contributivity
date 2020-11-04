@@ -43,7 +43,6 @@ This enables to parameterize unit tests - the tests are run by Travis each time 
 
 from pathlib import Path
 
-import numpy as np
 import pytest
 import yaml
 
@@ -132,32 +131,32 @@ def create_Scenario(request):
             Path.cwd() / constants.EXPERIMENTS_FOLDER_NAME / full_experiment_name
     )
 
-    # scenar.dataset object is created inside the Scenario constructor
-    scenar = Scenario(
+    # scenario_.dataset object is created inside the Scenario constructor
+    scenario_ = Scenario(
         **params, experiment_path=experiment_path, scenario_id=0, repeats_count=1
     )
 
-    scenar.mpl = scenar.multi_partner_learning_approach(scenar, is_save_data=True)
+    scenario_.mpl = scenario_.multi_partner_learning_approach(scenario_, is_save_data=True)
 
-    scenar.instantiate_scenario_partners()
+    scenario_.instantiate_scenario_partners()
     # Split data according to scenario and then pre-process successively...
     # ... train data, early stopping validation data, test data
-    if scenar.samples_split_type == "basic":
-        scenar.split_data()
-    elif scenar.samples_split_type == "advanced":
-        scenar.split_data_advanced()
-    scenar.compute_batch_sizes()
-    scenar.data_corruption()
+    if scenario_.samples_split_type == "basic":
+        scenario_.split_data()
+    elif scenario_.samples_split_type == "advanced":
+        scenario_.split_data_advanced()
+    scenario_.compute_batch_sizes()
+    scenario_.data_corruption()
 
-    return scenar
+    return scenario_
 
 
 @pytest.fixture(scope="class")
 def create_Contributivity(create_Scenario):
-    scenar = create_Scenario
-    contri = Contributivity(scenario=scenar)
+    scenario = create_Scenario
+    contributivity = Contributivity(scenario=scenario)
 
-    return contri
+    return contributivity
 
 
 ######
@@ -177,9 +176,9 @@ class Test_Scenario:
         assert type(create_Scenario) == Scenario
 
     def test_raiseException(self, create_Scenario):
-        scenar = create_Scenario
+        scenario = create_Scenario
         with pytest.raises(Exception):
-            scenar.instantiate_scenario_partners()
+            scenario.instantiate_scenario_partners()
 
     def test_corrupt_labels_type(self):
         """partner.y_train should be a numpy.ndarray"""
@@ -189,9 +188,9 @@ class Test_Scenario:
 
     def test_corrupt_labels_type_elem(self, create_Scenario):
         """corrupt_labels raise TypeError if partner.y_train isn't float32"""
-        scenar = create_Scenario
+        scenario = create_Scenario
         with pytest.raises(TypeError):
-            part = scenar.partners_list[0]
+            part = scenario.partners_list[0]
             part.y_train = part.y_train.astype("float64")
             part.corrupt_labels(part)
 
@@ -203,9 +202,9 @@ class Test_Scenario:
 
     def test_shuffle_labels_type_elem(self, create_Scenario):
         """shuffle_labels raise TypeError if partner.y_train isn't float32"""
-        scenar = create_Scenario
+        scenario = create_Scenario
         with pytest.raises(TypeError):
-            part = scenar.partners_list[0]
+            part = scenario.partners_list[0]
             part.y_train = part.y_train.astype("float64")
             part.shuffle_labels(part)
 
@@ -255,22 +254,22 @@ class Test_Dataset:
         assert len(data.x_test) == len(data.y_test), "Number of test label is not equal to the number of data"
 
         if data.num_classes > 2:
-            assert data.y_train[np.random.randint(len(data.y_train))].shape == (data.num_classes,)
-            assert data.y_val[np.random.randint(len(data.y_val))].shape == (data.num_classes,)
-            assert data.y_test[np.random.randint(len(data.y_test))].shape == (data.num_classes,)
-        assert data.x_train[np.random.randint(len(data.x_train))].shape == data.input_shape
-        assert data.x_test[np.random.randint(len(data.x_test))].shape == data.input_shape
-        assert data.x_val[np.random.randint(len(data.x_val))].shape == data.input_shape
+            assert data.y_train[0].shape == (data.num_classes,)
+            assert data.y_val[0].shape == (data.num_classes,)
+            assert data.y_test[0].shape == (data.num_classes,)
+        assert data.x_train[0].shape == data.input_shape
+        assert data.x_test[0].shape == data.input_shape
+        assert data.x_val[0].shape == data.input_shape
 
     def test_generate_new_model(self, create_all_datasets):
         dataset = create_all_datasets
-        model1 = dataset.generate_new_model()
-        assert callable(model1.fit), ".fit() method is required for model"
-        assert callable(model1.evaluate), ".evaluate() method is required for model"
-        assert callable(model1.save_weights), ".save_weights() method is required for model"
-        assert callable(model1.load_weights), ".load_weights() method is required for model"
-        assert callable(model1.get_weights), ' .get_weights() method is required for model'
-        assert callable(model1.set_weights), ".set_weights() method is required for model"
+        model = dataset.generate_new_model()
+        assert callable(model.fit), ".fit() method is required for model"
+        assert callable(model.evaluate), ".evaluate() method is required for model"
+        assert callable(model.save_weights), ".save_weights() method is required for model"
+        assert callable(model.load_weights), ".load_weights() method is required for model"
+        assert callable(model.get_weights), ' .get_weights() method is required for model'
+        assert callable(model.set_weights), ".set_weights() method is required for model"
 
 
 #####
