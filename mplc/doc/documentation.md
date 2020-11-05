@@ -1,6 +1,6 @@
 # MPLC - documentation
 
-> *This documentation is work in progress, please don't get mad if you don't find what you are looking for! Drop us a line, we'll do our best to improve it.*
+> *This documentation is work in progress, please don't get mad if you don't find what you are looking for! Drop us a line, we'll do our best to answer you quickly and enhance the documentation.*
 
 Table of content:
 
@@ -118,40 +118,7 @@ my_scenario.run()
 
 ### Browsing results
 
-After a run, every information regarding the training and testing will be available under the `multi_partner_learning` object in the `scenario.dataset.mpl` attribute.
-
-For instance: you can access `scenario.mpl.loss_collective_models`.
-
-Here is a non exhaustive list of metrics available:
-
-- `loss_collective_models`
-- `score_matrix_collective_models`
-- `score_matrix_per_partner`
-
-Here is an example of an accuracy plot for 3 partners
-
-```python
-import pandas as pd
-import seaborn as sns
-sns.set()
-
-x = my_scenario.mpl.score_matrix_per_partner
-
-x_collective = my_scenario.mpl.score_matrix_collective_models
-
-x = x[:,:,0]
-x_collective = x_collective[:,0]
-
-d = {
-    'partner 0' : x[:,0],
-    'partner 1' : x[:,1],
-    'partner 2' : x[:,2],
-    'Averaged model' : x_collective
-}
-
-df = pd.DataFrame(d)
-sns.relplot(data = df, kind = "line")
-```
+After a run, every information regarding the training and testing will be available ... <tbc `History` object>
 
 Check out [Tutorial 3 - Exploring results](https://github.com/SubstraFoundation/distributed-learning-contributivity/blob/master/notebooks/examples/3_Exploring_results.ipynb) for more information.
 
