@@ -1131,6 +1131,19 @@ class Contributivity:
         end = timer()
         self.computation_time_sec = end - start
 
+    def reweight(self):  # TOD refacto
+        start = timer()
+        mpl = multi_partner_learning.Reweighting(self.scenario)
+        mpl.fit()
+        self.score = mpl.history.score
+        self.contributivity_scores = mpl.aggregator.aggregation_weights
+
+        self.name = "Reweighting"
+        self.scores_std = np.zeros(mpl.partners_count)
+        self.normalized_scores = self.contributivity_scores / np.sum(self.contributivity_scores)
+        end = timer()
+        self.computation_time_sec = end - start
+
     def compute_contributivity(
             self,
             method_to_compute,
@@ -1194,6 +1207,8 @@ class Contributivity:
             self.PVRL(learning_rate=0.2)
         elif method_to_compute == "LFlip":
             self.flip_label()
+        elif method_to_compute == "Reweighting":
+            self.reweight()
         else:
             logger.warning("Unrecognized name of method, statement ignored!")
 

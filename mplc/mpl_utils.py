@@ -128,14 +128,25 @@ class ScoresAggregator(Aggregator):
         super(ScoresAggregator, self).aggregate_model_weights()
 
 
-class AnyWeightAggregator(Aggregator):
-    def __init__(self, mpl, w=None):
-        super(AnyWeightAggregator, self).__init__(mpl)
-        if not w:
+class ReweightingAggregator(Aggregator):
+    def __init__(self, mpl, w=None, param=None):
+        super(ReweightingAggregator, self).__init__(mpl)
+        if not w and not param:
             partners_sizes = [partner.data_volume for partner in self.mpl.partners_list]
             self.aggregation_weights = partners_sizes / np.sum(partners_sizes)
-        else:
+            self.aggregation_weights_param = np.log(self.aggregation_weights)
+        elif not param:
             self.aggregation_weights = w
+            self.aggregation_weights_param = np.log(self.aggregation_weights)
+        elif not w:
+            e = np.exp(param)
+            self.aggregation_weights = e / np.sum(e)
+            self.aggregation_weights_param = param
+        else:
+            e = np.exp(param)
+            assert np.all(e / np.sum(e) == w)
+            self.aggregation_weights = w
+            self.aggregation_weights_param = param
 
 
         # Supported aggregation weights approaches

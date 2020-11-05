@@ -40,6 +40,7 @@ CONTRIBUTIVITY_METHODS = [
     "Federated SBS constant",
     "LFlip",
     "PVRL",
+    "Reweighting",
 ]
 
 # Datasets' Tags
