@@ -101,6 +101,19 @@ class Aggregator(ABC):
 
         return new_weights
 
+    def aggregate_gradients(self):
+        """Aggregate gradients obtained by the backward propagation on the partner's models. """
+        gradients_per_layer = list(zip(*[partner.gradients for partner in self.mpl.partners_list]))
+        fusionned_gradients = list()
+
+        for gradients in gradients_per_layer:
+            avg_gradients_for_layer = np.average(
+                np.array(gradients), axis=0, weights=self.aggregation_weights
+            )
+            fusionned_gradients.append(list(avg_gradients_for_layer))
+
+        return fusionned_gradients
+
 
 class UniformAggregator(Aggregator):
     def __init__(self, mpl):
@@ -134,3 +147,4 @@ AGGREGATORS = {
     "data-volume": DataVolumeAggregator,
     "local-score": ScoresAggregator
 }
+

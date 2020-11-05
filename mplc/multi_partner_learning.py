@@ -13,6 +13,7 @@ from keras.backend import clear_session
 from keras.callbacks import EarlyStopping
 from loguru import logger
 from sklearn.preprocessing import normalize
+from tensorflow import GradientTape
 
 from . import constants
 from .mpl_utils import History, Aggregator
@@ -511,6 +512,80 @@ class MplLabelFlip(FederatedAverageLearning):
         logger.debug("End of LFlip collaborative round.")
 
 
+class GradientFusion(MultiPartnerLearning):
+    def __init__(self, scenario, **kwargs):
+        super(GradientFusion, self).__init__(scenario, **kwargs)
+        if self.partners_count == 1:
+            raise ValueError('Only one partner is provided. Please use the dedicated SinglePartnerLearning class')
+        model = self.build_model()
+        self.optimizer = model.optimizer
+
+    def fit_epoch(self):
+        # Clear Keras' old models
+        clear_session()
+
+        # Split the train dataset in mini-batches
+        self.split_in_minibatches()
+
+        # Iterate over mini-batches and train
+        for i in range(self.minibatch_count):
+            self.minibatch_index = i
+            self.fit_minibatch()
+
+            # At the end of each minibatch,aggregate the models
+            model = self.build_model()
+            self.optimizer.apply_gradients(zip(fusionned_gradients, model.trainable_weights))
+            self.model_weights = model.get_weights()
+        self.minibatch_index = 0
+
+    def fit_minibatch(self):
+        """Proceed to a collaborative round with a federated averaging approach"""
+
+        logger.debug("Start new fedavg collaborative round ...")
+
+        # Starting model for each partner is the aggregated model from the previous mini-batch iteration
+        logger.info(f"(fedavg) Minibatch n°{self.minibatch_index} of epoch n°{self.epoch_index}, "
+                    f"init each partner's models with a copy of the global model")
+
+        for partner in self.partners_list:
+            partner.model_weights = self.model_weights
+
+        # Evaluate and store accuracy of mini-batch start model
+        self.eval_and_log_model_val_perf()
+
+        # Iterate over partners for training each individual model
+        for partner_index, partner in enumerate(self.partners_list):
+            # Reference the partner's model
+            partner_model = partner.build_model()
+
+            with GradientTape() as tape:
+                # Forward pass.
+                logits = partner_model.predict(partner.minibatched_x_train[self.minibatch_index])
+                # Loss value for this batch.
+                loss_value = partner_model.loss(partner.minibatched_y_train[self.minibatch_index]
+                                                , logits)
+            # Backward pass
+            partner.gradients = tape.gradient(loss_value, partner_model.trainable_weights)
+
+            val_history = partner_model.evaluate(self.val_data[0], self.val_data[1])
+            history = partner_model.evaluate(partner.minibatched_x_train[self.minibatch_index],
+                                             partner.minibatched_y_train[self.minibatch_index])
+            history = {
+                "loss": history[0],
+                'accuracy': history[1],
+                'val_loss': val_history[0],
+                'val_accuracy': val_history[1]
+            }
+
+            # Log results of the round
+            self.log_partner_perf(partner.id, partner_index, history)
+
+            # Update the partner's model in the models' list
+            partner.model_weights = partner_model.get_weights()
+
+        logger.debug("End of fedavg collaborative round.")
+
+
 # Supported multipartner learning approaches
 
 MULTI_PARTNER_LEARNING_APPROACHES = {
@@ -518,5 +593,6 @@ MULTI_PARTNER_LEARNING_APPROACHES = {
     "seq-pure": SequentialLearning,
     "seq-with-final-agg": SequentialWithFinalAggLearning,
     "seqavg": SequentialAverageLearning,
-    "lflip": MplLabelFlip
+    "lflip": MplLabelFlip,
+    'grad-fusion': GradientFusion
 }
