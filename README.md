@@ -70,7 +70,7 @@ Finally, with given scenarios and multi-partner learning approaches, we can addr
 
 ##### Using pip
 
-```bash
+```sh
 $ pip install mplc
 ```
 
@@ -82,7 +82,7 @@ If you want to install mplc from the repository, make sure that you got the late
 
 Then clone the repository, and trigger the installation from local sources.
 
-```bash
+```sh
 $ git clone https://github.com/SubstraFoundation/distributed-learning-contributivity.git
 $ cd distributed-learning-contributivity
 $ pip install -e . 
@@ -202,3 +202,4 @@ Should you be interested in this open effort and would like to share any questio
 - Come meet with us at La Paillasse (Paris, France), Le Palace (Nantes, France) or Studio Iconosquare (Limoges, France)
 
  ![logo Substra Foundation](./img/substra_logo_couleur_rvb_w150px.png)
+
