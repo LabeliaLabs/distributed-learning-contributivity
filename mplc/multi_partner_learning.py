@@ -15,7 +15,7 @@ from loguru import logger
 from sklearn.preprocessing import normalize
 
 from . import constants
-from .mpl_utils import History, Aggregator
+from .mpl_utils import History, Aggregator, AnyWeightAggregator
 from .partner import Partner, PartnerMpl
 
 ALLOWED_PARAMETERS = ('partners_list',
@@ -509,6 +509,45 @@ class MplLabelFlip(FederatedAverageLearning):
             partner.model_weights = partner_model.get_weights()
 
         logger.debug("End of LFlip collaborative round.")
+
+
+class Reweighting(MultiPartnerLearning):
+    def __init__(self, scenario, **kwargs):
+        # First, if only one partner, fall back to dedicated single partner function
+        super(Reweighting, self).__init__(scenario, **kwargs)
+
+        self.minibatch_gradient = [None] * self.partners_count
+
+        self.aggregator = AnyWeightAggregator(self)
+
+    def weights_difference(self, weights_1, weights_2):
+        """Return the difference (or the gradient) between two model's weight list"""
+
+        difference_of_weights = []
+        for layer1, layer2 in zip(weights_1, weights_2):
+            difference_of_weights.append(np.subtract(layer2, layer1))
+        return difference_of_weights
+
+    def weights_sum(self, weights_1, weights_2):
+        """Return the sum of two model's weight list"""
+
+        difference_of_weights = []
+        for layer1, layer2 in zip(weights_1, weights_2):
+            difference_of_weights.append(np.add(layer2, layer1))
+        return difference_of_weights
+
+    def scalar_product(self, gradient1, gradient2):
+        """Return the scalar product between two gradient vector"""
+        layers_scalar_products = []
+        # Compute the scalar producte between each pair of layers
+        for layer1, layer2 in zip(gradient1, gradient2):
+            layers_scalar_products.append(np.sum(np.multiply(layer2, layer1)))
+        # Sum the scalar products of the layers
+        return np.sum(layers_scalar_products)
+
+    def fit_minibatch(self):
+        pass
+        # Work in progress...
 
 
 # Supported multipartner learning approaches

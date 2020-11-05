@@ -128,7 +128,17 @@ class ScoresAggregator(Aggregator):
         super(ScoresAggregator, self).aggregate_model_weights()
 
 
-# Supported aggregation weights approaches
+class AnyWeightAggregator(Aggregator):
+    def __init__(self, mpl, w=None):
+        super(AnyWeightAggregator, self).__init__(mpl)
+        if not w:
+            partners_sizes = [partner.data_volume for partner in self.mpl.partners_list]
+            self.aggregation_weights = partners_sizes / np.sum(partners_sizes)
+        else:
+            self.aggregation_weights = w
+
+
+        # Supported aggregation weights approaches
 AGGREGATORS = {
     "uniform": UniformAggregator,
     "data-volume": DataVolumeAggregator,
