@@ -1,32 +1,32 @@
-# Contributing to Contributivity
+# Contributing to mplc
 
-> Please, feel free to suggest any other relevant item, to ask for edits or even to submit a Pull Request!
->
-> You can also have a look at these broader [contributing guidelines](https://github.com/SubstraFoundation/.github/blob/master/CONTRIBUTING.md).
+> *Please, feel free to suggest any other relevant item, to ask for edits or even to submit a Pull Request!*
+> *You can also have a look at these broader [contributing guidelines](https://github.com/SubstraFoundation/.github/blob/master/CONTRIBUTING.md)*.
 
-- [Contributing to Contributivity](#contributing-to-contributivity)
-  - [1. Git workflow & branching](#1-git-workflow--branching)
-  - [2. Python](#2-python)
-    - [2.1 Python Virtual Environment](#21-python-virtual-environment)
-    - [2.2 Python Enhancement Proposals (PEP)](#22-python-enhancement-proposals-pep)
+Table of content:
+
+1. [Git workflow & branching](#1-git-workflow--branching)
+1. [Python](#2-python)
+   1. [Python Virtual Environment](#21-python-virtual-environment)
+   1. [Python Enhancement Proposals (PEP)](#22-python-enhancement-proposals-pep)
       - [Black formatter](#black-formatter)
-        - [Installation](#installation)
-        - [Usage](#usage)
       - [Flake8 linter](#flake8-linter)
-    - [2.3 Basic module structure & Imports order](#23-basic-module-structure--imports-order)
-    - [2.4 Jupyter Notebooks](#24-jupyter-notebooks)
-      - [2.5 Sharing & online rendering](#25-sharing--online-rendering)
-  - [3. Further Resources](#3-further-resources)
+   1. [Basic module structure & Imports order](#23-basic-module-structure--imports-order)
+   1. [Jupyter Notebooks](#24-jupyter-notebooks)
+   1. [Sharing & online rendering](#25-sharing--online-rendering)
+1. [Further Resources](#3-further-resources)
 
 ## 1. Git workflow & branching
 
-As long as other people contribute to a repository, it is easier and safer to restrain direct actions on the `master` branch. To do so, it is advised to create new branches, based on `master` (or a dedicated sub-branch, `dev` for example), to develop any new feature and then to open a Pull Request. Once audited and validated, it can be merged into `master`, and so on.
+The branching model of the project is a very simplified of the [standard approach](https://nvie.com/posts/a-successful-git-branching-model/):
 
-To go further, here is a good example of a successful project build with a versioning file system (git, mercurial, etc.): <https://nvie.com/posts/a-successful-git-branching-model/>
+- The `master` branch is protected
+- Contributors create a feature branch from `master`, push it to the repository and open a draft PR
+- Once automated tests passe, their PRs are reviewed and merged by the repository maintainers
 
 ## 2. Python
 
-### 2.1 Python Virtual Environment
+### 2.i. Python Virtual Environment
 
 In order to keep your installation separated from your general Python environment, which is a general Python good practice, it is recommended to set up a Python [virtual environment](https://virtualenv.pypa.io/en/latest/). In a new terminal window, please use one of the following method:
 
@@ -78,7 +78,7 @@ If you are looking for more Python Virtual Environment resources, you might be i
 
 Please note that you can then select your new virtual environment as any other Python interpreter in your favorite IDE and be able to use the new installed packages as if it were installed on your general Python setup.
 
-### 2.2 Python Enhancement Proposals (PEP)
+### 2.ii. Python Enhancement Proposals (PEP)
 
 - [PEP8](https://pep8.org/)
 - [PEP Index](https://www.python.org/dev/peps/) & [Repository](https://github.com/python/peps)
@@ -86,14 +86,17 @@ Please note that you can then select your new virtual environment as any other P
 
 #### Black formatter
 
-This tool might seem a little bit radical, but it is based on PEPs and offers several possibilities of customization. It will help you learn and improve your code
+This tool might seem a little bit radical, but it is based on PEPs and offers several possibilities of customization. It will help you learn and improve your code.
 
-You don't have to take all the suggested modifications (with the help of `git diff`) but it is a good reference based on PEP rules that will ensure **validity**, **maintainability** and **readability** of the code: [Package Repository](https://github.com/psf/black)
+You don't have to take all the suggested modifications (with the help of `git diff`) but it is a good reference based on PEP rules that will ensure **validity**, **maintainability** and **readability** of the code.
+
+Link: [Black package pepository](https://github.com/psf/black).
 
 ##### Installation
 
 ```sh
 pip3 install black
+
 # with anaconda
 conda install -c conda-forge black
 ```
@@ -103,15 +106,16 @@ conda install -c conda-forge black
 ```sh
 # Inspect a file
 black FILE.py
+
 # Inspect files in the current folder
 black .
 ```
 
 #### Flake8 linter
 
-Flake8 is a famous Python linting package that might be of help within your development environment: <https://pypi.org/project/flake8/>. It will help ensure the correct format of your code.
+[Flake8](https://pypi.org/project/flake8/) is a famous Python linting package that might be of help within your development environment. It will help ensure the correct format of your code.
 
-### 2.3 Basic module structure & Imports order
+### 2.iii. Basic module structure & Imports order
 
 ```python
 # -*- coding : utf-8
@@ -145,9 +149,9 @@ if __name__ == '__main__':
     main()
 ```
 
-### 2.4 Jupyter Notebooks
+### 2.iv. Jupyter Notebooks
 
-> The future is now, old man!
+> "The future is now, old man!"
 
 Jupyter Notebooks are awesome! It allows you run Python code (but not only!) in your favorite web browser and handles for you all the backend management so you can focus on writing your code in cells, or your notes directly in markdown! There are plenty of fresh contents about ways to adopt, adapt or trick notebooks. If not yet familiar with it, you really should have a look: <https://jupyter.org/>.
 
@@ -156,16 +160,17 @@ https://ipywidgets.readthedocs.io/en/latest/).
 
 Note: [Jupyter lab](https://github.com/jupyterlab/jupyterlab) is like the future of Notebook, be sure to have a look, you might like it!
 
-#### 2.5 Sharing & online rendering
+#### 2.v. Sharing & online rendering
 
 Notebooks now have really efficient ways to share your code and display your outputs, among them, you will find:
 
 - [Binder](https://mybinder.org/) that lets you turn a Git repository into a collection of interactive notebooks!
-- [Voila](https://github.com/voila-dashboards/voila) is a newcomer that will allow to build dashboads for your presentations!
+- [Voila](https://github.com/voila-dashboards/voila) is a newcomer that will allow to build dashboards for your presentations!
+- [Colab](https://colab.research.google.com/) offers online, cloud-hosted notebooks and its free plan enables usage of GPUs
 
-#### 2.6 Release a new build 
+#### 2.vi. Release a new build
 
-To release a new version on Pypi, go at the root of the repository, and trigger the build with `pip`.
+To release a new version on PyPI, go at the root of the repository, and trigger the build with `pip`.
 You will need all the `dev-requirements` installed.
 
 ```bash
