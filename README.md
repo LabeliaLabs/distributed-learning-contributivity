@@ -68,15 +68,15 @@ This library can be schematically broken down into 3 blocks:
 
 #### Scenarios
 
-A key capability is to easily define and simulate different multi-partner settings to be able to experiment on them. For that, the library enables to configure scenarios by specifying the number of partners, how the dataset is partitioned among them, etc. See the [first tutorial](https://github.com/SubstraFoundation/distributed-learning-contributivity/blob/master/notebooks/tutorials/Tutorial-1_Run_your_first_scenario.ipynb), and the related documentation's section [Definition of collaborative scenarios](./mplc/docs/documentation.md#definition-of-collaborative-scenarios) for all available parameters.
+A key capability is to easily define and simulate different multi-partner settings to be able to experiment on them. For that, the library enables to configure scenarios by specifying the number of partners, how the dataset is partitioned among them, etc. See the [first tutorial](https://github.com/SubstraFoundation/distributed-learning-contributivity/blob/master/notebooks/tutorials/Tutorial-1_Run_your_first_scenario.ipynb), and the related documentation's section [Definition of collaborative scenarios](mplc/doc/documentation.md#definition-of-collaborative-scenarios) for all available parameters.
 
 #### Multi-partner learning approaches
 
-Once a given scenario is configured, it is then possible to configure the multi-partner learning approach. So far, 3 different approaches are implemented (federated averaging, sequential, sequential averaging). See the related documentation section [Configuration of the collaborative and distributed learning](./mplc/docs/documentation.md#configuration-of-the-collaborative-and-distributed-learning) for descriptive schemas and additional ML-related parameters.
+Once a given scenario is configured, it is then possible to configure the multi-partner learning approach. So far, 3 different approaches are implemented (federated averaging, sequential, sequential averaging). See the related documentation section [Configuration of the collaborative and distributed learning](mplc/doc/documentation.md#configuration-of-the-collaborative-and-distributed-learning) for descriptive schemas and additional ML-related parameters.
 
 #### Contributivity measurement approaches
 
-Finally, with a given scenario and selected multi-partner learning approaches, it becomes possible to address contributivity measurement approaches. See the related documentation's sections [Configuration of contributivity measurement methods to be tested](./mplc/docs/documentation.md#scenario-parameters) and [Contributivity measurement approaches studied and implemented](./mplc/docs/documentation.md#configuration-of-contributivity-measurement-methods-to-be-tested).
+Finally, with a given scenario and selected multi-partner learning approaches, it becomes possible to address contributivity measurement approaches. See the related documentation's sections [Configuration of contributivity measurement methods to be tested](mplc/doc/documentation.md#scenario-parameters) and [Contributivity measurement approaches studied and implemented](mplc/doc/documentation.md#configuration-of-contributivity-measurement-methods-to-be-tested).
 
 ### Installation 
 
@@ -123,7 +123,7 @@ my_scenario.run()
 
 Alternatively, you can also use the `main.py` provided in the repository, with a `.yml` config file.
 
-1. Define your mock scenario(s) in the `config.yml` file by changing the values of the suggested parameters of the example scenario (you can browse more available parameters in [the documentation](./mplc/docs/documentation.md)). For example:
+1. Define your mock scenario(s) in the `config.yml` file by changing the values of the suggested parameters of the example scenario (you can browse more available parameters in [the documentation](mplc/doc/documentation.md)). For example:
 
     ```yaml
     experiment_name: my_custom_experiment
