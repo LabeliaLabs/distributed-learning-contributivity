@@ -19,13 +19,6 @@ from sklearn.preprocessing import LabelEncoder
 
 from . import contributivity, constants
 from . import dataset as dataset_module
-from .datasets import (
-    dataset_mnist,
-    dataset_titanic,
-    dataset_esc50,
-    dataset_cifar10,
-    dataset_imdb,
-)
 from .mpl_utils import AGGREGATORS
 from .multi_partner_learning import MULTI_PARTNER_LEARNING_APPROACHES
 from .partner import Partner
@@ -140,15 +133,15 @@ class Scenario:
         else:
             # Reference the module corresponding to the dataset selected and initialize the Dataset object
             if dataset_name == constants.MNIST:  # default
-                self.dataset = dataset_mnist.generate_new_dataset()
+                self.dataset = dataset_module.Mnist()
             elif dataset_name == constants.CIFAR10:
-                self.dataset = dataset_cifar10.generate_new_dataset()
+                self.dataset = dataset_module.Cifar10()
             elif dataset_name == constants.TITANIC:
-                self.dataset = dataset_titanic.generate_new_dataset()
+                self.dataset = dataset_module.Titanic()
             elif dataset_name == constants.ESC50:
-                self.dataset = dataset_esc50.generate_new_dataset()
+                self.dataset = dataset_module.Esc50()
             elif dataset_name == constants.IMDB:
-                self.dataset = dataset_imdb.generate_new_dataset()
+                self.dataset = dataset_module.Imdb()
             else:
                 raise Exception(
                     f"Dataset named '{dataset_name}' is not supported (yet). You can construct your own "

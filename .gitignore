@@ -117,6 +117,6 @@ experiments/
 
 
 # datasets
-mplc/datasets/local_data/
+mplc/local_data/
 
 *.zip
