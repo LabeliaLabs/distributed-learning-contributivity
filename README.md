@@ -2,7 +2,15 @@
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/SubstraFoundation/distributed-learning-contributivity/blob/master/run_experiment_on_google_collab.ipynb)
 [![Discuss on Slack](https://img.shields.io/badge/chat-on%20slack-orange)](https://substra.us18.list-manage.com/track/click?e=2effed55c9&id=fa49875322&u=385fa3f9736ea94a1fcca969f)
 
-# Simulate collaborative multi-partner ML projects & Experiment learning and contributivity measurement approaches
+# MPLC: Multi-Partner Learning and Contributivity
+
+In short, MPLC enables to:
+
+- simulate collaborative multi-partner ML scenarios
+- experiment and benchmark multi-partner learning approaches
+- experiment and benchmark contributivity measurement approaches
+
+## Table of content:
 
 - [Introduction](#introduction)
   * [Context of this work](#context-of-this-work)
@@ -18,6 +26,7 @@
     + [Using the library](#using-the-library)
   * [Ongoing work and improvement plan](#ongoing-work-and-improvement-plan)
 - [Contacts, contributions, collaborations](#contacts,-contributions,-collaborations)
+
 ___
 
 ## Introduction
