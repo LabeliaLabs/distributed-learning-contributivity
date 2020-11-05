@@ -175,6 +175,8 @@ There are 2 ways to select a dataset. You can either choose a pre-implemented da
 - `dataset_name`: `'mnist'` (default), `'cifar10'`, `'esc50'`, `'imdb'` or `'titanic'`  
   MNIST, CIFAR10, ESC50, IMDB and Titanic are currently supported. They come with their associated modules in `/mplc/datasets` for loading data, pre-processing inputs, and define a model architecture.
   
+  > Note: the pre-implemented example based on the Titanic dataset uses a SKLearn `LogisticRegression()`. PLease note that it requires a dataset partitioning where each partner gets samples from both classes (otherwise you'll get: `ValueError: This solver needs samples of at least 2 classes in the data, but the data contains only one class`).
+  
 - `init_model_from`: `'random_initialization'` (default) or `'path/to/weights'`  
   For each dataset, it is possible to provide a path to pre-existing model weights. Use `'random_initialization'` (or an empty value) if you want a random initialization of the model.  
   Example: `init_model_from='./my_previously_trained_models/weights_super_model.h5'`
