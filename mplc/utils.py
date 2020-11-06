@@ -113,7 +113,7 @@ def init_result_folder(yaml_filepath, cfg):
 
     # Check if experiment folder already exists
     while experiment_path.exists():
-        logger.warning(f"Experiment folder, {experiment_path} already exists")
+        logger.warning(f"Experiment folder {experiment_path} already exists")
         new_experiment_name = Path(str(experiment_path) + "_bis")
         experiment_path = Path.cwd() / constants.EXPERIMENTS_FOLDER_NAME / new_experiment_name
         logger.warning(f"Experiment folder has been renamed to: {experiment_path}")
