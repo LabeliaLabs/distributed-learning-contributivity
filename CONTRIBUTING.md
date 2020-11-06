@@ -115,6 +115,8 @@ black .
 
 [Flake8](https://pypi.org/project/flake8/) is a famous Python linting package that might be of help within your development environment. It will help ensure the correct format of your code.
 
+> Note: `flake8` is part of the automated tests of the repository executed by Travis. Incorrect code formatting will automatically lead to failed tests. 
+
 ### 2.iii. Basic module structure & Imports order
 
 ```python
