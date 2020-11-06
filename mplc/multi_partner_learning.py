@@ -516,7 +516,7 @@ class MplLabelFlip(FederatedAverageLearning):
         logger.debug("End of LFlip collaborative round.")
 
 
-# Supported multipartner learning approaches
+# Supported multi-partner learning approaches
 
 MULTI_PARTNER_LEARNING_APPROACHES = {
     "fedavg": FederatedAverageLearning,

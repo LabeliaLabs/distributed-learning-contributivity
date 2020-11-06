@@ -47,6 +47,7 @@ class Scenario:
             experiment_path=Path(r"./experiments"),
             scenario_id=1,
             repeats_count=1,
+            is_dry_run=False,
             **kwargs,
     ):
         """
@@ -277,9 +278,10 @@ class Scenario:
     # Miscellaneous
     # -------------
 
-        # Scenario id and number of repetitions
+        # Misc.
         self.scenario_id = scenario_id
         self.n_repeat = repeats_count
+        self.is_dry_run = is_dry_run
 
         # The quick demo parameters overwrites previously defined parameters to make the scenario faster to compute
         self.is_quick_demo = is_quick_demo
@@ -341,7 +343,7 @@ class Scenario:
         """Log the description of the scenario configured"""
 
         # Describe scenario
-        logger.info("### Description of data scenario configured:")
+        logger.info("Description of data scenario configured:")
         logger.info(f"   Number of partners defined: {self.partners_count}")
         logger.info(f"   Data distribution scenario chosen: {self.samples_split_description}")
         logger.info(f"   Multi-partner learning approach: {self.multi_partner_learning_approach}")
@@ -352,7 +354,7 @@ class Scenario:
                     f"{self.gradient_updates_per_pass_count} gradient updates per pass")
 
         # Describe data
-        logger.info(f"### Data loaded: {self.dataset.name}")
+        logger.info(f"Data loaded: {self.dataset.name}")
         logger.info(
             f"   {len(self.dataset.x_train)} train data with {len(self.dataset.y_train)} labels"
         )
@@ -367,10 +369,7 @@ class Scenario:
         self.contributivity_list.append(contributivity_method)
 
     def instantiate_scenario_partners(self):
-        """Create the partners_list - self.partners_list should be []"""
-
-        if self.partners_list:
-            raise Exception("self.partners_list should be []")
+        """Create the partners_list"""
 
         self.partners_list = [Partner(i, corruption=self.corruption_parameters[i]) for i in range(self.partners_count)]
 
@@ -535,19 +534,16 @@ class Scenario:
         ), "Error: in the provided \
             config file and the provided dataset, a partner doesn't have enough data samples to create the minibatches "
 
-        if is_logging_enabled:
-            logger.info("### Splitting data among partners:")
-            logger.info("   Advanced split performed.")
-            logger.info(
-                f"   Nb of samples split amongst partners: {self.nb_samples_used}"
-            )
-            logger.info(
-                f"   Partners' relative nb of samples: {[round(p, 2) for p in self.final_relative_nb_samples]} "
-                f"   (versus initially configured: {amounts_per_partner})"
+        if is_logging_enabled and not self.is_dry_run:
+            logger.info("Splitting data among partners (advanced split):")
+            logger.info(f"Nb of samples split amongst partners: {self.nb_samples_used}")
+            logger.debug(
+                f"Partners' relative nb of samples: {[round(p, 2) for p in self.final_relative_nb_samples]} "
+                f"(versus initially configured: {amounts_per_partner})"
             )
             for partner in self.partners_list:
                 logger.info(
-                    f"   Partner #{partner.id}: {len(partner.x_train)} "
+                    f"Partner #{partner.id}: {len(partner.x_train)} "
                     f"samples with labels {partner.clusters_list}"
                 )
 
@@ -555,8 +551,6 @@ class Scenario:
 
     def split_data(self, is_logging_enabled=True):
         """Populates the partners with their train and test data (not pre-processed)"""
-
-        # Fetch parameters of scenario
 
         y_train = LabelEncoder().fit_transform([str(y) for y in self.dataset.y_train])
 
@@ -650,17 +644,12 @@ class Scenario:
             p.final_nb_samples / self.nb_samples_used for p in self.partners_list
         ]
 
-        if is_logging_enabled:
-            logger.info("### Splitting data among partners:")
-            logger.info("   Simple split performed.")
-            logger.info(
-                f"   Nb of samples split amongst partners: {self.nb_samples_used}"
-            )
+        if is_logging_enabled and not self.is_dry_run:
+            logger.info("Splitting data among partners (simple split):")
+            logger.info(f"Nb of samples split amongst partners: {self.nb_samples_used}")
             for partner in self.partners_list:
                 logger.info(
-                    f"   Partner #{partner.id}: "
-                    f"{partner.final_nb_samples} samples "
-                    f"with labels {partner.clusters_list}"
+                    f"Partner #{partner.id}: {partner.final_nb_samples} samples with labels {partner.clusters_list}"
                 )
 
         return 0
@@ -771,13 +760,13 @@ class Scenario:
 
         return df
 
-    def run(self, is_dry_run=False):
+    def run(self):
 
         # -----------------
         # Preliminary steps
         # -----------------
 
-        if not is_dry_run:
+        if not self.is_dry_run:
             logger.info("Now starting running a scenario")
             self.log_scenario_description()
             self.initialize_output_attributes()
@@ -786,6 +775,7 @@ class Scenario:
         # Provision the scenario
         # -----------------------
 
+        # Instantiate a Partner object for each partner of the scenario
         self.instantiate_scenario_partners()
 
         # Split data according to scenario and then pre-process successively...
@@ -795,12 +785,13 @@ class Scenario:
         elif self.samples_split_type == "advanced":
             self.split_data_advanced()
 
-        if not is_dry_run:
+        if not self.is_dry_run:
             self.plot_data_distribution()
+
         self.compute_batch_sizes()
         self.data_corruption()
 
-        if not is_dry_run:
+        if not self.is_dry_run:
 
             # --------------------------------------------
             # Instantiate and run a multi-partner learning
@@ -818,6 +809,6 @@ class Scenario:
                 contrib = contributivity.Contributivity(scenario=self)
                 contrib.compute_contributivity(method)
                 self.append_contributivity(contrib)
-                logger.info(f"## Evaluating contributivity with {method}: {contrib}")
+                logger.info(f"Evaluating contributivity with {method}: {contrib}")
 
             return 0

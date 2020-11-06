@@ -17,18 +17,16 @@ class Experiment:
     def __init__(
             self,
             experiment_name=None,
-            scenarios_list=None,
             nb_repeats=1,
     ):
         """
         :param experiment_name: string, name of the experiment
-        :param scenarios_list: [Scenario], lists instances of the Scenario object
         :param nb_repeats: int, number of repeats of the experiments (as an experiment includes
                            a number of non-deterministic phenomena. Example: 5
         """
 
         self.name = experiment_name
-        self.scenarios_list = scenarios_list
+        self.scenarios_list = []
         self.nb_repeats = nb_repeats
         self.experiment_path = self.define_experiment_path()
 
@@ -56,22 +54,24 @@ class Experiment:
         """Add a scenario to the list of scenarios to be run"""
 
         if isinstance(scenario_to_add, scenario_module.Scenario):
+            scenario_to_add.experiment_path = self.experiment_path
             self.scenarios_list.append(scenario_to_add)
         else:
             logger.info(f"The scenario {scenario_to_add} you are trying to add is not an instance of"
                         f"object scenario.Scenario")
 
-    def create_scenarios_from_config_file(self, path_to_config_file, repeat_index):
+    def create_scenarios_from_config_file(self, path_to_config_file):
         """Create scenarios from a config file passed as argument,
            and populates scenarios list accordingly"""
 
         config = utils.get_config_from_file(path_to_config_file)
         scenario_params_list = utils.get_scenario_params_list(config["scenario_params_list"])
 
+        logger.info(f"Creating scenarios from config file")
+
         for scenario_params_idx, scenario_params in enumerate(scenario_params_list):
 
             scenario_params_index_str = f"{scenario_params_idx + 1}/{len(scenario_params_list)}"
-            logger.info(f"Creating scenarios from config file")
             logger.debug(f"Scenario {scenario_params_index_str}: {scenario_params}")
 
             current_scenario = scenario_module.Scenario(
@@ -90,11 +90,15 @@ class Experiment:
 
         for scenario_idx, scenario in enumerate(self.scenarios_list):
 
+            scenario.is_dry_run = True
+
             scenario_index_str = f"{scenario_idx + 1}/{len(self.scenarios_list)}"
-            logger.debug(f"Scenarios validation: now validating scenario {scenario_index_str} "
+            logger.info(f"Scenarios validation: now validating scenario {scenario_index_str} "
                          f"(instantiate partners, split data, compute batch sizes, apply data corruption req.)")
 
-            scenario.run(is_dry_run=True)
+            scenario.run()
+
+            scenario.is_dry_run = False
 
         logger.debug("Scenarios validation: all scenario have been validated successfully")
 
@@ -132,7 +136,8 @@ class Experiment:
                 with open(self.experiment_path / "results.csv", "a") as f:
                     df_results.to_csv(f, header=f.tell() == 0, index=False)
                     logger.info(f"(Repeat {repeat_index_str}, scenario {scenario_index_str}) "
-                                f"Results saved to {os.path.relpath(self.experiment_path)}/results.csv")
+                                f"Results saved to results.csv "
+                                f"in folder {os.path.relpath(self.experiment_path)}")
 
         # TODO: Produce a default analysis notebook
         pass

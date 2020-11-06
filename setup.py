@@ -24,7 +24,7 @@ setup(
               'substra',
               'machine learning',
               'contributivity',
-              'multipartner learning',
+              'multi-partner learning',
               'distributed learning'],
     license='Apache 2.0',
     install_requires=requirements,
