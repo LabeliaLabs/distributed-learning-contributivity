@@ -150,7 +150,9 @@ class MultiPartnerLearning(ABC):
         self.history.history['mpl_model']['val_accuracy'][self.epoch_index, self.minibatch_index] = hist[1]
 
         if self.minibatch_index >= self.minibatch_count - 1:
-            logger.info(f"   Model evaluation at the end of the epoch: "
+            epoch_nb_str = f"{str(self.epoch_index).zfill(2)}/{str(self.epoch_count - 1).zfill(2)}"
+            logger.info(f"   Model evaluation at the end of the epoch "
+                        f"{epoch_nb_str}: "
                         f"{['%.3f' % elem for elem in hist]}")
 
     def eval_and_log_final_model__test_perf(self):
