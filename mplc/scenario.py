@@ -47,7 +47,6 @@ class Scenario:
             experiment_path=Path(r"./experiments"),
             scenario_id=1,
             repeats_count=1,
-            is_dry_run=False,
             **kwargs,
     ):
         """
@@ -97,7 +96,6 @@ class Scenario:
         :param experiment_path: path
         :param scenario_id: str
         :param repeats_count: int
-        :param is_dry_run: boolean
         :param **kwargs:
         """
 
@@ -316,8 +314,6 @@ class Scenario:
             self.epoch_count = 3
             self.minibatch_count = 2
 
-        self.is_dry_run = is_dry_run
-
     # -------
     # Outputs
     # -------
@@ -339,8 +335,7 @@ class Scenario:
         self.short_scenario_name = f"{self.partners_count} {self.amounts_per_partner}"
 
         self.save_folder = self.experiment_path / self.scenario_name
-        if not self.is_dry_run:
-            self.save_folder.mkdir(parents=True, exist_ok=True)
+        self.save_folder.mkdir(parents=True, exist_ok=True)
 
     def log_scenario_description(self):
         """Log the description of the scenario configured"""
@@ -776,47 +771,53 @@ class Scenario:
 
         return df
 
-    def run(self):
+    def run(self, is_dry_run=False):
 
         # -----------------
         # Preliminary steps
         # -----------------
 
-        logger.info("Now starting running a scenario")
-        self.log_scenario_description()
-        self.initialize_output_attributes()
+        if not is_dry_run:
+            logger.info("Now starting running a scenario")
+            self.log_scenario_description()
+            self.initialize_output_attributes()
 
         # -----------------------
         # Provision the scenario
         # -----------------------
 
         self.instantiate_scenario_partners()
+
         # Split data according to scenario and then pre-process successively...
         # ... train data, early stopping validation data, test data
         if self.samples_split_type == "basic":
             self.split_data()
         elif self.samples_split_type == "advanced":
             self.split_data_advanced()
-        self.plot_data_distribution()
+
+        if not is_dry_run:
+            self.plot_data_distribution()
         self.compute_batch_sizes()
         self.data_corruption()
 
-        # --------------------------------------------
-        # Instantiate and run a multi-partner learning
-        # --------------------------------------------
+        if not is_dry_run:
 
-        self.mpl = self.multi_partner_learning_approach(self, is_save_data=True)
-        self.mpl.fit()
+            # --------------------------------------------
+            # Instantiate and run a multi-partner learning
+            # --------------------------------------------
 
-        # ----------------------------------------------------------
-        # Instantiate and run the contributivity measurement methods
-        # ----------------------------------------------------------
+            self.mpl = self.multi_partner_learning_approach(self, is_save_data=True)
+            self.mpl.fit()
 
-        for method in self.methods:
-            logger.info(f"{method}")
-            contrib = contributivity.Contributivity(scenario=self)
-            contrib.compute_contributivity(method)
-            self.append_contributivity(contrib)
-            logger.info(f"## Evaluating contributivity with {method}: {contrib}")
+            # ----------------------------------------------------------
+            # Instantiate and run the contributivity measurement methods
+            # ----------------------------------------------------------
 
-        return 0
+            for method in self.methods:
+                logger.info(f"{method}")
+                contrib = contributivity.Contributivity(scenario=self)
+                contrib.compute_contributivity(method)
+                self.append_contributivity(contrib)
+                logger.info(f"## Evaluating contributivity with {method}: {contrib}")
+
+            return 0

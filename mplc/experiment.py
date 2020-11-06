@@ -94,15 +94,7 @@ class Experiment:
             logger.debug(f"Scenarios validation: now validating scenario {scenario_index_str} "
                          f"(instantiate partners, split data, compute batch sizes, apply data corruption req.)")
 
-            scenario.instantiate_scenario_partners()
-
-            if scenario.samples_split_type == 'basic':
-                scenario.split_data(is_logging_enabled=False)
-            elif scenario.samples_split_type == 'advanced':
-                scenario.split_data_advanced(is_logging_enabled=False)
-
-            scenario.compute_batch_sizes()
-            scenario.data_corruption()
+            scenario.run(is_dry_run=True)
 
         logger.debug("Scenarios validation: all scenario have been validated successfully")
 
@@ -129,6 +121,7 @@ class Experiment:
                 logger.info(f"(Repeat {repeat_index_str}) Now running scenario {scenario_index_str}")
 
                 # Run the scenario
+                scenario.n_repeat = repeat_idx
                 scenario.run()
 
                 # Save scenario results
@@ -141,5 +134,5 @@ class Experiment:
                     logger.info(f"(Repeat {repeat_index_str}, scenario {scenario_index_str}) "
                                 f"Results saved to {os.path.relpath(self.experiment_path)}/results.csv")
 
-        # Produce a default analysis notebook
+        # TODO: Produce a default analysis notebook
         pass
