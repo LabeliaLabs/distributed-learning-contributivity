@@ -10,7 +10,7 @@ Table of content:
   * [Select a pre-implemented dataset](#select-a-pre-implemented-dataset)
   * [Set some ML parameters](#set-some-ml-parameters)
   * [Run it](#run-it)
-  * [Results](#results)
+  * [Results](#Browsing-results)
   * [Contributivity measurement methods](#contributivity-measurement-methods)
 - [Scenario parameters](#scenario-parameters)
   * [Choice of dataset](#choice-of-dataset)
@@ -21,9 +21,9 @@ Table of content:
 - [Dataset generation](#dataset-generation)
   * [Dataset](#dataset)
   * [Model generator](#model-generator)
-  * [Preprocessing](#preprocessing)
+  * [Preprocessing](#data-labels)
   * [Split in train, validation and test sets](#split-in-train-validation-and-test-sets)
-- [Contacts, contributions, collaborations](#contacts--contributions--collaborations)
+- [Contacts, contributions, collaborations](#Contacts,-contributions,-collaborations)
 
 ## Pre-requisites
 
@@ -422,37 +422,44 @@ The `Dataset` object is useful if you want to define custom datasets and related
 
 ### Dataset
 
-Here is the structure of the dataset generator:
+The `Dataset` abstract class implements most of the methods needed by the library. To use an custom dataset, you must define a new class, which inherit from the `Dataset` one
+Don't forget to call the `Dataset.__init__()` via the super function. It will requires some parameters. 
+Here is the structure of the `Dataset` generator:
 
 ```python
-dataset = Dataset(
-    "name",
-    x_train,
-    x_test,
-    y_train,
-    y_test,
-    input_shape,
-    num_classes,
-)
+from mplc.dataset import Dataset
+class MyDataset(Dataset):
+    def __init__(self):
+        #  load and preprocess the train and test data. 
+        super().__init__('dataset_name',
+                         input_shape,
+                         num_classes,
+                         x_train,
+                         y_train,
+                         x_test,
+                         y_test)
+   
+    def generate_new_model(self):
+        # Initialize a model 
+        return model 
+     
 ```
-
-### Data labels
-
-The data labels can take whatever shape you need, with only one condition. The labels need to be convertible into string format, and with respect to the condition that if `label1` is equal to `label2` (reciprocally different from), therefore `str(label1)` must be equal to `str(label2)` (reciprocally different from).
-
 ### Model generator
 
-Th method `generate_new_model()` needs to be implemented and provide the model to be trained.
+The method `generate_new_model()` needs to be implemented and provide the model to be trained.
 
 > Note: it is mandatory to have loss and accuracy as metrics for your model.
 
-Currently the library handles compiled Keras' models (see MNIST, ESC50, IMDB and CIFAR10 datasets), and Scikit-Learn Linear Regression models (see the TITANIC dataset).
+Currently the library handles compiled Keras' models (see MNIST, ESC50, IMDB and CIFAR10 datasets). Scikit-Learn Logistic Regression models can be adapted to work with the library (see the TITANIC dataset).
+### Data labels
+
+The data labels can take whatever shape you need, with only one condition. The labels need to be convertible into string format, and with respect to the condition that if `label1` is equal to `label2` (reciprocally different from), therefore `str(label1)` must be equal to `str(label2)` (reciprocally different from).
 
 ### Split in train, validation and test sets
 
 The `Dataset` object must provide separate train and test sets (referred to as global train set and global test set).
 
-The global train set is then further split into a global train set and a global validation set, by the function `train_val_split_global()`. Please note that if this function is not provided, the SKLearn's `train_test_split()` function will be called by default, and `10%` of the training set will be use as validation set. 
+The global train set is then further split into a global train set and a global validation set, by the function `train_val_split_global()`. Please note that if this function is not overwritten, the SKLearn's `train_test_split()` function will be called by default, and `10%` of the training set will be use as validation set. 
 
 In the multi-partner learning computations, the global validation set is used for early stopping and the global test set is used for performance evaluation.
 
