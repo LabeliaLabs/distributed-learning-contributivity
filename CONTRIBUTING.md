@@ -7,13 +7,13 @@ Table of content:
 
 1. [Git workflow & branching](#1-git-workflow--branching)
 1. [Python](#2-python)
-   1. [Python Virtual Environment](#21-python-virtual-environment)
-   1. [Python Enhancement Proposals (PEP)](#22-python-enhancement-proposals-pep)
+   1. [Python Virtual Environment](#2i-python-virtual-environment)
+   1. [Python Enhancement Proposals (PEP)](#2ii-python-enhancement-proposals-pep)
       - [Black formatter](#black-formatter)
       - [Flake8 linter](#flake8-linter)
-   1. [Basic module structure & Imports order](#23-basic-module-structure--imports-order)
-   1. [Jupyter Notebooks](#24-jupyter-notebooks)
-   1. [Sharing & online rendering](#25-sharing--online-rendering)
+   1. [Basic module structure & Imports order](#2iii-basic-module-structure--imports-order)
+   1. [Jupyter Notebooks](#2iv-jupyter-notebooks)
+   1. [Sharing & online rendering](#2v-sharing--online-rendering)
 1. [Further Resources](#3-further-resources)
 
 ## 1. Git workflow & branching
