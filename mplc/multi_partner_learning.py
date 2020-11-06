@@ -14,6 +14,7 @@ from keras.callbacks import EarlyStopping
 from loguru import logger
 from sklearn.preprocessing import normalize
 from tensorflow import GradientTape
+from tensorflow import convert_to_tensor
 
 from . import constants
 from .mpl_utils import History, Aggregator
@@ -534,7 +535,8 @@ class GradientFusion(MultiPartnerLearning):
 
             # At the end of each minibatch,aggregate the models
             model = self.build_model()
-            self.optimizer.apply_gradients(zip(fusionned_gradients, model.trainable_weights))
+            fusion_gradients = self.aggregator.aggregate_gradients()
+            self.optimizer.apply_gradients(zip(fusion_gradients, model.trainable_weights))
             self.model_weights = model.get_weights()
         self.minibatch_index = 0
 
@@ -557,13 +559,14 @@ class GradientFusion(MultiPartnerLearning):
         for partner_index, partner in enumerate(self.partners_list):
             # Reference the partner's model
             partner_model = partner.build_model()
-
+            input_ = convert_to_tensor(partner.minibatched_x_train[self.minibatch_index])
+            labels_ = convert_to_tensor(partner.minibatched_y_train[self.minibatch_index])
             with GradientTape() as tape:
                 # Forward pass.
-                logits = partner_model.predict(partner.minibatched_x_train[self.minibatch_index])
+                tape.watch(input_)
+                logits = partner_model(input_)
                 # Loss value for this batch.
-                loss_value = partner_model.loss(partner.minibatched_y_train[self.minibatch_index]
-                                                , logits)
+                loss_value = partner_model.loss(labels_, logits)
             # Backward pass
             partner.gradients = tape.gradient(loss_value, partner_model.trainable_weights)
 
@@ -571,10 +574,10 @@ class GradientFusion(MultiPartnerLearning):
             history = partner_model.evaluate(partner.minibatched_x_train[self.minibatch_index],
                                              partner.minibatched_y_train[self.minibatch_index])
             history = {
-                "loss": history[0],
-                'accuracy': history[1],
-                'val_loss': val_history[0],
-                'val_accuracy': val_history[1]
+                "loss": [history[0]],
+                'accuracy': [history[1]],
+                'val_loss': [val_history[0]],
+                'val_accuracy': [val_history[1]]
             }
 
             # Log results of the round
