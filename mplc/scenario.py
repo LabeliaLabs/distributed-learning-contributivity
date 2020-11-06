@@ -100,9 +100,10 @@ class Scenario:
         :param is_dry_run: boolean
         :param **kwargs:
         """
-        # ---------------------------------------------------------------------
-        # Initialization of the dataset defined in the config of the experiment
-        # ---------------------------------------------------------------------
+
+    # ---------------------------------------------------------------------
+    # Initialization of the dataset defined in the config of the experiment
+    # ---------------------------------------------------------------------
 
         # Raise Exception if unknown parameters in the config of the scenario
 
@@ -161,10 +162,7 @@ class Scenario:
                 )
             logger.debug(f"Dataset selected: {dataset_name}")
 
-        # The train set is split into a train set and a validation set (used in particular for early stopping)
-
-        # The proportion of the dataset the computation will used
-
+        # Proportion of the dataset the computation will used
         self.dataset_proportion = dataset_proportion
         assert (
                 self.dataset_proportion > 0
@@ -176,42 +174,30 @@ class Scenario:
         if self.dataset_proportion < 1:
             self.dataset.shorten_dataset_proportion(self.dataset_proportion)
         else:
-            logger.debug(
-                f"Computation use the full dataset for scenario #{scenario_id}"
-            )
+            logger.debug(f"The full dataset will be used (dataset_proportion is configured to 1)")
 
         self.nb_samples_used = len(self.dataset.x_train)
         self.final_relative_nb_samples = []
 
-        # --------------------------------------
-        #  Definition of collaborative scenarios
-        # --------------------------------------
-        # List of all partners defined in the scenario
-        self.partners_list = []
+    # --------------------------------------
+    #  Definition of collaborative scenarios
+    # --------------------------------------
 
-        # partners mock different partners in a collaborative data science project
-        # For defining the number of partners
-
-        self.partners_count = partners_count
+        # Partners mock different partners in a collaborative data science project
+        self.partners_list = []  # List of all partners defined in the scenario
+        self.partners_count = partners_count  # Number of partners in the scenario
 
         # For configuring the respective sizes of the partners' datasets
-        # Should the partners receive an equivalent amount of samples each or receive different amounts?
-        # Define the percentages of samples per partner
-        # Sum has to equal 1 and number of items has to equal partners_count
+        # (% of samples of the dataset for each partner, ...
+        # ... has to sum to 1, and number of items has to equal partners_count)
         self.amounts_per_partner = amounts_per_partner
 
         # For configuring if data samples are split between partners randomly or in a stratified way...
         # ... so that they cover distinct areas of the samples space
-        if samples_split_option is not None:
-            (
-                self.samples_split_type,
-                self.samples_split_description,
-            ) = samples_split_option
+        if samples_split_option:
+            (self.samples_split_type, self.samples_split_description) = samples_split_option
         else:
-            (self.samples_split_type, self.samples_split_description) = (
-                "basic",
-                "random",
-            )  # default
+            (self.samples_split_type, self.samples_split_description) = ("basic", "random")  # default
 
         # For configuring if the data of the partners are corrupted or not (useful for testing contributivity measures)
         if corruption_parameters:
@@ -221,9 +207,9 @@ class Scenario:
         else:
             self.corruption_parameters = [NoCorruption() for _ in range(self.partners_count)]  # default
 
-        # ---------------------------------------------------
-        #  Configuration of the distributed learning approach
-        # ---------------------------------------------------
+    # ---------------------------------------------------
+    #  Configuration of the distributed learning approach
+    # ---------------------------------------------------
 
         self.mpl = None
 
@@ -238,8 +224,8 @@ class Scenario:
                 text_error += f"{key}, "
             raise KeyError(text_error)
 
-        # Define how federated learning aggregation steps are weighted. Toggle between 'uniform' and 'data_volume'
-        # Default is 'uniform'
+        # Define how federated learning aggregation steps are weighted...
+        # ... Toggle between 'uniform' (default) and 'data_volume'
         try:
             self.aggregation = AGGREGATORS[aggregation_weighting]
         except KeyError:
@@ -264,7 +250,6 @@ class Scenario:
 
         # Early stopping stops ML training when performance increase is not significant anymore
         # It is used to optimize the number of epochs and the execution time
-
         self.is_early_stopping = is_early_stopping
 
         # Model used to initialise model
@@ -274,9 +259,9 @@ class Scenario:
         else:
             self.use_saved_weights = True
 
-        # -----------------------------------------------------------------
-        #  Configuration of contributivity measurement methods to be tested
-        # -----------------------------------------------------------------
+    # -----------------------------------------------------------------
+    #  Configuration of contributivity measurement methods to be tested
+    # -----------------------------------------------------------------
 
         # List of contributivity measures selected and computed in the scenario
         self.contributivity_list = []
@@ -288,24 +273,21 @@ class Scenario:
                 if method in constants.CONTRIBUTIVITY_METHODS:
                     self.methods.append(method)
                 else:
-                    raise Exception(
-                        f"Contributivity method '{method}' is not in methods list."
-                    )
+                    raise Exception(f"Contributivity method '{method}' is not in methods list.")
 
-        # -------------
-        # Miscellaneous
-        # -------------
+    # -------------
+    # Miscellaneous
+    # -------------
 
-        # Scenario id and number of repetition
-
+        # Scenario id and number of repetitions
         self.scenario_id = scenario_id
         self.n_repeat = repeats_count
 
+        # The quick demo parameters overwrites previously defined parameters to make the scenario faster to compute
         self.is_quick_demo = is_quick_demo
         if self.is_quick_demo and self.dataset_proportion < 1:
             raise Exception("Don't start a quick_demo without the full dataset")
 
-        # The quick demo parameters overwrites previously defined parameters to make the scenario faster to compute
         if self.is_quick_demo:
             # Use less data and/or less epochs to speed up the computations
             logger.info("Quick demo: limit number of data and number of epochs.")
@@ -334,66 +316,60 @@ class Scenario:
             self.epoch_count = 3
             self.minibatch_count = 2
 
-        # -------
-        # Outputs
-        # -------
+        self.is_dry_run = is_dry_run
+
+    # -------
+    # Outputs
+    # -------
+
+        self.experiment_path = experiment_path
+        self.scenario_name = None
+        self.short_scenario_name = None
+        self.save_folder = None
+
+        logger.info("Scenario instantiated")
+
+    def initialize_output_attributes(self):
 
         now = datetime.datetime.now()
         now_str = now.strftime("%Y-%m-%d_%Hh%M")
-        self.scenario_name = (
-                "scenario_"
-                + str(self.scenario_id)
-                + "_"
-                + "repeat"
-                + "_"
-                + str(self.n_repeat)
-                + "_"
-                + now_str
-                + "_"
-                + uuid.uuid4().hex[
-                  :3
-                  ]  # This is to be sure 2 distinct scenarios do no have the same name
-        )
+        self.scenario_name = f"scenario_{self.scenario_id}_repeat_{self.n_repeat}_{now_str}_" \
+                             f"{uuid.uuid4().hex[:3]}"  # to distinguish identical names
 
-        self.short_scenario_name = (
-                str(self.partners_count) + " " + str(self.amounts_per_partner)
-        )
+        self.short_scenario_name = f"{self.partners_count} {self.amounts_per_partner}"
 
-        self.save_folder = experiment_path / self.scenario_name
-        if not is_dry_run:
+        self.save_folder = self.experiment_path / self.scenario_name
+        if not self.is_dry_run:
             self.save_folder.mkdir(parents=True, exist_ok=True)
 
-        # ------------------------------------------------
-        # Print the description of the scenario configured
-        # ------------------------------------------------
+    def log_scenario_description(self):
+        """Log the description of the scenario configured"""
 
-        if not is_dry_run:
-            # Describe scenario
-            logger.info("### Description of data scenario configured:")
-            logger.info(f"   Number of partners defined: {self.partners_count}")
-            logger.info(f"   Data distribution scenario chosen: {self.samples_split_description}")
-            logger.info(f"   Multi-partner learning approach: {self.multi_partner_learning_approach}")
-            logger.info(f"   Weighting option: {self.aggregation}")
-            logger.info(f"   Iterations parameters: "
-                        f"{self.epoch_count} epochs > "
-                        f"{self.minibatch_count} mini-batches > "
-                        f"{self.gradient_updates_per_pass_count} gradient updates per pass")
+        # Describe scenario
+        logger.info("### Description of data scenario configured:")
+        logger.info(f"   Number of partners defined: {self.partners_count}")
+        logger.info(f"   Data distribution scenario chosen: {self.samples_split_description}")
+        logger.info(f"   Multi-partner learning approach: {self.multi_partner_learning_approach}")
+        logger.info(f"   Weighting option: {self.aggregation}")
+        logger.info(f"   Iterations parameters: "
+                    f"{self.epoch_count} epochs > "
+                    f"{self.minibatch_count} mini-batches > "
+                    f"{self.gradient_updates_per_pass_count} gradient updates per pass")
 
-            # Describe data
-            logger.info(f"### Data loaded: {self.dataset.name}")
-            logger.info(
-                f"   {len(self.dataset.x_train)} train data with {len(self.dataset.y_train)} labels"
-            )
-            logger.info(
-                f"   {len(self.dataset.x_val)} val data with {len(self.dataset.y_val)} labels"
-            )
-            logger.info(
-                f"   {len(self.dataset.x_test)} test data with {len(self.dataset.y_test)} labels"
-            )
+        # Describe data
+        logger.info(f"### Data loaded: {self.dataset.name}")
+        logger.info(
+            f"   {len(self.dataset.x_train)} train data with {len(self.dataset.y_train)} labels"
+        )
+        logger.info(
+            f"   {len(self.dataset.x_val)} val data with {len(self.dataset.y_val)} labels"
+        )
+        logger.info(
+            f"   {len(self.dataset.x_test)} test data with {len(self.dataset.y_test)} labels"
+        )
 
-    def append_contributivity(self, contributivity):
-
-        self.contributivity_list.append(contributivity)
+    def append_contributivity(self, contributivity_method):
+        self.contributivity_list.append(contributivity_method)
 
     def instantiate_scenario_partners(self):
         """Create the partners_list - self.partners_list should be []"""
@@ -771,9 +747,7 @@ class Scenario:
         dict_results["aggregation"] = self.aggregation
         dict_results["epoch_count"] = self.epoch_count
         dict_results["minibatch_count"] = self.minibatch_count
-        dict_results[
-            "gradient_updates_per_pass_count"
-        ] = self.gradient_updates_per_pass_count
+        dict_results["gradient_updates_per_pass_count"] = self.gradient_updates_per_pass_count
         dict_results["is_early_stopping"] = self.is_early_stopping
         dict_results["mpl_test_score"] = self.mpl.history.score
         dict_results["mpl_nb_epochs_done"] = self.mpl.history.nb_epochs_done
@@ -789,16 +763,12 @@ class Scenario:
             dict_results["contributivity_scores"] = contrib.contributivity_scores
             dict_results["contributivity_stds"] = contrib.scores_std
             dict_results["computation_time_sec"] = contrib.computation_time_sec
-            dict_results[
-                "first_characteristic_calls_count"
-            ] = contrib.first_charac_fct_calls_count
+            dict_results["first_characteristic_calls_count"] = contrib.first_charac_fct_calls_count
 
             for i in range(self.partners_count):
                 # Partner-specific data
                 dict_results["partner_id"] = i
-                dict_results["dataset_fraction_of_partner"] = self.amounts_per_partner[
-                    i
-                ]
+                dict_results["dataset_fraction_of_partner"] = self.amounts_per_partner[i]
                 dict_results["contributivity_score"] = contrib.contributivity_scores[i]
                 dict_results["contributivity_std"] = contrib.scores_std[i]
 
@@ -807,8 +777,17 @@ class Scenario:
         return df
 
     def run(self):
+
+        # -----------------
+        # Preliminary steps
+        # -----------------
+
+        logger.info("Now starting running a scenario")
+        self.log_scenario_description()
+        self.initialize_output_attributes()
+
         # -----------------------
-        #  Provision the scenario
+        # Provision the scenario
         # -----------------------
 
         self.instantiate_scenario_partners()

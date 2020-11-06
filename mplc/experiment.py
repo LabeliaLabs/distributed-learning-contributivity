@@ -17,7 +17,7 @@ class Experiment:
     def __init__(
             self,
             experiment_name=None,
-            scenarios_list=[],
+            scenarios_list=None,
             nb_repeats=1,
     ):
         """
@@ -61,6 +61,51 @@ class Experiment:
             logger.info(f"The scenario {scenario_to_add} you are trying to add is not an instance of"
                         f"object scenario.Scenario")
 
+    def create_scenarios_from_config_file(self, path_to_config_file, repeat_index):
+        """Create scenarios from a config file passed as argument,
+           and populates scenarios list accordingly"""
+
+        config = utils.get_config_from_file(path_to_config_file)
+        scenario_params_list = utils.get_scenario_params_list(config["scenario_params_list"])
+
+        for scenario_params_idx, scenario_params in enumerate(scenario_params_list):
+
+            scenario_params_index_str = f"{scenario_params_idx + 1}/{len(scenario_params_list)}"
+            logger.info(f"Creating scenarios from config file")
+            logger.debug(f"Scenario {scenario_params_index_str}: {scenario_params}")
+
+            current_scenario = scenario_module.Scenario(
+                **scenario_params,
+                experiment_path=self.experiment_path,
+                scenario_id=scenario_params_idx+1,
+            )
+
+            self.add_scenario(current_scenario)
+
+    def validate_scenarios_list(self):
+        """Instantiate every scenario without running it to check if
+           every scenario is correctly specified. This prevents scenario initialization errors during the experiment"""
+
+        logger.debug("Starting validation of scenarios prior to running the experiment")
+
+        for scenario_idx, scenario in enumerate(self.scenarios_list):
+
+            scenario_index_str = f"{scenario_idx + 1}/{len(self.scenarios_list)}"
+            logger.debug(f"Scenarios validation: now validating scenario {scenario_index_str} "
+                         f"(instantiate partners, split data, compute batch sizes, apply data corruption req.)")
+
+            scenario.instantiate_scenario_partners()
+
+            if scenario.samples_split_type == 'basic':
+                scenario.split_data(is_logging_enabled=False)
+            elif scenario.samples_split_type == 'advanced':
+                scenario.split_data_advanced(is_logging_enabled=False)
+
+            scenario.compute_batch_sizes()
+            scenario.data_corruption()
+
+        logger.debug("Scenarios validation: all scenario have been validated successfully")
+
     def run_experiment(self):
         """Run the experiment, starting by validating the scenarios first"""
 
@@ -68,31 +113,33 @@ class Experiment:
         plt.close("all")  # Close open figures
         utils.set_log_file(self.experiment_path)  # Move log files to experiment folder
 
-        # First: validate scenarios
-        pass
+        # Validate scenarios prior to running the experiment
+        self.validate_scenarios_list()
 
         # Loop over nb_repeats
-        for i in range(self.nb_repeats):
+        for repeat_idx in range(self.nb_repeats):
 
-            logger.info(f"Repeat {i + 1}/{self.nb_repeats}")
+            repeat_index_str = f"{repeat_idx + 1}/{self.nb_repeats}"
+            logger.info(f"Now starting repeat {repeat_index_str}")
 
             # Loop over scenarios in scenarios_list
-            for scenario_id, scenario in enumerate(self.scenarios_list):
+            for scenario_idx, scenario in enumerate(self.scenarios_list):
 
-                logger.info(f"Now running scenario {scenario_id + 1}/{len(self.scenarios_list)}")
+                scenario_index_str = f"{scenario_idx + 1}/{len(self.scenarios_list)}"
+                logger.info(f"(Repeat {repeat_index_str}) Now running scenario {scenario_index_str}")
 
                 # Run the scenario
                 scenario.run()
 
-                # Store scenario results in a global results object/file
+                # Save scenario results
                 df_results = scenario.to_dataframe()
-                df_results["random_state"] = i
-                df_results["scenario_id"] = scenario_id
+                df_results["repeat_index"] = repeat_idx
+                df_results["scenario_index"] = scenario_idx
 
                 with open(self.experiment_path / "results.csv", "a") as f:
                     df_results.to_csv(f, header=f.tell() == 0, index=False)
-                    logger.info(f"Results saved to {os.path.relpath(self.experiment_path)}/results.csv")
+                    logger.info(f"(Repeat {repeat_index_str}, scenario {scenario_index_str}) "
+                                f"Results saved to {os.path.relpath(self.experiment_path)}/results.csv")
 
-        # Save the final results object/file
         # Produce a default analysis notebook
         pass
