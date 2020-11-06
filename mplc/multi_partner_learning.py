@@ -512,22 +512,26 @@ class MplLabelFlip(FederatedAverageLearning):
 
 
 class Reweighting(MultiPartnerLearning):
-    def __init__(self, scenario, light_reweighting=False, **kwargs):
+    def __init__(self, scenario, beta=0.2, alpha=0.0, **kwargs):
         # First, if only one partner, fall back to dedicated single partner function
         super(Reweighting, self).__init__(scenario, **kwargs)
-
+        
         self.minibatch_gradient = [None] * self.partners_count
 
         self.aggregator = ReweightingAggregator(self)
 
-        self.light_reweighting=light_reweighting
+        self.sep_index = int(len(self.dataset.x_val) / 2)
 
-    def weights_difference(self, weights_1, weights_2):
+        self.beta = beta
+
+        self.alpha = alpha
+
+    def weights_substract(self, weights_1, weights_2):
         """Return the difference (or the gradient) between two model's weight list"""
 
         difference_of_weights = []
         for layer_1, layer_2 in zip(weights_1, weights_2):
-            difference_of_weights.append(np.subtract(layer_2, layer_1))
+            difference_of_weights.append(np.subtract(layer_1, layer_2))
         return difference_of_weights
 
     def weights_sum(self, weights_1, weights_2):
@@ -535,15 +539,15 @@ class Reweighting(MultiPartnerLearning):
 
         sum_of_weights = []
         for layer_1, layer_2 in zip(weights_1, weights_2):
-            sum_of_weights.append(np.add(layer_2, layer_1))
+            sum_of_weights.append(np.add(layer_1, layer_2))
         return sum_of_weights
 
-    def scalar_product(self, gradient1, gradient2):
+    def scalar_product(self, weights_1, weights_2):
         """Return the scalar product between two gradient vector"""
         layers_scalar_products = []
         # Compute the scalar producte between each pair of layers
-        for layer_1, layer_2 in zip(gradient1, gradient2):
-            layers_scalar_products.append(np.sum(np.multiply(layer_2, layer_1)))
+        for layer_1, layer_2 in zip(weights_1, weights_2):
+            layers_scalar_products.append(np.sum(np.multiply(layer_1, layer_2)))
         # Sum the scalar products of the layers
         return np.sum(layers_scalar_products)
 
@@ -584,9 +588,8 @@ class Reweighting(MultiPartnerLearning):
                                         validation_data=self.val_data)
 
             # Compute the gradient for this minibatch
-            self.minibatch_gradient[partner_index] = self.weights_difference(self.model_weights,
-                                                                             partner_model.get_weights()
-                                                                             )
+            self.minibatch_gradient[partner_index] = self.weights_substract(partner_model.get_weights(),
+                                                                            self.model_weights)
 
             # Log results of the round
             self.log_partner_perf(partner.id, partner_index, history.history)
@@ -596,7 +599,7 @@ class Reweighting(MultiPartnerLearning):
 
         logger.debug("End of Reweighting collaborative round.")
 
-    def fit_epoch(self, beta=0.1):
+    def fit_epoch(self):
         # Clear Keras' old models
         clear_session()
 
@@ -607,57 +610,64 @@ class Reweighting(MultiPartnerLearning):
         for i in range(self.minibatch_count):
             self.minibatch_index = i
             self.fit_minibatch()
-
-            logger.debug("Starting weight optimization for the current minibatch.")
-            previous_aggregation_weights = np.zeros(self.partners_count)
-            step_count = 0
-            while np.max(np.abs(previous_aggregation_weights - self.aggregator.aggregation_weights)) > 0.01:
-                step_count += 1
-                logger.debug(f"step : {step_count}")
-                # For the while condition
-                previous_aggregation_weights = self.aggregator.aggregation_weights
-
-                # Compute the derivative_of_coeff
-                logger.debug("Computing the derivative of coefficient with respect to the parameters")
-                next_model_weights = self.aggregator.aggregate_model_weights()
-                derivative_of_coeff = [None] * self.partners_count
-
-                for partner_index in range(self.partners_count):
-
-                    collective_model_gradient = self.weights_difference(self.model_weights, next_model_weights)
-
-                    derivative_of_coeff[partner_index] = self.scalar_mult(
-                        self.aggregator.aggregation_weights[partner_index],
-                        self.weights_difference(self.minibatch_gradient[partner_index], collective_model_gradient)
-                    )
-
-                # Compute the gradient on validation data
-                logger.debug("Computing the gradient on validation data")
-                next_model_val = self.build_model_from_weights(next_model_weights)
-                next_model_val.fit(self.dataset.x_val, self.dataset.y_val, verbose=0)
-                val_weights = next_model_val.get_weights()
-                gradient_val = self.weights_difference(self.model_weights, val_weights)
-
-                # Update the aggregation weight
-                logger.debug("Updating the aggregation weight")
-                for partner_index in range(self.partners_count):
-                    self.aggregator.aggregation_weights_param[partner_index] -= beta * (
-                        self.scalar_product(gradient_val, derivative_of_coeff[partner_index])
-                    )
-
-                e = np.exp(self.aggregator.aggregation_weights_param)
-                self.aggregator.aggregation_weights = e / np.sum(e)
-
-                if self.light_reweighting:
-                    break
-
-            logger.debug("Optimization of the weights over -> aggregating the partner models")
+            #   weight optimization for the current minibatch.
+            self.udpate_aggregation_weights()
             # Once the aggregation_weights have converge, Do the aggregation
             self.model_weights = self.aggregator.aggregate_model_weights()
 
+
         self.minibatch_index = 0
 
+    def udpate_aggregation_weights(self):
+        # Compute the derivative_of_coeff with respect to the parameters
+        next_model_weights = self.aggregator.aggregate_model_weights()
+        derivative_of_coeff = [None] * self.partners_count
 
+        for partner_index in range(self.partners_count):
+            collective_model_gradient = self.weights_substract(next_model_weights, self.model_weights)
+
+            derivative_of_coeff[partner_index] = self.scalar_mult(
+                -self.aggregator.aggregation_weights[partner_index],
+                self.weights_substract(collective_model_gradient, self.minibatch_gradient[partner_index])
+            )
+
+        # Compute the gradient on validation data
+        next_model_val = self.build_model_from_weights(next_model_weights)
+
+        next_model_val.fit(self.dataset.x_val[:self.sep_index], self.dataset.y_val[:self.sep_index], verbose=0)
+        val_weights = next_model_val.get_weights()
+        minus_gradient_val = self.weights_substract(val_weights, self.model_weights)
+
+        # Update the aggregation weight
+        partners_sizes = [partner.data_volume for partner in self.partners_list]
+        sign = np.sign(self.aggregator.aggregation_weights_param
+                       - partners_sizes / np.sum(partners_sizes) )
+        e = self.aggregator.aggregation_weights_param
+        for partner_index in range(self.partners_count):
+            self.aggregator.aggregation_weights_param[partner_index] += (1.0 - self.alpha) * self.beta * (
+                self.scalar_product(minus_gradient_val, derivative_of_coeff[partner_index])
+            ) + self.alpha * ( sign[partner_index]- np.sum(np.multiply(sign, e)) ) * e[partner_index]
+
+        e = np.exp(self.aggregator.aggregation_weights_param)
+        self.aggregator.aggregation_weights = e / np.sum(e)
+
+        logger.debug(f"Weights: {self.aggregator.aggregation_weights}")
+        logger.debug(f"Params: {self.aggregator.aggregation_weights_param}")
+
+
+    def eval_and_log_model_val_perf(self):
+        model = self.build_model()
+        hist = model.evaluate(self.val_data[0][self.sep_index:],
+                              self.val_data[1][self.sep_index:],
+                              batch_size=constants.DEFAULT_BATCH_SIZE,
+                              verbose=0,
+                              )
+        self.history.history['mpl_model']['val_loss'][self.epoch_index, self.minibatch_index] = hist[0]
+        self.history.history['mpl_model']['val_accuracy'][self.epoch_index, self.minibatch_index] = hist[1]
+
+        if self.minibatch_index >= self.minibatch_count - 1:
+            logger.info(f"   Model evaluation at the end of the epoch: "
+                        f"{['%.3f' % elem for elem in hist]}")
 # Supported multipartner learning approaches
 
 MULTI_PARTNER_LEARNING_APPROACHES = {
@@ -665,5 +675,6 @@ MULTI_PARTNER_LEARNING_APPROACHES = {
     "seq-pure": SequentialLearning,
     "seq-with-final-agg": SequentialWithFinalAggLearning,
     "seqavg": SequentialAverageLearning,
-    "lflip": MplLabelFlip
+    "lflip": MplLabelFlip,
+    "reweighting": Reweighting,
 }
