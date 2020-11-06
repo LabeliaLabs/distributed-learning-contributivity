@@ -86,7 +86,7 @@ Currently MNIST, CIFAR10, TITANIC, IMDB and ESC50 are supported. You can use one
 from mplc.scenario import Scenario
 my_scenario = Scenario(partners_count=3,
                        amounts_per_partner=[0.2, 0.3, 0.5],
-                        dataset_name='mnist')
+                       dataset_name='mnist')
 ```
 
 With each dataset, a model architecture is provided by default, so you do not need to care of it. Moreover, the split between the validation and train sets is done by the constructor's of the dataset, even if you can finetune it.
@@ -153,8 +153,7 @@ history.score           # Final score evaluated on the test dataset at the end o
 history.metrics         # Metrics computed on the partners' models
 ```
 
-
-Check out [Tutorial 3 - Exploring results](https://github.com/SubstraFoundation/distributed-learning-contributivity/blob/master/notebooks/examples/3_Exploring_results.ipynb) for more information.
+Check out section 4 of [Tutorial 1](https://github.com/SubstraFoundation/distributed-learning-contributivity/blob/master/notebooks/tutorials/Tutorial-1_Run_your_first_scenario.ipynb) for examples.
 
 ### Contributivity measurement methods
 
@@ -177,8 +176,6 @@ contributivity_score = my_scenario.contributivity_list
 print(contributivity_score[0])
 ```
 
-Check out [Tutorial 4 - Exploring contributivity](https://github.com/SubstraFoundation/distributed-learning-contributivity/blob/master/notebooks/examples/4_Exploring_contributivity.ipynb) for more information.
-
 > Note: there is a lot more parameters to play with, which are fully explained below.
 
 ## Scenario parameters
@@ -196,18 +193,19 @@ In this documentation, available scenario parameters are structured into the fol
 There are 2 ways to select a dataset. You can either choose a pre-implemented dataset, by setting the `dataset_name` parameter, or create a custom dataset object and pass it to the `dataset` parameter. To look at the structure of the dataset object, see the [Dataset generation](#dataset-generation) section below.
 
 - `dataset`: `None` (default), `datasets.Dataset object`  
-  This enables to use your own dataset, with the class Dataset. The [Tutorial 2](https://github.com/SubstraFoundation/distributed-learning-contributivity/blob/master/notebooks/examples/2%20_Sentiment140.ipynb) provides more explicit information.
+  This enables to use your own dataset, with the class Dataset. The [Tutorial 2](https://github.com/SubstraFoundation/distributed-learning-contributivity/blob/master/notebooks/tutorials/Tutorial-3_Use_homemade_dataset.ipynb) provides more explicit information.
   If None, the dataset provided by the `dataset_name` parameter will be used.  
   Note about validation and test datasets:
 
-    - The dataset modules must provide separated train and test sets (referred to as global train set and global test set).
-    - The global train set is then further split into a global train set and a global validation set.
+    - The `load_data()` method must provide separated train and test sets (referred to as global train set and global test set).
+    - The global train set is then further automatically split into a global train set and a global validation set.
     - In the multi-partner learning computations, the global validation set is used for early stopping and the global test set is used for performance evaluation.
     - The global train set is split amongst partner (according to the scenario configuration) to populate the partner's local datasets.
-    - For each partner, the local dataset can be split into separated train, validation and test sets, depending on the dataset configuration. Currently, the local validation and test set are not used, but they are available for further developments of multi-partner learning and contributivity measurement approaches.
+    - For each partner, the local dataset can be split into separate train, validation and test sets, depending on the dataset configuration, by dedicated split method in the dataset subclass.  
+      > Note: currently, the local validation and test set are not used, but they are available for further developments of multi-partner learning and contributivity measurement approaches.
 
 - `dataset_name`: `'mnist'` (default), `'cifar10'`, `'esc50'`, `'imdb'` or `'titanic'`  
-  MNIST, CIFAR10, ESC50, IMDB and Titanic are currently supported. They come with their associated modules in `/mplc/datasets` for loading data, pre-processing inputs, and define a model architecture.
+  MNIST, CIFAR10, ESC50, IMDB and Titanic are currently supported. They come as subclass of the `Dataset` object (`./mplc/dataset.py`), with their corresponding methods for loading data, pre-processing inputs, define a model architecture, etc.
   
   > Note: the pre-implemented example based on the Titanic dataset uses a SKLearn `LogisticRegression()`. PLease note that it requires a dataset partitioning where each partner gets samples from both classes (otherwise you'll get: `ValueError: This solver needs samples of at least 2 classes in the data, but the data contains only one class`).
   
@@ -254,8 +252,8 @@ There are 2 ways to select a dataset. You can either choose a pre-implemented da
   Enables to artificially corrupt the data of one or several partners:
 
     - `not_corrupted`: data are not corrupted
-    - `shuffled`: labels are shuffled randomly, not corresponding anymore with inputs
-    - `corrupted`: labels are all offset of `1` class
+    - `shuffled`: each label is randomly shuffled
+    - `corrupted`: each label is offset of one class
 
   Example: `corrupted_datasets=[not_corrupted, not_corrupted, not_corrupted, shuffled]`
 
@@ -329,6 +327,7 @@ There are several parameters influencing how the collaborative and distributed l
     - "Federated SBS quadratic"
     - "Federated SBS constant"
     - "LFlip"
+    - "PVRL"
     ```
 
 The methods are detailed below: 
@@ -419,57 +418,35 @@ Example: `methods=["Shapley values", "Independent scores", "TMCS"]`
 
 ## Dataset generation
 
-The `Dataset` object is useful if you want to define custom datasets and related objects such as preprocessing functions and model generator.
+The `Dataset` object is useful if you want to define custom datasets and related objects such as preprocessing functions and model generator. It is demonstrated in [Tutorial 3 - Use homemade dataset](https://github.com/SubstraFoundation/distributed-learning-contributivity/blob/master/notebooks/tutorials/Tutorial-3_Use_homemade_dataset.ipynb).
 
 ### Dataset
 
-This is the structure of the dataset generator:
+Here is the structure of the dataset generator:
 
 ```python
-dataset = dataset.Dataset(
+dataset = Dataset(
     "name",
-    X_train,
-    X_test,
+    x_train,
+    x_test,
     y_train,
     y_test,
     input_shape,
     num_classes,
-    preprocess_dataset_labels,      # See below
-    generate_new_model_for_dataset  # See below
-    train_val_split_global,         # See below
-    train_test_split_local,         # See below
-    train_val_split_local           # See below
 )
 ```
 
+### Data labels
+
+The data labels can take whatever shape you need, with only one condition. The labels need to be convertible into string format, and with respect to the condition that if `label1` is equal to `label2` (reciprocally different from), therefore `str(label1)` must be equal to `str(label2)` (reciprocally different from).
+
 ### Model generator
 
-This function provides the model which will be trained by the `Scenario` object. Currently the library handles compiled Keras' models (see MNIST, ESC50, IMDB and CIFAR10 datasets), and Scikit-Learn Linear Regression models (see the TITANIC dataset).  
-
-```python
-def generate_new_model_for_dataset():
-    
-    # Initialize a model type
-    model = Sequential()  # example
-    
-    # Define your model structure
-    model.add(Dense(num_classes, activation='softmax'))  # example
-    
-    # compile with loss and accuracy
-    model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])  # example
-    
-    return model
-```
+Th method `generate_new_model()` needs to be implemented and provide the model to be trained.
 
 > Note: it is mandatory to have loss and accuracy as metrics for your model.
 
-### Preprocessing
-
-```python
-def preprocess_dataset_labels(y):
-    # (...)
-    return y
-```
+Currently the library handles compiled Keras' models (see MNIST, ESC50, IMDB and CIFAR10 datasets), and Scikit-Learn Linear Regression models (see the TITANIC dataset).
 
 ### Split in train, validation and test sets
 

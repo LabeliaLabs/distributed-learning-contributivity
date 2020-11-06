@@ -41,7 +41,7 @@ class Partner:
         n = int(len(self.y_train) * proportion_corrupted)
         idx = sample(list(range(len(self.y_train))), n)
 
-        # Off-set  the labels
+        # Offset the labels
         for i in idx:
             new_label = self.y_train[i]
             idx_max = np.argmax(new_label)
