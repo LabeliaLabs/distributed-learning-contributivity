@@ -118,7 +118,41 @@ my_scenario.run()
 
 ### Browsing results
 
-After a run, every information regarding the training and testing will be available ... <tbc `History` object>
+After a run, every information regarding the training and testing will be available. Under the hood, the training is performed by a `MultiPartnerLearning` object, which is referred to by the `my_scenario.mpl` attribute.
+Each `MultiPartnerLearning` object holds a `History` object, which stores all the information related to training and testing.
+
+```python
+history = my_scenario.mpl.history 
+``` 
+The main attribute of the `history` object is an `history` dictionary, which is structured as followed :
+```python
+history.history = { 1: {'val_accuracy' : matrix[epoch, minibatch]
+                    .   'val_loss'     : matrix[epoch, minibatch]
+                    .   'accuracy'     : matrix[epoch, minibatch]
+                    .   'loss'         : matrix[epoch, minibatch] }
+                    n: { ... }
+          'mpl_model':{ 'val_accuracy' : matrix[epoch, minibatch]
+                        'val_loss'     : matrix[epoch, minibatch] }
+                   } 
+```
+The n first keys correspond to the partner id, and the data referenced by the `'mpl_model'` key are those of the global model. 
+As this dictionary is not really user friendly, you can convert it to a Pandas DataFrame, and use the pandas API to performed advanced analysis easily.
+Here is an instance:
+```python
+history_df = my_scenario.mpl.history.partners_to_dataframe()
+losses_per_partners = history_df[history_df.Minibatch==2].pivot(index='Epoch', columns='Partner', values='val_loss')
+```
+Check out [Tutorial 1](https://github.com/SubstraFoundation/distributed-learning-contributivity/blob/master/notebooks/tutorials/Tutorial-1_Run_your_first_scenario.ipynb) for more instances.
+
+There is few other `History` attributes : 
+
+```python
+history.save_folder     # Path to the folder where is saved plots
+history.nb_epochs_done  # Number of epoch done in the mpl, taking into account any early stopping
+history.score           # Final score evaluated on the test dataset at the end of the training
+history.metrics         # Metrics computed on the partners' models
+```
+
 
 Check out [Tutorial 3 - Exploring results](https://github.com/SubstraFoundation/distributed-learning-contributivity/blob/master/notebooks/examples/3_Exploring_results.ipynb) for more information.
 
