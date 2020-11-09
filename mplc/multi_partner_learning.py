@@ -374,7 +374,7 @@ class EnsembleResults(MultiPartnerLearning):
         """Proceed to a collaborative round with an results ensembling approach"""
 
         logger.debug("Start new ensembling collaborative round ...")
-        logger.info(f"(ensembling) Minibatch n°{self.minibatch_index} of epoch n°{self.epoch_index})
+        logger.info(f"(ensembling) Minibatch n°{self.minibatch_index} of epoch n°{self.epoch_index}")
 
         for partner in self.partners_list:
             partner.model_weights = self.model_weights
