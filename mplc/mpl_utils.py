@@ -6,6 +6,7 @@ from copy import deepcopy
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+from tensorflow import reduce_mean, convert_to_tensor
 
 
 class History:
@@ -105,11 +106,9 @@ class Aggregator(ABC):
         """Aggregate gradients obtained by the backward propagation on the partner's models. """
         gradients_per_layer = list(zip(*[partner.gradients for partner in self.mpl.partners_list]))
         fusionned_gradients = list()
-
+        agg_w_tf = convert_to_tensor(self.aggregation_weights)
         for gradients in gradients_per_layer:
-            avg_gradients_for_layer = np.average(
-                np.array(gradients), axis=0, weights=self.aggregation_weights
-            )
+            avg_gradients_for_layer = reduce_mean(gradients * agg_w_tf, axis=1)
             fusionned_gradients.append(list(avg_gradients_for_layer))
 
         return fusionned_gradients
@@ -139,6 +138,10 @@ class ScoresAggregator(Aggregator):
     def aggregate_model_weights(self):
         self.prepare_aggregation_weights()
         super(ScoresAggregator, self).aggregate_model_weights()
+
+    def aggregate_gradients(self):
+        self.prepare_aggregation_weights()
+        super(ScoresAggregator, self).aggregate_gradients()
 
 
 # Supported aggregation weights approaches

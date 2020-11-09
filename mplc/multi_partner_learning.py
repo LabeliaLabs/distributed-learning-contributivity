@@ -570,9 +570,9 @@ class GradientFusion(MultiPartnerLearning):
             # Backward pass
             partner.gradients = tape.gradient(loss_value, partner_model.trainable_weights)
 
-            val_history = partner_model.evaluate(self.val_data[0], self.val_data[1])
+            val_history = partner_model.evaluate(self.val_data[0], self.val_data[1], verbose=False)
             history = partner_model.evaluate(partner.minibatched_x_train[self.minibatch_index],
-                                             partner.minibatched_y_train[self.minibatch_index])
+                                             partner.minibatched_y_train[self.minibatch_index], verbose=False)
             history = {
                 "loss": [history[0]],
                 'accuracy': [history[1]],
