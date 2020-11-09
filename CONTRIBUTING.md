@@ -24,6 +24,8 @@ The branching model of the project is a very simplified of the [standard approac
 - Contributors create a feature branch from `master`, push it to the repository and open a draft PR
 - Once automated tests passe, their PRs are reviewed and merged by the repository maintainers
 
+> **Note**: If you are not yet part of the contributor list, please get in touch with us. In the meantime, you can create your own fork of the project and open a PR pointing to this source repository, so we can evaluate your submission. [Github documentation](https://docs.github.com/en/free-pro-team@latest/github/collaborating-with-issues-and-pull-requests/creating-a-pull-request-from-a-fork).
+
 ## 2. Python
 
 ### 2.i. Python Virtual Environment
