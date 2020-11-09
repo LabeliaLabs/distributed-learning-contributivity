@@ -13,6 +13,7 @@ from keras.backend import clear_session
 from keras.callbacks import EarlyStopping
 from loguru import logger
 from sklearn.preprocessing import normalize
+from sklearn.metrics import accuracy_score, log_loss
 
 from . import constants
 from .mpl_utils import History, Aggregator
@@ -139,13 +140,14 @@ class MultiPartnerLearning(ABC):
 
         logger.debug(f"{epoch_nb_str} > {mb_nb_str} > {partner_id_str} > val_acc: {val_acc_str}")
 
-    def eval_and_log_model_val_perf(self):
+    def evaluate_model(self, x, y):
         model = self.build_model()
-        hist = model.evaluate(self.val_data[0],
-                              self.val_data[1],
-                              batch_size=constants.DEFAULT_BATCH_SIZE,
-                              verbose=0,
-                              )
+        hist = model.evaluate(x, y, batch_size=constants.DEFAULT_BATCH_SIZE, verbose=0)
+
+        return hist
+
+    def eval_and_log_model_val_perf(self):
+        hist = self.evaluate_model(self.val_data[0], self.val_data[1])
         self.history.history['mpl_model']['val_loss'][self.epoch_index, self.minibatch_index] = hist[0]
         self.history.history['mpl_model']['val_accuracy'][self.epoch_index, self.minibatch_index] = hist[1]
 
@@ -155,14 +157,9 @@ class MultiPartnerLearning(ABC):
                         f"{epoch_nb_str}: "
                         f"{['%.3f' % elem for elem in hist]}")
 
-    def eval_and_log_final_model__test_perf(self):
+    def eval_and_log_final_model_test_perf(self):
         logger.info("### Evaluating model on test data:")
-        model = self.build_model()
-        hist = model.evaluate(self.test_data[0],
-                              self.test_data[1],
-                              batch_size=constants.DEFAULT_BATCH_SIZE,
-                              verbose=0,
-                              )
+        hist = self.evaluate_model(self.test_data[0], self.test_data[1])
         self.history.score = hist[1]
         self.history.nb_epochs_done = self.epoch_index + 1
         logger.info(f"   Model metrics names: {self.metrics_names}")
@@ -204,7 +201,7 @@ class MultiPartnerLearning(ABC):
             self.epoch_index += 1
 
         # After last epoch or if early stopping was triggered, evaluate model on the global testset
-        self.eval_and_log_final_model__test_perf()
+        self.eval_and_log_final_model_test_perf()
         # Save the model's weights
         self.save_final_model()
 
@@ -259,7 +256,7 @@ class SinglePartnerLearning(MultiPartnerLearning):
         self.log_partner_perf(self.partner.id, 0, history.history)
         del self.history.history['mpl_model']
         # Evaluate trained model on test data
-        self.eval_and_log_final_model__test_perf()
+        self.eval_and_log_final_model_test_perf()
         self.history.nb_epochs_done = (es.stopped_epoch + 1) if es.stopped_epoch != 0 else self.epoch_count
 
         end = timer()
@@ -329,6 +326,81 @@ class FederatedAverageLearning(MultiPartnerLearning):
             partner.model_weights = partner_model.get_weights()
 
         logger.debug("End of fedavg collaborative round.")
+
+
+class EnsembleResults(MultiPartnerLearning):
+    def __init__(self, scenario, **kwargs):
+        # First, if only one partner, fall back to dedicated single partner function
+        super(EnsembleResults, self).__init__(scenario, **kwargs)
+        if self.partners_count == 1:
+            raise ValueError('Only one partner is provided. Please use the dedicated SinglePartnerLearning class')
+
+    def evaluate_model(self, x, y_true):
+
+        predictions_list = []
+        for partner in self.partners_list:
+
+            model = partner.build_model()
+            predictions = model.predict(x)
+            predictions_list.append(predictions)
+
+        y_pred = np.mean(predictions_list, axis=0)
+
+        loss = log_loss(y_true, y_pred)
+
+        y_true = np.argmax(y_true, axis=1)
+        y_pred = np.argmax(y_pred, axis=1)
+        metric = accuracy_score(y_true, y_pred)
+
+        hist = [loss, metric]
+
+        return hist
+
+    def fit_epoch(self):
+        # Clear Keras' old models
+        clear_session()
+
+        # Split the train dataset in mini-batches
+        self.split_in_minibatches()
+
+        # Iterate over mini-batches and train
+        for i in range(self.minibatch_count):
+            self.minibatch_index = i
+            self.fit_minibatch()
+
+        self.minibatch_index = 0
+
+    def fit_minibatch(self):
+        """Proceed to a collaborative round with an results ensembling approach"""
+
+        logger.debug("Start new ensembling collaborative round ...")
+        logger.info(f"(ensembling) Minibatch n°{self.minibatch_index} of epoch n°{self.epoch_index})
+
+        for partner in self.partners_list:
+            partner.model_weights = self.model_weights
+
+        # Evaluate and store accuracy of mini-batch start model
+        self.eval_and_log_model_val_perf()
+
+        # Iterate over partners for training each individual model
+        for partner_index, partner in enumerate(self.partners_list):
+            # Reference the partner's model
+            partner_model = partner.build_model()
+
+            # Train on partner local data set
+            history = partner_model.fit(partner.minibatched_x_train[self.minibatch_index],
+                                        partner.minibatched_y_train[self.minibatch_index],
+                                        batch_size=partner.batch_size,
+                                        verbose=0,
+                                        validation_data=self.val_data)
+
+            # Log results of the round
+            self.log_partner_perf(partner.id, partner_index, history.history)
+
+            # Update the partner's model in the models' list
+            partner.model_weights = partner_model.get_weights()
+
+        logger.debug("End of ensembling collaborative round.")
 
 
 class SequentialLearning(MultiPartnerLearning):  # seq-pure
@@ -520,5 +592,6 @@ MULTI_PARTNER_LEARNING_APPROACHES = {
     "seq-pure": SequentialLearning,
     "seq-with-final-agg": SequentialWithFinalAggLearning,
     "seqavg": SequentialAverageLearning,
-    "lflip": MplLabelFlip
+    "lflip": MplLabelFlip,
+    "ensembling": EnsembleResults
 }

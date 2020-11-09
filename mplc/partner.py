@@ -103,4 +103,5 @@ class PartnerMpl:
         self.minibatched_y_train = np.split(y_train, (split_indices[:-1] * len(y_train)).astype(int))
 
     def build_model(self):
+        # TODO Why don't we have the model as a parameter of partnerMPL object ?
         return self.mpl.build_model_from_weights(self.model_weights)
