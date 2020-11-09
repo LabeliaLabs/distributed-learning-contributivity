@@ -51,6 +51,17 @@ class Test_EndToEndTest:
 
         assert np.min(titanic_scenario.mpl.history.score) > 0.65
 
+    def test_ensemble(self):
+        """
+        Test performance on mnist dataset with the ensemble method
+        """
+
+        ensemble_scenario = Scenario(2, [0.4, 0.6], epoch_count=3, minibatch_count=1, dataset_name='mnist',
+                                     multi_partner_learning_approach="ensembling")
+        ensemble_scenario.run()
+
+        assert np.min(ensemble_scenario.mpl.history.score) > 0.9
+
     def test_contrib(self):
         """
         Test contrib score
