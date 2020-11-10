@@ -518,26 +518,18 @@ class GradientFusion(MultiPartnerLearning):
         super(GradientFusion, self).__init__(scenario, **kwargs)
         if self.partners_count == 1:
             raise ValueError('Only one partner is provided. Please use the dedicated SinglePartnerLearning class')
-        model = self.build_model()
-        self.optimizer = model.optimizer
+        self.model = self.build_model()
 
     def fit_epoch(self):
-        # Clear Keras' old models
-        clear_session()
-
         # Split the train dataset in mini-batches
         self.split_in_minibatches()
 
         # Iterate over mini-batches and train
+
         for i in range(self.minibatch_count):
             self.minibatch_index = i
             self.fit_minibatch()
 
-            # At the end of each minibatch,aggregate the models
-            model = self.build_model()
-            fusion_gradients = self.aggregator.aggregate_gradients()
-            self.optimizer.apply_gradients(zip(fusion_gradients, model.trainable_weights))
-            self.model_weights = model.get_weights()
         self.minibatch_index = 0
 
     def fit_minibatch(self):
@@ -556,20 +548,21 @@ class GradientFusion(MultiPartnerLearning):
         self.eval_and_log_model_val_perf()
 
         # Iterate over partners for training each individual model
-        for partner_index, partner in enumerate(self.partners_list):
-            # Reference the partner's model
-            partner_model = partner.build_model()
-            input_ = convert_to_tensor(partner.minibatched_x_train[self.minibatch_index])
-            labels_ = convert_to_tensor(partner.minibatched_y_train[self.minibatch_index])
-            with GradientTape() as tape:
+        with GradientTape() as tape:
+            for partner_index, partner in enumerate(self.partners_list):
+                # Reference the partner's model
+                partner_model = partner.build_model()
+                input_ = convert_to_tensor(partner.minibatched_x_train[self.minibatch_index])
+                labels_ = convert_to_tensor(partner.minibatched_y_train[self.minibatch_index])
                 # Forward pass.
                 tape.watch(input_)
                 logits = partner_model(input_)
                 # Loss value for this batch.
-                loss_value = partner_model.loss(labels_, logits)
-            # Backward pass
-            partner.gradients = tape.gradient(loss_value, partner_model.trainable_weights)
+                partner.loss = partner_model.loss(labels_, logits)
+            loss = self.aggregator.aggregate_losses()
+            self.model.optimizer.get_updates(loss, self.model.trainable_weights)
 
+        for partner_index, partner in enumerate(self.partners_list):
             val_history = partner_model.evaluate(self.val_data[0], self.val_data[1], verbose=False)
             history = partner_model.evaluate(partner.minibatched_x_train[self.minibatch_index],
                                              partner.minibatched_y_train[self.minibatch_index], verbose=False)

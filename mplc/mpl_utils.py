@@ -6,7 +6,7 @@ from copy import deepcopy
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from tensorflow import reduce_mean, convert_to_tensor
+from tensorflow import convert_to_tensor
 
 
 class History:
@@ -102,16 +102,14 @@ class Aggregator(ABC):
 
         return new_weights
 
-    def aggregate_gradients(self):
-        """Aggregate gradients obtained by the backward propagation on the partner's models. """
-        gradients_per_layer = list(zip(*[partner.gradients for partner in self.mpl.partners_list]))
-        fusionned_gradients = list()
-        agg_w_tf = convert_to_tensor(self.aggregation_weights)
-        for gradients in gradients_per_layer:
-            avg_gradients_for_layer = reduce_mean(gradients * agg_w_tf, axis=1)
-            fusionned_gradients.append(list(avg_gradients_for_layer))
+    def aggregate_losses(self):
+        """Aggregate losses obtained by the forward propagation on the partner's models. """
+        agg_w_tf = convert_to_tensor(self.aggregation_weights, dtype="float32")
+        weighted_losses = [p.loss for w, p in zip(agg_w_tf, self.mpl.partners_list)]
+        from tensorflow import concat
+        agg_loss = concat(weighted_losses, axis=0)
 
-        return fusionned_gradients
+        return self.mpl.partners_list[0].loss
 
 
 class UniformAggregator(Aggregator):
