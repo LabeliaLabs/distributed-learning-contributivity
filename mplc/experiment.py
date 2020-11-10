@@ -57,8 +57,8 @@ class Experiment:
             scenario_to_add.experiment_path = self.experiment_path
             self.scenarios_list.append(scenario_to_add)
         else:
-            logger.info(f"The scenario {scenario_to_add} you are trying to add is not an instance of"
-                        f"object scenario.Scenario")
+            raise Exception(f"The scenario {scenario_to_add} you are trying to add is not an instance of"
+                            f"object scenario.Scenario")
 
     def create_scenarios_from_config_file(self, path_to_config_file):
         """Create scenarios from a config file passed as argument,
