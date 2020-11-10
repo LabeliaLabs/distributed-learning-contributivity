@@ -78,29 +78,11 @@ class Experiment:
                 **scenario_params,
                 experiment_path=self.experiment_path,
                 scenario_id=scenario_params_idx+1,
+                is_dry_run=True,
             )
 
             self.add_scenario(current_scenario)
-
-    def validate_scenarios_list(self):
-        """Instantiate every scenario without running it to check if
-           every scenario is correctly specified. This prevents scenario initialization errors during the experiment"""
-
-        logger.debug("Starting validation of scenarios prior to running the experiment")
-
-        for scenario_idx, scenario in enumerate(self.scenarios_list):
-
-            scenario.is_dry_run = True
-
-            scenario_index_str = f"{scenario_idx + 1}/{len(self.scenarios_list)}"
-            logger.info(f"Scenarios validation: now validating scenario {scenario_index_str} "
-                         f"(instantiate partners, split data, compute batch sizes, apply data corruption req.)")
-
-            scenario.run()
-
-            scenario.is_dry_run = False
-
-        logger.debug("Scenarios validation: all scenario have been validated successfully")
+            logger.info(f"Scenario {current_scenario.scenario_name} validated and added to the experiment")
 
     def run_experiment(self):
         """Run the experiment, starting by validating the scenarios first"""
@@ -108,9 +90,6 @@ class Experiment:
         # Preliminary steps
         plt.close("all")  # Close open figures
         utils.set_log_file(self.experiment_path)  # Move log files to experiment folder
-
-        # Validate scenarios prior to running the experiment
-        self.validate_scenarios_list()
 
         # Loop over nb_repeats
         for repeat_idx in range(self.nb_repeats):
@@ -125,6 +104,7 @@ class Experiment:
                 logger.info(f"(Repeat {repeat_index_str}) Now running scenario {scenario_index_str}")
 
                 # Run the scenario
+                scenario.convert_from_dry_run_to_run()
                 scenario.n_repeat = repeat_idx
                 scenario.run()
 

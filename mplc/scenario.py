@@ -290,7 +290,6 @@ class Scenario:
 
         if self.is_quick_demo:
             # Use less data and/or less epochs to speed up the computations
-            logger.info("Quick demo: limit number of data and number of epochs.")
             if len(self.dataset.x_train) > constants.TRAIN_SET_MAX_SIZE_QUICK_DEMO:
                 index_train = np.random.choice(
                     self.dataset.x_train.shape[0],
@@ -316,28 +315,51 @@ class Scenario:
             self.epoch_count = 3
             self.minibatch_count = 2
 
-    # -------
-    # Outputs
-    # -------
-
-        self.experiment_path = experiment_path
-        self.scenario_name = None
-        self.short_scenario_name = None
-        self.save_folder = None
-
-        logger.info("Scenario instantiated")
-
-    def initialize_output_attributes(self):
+    # -----------------
+    # Output parameters
+    # -----------------
 
         now = datetime.datetime.now()
         now_str = now.strftime("%Y-%m-%d_%Hh%M")
         self.scenario_name = f"scenario_{self.scenario_id}_repeat_{self.n_repeat}_{now_str}_" \
                              f"{uuid.uuid4().hex[:3]}"  # to distinguish identical names
-
         self.short_scenario_name = f"{self.partners_count} {self.amounts_per_partner}"
 
+        self.experiment_path = experiment_path
         self.save_folder = self.experiment_path / self.scenario_name
-        self.save_folder.mkdir(parents=True, exist_ok=True)
+        if not self.is_dry_run:
+            self.save_folder.mkdir(parents=True, exist_ok=True)
+
+    # -----------------------
+    # Provision the scenario
+    # -----------------------
+
+        self.instantiate_scenario_partners()
+        self.split_data()
+        self.compute_batch_sizes()
+        self.data_corruption()
+
+        if self.is_dry_run:
+            logger.info("Scenario instantiated (dry run): "
+                        "save folder not created, description not logged, data distribution not plotted")
+        else:
+            logger.info("Scenario instantiated")
+            self.log_scenario_description()
+            self.plot_data_distribution()
+
+    def convert_from_dry_run_to_run(self):
+        """Convert a dry run scenario to a real scenario"""
+
+        if self.is_dry_run:
+            logger.info("Convert scenario from dry run to real")
+            self.is_dry_run = False
+            self.save_folder.mkdir(parents=True, exist_ok=True)
+            self.log_scenario_description()
+            self.plot_data_distribution()
+            logger.info("Scenario not in dry run mode anymore, now instantiated entirely "
+                        "(save folder created, description logged, data distribution plotted")
+        else:
+            logger.debug(f"The scenario was not in dry run mode - no changes made")
 
     def log_scenario_description(self):
         """Log the description of the scenario configured"""
@@ -355,6 +377,9 @@ class Scenario:
 
         # Describe data
         logger.info(f"Data loaded: {self.dataset.name}")
+        if self.is_quick_demo:
+            logger.info("   Quick demo configuration: number of data samples and epochs "
+                        "are limited to speed up the run")
         logger.info(
             f"   {len(self.dataset.x_train)} train data with {len(self.dataset.y_train)} labels"
         )
@@ -372,6 +397,12 @@ class Scenario:
         """Create the partners_list"""
 
         self.partners_list = [Partner(i, corruption=self.corruption_parameters[i]) for i in range(self.partners_count)]
+
+    def split_data(self, is_logging_enabled=True):
+        if self.samples_split_type == "basic":
+            self.split_data_basic(is_logging_enabled)
+        elif self.samples_split_type == "advanced":
+            self.split_data_advanced(is_logging_enabled)
 
     def split_data_advanced(self, is_logging_enabled=True):
         """Advanced split: Populates the partners with their train and test data (not pre-processed)"""
@@ -549,7 +580,7 @@ class Scenario:
 
         return 0
 
-    def split_data(self, is_logging_enabled=True):
+    def split_data_basic(self, is_logging_enabled=True):
         """Populates the partners with their train and test data (not pre-processed)"""
 
         y_train = LabelEncoder().fit_transform([str(y) for y in self.dataset.y_train])
@@ -766,49 +797,27 @@ class Scenario:
         # Preliminary steps
         # -----------------
 
-        if not self.is_dry_run:
-            logger.info("Now starting running a scenario")
-            self.log_scenario_description()
-            self.initialize_output_attributes()
+        if self.is_dry_run:
+            self.convert_from_dry_run_to_run()
 
-        # -----------------------
-        # Provision the scenario
-        # -----------------------
+        logger.info(f"Now starting running scenario {self.scenario_name}")
 
-        # Instantiate a Partner object for each partner of the scenario
-        self.instantiate_scenario_partners()
+        # -----------------------------------------------------
+        # Instantiate and run the distributed learning approach
+        # -----------------------------------------------------
 
-        # Split data according to scenario and then pre-process successively...
-        # ... train data, early stopping validation data, test data
-        if self.samples_split_type == "basic":
-            self.split_data()
-        elif self.samples_split_type == "advanced":
-            self.split_data_advanced()
+        self.mpl = self.multi_partner_learning_approach(self, is_save_data=True)
+        self.mpl.fit()
 
-        if not self.is_dry_run:
-            self.plot_data_distribution()
+        # ----------------------------------------------------------
+        # Instantiate and run the contributivity measurement methods
+        # ----------------------------------------------------------
 
-        self.compute_batch_sizes()
-        self.data_corruption()
+        for method in self.methods:
+            logger.info(f"{method}")
+            contrib = contributivity.Contributivity(scenario=self)
+            contrib.compute_contributivity(method)
+            self.append_contributivity(contrib)
+            logger.info(f"Evaluating contributivity with {method}: {contrib}")
 
-        if not self.is_dry_run:
-
-            # --------------------------------------------
-            # Instantiate and run a multi-partner learning
-            # --------------------------------------------
-
-            self.mpl = self.multi_partner_learning_approach(self, is_save_data=True)
-            self.mpl.fit()
-
-            # ----------------------------------------------------------
-            # Instantiate and run the contributivity measurement methods
-            # ----------------------------------------------------------
-
-            for method in self.methods:
-                logger.info(f"{method}")
-                contrib = contributivity.Contributivity(scenario=self)
-                contrib.compute_contributivity(method)
-                self.append_contributivity(contrib)
-                logger.info(f"Evaluating contributivity with {method}: {contrib}")
-
-            return 0
+        return 0

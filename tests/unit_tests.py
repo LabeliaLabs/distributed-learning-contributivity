@@ -161,11 +161,11 @@ def create_Scenario(request):
     # Split data according to scenario and then pre-process successively...
     # ... train data, early stopping validation data, test data
     if scenario_.samples_split_type == "basic":
-        scenario_.split_data()
+        scenario_.split_data_basic()
     elif scenario_.samples_split_type == "advanced":
         scenario_.split_data_advanced()
     scenario_.compute_batch_sizes()
-    scenario_.data_corruption()
+    scenario_.apply_data_alteration_configuration()
 
     return scenario_
 
