@@ -350,8 +350,9 @@ class Scenario:
     def convert_from_dry_run_to_run(self):
         """Convert a dry run scenario to a real scenario"""
 
+        logger.debug(f"Checking if scenario {self.scenario_name} is in dry run mode")
         if self.is_dry_run:
-            logger.info("Convert scenario from dry run to real")
+            logger.info("It is indeed in dry run mode - removing dry run mode now")
             self.is_dry_run = False
             self.save_folder.mkdir(parents=True, exist_ok=True)
             self.log_scenario_description()
@@ -359,7 +360,7 @@ class Scenario:
             logger.info("Scenario not in dry run mode anymore, now instantiated entirely "
                         "(save folder created, description logged, data distribution plotted")
         else:
-            logger.debug(f"The scenario was not in dry run mode - no changes made")
+            logger.debug(f"It wasn't in dry run mode - no changes made")
 
     def log_scenario_description(self):
         """Log the description of the scenario configured"""
