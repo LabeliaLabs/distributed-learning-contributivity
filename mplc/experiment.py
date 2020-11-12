@@ -3,11 +3,12 @@
 An Experiment regroups multiple scenarios and enables to run them and analyze their results.
 """
 
-import os
 import datetime
+import os
+from pathlib import Path
+
 import matplotlib.pyplot as plt
 from loguru import logger
-from pathlib import Path
 
 from . import scenario as scenario_module
 from . import utils, constants
@@ -20,18 +21,23 @@ class Experiment:
             self,
             experiment_name=None,
             nb_repeats=1,
+            scenarios_list=[]
     ):
         """
         :param experiment_name: string, name of the experiment
         :param nb_repeats: int, number of repeats of the experiments (as an experiment includes
                            a number of non-deterministic phenomena. Example: 5
+        :param scenarios_list: list, list of scenarios to be run during the experiment. scenario can also be added via
         """
 
         self.name = experiment_name
-        self.scenarios_list = []
-        self.nb_repeats = nb_repeats
         if experiment_name:
             self.experiment_path = self.define_experiment_path()
+        self.scenarios_list = []
+        for scenario in scenarios_list:
+            self.add_scenario(scenario)
+        self.nb_repeats = nb_repeats
+
 
     def define_experiment_path(self):
         """Define the path and create folder for saving results of the experiment"""
@@ -58,6 +64,7 @@ class Experiment:
 
         if isinstance(scenario_to_add, scenario_module.Scenario):
             scenario_to_add.experiment_path = self.experiment_path
+            scenario_to_add.save_folder = self.experiment_path / scenario_to_add.scenario_name
             self.scenarios_list.append(scenario_to_add)
         else:
             raise Exception(f"The scenario {scenario_to_add} you are trying to add is not an instance of"
@@ -75,25 +82,23 @@ class Experiment:
         self.experiment_path = self.define_experiment_path()
         scenario_params_list = utils.get_scenario_params_list(config["scenario_params_list"])
 
-        logger.info(f"Creating scenarios from config file, in dry run mode to validate them first")
+        logger.info(f"Creating scenarios from config file")
 
         for scenario_params_idx, scenario_params in enumerate(scenario_params_list):
-
             scenario_params_index_str = f"{scenario_params_idx + 1}/{len(scenario_params_list)}"
             logger.debug(f"Scenario {scenario_params_index_str}: {scenario_params}")
 
             current_scenario = scenario_module.Scenario(
                 **scenario_params,
                 experiment_path=self.experiment_path,
-                scenario_id=scenario_params_idx+1,
-                is_dry_run=True,
+                scenario_id=scenario_params_idx + 1,
             )
 
             self.add_scenario(current_scenario)
             logger.info(f"Scenario {current_scenario.scenario_name} successfully validated "
                         f"and added to the experiment")
 
-        logger.info("All scenarios created in dry run mode, successfully validated and added to the experiment")
+        logger.info("All scenarios created , successfully validated and added to the experiment")
 
     def run_experiment(self):
         """Run the experiment, starting by validating the scenarios first"""
@@ -111,13 +116,11 @@ class Experiment:
 
             # Loop over scenarios in scenarios_list
             for scenario_idx, scenario in enumerate(self.scenarios_list):
-
                 scenario_index_str = f"{scenario_idx + 1}/{len(self.scenarios_list)}"
                 logger.info(f"(Experiment {self.name}, repeat {repeat_index_str}) "
                             f"Now running scenario {scenario_index_str}")
 
                 # Run the scenario
-                scenario.convert_from_dry_run_to_run()
                 scenario.n_repeat = repeat_idx
                 scenario.run()
 

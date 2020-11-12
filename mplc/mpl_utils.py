@@ -75,35 +75,35 @@ class History:
                 pickle.dump(self.history, f)
         else:
             history_df = self.history_to_dataframe()
-            history_df.to_csv(self.mpl.save_folder)
+            history_df.to_csv(self.mpl.save_folder / "history.csv")
 
         if not os.path.exists(self.save_folder / 'graphs/'):
             os.makedirs(self.save_folder / 'graphs/')
         plt.figure()
-        plt.plot(self.history['mpl_model']['val_loss'][:self.mpl.epoch_index + 1, self.mpl.minibatch_count])
+        plt.plot(self.history['mpl_model']['val_loss'][:, -1])
         plt.ylabel("Loss")
         plt.xlabel("Epoch")
-        plt.savefig(self.save_folder / "graphs/federated_training_loss.png")
+        plt.savefig(self.save_folder / "graphs/federated_training_val_loss.png")
         plt.close()
 
         plt.figure()
-        plt.plot(self.history['mpl_model']['val_accuracy'][:self.mpl.epoch_index + 1, self.mpl.minibatch_count])
+        plt.plot(self.history['mpl_model']['val_accuracy'][:, -1])
         plt.ylabel("Accuracy")
         plt.xlabel("Epoch")
         plt.ylim([0, 1])
-        plt.savefig(self.save_folder / "graphs/federated_training_acc.png")
+        plt.savefig(self.save_folder / "graphs/federated_training_val_acc.png")
         plt.close()
 
         plt.figure()
         for key, value in self.history.items():
-            plt.plot(value['val_accuracy'][:self.mpl.epoch_index + 1, self.mpl.minibatch_count],
+            plt.plot(value['val_accuracy'][:, -1],
                      label=(f'partner {key}' if key != 'mpl_model' else key))
         plt.title("Model accuracy")
         plt.ylabel("Accuracy")
         plt.xlabel("Epoch")
         plt.legend()
         plt.ylim([0, 1])
-        plt.savefig(self.save_folder / "graphs/all_partners.png")
+        plt.savefig(self.save_folder / "graphs/all_partners_val_acc.png")
         plt.close()
 
 
