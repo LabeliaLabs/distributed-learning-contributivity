@@ -27,7 +27,7 @@ class History:
                                      'val_loss': np.zeros((mpl.epoch_count, mpl.minibatch_count))}
 
     def partners_to_dataframe(self):
-        temp_dict = {'Partner': [],
+        temp_dict = {'Model': [],
                      'Epoch': [],
                      'Minibatch': []}
         for key in self.metrics:
@@ -36,18 +36,46 @@ class History:
             epoch_count, minibatch_count = self.history['mpl_model']['val_loss'].shape
             for epoch in range(epoch_count):
                 for mb in range(minibatch_count):
-                    temp_dict['Partner'].append(partner_id)
+                    temp_dict['Model'].append(f'partner_{partner_id}')
                     temp_dict['Epoch'].append(epoch)
                     temp_dict['Minibatch'].append(mb)
                     for metric, matrix in hist.items():
                         temp_dict[metric].append(matrix[epoch, mb])
         return pd.DataFrame.from_dict(temp_dict)
 
-    def save_data(self):
-        """Save figures, losses and metrics to disk"""
+    def global_model_to_dataframe(self):
+        temp_dict = {'Epoch': [],
+                     'Minibatch': []}
+        for key in self.history['mpl_model'].keys():
+            temp_dict[key] = []
+        epoch_count, minibatch_count = self.history['mpl_model']['val_loss'].shape
+        for epoch in range(epoch_count):
+            for mb in range(minibatch_count):
+                temp_dict['Epoch'].append(epoch)
+                temp_dict['Minibatch'].append(mb)
+                for metric, matrix in self.history['mpl_model'].items():
+                    temp_dict[metric].append(matrix[epoch, mb])
+        return pd.DataFrame.from_dict(temp_dict)
 
-        with open(self.save_folder / "history_data.p", 'wb') as f:
-            pickle.dump(self.history, f)
+    def history_to_dataframe(self):
+        partners_df = self.partners_to_dataframe()
+        mpl_model_df = self.global_model_to_dataframe()
+        mpl_model_df['Model'] = 'mpl_model'
+
+        return partners_df.append(mpl_model_df, ignore_index=True)
+
+    def save_data(self, binary=False):
+        """Save figures, losses and metrics to disk
+            :param binary : bool, set to false by default.
+                            If True, the history.history dictionary is pickled and saved in binary format.
+                            If True, the pandas dataframe version of the history are saved as .csv file"""
+
+        if binary:
+            with open(self.save_folder / "history_data.p", 'wb') as f:
+                pickle.dump(self.history, f)
+        else:
+            history_df = self.history_to_dataframe()
+            history_df.to_csv(self.mpl.save_folder)
 
         if not os.path.exists(self.save_folder / 'graphs/'):
             os.makedirs(self.save_folder / 'graphs/')

@@ -207,13 +207,15 @@ class MultiPartnerLearning(ABC):
 
         # After last epoch or if early stopping was triggered, evaluate model on the global testset
         self.eval_and_log_final_model__test_perf()
-        # Save the model's weights
-        self.save_final_model()
 
         end = timer()
         self.learning_computation_time = end - start
         logger.info(f"Training and evaluation on multiple partners: "
                     f"done. ({np.round(self.learning_computation_time, 3)} seconds)")
+        if self.is_save_data:
+            self.history.save_data()
+            # Save the model's weights
+            self.save_final_model()
 
     @abstractmethod
     def fit_epoch(self):
