@@ -31,6 +31,12 @@ class Partner:
         self.y_val = None
         self.y_test = None
 
+        self.corruption_matrix = None
+
+    @property
+    def num_labels(self):
+        return self.y_train.shape[1]
+
     def corrupt_labels(self, proportion_corrupted):
         if not 0 <= proportion_corrupted <= 1:
             raise ValueError(
@@ -48,6 +54,38 @@ class Partner:
             new_label[idx_max] = 0.0
             new_label[idx_max - 1] = 1.0
             self.y_train[i] = new_label
+
+    def permute_labels(self, proportion_corrupted=1):
+        if not 0 <= proportion_corrupted <= 1:
+            raise ValueError(
+                f"The proportion of labels to corrupted was {proportion_corrupted} but it must be between 0 and 1."
+            )
+        # Select the indices where the label will be off-set
+        n = int(len(self.y_train) * proportion_corrupted)
+        idx = sample(list(range(len(self.y_train))), n)
+        # Generate the permutation matrix to use
+        self.corruption_matrix = np.zeros((self.num_labels, self.num_labels))
+        idx_permutation = np.random.permutation(self.num_labels)
+        self.corruption_matrix[np.arange(self.num_labels), idx_permutation] = 1
+        # Permute the labels
+        self.y_train[idx] = np.dot(self.y_train[idx], self.corruption_matrix.T)
+
+    def random_labels(self, proportion_corrupted=1):
+        if not 0 <= proportion_corrupted <= 1:
+            raise ValueError(
+                f"The proportion of labels to corrupted was {proportion_corrupted} but it must be between 0 and 1."
+            )
+        # Select the indices where the label will be off-set
+        n = int(len(self.y_train) * proportion_corrupted)
+        idx = sample(list(range(len(self.y_train))), n)
+        # Generate the random matrix to use
+        alpha = np.random.random(self.num_labels)
+        self.corruption_matrix = np.random.dirichlet(alpha, 10)
+        # Randomize the labels
+        for i in idx:  # TODO vectorize
+            temp = np.zeros((self.num_labels,))
+            temp[np.random.choice(self.num_labels, p=self.corruption_matrix[np.argmax(self.y_train[i])])] = 1
+            self.y_train[i] = temp
 
     def shuffle_labels(self, proportion_shuffled):
         if not 0 <= proportion_shuffled <= 1:
