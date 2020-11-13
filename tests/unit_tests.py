@@ -9,7 +9,7 @@ This enables to parameterize unit tests - the tests are run by Travis each time 
 #
 ##########
 
-# Some usefull commands:
+# Some useful commands:
 #
 # pytest tests.py
 # pytest -k TestDemoClass tests.py
@@ -43,6 +43,7 @@ This enables to parameterize unit tests - the tests are run by Travis each time 
 
 from pathlib import Path
 
+import numpy as np
 import pytest
 import yaml
 
@@ -87,6 +88,15 @@ def create_MultiPartnerLearning(create_all_datasets):
     )
 
     yield mpl
+
+
+@pytest.fixture(scope='class')
+def create_Partner(create_all_datasets):
+    data = create_all_datasets
+    partner = Partner(0)
+    partner.y_train = data.y_train[:int(len(data.y_train) / 10)]
+    partner.x_train = data.x_train[:int(len(data.x_train) / 10)]
+    return partner
 
 
 @pytest.fixture(scope="class",
@@ -180,33 +190,41 @@ class Test_Scenario:
         with pytest.raises(Exception):
             scenario.instantiate_scenario_partners()
 
-    def test_corrupt_labels_type(self):
+
+class Test_Partner:
+    def test_corrupt_labels(self, create_Partner):
         """partner.y_train should be a numpy.ndarray"""
-        with pytest.raises(TypeError):
-            part = Partner(partner_id=0)
-            part.corrupt_labels()
+        partner = create_Partner
+        one_label = np.argmax(partner.y_train[-1])
+        partner.corrupt_labels(1.)
+        assert partner.y_train[-1].max() == 1
+        assert partner.y_train[-1].sum() == 1
+        assert one_label != np.argmax(partner.y_train[-1])
 
-    def test_corrupt_labels_type_elem(self, create_Scenario):
-        """corrupt_labels raise TypeError if partner.y_train isn't float32"""
-        scenario = create_Scenario
-        with pytest.raises(TypeError):
-            part = scenario.partners_list[0]
-            part.y_train = part.y_train.astype("float64")
-            part.corrupt_labels(part)
+    def test_permute_labels(self, create_Partner):
+        """partner.y_train should be a numpy.ndarray"""
+        partner = create_Partner
+        partner.permute_labels(1.)
+        ones_vect = np.ones(partner.y_train.shape[1])
+        assert (partner.corruption_matrix.sum(axis=1) == ones_vect).all()
+        assert (partner.corruption_matrix.sum(axis=0) == ones_vect.T).all()
 
-    def test_shuffle_labels_type(self):
-        """shuffle_labels should be a numpy.ndarray"""
-        with pytest.raises(TypeError):
-            part = Partner(partner_id=0)
-            part.shuffle_labels(part)
+    def test_random_labels(self, create_Partner):
+        partner = create_Partner
+        partner.random_labels(1.)
+        assert partner.y_train[-1].max() == 1
+        assert partner.y_train[-1].sum() == 1
+        ones_vect = np.ones(partner.y_train.shape[1])
+        assert (partner.corruption_matrix.sum(axis=1).round(1) == ones_vect).all()
 
-    def test_shuffle_labels_type_elem(self, create_Scenario):
-        """shuffle_labels raise TypeError if partner.y_train isn't float32"""
-        scenario = create_Scenario
-        with pytest.raises(TypeError):
-            part = scenario.partners_list[0]
-            part.y_train = part.y_train.astype("float64")
-            part.shuffle_labels(part)
+    def test_shuffle_labels(self, create_Partner):
+        """partner.y_train should be a numpy.ndarray"""
+        partner = create_Partner
+        one_label = np.argmax(partner.y_train[-1])
+        partner.corrupt_labels(1.)
+        assert partner.y_train[-1].max() == 1
+        assert partner.y_train[-1].sum() == 1
+        assert one_label != np.argmax(partner.y_train[-1])
 
 
 class Test_Mpl:

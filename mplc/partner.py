@@ -17,11 +17,11 @@ class Partner:
 
         self.batch_size = constants.DEFAULT_BATCH_SIZE
 
-        self.cluster_count = int
-        self.cluster_split_option = str
+        self.cluster_count: int
+        self.cluster_split_option: str
         self.clusters_list = []
-        self.final_nb_samples = int
-        self.final_nb_samples_p_cluster = int
+        self.final_nb_samples: int
+        self.final_nb_samples_p_cluster: int
 
         self.x_train = None
         self.x_val = None
@@ -80,7 +80,7 @@ class Partner:
         idx = sample(list(range(len(self.y_train))), n)
         # Generate the random matrix to use
         alpha = np.random.random(self.num_labels)
-        self.corruption_matrix = np.random.dirichlet(alpha, 10)
+        self.corruption_matrix = np.random.dirichlet(alpha, self.num_labels)
         # Randomize the labels
         for i in idx:  # TODO vectorize
             temp = np.zeros((self.num_labels,))
