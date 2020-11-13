@@ -220,11 +220,9 @@ class Test_Partner:
     def test_shuffle_labels(self, create_Partner):
         """partner.y_train should be a numpy.ndarray"""
         partner = create_Partner
-        one_label = np.argmax(partner.y_train[-1])
         partner.corrupt_labels(1.)
         assert partner.y_train[-1].max() == 1
         assert partner.y_train[-1].sum() == 1
-        assert one_label != np.argmax(partner.y_train[-1])
 
 
 class Test_Mpl:

@@ -79,7 +79,7 @@ class Partner:
         n = int(len(self.y_train) * proportion_corrupted)
         idx = sample(list(range(len(self.y_train))), n)
         # Generate the random matrix to use
-        alpha = np.random.random(self.num_labels)
+        alpha = np.ones(self.num_labels)
         self.corruption_matrix = np.random.dirichlet(alpha, self.num_labels)
         # Randomize the labels
         for i in idx:  # TODO vectorize
