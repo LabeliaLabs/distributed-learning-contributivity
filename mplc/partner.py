@@ -6,6 +6,7 @@ This enables to parameterize the partners that participate to the simulated fede
 from random import sample
 
 import numpy as np
+from keras.utils import to_categorical
 
 from . import constants
 
@@ -33,10 +34,31 @@ class Partner:
 
         self.corruption_matrix = None
 
+    class _Decorator:  # This class allows use to create private decorators for the partner class.
+        @classmethod
+        def categorical_needed(cls, func):
+            def _decorator(self, *args,
+                           **kwargs):  # It is not very clear to me why self variable is accessible, but it's working
+                # Check if the labels are encoded into categorical. If not, convert it
+                if self.y_train.ndim == 1:
+                    self.y_train = to_categorical(self.y_train.reshape(-1, 1))
+                    one_label = True
+                else:
+                    one_label = False
+                # Call the function
+                res = func(self, *args, **kwargs)
+                # If needed, convert it back
+                if one_label:
+                    self.y_train = np.argmax(self.y_train, axis=1)
+                return res
+
+            return _decorator
+
     @property
     def num_labels(self):
         return self.y_train.shape[1]
 
+    @_Decorator.categorical_needed
     def corrupt_labels(self, proportion_corrupted):
         if not 0 <= proportion_corrupted <= 1:
             raise ValueError(
@@ -55,11 +77,13 @@ class Partner:
             new_label[idx_max - 1] = 1.0
             self.y_train[i] = new_label
 
+    @_Decorator.categorical_needed
     def permute_labels(self, proportion_corrupted=1):
         if not 0 <= proportion_corrupted <= 1:
             raise ValueError(
                 f"The proportion of labels to corrupted was {proportion_corrupted} but it must be between 0 and 1."
             )
+
         # Select the indices where the label will be off-set
         n = int(len(self.y_train) * proportion_corrupted)
         idx = sample(list(range(len(self.y_train))), n)
@@ -70,6 +94,7 @@ class Partner:
         # Permute the labels
         self.y_train[idx] = np.dot(self.y_train[idx], self.corruption_matrix.T)
 
+    @_Decorator.categorical_needed
     def random_labels(self, proportion_corrupted=1):
         if not 0 <= proportion_corrupted <= 1:
             raise ValueError(
@@ -87,6 +112,7 @@ class Partner:
             temp[np.random.choice(self.num_labels, p=self.corruption_matrix[np.argmax(self.y_train[i])])] = 1
             self.y_train[i] = temp
 
+    @_Decorator.categorical_needed
     def shuffle_labels(self, proportion_shuffled):
         if not 0 <= proportion_shuffled <= 1:
             raise ValueError(

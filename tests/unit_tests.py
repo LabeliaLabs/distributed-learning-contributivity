@@ -195,34 +195,39 @@ class Test_Partner:
     def test_corrupt_labels(self, create_Partner):
         """partner.y_train should be a numpy.ndarray"""
         partner = create_Partner
-        one_label = np.argmax(partner.y_train[-1])
         partner.corrupt_labels(1.)
-        assert partner.y_train[-1].max() == 1
-        assert partner.y_train[-1].sum() == 1
-        assert one_label != np.argmax(partner.y_train[-1])
+        assert ((partner.y_train == 0) + (partner.y_train == 1)).all()
+        if partner.y_train.ndim > 1:
+            assert partner.y_train[-1].max() == 1
+            assert partner.y_train[-1].sum() == 1
 
     def test_permute_labels(self, create_Partner):
         """partner.y_train should be a numpy.ndarray"""
         partner = create_Partner
         partner.permute_labels(1.)
-        ones_vect = np.ones(partner.y_train.shape[1])
+        assert ((partner.y_train == 0) + (partner.y_train == 1)).all()
+        ones_vect = np.ones(partner.corruption_matrix.shape[1])
         assert (partner.corruption_matrix.sum(axis=1) == ones_vect).all()
         assert (partner.corruption_matrix.sum(axis=0) == ones_vect.T).all()
 
     def test_random_labels(self, create_Partner):
         partner = create_Partner
         partner.random_labels(1.)
-        assert partner.y_train[-1].max() == 1
-        assert partner.y_train[-1].sum() == 1
-        ones_vect = np.ones(partner.y_train.shape[1])
+        assert ((partner.y_train == 0) + (partner.y_train == 1)).all()
+        if partner.y_train.ndim > 1:
+            assert partner.y_train[-1].max() == 1
+            assert partner.y_train[-1].sum() == 1
+        ones_vect = np.ones(partner.corruption_matrix.shape[1])
         assert (partner.corruption_matrix.sum(axis=1).round(1) == ones_vect).all()
 
     def test_shuffle_labels(self, create_Partner):
         """partner.y_train should be a numpy.ndarray"""
         partner = create_Partner
-        partner.corrupt_labels(1.)
-        assert partner.y_train[-1].max() == 1
-        assert partner.y_train[-1].sum() == 1
+        partner.shuffle_labels(1.)
+        assert ((partner.y_train == 0) + (partner.y_train == 1)).all()
+        if partner.y_train.ndim > 1:
+            assert partner.y_train[-1].max() == 1
+            assert partner.y_train[-1].sum() == 1
 
 
 class Test_Mpl:
