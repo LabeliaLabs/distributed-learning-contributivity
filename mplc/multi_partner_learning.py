@@ -180,8 +180,10 @@ class MultiPartnerLearning(ABC):
             # Early stopping parameters
             if (
                     self.epoch_index >= constants.PATIENCE
-                    and self.history.history['mpl_model']['val_loss'][self.epoch_index, self.minibatch_index] >
-                    self.history.history['mpl_model']['val_loss'][self.epoch_index-constants.PATIENCE, self.minibatch_index]
+                    and self.history.history['mpl_model']['val_loss'][self.epoch_index,
+                                                                      self.minibatch_index] >
+                    self.history.history['mpl_model']['val_loss'][self.epoch_index-constants.PATIENCE,
+                                                                  self.minibatch_index]
             ):
                 logger.debug("         -> Early stopping criteria are met, stopping here.")
                 return True
