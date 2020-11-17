@@ -84,7 +84,7 @@ class Partner:
                 f"The proportion of labels to corrupted was {proportion_corrupted} but it must be between 0 and 1."
             )
 
-        # Select the indices where the label will be off-set
+        # Select the indices where the label will be permuted
         n = int(len(self.y_train) * proportion_corrupted)
         idx = sample(list(range(len(self.y_train))), n)
         # Generate the permutation matrix to use
