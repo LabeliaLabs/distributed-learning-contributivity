@@ -732,28 +732,52 @@ class Scenario:
             # If a data corruption is configured, apply it
             if self.corrupted_datasets[partner_index] == "corrupted":
                 logger.debug(
-                    f"   ... Corrupting (by offsetting labels) 100.0 \
-                    percent of the data of partner #{partner.id}"
+                    f"   ... Corrupting (by offsetting labels) the whole of partner #{partner.id}"
                 )
                 partner.corrupt_labels(1.0)
             elif self.corrupted_datasets[partner_index] == "shuffled":
                 logger.debug(
-                    f"   ... Corrupting (by shuffling labels) 100.0 \
-                    percent of the data of partner #{partner.id}"
+                    f"   ... Corrupting (by shuffling labels) the whole dataset of partner #{partner.id}"
                 )
                 partner.shuffle_labels(1.0)
+            elif self.corrupted_datasets[partner_index] == 'permuted':
+                logger.debug(
+                    f"  ... Corrupting (by permuting the labels ) the whole dataset of partner #{partner.id}."
+                    f"Permutation matrix available"
+                )
+                partner.permute_labels(1.0)
+            elif self.corrupted_datasets[partner_index] == 'random':
+                logger.debug(
+                    f"  ... Corrupting (by randomizing the labels ) the whole dataset of partner #{partner.id}."
+                    f"Dirichlet distribution matrix available"
+                )
+                partner.random_labels(1.0)
             elif self.corrupted_datasets[partner_index][0] == "corrupted":
                 logger.debug(
                     f"   ... Corrupting (by offsetting labels) {self.corrupted_datasets[partner_index][1] * 100} \
-                    percent of the data of partner #{partner.id}"
+                            percent of the data of partner #{partner.id}"
                 )
                 partner.corrupt_labels(self.corrupted_datasets[partner_index][1])
             elif self.corrupted_datasets[partner_index][0] == "shuffled":
                 logger.debug(
                     f"   ... Corrupting (by shuffling labels) {self.corrupted_datasets[partner_index][1] * 100} \
-                    percent of the data of partner #{partner.id}"
+                            percent of the data of partner #{partner.id}"
                 )
                 partner.shuffle_labels(self.corrupted_datasets[partner_index][1])
+            elif self.corrupted_datasets[partner_index][0] == 'permuted':
+                logger.debug(
+                    f"  ... Corrupting (by permuting the labels ) {self.corrupted_datasets[partner_index][1] * 100} "
+                    f"percent of the data of partner #{partner.id}."
+                    f"Permutation matrix available"
+                )
+                partner.permute_labels(self.corrupted_datasets[partner_index][1])
+            elif self.corrupted_datasets[partner_index][0] == 'random':
+                logger.debug(
+                    f"  ... Corrupting (by randomizing the labels ) {self.corrupted_datasets[partner_index][1] * 100} "
+                    f"percent of the data of partner #{partner.id}."
+                    f"Dirichlet distribution matrix available"
+                )
+                partner.random_labels(self.corrupted_datasets[partner_index][1])
             elif self.corrupted_datasets[partner_index] == "not_corrupted":
                 pass
             else:
