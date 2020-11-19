@@ -47,11 +47,10 @@ class MultiPartnerLearning(ABC):
         self.minibatch_count = scenario.minibatch_count
         self.is_early_stopping = scenario.is_early_stopping
 
-        # Attributes related to the aggregation approach
-        self.aggregation_method = scenario.aggregation
+        # Attributes related to the _aggregation approach
+        self.aggregation_method = scenario._aggregation
 
         # Attributes to store results
-        self.is_save_data = False  # default value
         self.save_folder = scenario.save_folder
 
         # Erase the default parameters (which mostly come from the scenario) if some parameters have been specified
@@ -87,6 +86,14 @@ class MultiPartnerLearning(ABC):
 
         # Initialize History
         self.history = History(self)
+
+        # Initialize result folder
+        if self.save_folder is not None:
+            if 'custom_name' in kwargs:
+                self.save_folder = self.save_folder / kwargs["custom_name"]
+            else:
+                self.save_folder = self.save_folder / 'mpl'
+            self.save_folder.mkdir()
 
         logger.debug("MultiPartnerLearning object instantiated.")
 
@@ -126,6 +133,13 @@ class MultiPartnerLearning(ABC):
 
         model_to_save = self.build_model()
         model_to_save.save_weights(os.path.join(model_folder, self.dataset_name + '_final_weights.h5'))
+
+    def save_data(self):
+        if self.save_folder is None:
+            raise ValueError("The path to the save folder is None, history data cannot be saved, nor model weights")
+
+        self.save_final_model()
+        self.history.save_data()
 
     def log_partner_perf(self, partner_id, partner_index, history):
         for key_history in self.history.metrics:
@@ -212,10 +226,8 @@ class MultiPartnerLearning(ABC):
         self.learning_computation_time = end - start
         logger.info(f"Training and evaluation on multiple partners: "
                     f"done. ({np.round(self.learning_computation_time, 3)} seconds)")
-        if self.is_save_data:
-            self.history.save_data()
-            # Save the model's weights
-            self.save_final_model()
+        if self.save_folder is not None:
+            self.save_data()  # Save the model weights and the history data
 
     @abstractmethod
     def fit_epoch(self):

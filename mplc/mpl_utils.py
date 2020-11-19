@@ -70,6 +70,8 @@ class History:
                             If True, the history.history dictionary is pickled and saved in binary format.
                             If True, the pandas dataframe version of the history are saved as .csv file"""
 
+        if self.save_folder is None:
+            raise ValueError("The path to the save folder is None, history data cannot be saved")
         if binary:
             with open(self.save_folder / "history_data.p", 'wb') as f:
                 pickle.dump(self.history, f)
@@ -156,7 +158,7 @@ class ScoresAggregator(Aggregator):
         super(ScoresAggregator, self).aggregate_model_weights()
 
 
-# Supported aggregation weights approaches
+# Supported _aggregation weights approaches
 AGGREGATORS = {
     "uniform": UniformAggregator,
     "data-volume": DataVolumeAggregator,

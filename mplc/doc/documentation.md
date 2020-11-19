@@ -166,7 +166,7 @@ my_scenario = Scenario(partners_count=3,
                        dataset_name='mnist',
                        epoch_count=10,
                        minibatch_count=3,
-                       methods=['Shapley values'])
+                       contributivity_methods=['Shapley values'])
 ```
 
 Once ran, accessing the results is straightforward:

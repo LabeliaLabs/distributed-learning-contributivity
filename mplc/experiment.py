@@ -64,6 +64,11 @@ class Experiment:
 
         if isinstance(scenario_to_add, scenario_module.Scenario):
             scenario_to_add.experiment_path = self.experiment_path
+            new_id = len(self.scenarios_list)
+            scenario_to_add.scenario_name = scenario_to_add.scenario_name.replace(
+                f'scenario_{scenario_to_add.scenario_id}',
+                f'scenario_{new_id}')
+            scenario_to_add.scenario_id = new_id
             scenario_to_add.save_folder = self.experiment_path / scenario_to_add.scenario_name
             self.scenarios_list.append(scenario_to_add)
         else:
@@ -90,7 +95,7 @@ class Experiment:
 
             current_scenario = scenario_module.Scenario(
                 **scenario_params,
-                experiment_path=self.experiment_path,
+                save_path=self.experiment_path,
                 scenario_id=scenario_params_idx + 1,
             )
 
@@ -115,13 +120,14 @@ class Experiment:
             logger.info(f"(Experiment {self.name}) Now starting repeat {repeat_index_str}")
 
             # Loop over scenarios in scenarios_list
-            for scenario_idx, scenario in enumerate(self.scenarios_list):
+            for scenario_idx, white_scenario in enumerate(self.scenarios_list):
                 scenario_index_str = f"{scenario_idx + 1}/{len(self.scenarios_list)}"
                 logger.info(f"(Experiment {self.name}, repeat {repeat_index_str}) "
                             f"Now running scenario {scenario_index_str}")
 
                 # Run the scenario
-                scenario.n_repeat = repeat_idx
+                scenario = white_scenario.copy(repeat_count=repeat_idx, save_path=self.experiment_path)
+                print(scenario.save_folder, scenario.repeat_count)
                 scenario.run()
 
                 # Save scenario results

@@ -99,16 +99,16 @@ class Contributivity:
             self.first_charac_fct_calls_count += 1
             small_partners_list = np.array([self.scenario.partners_list[i] for i in subset])
             if len(small_partners_list) > 1:
-                mpl = self.scenario.multi_partner_learning_approach(self.scenario,
-                                                                    partners_list=small_partners_list,
-                                                                    is_early_stopping=True,
-                                                                    is_save_data=False,
-                                                                    )
+                mpl = self.scenario._multi_partner_learning_approach(self.scenario,
+                                                                     partners_list=small_partners_list,
+                                                                     is_early_stopping=True,
+                                                                     save_folder=None,
+                                                                     )
             else:
                 mpl = multi_partner_learning.SinglePartnerLearning(self.scenario,
                                                                    partner=small_partners_list[0],
                                                                    is_early_stopping=True,
-                                                                   is_save_data=False,
+                                                                   save_folder=None,
                                                                    )
             mpl.fit()
             self.charac_fct_values[tuple(subset)] = mpl.history.score
@@ -946,15 +946,12 @@ class Contributivity:
         # previous_partner_values = np.zeros(self.scenario.partners_count)
         # epsilon = 0.002
 
-        mpl = self.scenario.multi_partner_learning_approach(
-            self.scenario.partners_list,
-            self.scenario.epoch_count,
-            self.scenario.minibatch_count,
-            self.scenario.dataset,
-            self.scenario.aggregation,
+        mpl = self.scenario._multi_partner_learning_approach(
+            self.scenario,
             is_early_stopping=False,
             init_model_from="random_initialization",
             use_saved_weights=False,
+            custom_name='PVRL'
         )
         full_partners_list = mpl.partners_list  # this list must be a list of PartnerMpl
         initial_model = mpl.build_model()
@@ -964,7 +961,7 @@ class Contributivity:
                                       verbose=0,
                                       )
         previous_loss = hist[0]
-        while (mpl.epoch_index < mpl.epoch_count):
+        while mpl.epoch_index < mpl.epoch_count:
             # or (np.sum(np.abs(partner_values - previous_partner_values)) / self.scenario.partners_count > epsilon):
 
             # Select the partners / the action
@@ -977,7 +974,7 @@ class Contributivity:
             logger.info(f"Partners selected for the next epoch: {[p.id for p in mpl.partners_list]}")
 
             # apply one epoch with the selected partner to the previous model/ do the action
-            mpl.aggregator = self.scenario.aggregation(mpl)  # we have to reset the weight of aggregation
+            mpl.aggregator = self.scenario._aggregation(mpl)  # we have to reset the weight of _aggregation
             mpl.fit_epoch()
             loss = mpl.history.history['mpl_model']['val_loss'][mpl.epoch_index, -1]
             mpl.epoch_index += 1
@@ -997,7 +994,7 @@ class Contributivity:
             previous_loss = loss
 
         mpl.eval_and_log_final_model__test_perf()
-        mpl.save_final_model()
+        mpl.save_data()
         end = timer()
         mpl.learning_computation_time = end - start
         logger.info(f"Training and evaluation on multiple partners: "
@@ -1173,19 +1170,19 @@ class Contributivity:
             self.without_replacment_SMC(sv_accuracy=sv_accuracy, alpha=alpha)
         elif method_to_compute == "Federated SBS linear":
             # Contributivity 10: step by step increments with linear importance increase
-            if self.scenario.multi_partner_learning_approach != multi_partner_learning.FederatedAverageLearning:
+            if self.scenario._multi_partner_learning_approach != multi_partner_learning.FederatedAverageLearning:
                 logger.warning("Step by step linear contributivity method is only suited for federated "
                                "averaging learning approach")
             self.federated_SBS_linear()
         elif method_to_compute == "Federated SBS quadratic":
             # Contributivity 11: step by step increments with quadratic importance increase
-            if self.scenario.multi_partner_learning_approach != multi_partner_learning.FederatedAverageLearning:
+            if self.scenario._multi_partner_learning_approach != multi_partner_learning.FederatedAverageLearning:
                 logger.warning("Step by step quadratic contributivity method is only suited for federated "
                                "averaging learning approach")
             self.federated_SBS_quadratic()
         elif method_to_compute == "Federated SBS constant":
             # Contributivity 12: step by step increments with constant importance
-            if self.scenario.multi_partner_learning_approach != multi_partner_learning.FederatedAverageLearning:
+            if self.scenario._multi_partner_learning_approach != multi_partner_learning.FederatedAverageLearning:
                 logger.warning("Step by step constant contributivity method is only suited for federated "
                                "averaging learning approach")
             self.federated_SBS_constant()

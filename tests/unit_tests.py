@@ -24,7 +24,7 @@ This enables to parameterize unit tests - the tests are run by Travis each time 
 # -v run the tests in verbose mode, outputting one line per test
 # pytest -v tests.py
 
-# A "test_" prefix in classes and methods is needed to make a test discoverable by pytest
+# A "test_" prefix in classes and contributivity_methods is needed to make a test discoverable by pytest
 
 # Main documentation:
 # https://docs.pytest.org/en/latest/contents.html
@@ -129,9 +129,9 @@ def create_Scenario(request):
     )
     params.update(
         {
-            "methods": ["Shapley values", "Independent scores"],
-            "multi_partner_learning_approach": "fedavg",
-            "aggregation": "uniform",
+            "contributivity_methods": ["Shapley values", "Independent scores"],
+            "_multi_partner_learning_approach": "fedavg",
+            "_aggregation": "uniform",
         }
     )
     params.update(
@@ -152,10 +152,10 @@ def create_Scenario(request):
 
     # scenario_.dataset object is created inside the Scenario constructor
     scenario_ = Scenario(
-        **params, experiment_path=experiment_path, scenario_id=0, repeats_count=1
+        **params, save_path=experiment_path, scenario_id=0, repeats_count=1
     )
 
-    scenario_.mpl = scenario_.multi_partner_learning_approach(scenario_, is_save_data=True)
+    scenario_.mpl = scenario_._multi_partner_learning_approach(scenario_, is_save_data=True)
 
     scenario_.instantiate_scenario_partners()
     # Split data according to scenario and then pre-process successively...

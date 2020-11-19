@@ -120,7 +120,7 @@ def init_result_folder(yaml_filepath, cfg):
 
     experiment_path.mkdir(parents=True, exist_ok=False)
 
-    cfg["experiment_path"] = experiment_path
+    cfg["save_path"] = experiment_path
     logger.info("experiment folder " + str(experiment_path) + " created.")
 
     target_yaml_filepath = experiment_path / Path(yaml_filepath).name

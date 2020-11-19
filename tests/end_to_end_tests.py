@@ -60,7 +60,7 @@ class Test_EndToEndTest:
 
         df = Test_EndToEndTest.get_latest_dataframe("*end_to_end_test*")
 
-        # 2 contributivity methods for each partner --> 4 lines
+        # 2 contributivity contributivity_methods for each partner --> 4 lines
         assert len(df) == 4
 
         for contributivity_method in df.contributivity_method.unique():

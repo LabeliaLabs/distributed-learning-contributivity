@@ -41,11 +41,10 @@ class Scenario:
             minibatch_count=constants.DEFAULT_BATCH_COUNT,
             epoch_count=constants.DEFAULT_EPOCH_COUNT,
             is_early_stopping=True,
-            methods=None,
+            contributivity_methods=None,
             is_quick_demo=False,
-            experiment_path=Path(r"./experiments"),
+            save_path=None,
             scenario_id=1,
-            repeats_count=1,
             **kwargs,
     ):
         """
@@ -90,11 +89,10 @@ class Scenario:
         :param minibatch_count: int
         :param epoch_count: int
         :param is_early_stopping: boolean. Stop the training if scores on val_set reach a plateau
-        :param methods: A declarative list `[]` of the contributivity measurement methods to be executed.
+        :param contributivity_methods: A declarative list `[]` of the contributivity measurement contributivity_methods to be executed.
         :param is_quick_demo: boolean. Useful for debugging
-        :param experiment_path: path
+        :param save_path: path where to save the scenario output. By default, the scenario is not saved !
         :param scenario_id: str
-        :param repeats_count: int
         :param **kwargs:
         """
 
@@ -110,7 +108,7 @@ class Scenario:
             "dataset_proportion",
         ]  # Dataset related
         params_known += [
-            "methods",
+            "contributivity_methods",
             "multi_partner_learning_approach",
             "aggregation",
         ]  # federated learning related
@@ -128,6 +126,9 @@ class Scenario:
         ]  # Computation related
         params_known += ["init_model_from"]  # Model related
         params_known += ["is_quick_demo"]
+        params_known += ["save_path",
+                         "scenario_name",
+                         "repeat_count"]
 
         unrecognised_parameters = [x for x in kwargs.keys() if x not in params_known]
         if len(unrecognised_parameters) > 0:
@@ -157,7 +158,7 @@ class Scenario:
                     f"Dataset named '{dataset_name}' is not supported (yet). You can construct your own "
                     f"dataset object, or even add it by contributing to the project !"
                 )
-            logger.debug(f"Dataset selected: {dataset_name}")
+            logger.debug(f"Dataset selected: {self.dataset.name}")
 
         # Proportion of the dataset the computation will used
         self.dataset_proportion = dataset_proportion
@@ -172,9 +173,6 @@ class Scenario:
             self.dataset.shorten_dataset_proportion(self.dataset_proportion)
         else:
             logger.debug(f"The full dataset will be used (dataset_proportion is configured to 1)")
-
-        self.nb_samples_used = len(self.dataset.x_train)
-        self.final_relative_nb_samples = []
 
         # --------------------------------------
         #  Definition of collaborative scenarios
@@ -211,8 +209,9 @@ class Scenario:
         self.mpl = None
 
         # Multi-partner learning approach
+        self.multi_partner_learning_approach = multi_partner_learning_approach
         try:
-            self.multi_partner_learning_approach = MULTI_PARTNER_LEARNING_APPROACHES[
+            self._multi_partner_learning_approach = MULTI_PARTNER_LEARNING_APPROACHES[
                 multi_partner_learning_approach]
         except KeyError:
             text_error = f"Multi-partner learning approach '{multi_partner_learning_approach}' is not a valid "
@@ -223,8 +222,9 @@ class Scenario:
 
         # Define how federated learning aggregation steps are weighted...
         # ... Toggle between 'uniform' (default) and 'data_volume'
+        self.aggregation = aggregation_weighting
         try:
-            self.aggregation = AGGREGATORS[aggregation_weighting]
+            self._aggregation = AGGREGATORS[aggregation_weighting]
         except KeyError:
             raise ValueError(f"aggregation approach '{aggregation_weighting}' is not a valid approach. ")
 
@@ -257,20 +257,20 @@ class Scenario:
             self.use_saved_weights = True
 
         # -----------------------------------------------------------------
-        #  Configuration of contributivity measurement methods to be tested
+        #  Configuration of contributivity measurement contributivity_methods to be tested
         # -----------------------------------------------------------------
 
         # List of contributivity measures selected and computed in the scenario
         self.contributivity_list = []
 
-        # Contributivity methods
-        self.methods = []
-        if methods is not None:
-            for method in methods:
+        # Contributivity contributivity_methods
+        self.contributivity_methods = []
+        if contributivity_methods is not None:
+            for method in contributivity_methods:
                 if method in constants.CONTRIBUTIVITY_METHODS:
-                    self.methods.append(method)
+                    self.contributivity_methods.append(method)
                 else:
-                    raise Exception(f"Contributivity method '{method}' is not in methods list.")
+                    raise Exception(f"Contributivity method '{method}' is not in contributivity_methods list.")
 
         # -------------
         # Miscellaneous
@@ -278,7 +278,7 @@ class Scenario:
 
         # Misc.
         self.scenario_id = scenario_id
-        self.n_repeat = repeats_count
+        self.repeat_count = kwargs.get('repeat_count', 1)
 
         # The quick demo parameters overwrites previously defined parameters to make the scenario faster to compute
         self.is_quick_demo = is_quick_demo
@@ -318,13 +318,21 @@ class Scenario:
 
         now = datetime.datetime.now()
         now_str = now.strftime("%Y-%m-%d_%Hh%M")
-        self.scenario_name = f"scenario_{self.scenario_id}_repeat_{self.n_repeat}_{now_str}_" \
-                             f"{uuid.uuid4().hex[:3]}"  # to distinguish identical names
-        self.short_scenario_name = f"{self.partners_count} {self.amounts_per_partner}"
+        self.scenario_name = kwargs.get('scenario_name',
+                                        f"scenario_{self.scenario_id}_repeat_{self.repeat_count}_{now_str}_"
+                                        f"{uuid.uuid4().hex[:3]}")  # to distinguish identical names
+        if ' ' in self.scenario_name:
+            raise ValueError(
+                f'The scenario name "{self.scenario_name}"cannot be written with space character, please use '
+                f'underscore or dash.')
+        self.short_scenario_name = f"{self.partners_count}_{self.amounts_per_partner}"
 
-        self.experiment_path = experiment_path
-        self.save_folder = self.experiment_path / self.scenario_name
-
+        if save_path is not None:
+            self.experiment_path = Path(save_path)
+            self.save_folder = self.experiment_path / self.scenario_name
+        else:
+            self.experiment_path = None
+            self.save_folder = None
         # -----------------------
         # Provision the scenario
         # -----------------------
@@ -334,6 +342,38 @@ class Scenario:
         self.compute_batch_sizes()
         self.apply_data_alteration_configuration()
         self.log_scenario_description()
+
+    @property
+    def nb_samples_used(self):
+        if len(self.partners_list) == 0:
+            return len(self.dataset.x_train)
+        else:
+            return sum([p.final_nb_samples for p in self.partners_list])
+
+    @property
+    def final_relative_nb_samples(self):
+        return [p.final_nb_samples / self.nb_samples_used for p in self.partners_list]
+
+    def copy(self, **kwargs):
+        params = self.__dict__.copy()
+        for key in ['partners_list',
+                    'samples_split_type',
+                    'samples_split_description',
+                    'mpl',
+                    '_multi_partner_learning_approach',
+                    '_aggregation',
+                    'use_saved_weights',
+                    'contributivity_list',
+                    'scenario_name',
+                    'short_scenario_name',
+                    'experiment_path',
+                    'save_folder']:
+            del params[key]
+        if 'is_quick_demo' in kwargs and kwargs['is_quick_demo'] != self.is_quick_demo:
+            raise ValueError("Attribute 'is_quick_demo' cannot be modified between copies.")
+        params.update(kwargs)
+
+        return Scenario(**params)
 
     def log_scenario_description(self):
         """Log the description of the scenario configured"""
@@ -492,10 +532,7 @@ class Scenario:
                 amounts_per_partner[p.id] * len(y_train) * final_resize_factor
             )
             p.final_nb_samples_p_cluster = int(p.final_nb_samples / p.cluster_count)
-        self.nb_samples_used = sum([p.final_nb_samples for p in partners_list])
-        self.final_relative_nb_samples = [
-            p.final_nb_samples / self.nb_samples_used for p in partners_list
-        ]
+
 
         # Partners receive their subsets
         shared_clusters_index = dict.fromkeys(shared_clusters, 0)
@@ -644,11 +681,6 @@ class Scenario:
         ), "Error: in the provided config \
             file and dataset, a partner doesn't have enough data samples to create the minibatches"
 
-        self.nb_samples_used = sum([len(p.x_train) for p in self.partners_list])
-        self.final_relative_nb_samples = [
-            p.final_nb_samples / self.nb_samples_used for p in self.partners_list
-        ]
-
         if is_logging_enabled:
             logger.info("Splitting data among partners (simple split):")
             logger.info(f"Nb of samples split amongst partners: {self.nb_samples_used}")
@@ -676,8 +708,8 @@ class Scenario:
         plt.suptitle("Data distribution")
         plt.xlabel("Digits")
 
-        (self.save_folder / 'graphs').mkdir(parents=True, exist_ok=True)
-        plt.savefig(self.save_folder / "graphs/data_distribution.png")
+        (self.save_folder / 'graphs').mkdir(exist_ok=True)
+        plt.savefig(self.save_folder / "graphs" / "data_distribution.png")
         plt.close()
 
     def compute_batch_sizes(self):
@@ -769,22 +801,23 @@ class Scenario:
         # -----------------
         # Preliminary steps
         # -----------------
-
-        self.plot_data_distribution()
+        if not self.save_folder is None:
+            self.save_folder.mkdir()
+            self.plot_data_distribution()
         logger.info(f"Now starting running scenario {self.scenario_name}")
 
         # -----------------------------------------------------
         # Instantiate and run the distributed learning approach
         # -----------------------------------------------------
 
-        self.mpl = self.multi_partner_learning_approach(self, is_save_data=True)
+        self.mpl = self._multi_partner_learning_approach(self, custom_name='main_mpl')
         self.mpl.fit()
 
         # ----------------------------------------------------------
-        # Instantiate and run the contributivity measurement methods
+        # Instantiate and run the contributivity measurement contributivity_methods
         # ----------------------------------------------------------
 
-        for method in self.methods:
+        for method in self.contributivity_methods:
             logger.info(f"{method}")
             contrib = contributivity.Contributivity(scenario=self)
             contrib.compute_contributivity(method)

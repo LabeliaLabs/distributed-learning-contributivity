@@ -24,7 +24,7 @@ EXPERIMENTS_FOLDER_NAME = "experiments"
 TRAIN_SET_MAX_SIZE_QUICK_DEMO = 1000
 VAL_SET_MAX_SIZE_QUICK_DEMO = 500
 TEST_SET_MAX_SIZE_QUICK_DEMO = 500
-# Contributivity methods names
+# Contributivity contributivity_methods names
 CONTRIBUTIVITY_METHODS = [
     "Shapley values",
     "Independent scores",
