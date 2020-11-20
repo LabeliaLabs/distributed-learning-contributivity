@@ -38,7 +38,6 @@ class Experiment:
             self.add_scenario(scenario)
         self.nb_repeats = nb_repeats
 
-
     def define_experiment_path(self):
         """Define the path and create folder for saving results of the experiment"""
 
@@ -87,7 +86,7 @@ class Experiment:
         self.experiment_path = self.define_experiment_path()
         scenario_params_list = utils.get_scenario_params_list(config["scenario_params_list"])
 
-        logger.info(f"Creating scenarios from config file")
+        logger.info("Creating scenarios from config file")
 
         for scenario_params_idx, scenario_params in enumerate(scenario_params_list):
             scenario_params_index_str = f"{scenario_params_idx + 1}/{len(scenario_params_list)}"

@@ -130,8 +130,8 @@ def create_Scenario(request):
     params.update(
         {
             "contributivity_methods": ["Shapley values", "Independent scores"],
-            "_multi_partner_learning_approach": "fedavg",
-            "_aggregation": "uniform",
+            "multi_partner_learning_approach": "fedavg",
+            "aggregation": "uniform",
         }
     )
     params.update(
@@ -152,20 +152,10 @@ def create_Scenario(request):
 
     # scenario_.dataset object is created inside the Scenario constructor
     scenario_ = Scenario(
-        **params, save_path=experiment_path, scenario_id=0, repeats_count=1
+        **params, save_path=experiment_path, scenario_id=0
     )
 
     scenario_.mpl = scenario_._multi_partner_learning_approach(scenario_, is_save_data=True)
-
-    scenario_.instantiate_scenario_partners()
-    # Split data according to scenario and then pre-process successively...
-    # ... train data, early stopping validation data, test data
-    if scenario_.samples_split_type == "basic":
-        scenario_.split_data_basic()
-    elif scenario_.samples_split_type == "advanced":
-        scenario_.split_data_advanced()
-    scenario_.compute_batch_sizes()
-    scenario_.apply_data_alteration_configuration()
 
     return scenario_
 

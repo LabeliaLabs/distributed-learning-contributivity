@@ -89,7 +89,7 @@ class Scenario:
         :param minibatch_count: int
         :param epoch_count: int
         :param is_early_stopping: boolean. Stop the training if scores on val_set reach a plateau
-        :param contributivity_methods: A declarative list `[]` of the contributivity measurement contributivity_methods to be executed.
+        :param contributivity_methods: A declarative list `[]` of the contributivity measurement methods to be executed.
         :param is_quick_demo: boolean. Useful for debugging
         :param save_path: path where to save the scenario output. By default, the scenario is not saved !
         :param scenario_id: str
@@ -172,7 +172,7 @@ class Scenario:
         if self.dataset_proportion < 1:
             self.dataset.shorten_dataset_proportion(self.dataset_proportion)
         else:
-            logger.debug(f"The full dataset will be used (dataset_proportion is configured to 1)")
+            logger.debug("The full dataset will be used (dataset_proportion is configured to 1)")
 
         # --------------------------------------
         #  Definition of collaborative scenarios
@@ -533,7 +533,6 @@ class Scenario:
             )
             p.final_nb_samples_p_cluster = int(p.final_nb_samples / p.cluster_count)
 
-
         # Partners receive their subsets
         shared_clusters_index = dict.fromkeys(shared_clusters, 0)
         for p in partners_list:
@@ -801,7 +800,7 @@ class Scenario:
         # -----------------
         # Preliminary steps
         # -----------------
-        if not self.save_folder is None:
+        if self.save_folder is not None:
             self.save_folder.mkdir()
             self.plot_data_distribution()
         logger.info(f"Now starting running scenario {self.scenario_name}")
