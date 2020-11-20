@@ -752,6 +752,22 @@ class Scenario:
                     f"Dirichlet distribution matrix available"
                 )
                 partner.random_labels(1.0)
+            elif self.corrupted_datasets[partner_index] == 'redundant':
+                logger.debug(
+                    f"... ... Corrupting (by adding redundancy in the data ) the whole dataset"
+                    f" of partner #{partner.id} ")
+                partner.redundant_data(1.0)
+            elif self.corrupted_datasets[partner_index] == 'duplicated':
+                copy_id = np.argmin(
+                    np.maximum(0,
+                               np.delete(self.amounts_per_partner, partner_index)
+                               - self.amounts_per_partner[partner_index],
+                               )
+                )
+                logger.debug(
+                    f"... ... Corrupting (by copying data of partner {copy_id}) the whole"
+                    f" dataset of partner #{partner.id} ")
+                partner.duplicate_data(partner_copied=self.partners_list[copy_id], proportion=1)
             elif self.corrupted_datasets[partner_index][0] == "corrupted":
                 logger.debug(
                     f"   ... Corrupting (by offsetting labels) {self.corrupted_datasets[partner_index][1] * 100} \
@@ -778,6 +794,48 @@ class Scenario:
                     f"Dirichlet distribution matrix available"
                 )
                 partner.random_labels(self.corrupted_datasets[partner_index][1])
+            elif self.corrupted_datasets[partner_index][0] == 'redundant':
+                logger.debug(
+                    f"... ... Corrupting (by adding redundancy in the data )"
+                    f" {self.corrupted_datasets[partner_index][1] * 100} "
+                    f"percent of the data of partner #{partner.id}.")
+                partner.redundant_data(self.corrupted_datasets[partner_index][1])
+            elif self.corrupted_datasets[partner_index][0] == 'duplicated':
+                if len(self.corrupted_datasets[partner_index]) == 2:
+                    if type(self.corrupted_datasets[partner_index][1]) == float:
+                        copy_id = np.argmin(
+                            np.maximum(0,
+                                       np.delete(self.amounts_per_partner, partner_index)
+                                       - self.amounts_per_partner[partner_index],
+                                       )
+                        )[0]
+                        logger.debug(
+                            f"... ... Corrupting (by copying data of partner {copy_id})"
+                            f" {self.corrupted_datasets[partner_index][1] * 100} "
+                            f"percent of the data of partner #{partner.id}.")
+                        partner.duplicate_data(partner_copied=self.partners_list[copy_id],
+                                               proportion=self.corrupted_datasets[partner_index][1])
+
+                    elif type(self.corrupted_datasets[partner_index][1]) == int and \
+                            self.corrupted_datasets[partner_index][1] < self.partners_count:
+                        logger.debug(
+                            f"... ... Corrupting (by copying data of partner "
+                            f"{self.corrupted_datasets[partner_index][1]}) the whole"
+                            f" dataset of partner #{partner.id} ")
+                        partner.duplicate_data(
+                            partner_copied=self.partners_list[self.corrupted_datasets[partner_index][1]], proportion=1)
+                    else:
+                        ValueError(
+                            f"Unrecognized parameter for corruption of partner {partner_index}:"
+                            f" {self.corrupted_datasets[partner_index][1]}")
+                else:
+                    logger.debug(
+                        f"... ... Corrupting (by copying data of partner {self.corrupted_datasets[partner_index][1]})"
+                        f" {self.corrupted_datasets[partner_index][2] * 100} "
+                        f"percent of the data of partner #{partner.id}.")
+                    partner.duplicate_data(
+                        partner_copied=self.partners_list[self.corrupted_datasets[partner_index][1]],
+                        proportion=self.corrupted_datasets[partner_index][2])
             elif self.corrupted_datasets[partner_index] == "not_corrupted":
                 pass
             else:
