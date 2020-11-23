@@ -127,12 +127,12 @@ class Partner:
     def duplicate_data(self, partner_copied, proportion):
         if not 0 <= proportion <= 1:
             raise ValueError(
-                f"The proportion of labels to corrupted was {proportion} but it must be between 0 and 1."
+                f"The proportion of data to replace was {proportion} but it must be between 0 and 1."
             )
         # Select the indices where the label will be off-set
         n = int(len(self.y_train) * proportion)
 
-        if len(partner_copied.x_train) > n:
+        if len(partner_copied.y_train) > n:
             idx = sample(list(range(len(self.y_train))), n)
         else:
             n = int(len(partner_copied.y_train))
@@ -146,7 +146,7 @@ class Partner:
     def redundant_data(self, proportion):
         if not 0 <= proportion <= 1:
             raise ValueError(
-                f"The proportion of labels to corrupted was {proportion} but it must be between 0 and 1."
+                f"The proportion of data to replace was {proportion} but it must be between 0 and 1."
             )
         # Select the indices where the label will be off-set
         n = int(len(self.y_train) * proportion)

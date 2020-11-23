@@ -742,20 +742,20 @@ class Scenario:
                 partner.shuffle_labels(1.0)
             elif self.corrupted_datasets[partner_index] == 'permuted':
                 logger.debug(
-                    f"  ... Corrupting (by permuting the labels ) the whole dataset of partner #{partner.id}."
+                    f"  ... Corrupting (by permuting the labels ) the whole dataset of partner #{partner.id}"
                     f"Permutation matrix available"
                 )
                 partner.permute_labels(1.0)
             elif self.corrupted_datasets[partner_index] == 'random':
                 logger.debug(
-                    f"  ... Corrupting (by randomizing the labels ) the whole dataset of partner #{partner.id}."
+                    f"  ... Corrupting (by randomizing the labels ) the whole dataset of partner #{partner.id}"
                     f"Dirichlet distribution matrix available"
                 )
                 partner.random_labels(1.0)
             elif self.corrupted_datasets[partner_index] == 'redundant':
                 logger.debug(
-                    f"... ... Corrupting (by adding redundancy in the data ) the whole dataset"
-                    f" of partner #{partner.id} ")
+                    f"... ... Corrupting (by adding redundancy in the data) the whole dataset"
+                    f" of partner #{partner.id}")
                 partner.redundant_data(1.0)
             elif self.corrupted_datasets[partner_index] == 'duplicated':
                 copy_id = np.argmin(
@@ -766,7 +766,7 @@ class Scenario:
                 )
                 logger.debug(
                     f"... ... Corrupting (by copying data of partner {copy_id}) the whole"
-                    f" dataset of partner #{partner.id} ")
+                    f" dataset of partner #{partner.id}")
                 partner.duplicate_data(partner_copied=self.partners_list[copy_id], proportion=1)
             elif self.corrupted_datasets[partner_index][0] == "corrupted":
                 logger.debug(
@@ -783,22 +783,22 @@ class Scenario:
             elif self.corrupted_datasets[partner_index][0] == 'permuted':
                 logger.debug(
                     f"  ... Corrupting (by permuting the labels ) {self.corrupted_datasets[partner_index][1] * 100} "
-                    f"percent of the data of partner #{partner.id}."
+                    f"percent of the data of partner #{partner.id}"
                     f"Permutation matrix available"
                 )
                 partner.permute_labels(self.corrupted_datasets[partner_index][1])
             elif self.corrupted_datasets[partner_index][0] == 'random':
                 logger.debug(
                     f"  ... Corrupting (by randomizing the labels ) {self.corrupted_datasets[partner_index][1] * 100} "
-                    f"percent of the data of partner #{partner.id}."
+                    f"percent of the data of partner #{partner.id}"
                     f"Dirichlet distribution matrix available"
                 )
                 partner.random_labels(self.corrupted_datasets[partner_index][1])
             elif self.corrupted_datasets[partner_index][0] == 'redundant':
                 logger.debug(
-                    f"... ... Corrupting (by adding redundancy in the data )"
+                    f"... ... Corrupting (by adding redundancy in the data)"
                     f" {self.corrupted_datasets[partner_index][1] * 100} "
-                    f"percent of the data of partner #{partner.id}.")
+                    f"percent of the data of partner #{partner.id}")
                 partner.redundant_data(self.corrupted_datasets[partner_index][1])
             elif self.corrupted_datasets[partner_index][0] == 'duplicated':
                 if len(self.corrupted_datasets[partner_index]) == 2:
@@ -812,7 +812,7 @@ class Scenario:
                         logger.debug(
                             f"... ... Corrupting (by copying data of partner {copy_id})"
                             f" {self.corrupted_datasets[partner_index][1] * 100} "
-                            f"percent of the data of partner #{partner.id}.")
+                            f"percent of the data of partner #{partner.id}")
                         partner.duplicate_data(partner_copied=self.partners_list[copy_id],
                                                proportion=self.corrupted_datasets[partner_index][1])
 
@@ -821,7 +821,7 @@ class Scenario:
                         logger.debug(
                             f"... ... Corrupting (by copying data of partner "
                             f"{self.corrupted_datasets[partner_index][1]}) the whole"
-                            f" dataset of partner #{partner.id} ")
+                            f" dataset of partner #{partner.id}")
                         partner.duplicate_data(
                             partner_copied=self.partners_list[self.corrupted_datasets[partner_index][1]], proportion=1)
                     else:
@@ -832,7 +832,7 @@ class Scenario:
                     logger.debug(
                         f"... ... Corrupting (by copying data of partner {self.corrupted_datasets[partner_index][1]})"
                         f" {self.corrupted_datasets[partner_index][2] * 100} "
-                        f"percent of the data of partner #{partner.id}.")
+                        f"percent of the data of partner #{partner.id}")
                     partner.duplicate_data(
                         partner_copied=self.partners_list[self.corrupted_datasets[partner_index][1]],
                         proportion=self.corrupted_datasets[partner_index][2])
