@@ -1118,7 +1118,9 @@ class Contributivity:
             log_thetas.append(np.log(theta + 1e-8) / 10.0)
         mpl = multi_partner_learning.MplSModel(self.scenario, log_theta_list=log_thetas)
         mpl.fit()
-        theta_estimated = np.zeros((mpl.partners_count,mpl.dataset.num_classes,mpl.dataset.num_classes))
+        theta_estimated = np.zeros((mpl.partners_count,
+                                    mpl.dataset.num_classes,
+                                    mpl.dataset.num_classes))
         for i, partnerMpl in enumerate(mpl.partners_list):
             theta_estimated[i] = (np.exp(partnerMpl.petit_weights) / np.sum(np.exp(partnerMpl.petit_weights), axis=2))
         self.contributivity_scores = np.exp(- np.array([np.linalg.norm(

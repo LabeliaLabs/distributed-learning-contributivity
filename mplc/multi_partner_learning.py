@@ -15,7 +15,7 @@ from tensorflow.keras.backend import clear_session
 from tensorflow.keras.callbacks import EarlyStopping
 
 from . import constants
-from .mpl_utils import History, Aggregator, Channel
+from .mpl_utils import History, Aggregator
 from .partner import Partner, PartnerMpl
 
 ALLOWED_PARAMETERS = ('partners_list',
@@ -460,6 +460,59 @@ class SequentialAverageLearning(SequentialLearning):
 
             # At the end of each minibatch, aggregate the models
             self.model_weights = self.aggregator.aggregate_model_weights()
+
+
+class Channel(Dense):
+    """
+    Implement simple noise adaptation layer.
+    References
+        Goldberger & Ben-Reuven, Training deep neural-networks using a noise
+        adaptation layer, ICLR 2017
+        https://openreview.net/forum?id=H12GRgcxg
+    # Arguments
+        output_dim: int > 0
+              default is input_dim which is known at build time
+        See Dense layer for more arguments. There is no bias and the arguments
+        `bias`, `b_regularizer`, `b_constraint` are not used.
+    """
+
+    def __init__(self, units=None, **kwargs):
+        kwargs['use_bias'] = False
+        if 'activation' not in kwargs:
+            kwargs['activation'] = 'softmax'
+        super(Channel, self).__init__(units, **kwargs)
+
+    def build(self, input_shape):
+        if self.units is None:
+            self.units = input_shape[-1]
+        super(Channel, self).build(input_shape)
+
+    def call(self, x):
+        """
+        :param x: the output of a baseline classifier model passed as an input
+        It has a shape of (batch_size, input_dim) and
+        baseline_output.sum(axis=-1) == 1
+        :param mask: ignored
+        :return: the baseline output corrected by a channel matrix
+        """
+        # convert W to the channel probability (stochastic) matrix
+        # channel_matrix.sum(axis=-1) == 1
+        # channel_matrix.shape == (input_dim, input_dim)
+        channel_matrix = self.activation(10.0 * self.kernel)
+
+        # multiply the channel matrix with the baseline output:
+        # channel_matrix[0,0] is the probability that baseline output 0 will get
+        #  to channeled_output 0
+        # channel_matrix[0,1] is the probability that baseline output 0 will get
+        #  to channeled_output 1 ...
+        # ...
+        # channel_matrix[1,0] is the probability that baseline output 1 will get
+        #  to channeled_output 0 ...
+        #
+        # we want output[b,0] = x[b,0] * channel_matrix[0,0] + \
+        #                              x[b,1] * channel_matrix[1,0] + ...
+        # so we do a dot product of axis -1 in x with axis 0 in channel_matrix
+        return dot(x, channel_matrix)
 
 
 class MplSModel(FederatedAverageLearning):

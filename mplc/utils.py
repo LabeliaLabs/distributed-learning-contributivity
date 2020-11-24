@@ -149,4 +149,3 @@ def set_log_file(path):
     debug_path = path / constants.DEBUG_LOGGING_FILE_NAME
     logger.add(info_path, level="INFO")
     logger.add(debug_path, level="DEBUG")
-
