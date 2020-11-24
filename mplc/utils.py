@@ -82,9 +82,9 @@ def get_scenario_params_list(config):
             if scenario['samples_split_option'][0] == 'advanced' \
                     and (scenario['partners_count'] != len(scenario['samples_split_option'][1])):
                 raise Exception("Length of samples_split_option does not match number of partners.")
-            if 'corrupted_datasets' in params_name:
-                if scenario['partners_count'] != len(scenario['corrupted_datasets']):
-                    raise Exception("Length of corrupted_datasets does not match number of partners.")
+            if 'corruption_parameters' in params_name:
+                if scenario['partners_count'] != len(scenario['corruption_parameters']):
+                    raise Exception("Length of corruption_parameters does not match number of partners.")
             scenario_params_list.append(scenario)
 
     logger.info(f"Number of scenario(s) configured: {len(scenario_params_list)}")

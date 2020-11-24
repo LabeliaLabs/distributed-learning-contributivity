@@ -11,18 +11,19 @@ from . import constants
 
 
 class Partner:
-    IMPLEMENTED_CORRUPTION = ['duplication', 'permutation', 'random', 'random-uniform', 'permutation-circular',
+    IMPLEMENTED_CORRUPTION = ['not_corrupted', 'duplication', 'permutation', 'random', 'random-uniform',
+                              'permutation-circular',
                               'redundancy']
 
     def __init__(self, partner_id, **kwargs):
 
         #  Corruption related attributes
-        self.corruption_method = kwargs.get('corruption_method', default='not_corrupted')
-        self.proportion_corrupted = kwargs.get('proportion_corrupted', default=1.)
+        self.corruption_method = kwargs.get('corruption_method', 'not_corrupted')
+        self.proportion_corrupted = kwargs.get('proportion_corrupted', 1.)
         if not 0 <= self.proportion_corrupted <= 1:
             raise ValueError(f"The proportion of labels to corrupted was {self.proportion_corrupted} "
                              f"but it must be between 0 and 1.")
-        if self.corruption_method not in []:
+        if self.corruption_method not in self.IMPLEMENTED_CORRUPTION:
             raise ValueError(f'Unrecognized corruption method {self.corruption_method}')
         self.duplicated_partner_id = kwargs.get('duplicated_partner', None)
         self.duplicated_partner = None

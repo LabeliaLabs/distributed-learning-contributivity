@@ -115,7 +115,7 @@ def create_Scenario(request):
             "partners_count": 3,
             "amounts_per_partner": [0.2, 0.5, 0.3],
             "samples_split_option": samples_split_option,
-            "corrupted_datasets": ["not_corrupted"] * 3,
+            "corruption_parameters": [{}] * 3,
         }
     )
     params.update(
@@ -192,10 +192,10 @@ class Test_Scenario:
 
 
 class Test_Partner:
-    def test_corrupt_labels(self, create_Partner):
+    def test_permute_labels_circular(self, create_Partner):
         """partner.y_train should be a numpy.ndarray"""
         partner = create_Partner
-        partner.corrupt_labels(1.)
+        partner.permute_labels_circular()
         assert ((partner.y_train == 0) + (partner.y_train == 1)).all()
         if partner.y_train.ndim > 1:
             assert partner.y_train[-1].max() == 1
@@ -204,7 +204,8 @@ class Test_Partner:
     def test_permute_labels(self, create_Partner):
         """partner.y_train should be a numpy.ndarray"""
         partner = create_Partner
-        partner.permute_labels(1.)
+        partner.proportion_corrupted = 1.
+        partner.permute_labels()
         assert ((partner.y_train == 0) + (partner.y_train == 1)).all()
         ones_vect = np.ones(partner.corruption_matrix.shape[1])
         assert (partner.corruption_matrix.sum(axis=1) == ones_vect).all()
@@ -212,7 +213,7 @@ class Test_Partner:
 
     def test_random_labels(self, create_Partner):
         partner = create_Partner
-        partner.random_labels(1.)
+        partner.random_labels()
         assert ((partner.y_train == 0) + (partner.y_train == 1)).all()
         if partner.y_train.ndim > 1:
             assert partner.y_train[-1].max() == 1
@@ -220,10 +221,10 @@ class Test_Partner:
         ones_vect = np.ones(partner.corruption_matrix.shape[1])
         assert (partner.corruption_matrix.sum(axis=1).round(1) == ones_vect).all()
 
-    def test_shuffle_labels(self, create_Partner):
+    def test_random_labels_uniform(self, create_Partner):
         """partner.y_train should be a numpy.ndarray"""
         partner = create_Partner
-        partner.shuffle_labels(1.)
+        partner.random_labels_uniform()
         assert ((partner.y_train == 0) + (partner.y_train == 1)).all()
         if partner.y_train.ndim > 1:
             assert partner.y_train[-1].max() == 1

@@ -248,14 +248,24 @@ There are 2 ways to select a dataset. You can either choose a pre-implemented da
 
 ![Example of the advanced split option](../../img/advanced_split_example.png)
 
-- `corrupted_datasets`: `[not_corrupted (default), shuffled or corrupted]`  
-  Enables to artificially corrupt the data of one or several partners:
+- `corruption_parameters`: `[{'corruption_method':'permutation'},{}]`  Enables to artificially corrupt the data of one or several partners. The parameter should be a list of dictionary. The possible keys, values are the following:
+    - `'corruption_method'`: Indicating the corruption method to use to corrupt the partner's data. The possibilities are:
+        - `'not_corrupted'` (default): the data remains unchanged. 
+        - `'permutation'`, The labels are permuted. Permutation matrix (randomly generated), is available as `corruption_matrix` attribute of Partner.
+        - `'permutation-circular'`, The labels are permuted. The circular permutation is used. 
+        - `'random'`, The labels are flipped randomly, according to Diriclet distribution, which is avaible as `corruption_matrix` attribute of Partner.
+        - `'random-uniform'`, The labels are flipped randomly, according to uniform distribution
+        - `'duplication'`, The data are replaced by the data of another partner. This partner can be selected, see `'duplicated_partner_id'` parameter above
+        - `'redundancy'`, The data are replaced by a copy of an unique data. 
+    - `'proportion_corrupted'`: 1. (default), float between 0. and 1. Indicating the proportion of partner's data to corrupt
+    - `'duplicated_partner_id'`: Partner_id used by the duplicate corruption method. If not provided, a random partner amongst those with enough data will be selected
 
-    - `not_corrupted`: data are not corrupted
-    - `shuffled`: each label is randomly shuffled
-    - `corrupted`: each label is offset of one class
-
-  Example: `corrupted_datasets=[not_corrupted, not_corrupted, not_corrupted, shuffled]`
+  Example with 3 partners:
+  
+   `corruption_parameters = [{}, {'corruption_method':'permutation'},
+    {'corruption_method':'duplication',
+    'proportion_corrupted': 0.4,
+    'duplicated_partner_id': 0}]     `    
 
 ### Configuration of the collaborative and distributed learning
 

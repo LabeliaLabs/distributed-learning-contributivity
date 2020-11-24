@@ -33,7 +33,7 @@ class Scenario:
             dataset_name=constants.MNIST,
             dataset_proportion=1,
             samples_split_option=None,
-            corrupted_datasets=None,
+            corruption_parameters=None,
             init_model_from="random_initialization",
             multi_partner_learning_approach="fedavg",
             aggregation_weighting="data-volume",
@@ -81,7 +81,7 @@ class Scenario:
                                    [{}, {'corruption_method':'permutation'},
                                     {'corruption_method':'duplication',
                                     'proportion_corrupted': 0.4,
-                                    'duplicated_partner_id': 0}]                                                                               }
+                                    'duplicated_partner_id': 0}]
         :param init_model_from: None (default) or path
         :param multi_partner_learning_approach: 'fedavg' (default), 'seq-pure', 'seq-with-final-agg' or 'seqavg'
                                                 Define the multi-partner learning approach
@@ -117,7 +117,7 @@ class Scenario:
         params_known += [
             "partners_count",
             "amounts_per_partner",
-            "corrupted_datasets",
+            "corruption_parameters",
             "samples_split_option",
         ]  # Partners related
         params_known += [
@@ -212,10 +212,10 @@ class Scenario:
             )  # default
 
         # For configuring if the data of the partners are corrupted or not (useful for testing contributivity measures)
-        if corrupted_datasets is not None:
-            self.corrupted_datasets = corrupted_datasets
+        if corruption_parameters is not None:
+            self.corruption_parameters = corruption_parameters
         else:
-            self.corrupted_datasets = [{}] * self.partners_count  # default
+            self.corruption_parameters = [{}] * self.partners_count  # default
 
         # ---------------------------------------------------
         #  Configuration of the distributed learning approach
@@ -397,7 +397,7 @@ class Scenario:
         if self.partners_list:
             raise Exception("self.partners_list should be []")
 
-        self.partners_list = [Partner(i, **self.corrupted_datasets[i]) for i in range(self.partners_count)]
+        self.partners_list = [Partner(i, **self.corruption_parameters[i]) for i in range(self.partners_count)]
 
     def split_data_advanced(self, is_logging_enabled=True):
         """Advanced split: Populates the partners with their train and test data (not pre-processed)"""
