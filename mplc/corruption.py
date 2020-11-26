@@ -1,0 +1,170 @@
+from abc import ABC, abstractmethod
+
+import numpy as np
+from loguru import logger
+
+
+class Corruption(ABC):
+    def __init__(self, proportion=1, partner=None):
+        if not 0 <= proportion <= 1:
+            raise ValueError(f"The proportion of labels to corrupted was {proportion} "
+                             f"but it must be between 0 and 1.")
+        else:
+            self.proportion = proportion
+
+        self.partner = None
+        self.matrix = None
+
+        self._corrupted_idx = None
+
+        if partner:
+            self.set_partner(partner)
+
+    def set_partner(self, partner):
+        self.partner = partner
+
+    @property
+    def corrupted_index(self):
+        if not self._corrupted_idx:
+            n = int(len(self.partner.y_train) * self.proportion)
+            self._corrupted_idx = np.random.choice(len(self.partner.y_train), size=n, replace=False)
+        return self._corrupted_idx
+
+    @abstractmethod
+    def apply(self):
+        self.generate_matrix()
+
+    def generate_matrix(self):
+        self.matrix = np.identity(self.partner.num_labels)
+
+    def error_on_corruption_matrix(self, matrix):
+        return np.linalg.norm(self.matrix - matrix) / np.linalg.norm(self.matrix)
+
+
+class NoCorruption(Corruption):
+    name = 'not corrupted'
+
+    def apply(self):
+        self.generate_matrix()
+        logger.debug(f"   Partner #{self.partner.id}: not corrupted.")
+
+
+class Permutation(Corruption):
+    name = 'permutation'
+
+    def generate_matrix(self):
+        self.matrix = np.zeros((self.partner.num_labels, self.partner.num_labels))
+        idx_permutation = np.random.permutation(self.partner.num_labels)
+        self.matrix[np.arange(self.partner.num_labels), idx_permutation] = 1
+
+    def apply(self):
+        idx = self.corrupted_index
+        # Generate the permutation matrix to use
+        self.generate_matrix()
+        # Permute the labels
+        self.partner.y_train[idx] = np.dot(self.partner.y_train[idx], self.matrix.T)
+        logger.debug(f"   Partner #{self.partner.id}: Done.")
+
+
+class PermutationCircular(Permutation):
+    name = 'permutation-circular'
+
+    def generate_matrix(self):
+        self.matrix = np.roll(np.identity(self.partner.num_labels), -1, axis=1)
+
+
+class Randomize(Corruption):
+    name = 'random'
+
+    def generate_matrix(self):
+        alpha = np.ones(self.partner.num_labels)
+        self.matrix = np.random.dirichlet(alpha, self.partner.num_labels)
+
+    def apply(self):
+        idx = self.corrupted_index
+        # Generate the permutation matrix to use
+        self.generate_matrix()
+        # Randomize the labels
+        for i in idx:
+            temp = np.zeros((self.partner.num_labels,))
+            temp[np.random.choice(self.partner.num_labels, p=self.matrix[np.argmax(self.partner.y_train[i])])] = 1
+            self.partner.y_train[i] = temp
+        logger.debug(f"   Partner #{self.partner.id}: Done.")
+
+
+class RandomizeUniform(Randomize):
+    name = 'random-uniform'
+
+    def generate_matrix(self):
+        self.matrix = np.ones((self.partner.num_labels,) * 2) / self.partner.num_labels
+
+    def apply(self):
+        idx = self.corrupted_index
+        # Generate the permutation matrix to use
+        self.generate_matrix()
+        # Randomize the labels
+        for i in idx:
+            np.random.shuffle(self.partner.y_train[i])
+        logger.debug(f"   Partner #{self.partner.id}: Done.")
+
+
+class Redundancy(Corruption):
+    name = 'redundancy'
+
+    def apply(self):
+        idx = self.corrupted_index
+        self.generate_matrix()
+        self.partner.y_train[idx] = np.tile(self.partner.y_train[idx[0]],
+                                            (len(idx),) + (1,) * self.partner.y_train[idx[0]].ndim)
+        self.partner.x_train[idx] = np.tile(self.partner.x_train[idx[0]],
+                                            (len(idx),) + (1,) * self.partner.x_train[idx[0]].ndim)
+        logger.debug(f"   Partner #{self.partner.id}: Done.")
+
+
+class Duplication(Corruption):
+    name = 'duplication'
+
+    def __init__(self, proportion=1, partner=None, duplicated_partner_id=None, duplicated_partner=None):
+        super(Duplication, self).__init__(proportion=proportion, partner=partner)
+        self.duplicated_partner = duplicated_partner
+        self.duplicated_partner_id = duplicated_partner_id
+        if not duplicated_partner_id and not duplicated_partner:
+            raise Exception('Please provide either a Partner to duplicate, or its id')
+
+    @property
+    def corrupted_index(self):
+        if not self._corrupted_idx:
+            n = int(len(self.partner.y_train) * self.proportion)
+            if len(self.duplicated_partner.y_train) > n:
+                self._corrupted_idx = np.random.choice(len(self.partner.y_train), size=n, replace=False)
+            else:
+                n = int(len(self.duplicated_partner.y_train))
+                self._corrupted_idx = np.random.choice(len(self.partner.y_train), size=n, replace=False)
+                logger.warning(f"The partner which dataset would have been copied does not have enough data"
+                               f" to corrupt {self.proportion * 100}% of this partner's dataset."
+                               f" Only {np.round((n / len(self.partner.y_train)), 2) * 100} percent will be corrupted")
+                self.proportion = np.round((n / len(self.partner.y_train)), 2)
+        return self._corrupted_idx
+
+    def set_duplicated_partner(self, partner_list):
+        if not self.duplicated_partner_id:
+            raise Exception('Missing the Partner-to-duplicate\'s id.')
+        self.duplicated_partner = [partner for partner in partner_list if partner.id == self.duplicated_partner_id][0]
+
+    def apply(self):
+        if not self.duplicated_partner:
+            raise Exception('Missing the Partner to duplicate')
+        self.generate_matrix()
+        idx = self.corrupted_index
+        self.partner.y_train[idx] = self.duplicated_partner.y_train[:len(idx)]
+        self.partner.x_train[idx] = self.duplicated_partner.x_train[:len(idx)]
+        logger.debug(f"   Partner #{self.partner.id}: Done.")
+
+
+IMPLEMENTED_CORRUPTION = {'not_corrupted': NoCorruption,
+                          'duplication': Duplication,
+                          'permutation': Permutation,
+                          'random': Randomize,
+                          'random-uniform': RandomizeUniform,
+                          'permutation-circular': PermutationCircular,
+                          'redundancy': Redundancy}

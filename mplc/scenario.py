@@ -19,6 +19,7 @@ from sklearn.preprocessing import LabelEncoder
 
 from . import contributivity, constants
 from . import dataset as dataset_module
+from .corruption import Corruption, NoCorruption, Duplication, IMPLEMENTED_CORRUPTION
 from .mpl_utils import AGGREGATORS
 from .multi_partner_learning import MULTI_PARTNER_LEARNING_APPROACHES
 from .partner import Partner
@@ -213,9 +214,11 @@ class Scenario:
 
         # For configuring if the data of the partners are corrupted or not (useful for testing contributivity measures)
         if corruption_parameters is not None:
-            self.corruption_parameters = corruption_parameters
+            self.corruption_parameters = list(
+                map(lambda x: x if isinstance(x, Corruption) else IMPLEMENTED_CORRUPTION[x](),
+                    corruption_parameters))
         else:
-            self.corruption_parameters = [{}] * self.partners_count  # default
+            self.corruption_parameters = [NoCorruption() for _ in self.partners_list]  # default
 
         # ---------------------------------------------------
         #  Configuration of the distributed learning approach
@@ -397,7 +400,7 @@ class Scenario:
         if self.partners_list:
             raise Exception("self.partners_list should be []")
 
-        self.partners_list = [Partner(i, **self.corruption_parameters[i]) for i in range(self.partners_count)]
+        self.partners_list = [Partner(i, corruption=self.corruption_parameters[i]) for i in range(self.partners_count)]
 
     def split_data_advanced(self, is_logging_enabled=True):
         """Advanced split: Populates the partners with their train and test data (not pre-processed)"""
@@ -736,13 +739,13 @@ class Scenario:
     def data_corruption(self):
         """perform corruption on partner if needed"""
         for partner in self.partners_list:
-            if partner.corruption_method == "duplication":
-                if not partner.duplicated_partner_id:
+            if isinstance(partner.corruption, Duplication):
+                if not partner.corruption.duplicated_partner_id:
                     data_volume = np.array([p.data_volume for p in self.partners_list if p.id != partner.id])
                     ids = np.array([p.id for p in self.partners_list if p.id != partner.id])
                     candidates = ids[data_volume >= partner.data_volume * partner.proportion_corrupted]
-                    partner.duplicated_partner_id = np.choice(candidates)
-                partner.duplicated_partner = self.partners_list[partner.duplicated_partner_id]
+                    partner.corruption.duplicated_partner_id = np.choice(candidates)
+                partner.corruption.set_duplicated_partner(self.partners_list)
             partner.corrupt()
 
     def to_dataframe(self):
