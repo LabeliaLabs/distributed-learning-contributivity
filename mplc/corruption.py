@@ -25,7 +25,7 @@ class Corruption(ABC):
 
     @property
     def corrupted_index(self):
-        if not self._corrupted_idx:
+        if self._corrupted_idx is None:
             n = int(len(self.partner.y_train) * self.proportion)
             self._corrupted_idx = np.random.choice(len(self.partner.y_train), size=n, replace=False)
         return self._corrupted_idx
@@ -42,7 +42,7 @@ class Corruption(ABC):
 
 
 class NoCorruption(Corruption):
-    name = 'not corrupted'
+    name = 'not-corrupted'
 
     def apply(self):
         self.generate_matrix()
@@ -128,12 +128,12 @@ class Duplication(Corruption):
         super(Duplication, self).__init__(proportion=proportion, partner=partner)
         self.duplicated_partner = duplicated_partner
         self.duplicated_partner_id = duplicated_partner_id
-        if not duplicated_partner_id and not duplicated_partner:
+        if duplicated_partner_id is None and not duplicated_partner:
             raise Exception('Please provide either a Partner to duplicate, or its id')
 
     @property
     def corrupted_index(self):
-        if not self._corrupted_idx:
+        if self._corrupted_idx is None:
             n = int(len(self.partner.y_train) * self.proportion)
             if len(self.duplicated_partner.y_train) > n:
                 self._corrupted_idx = np.random.choice(len(self.partner.y_train), size=n, replace=False)
@@ -161,7 +161,7 @@ class Duplication(Corruption):
         logger.debug(f"   Partner #{self.partner.id}: Done.")
 
 
-IMPLEMENTED_CORRUPTION = {'not_corrupted': NoCorruption,
+IMPLEMENTED_CORRUPTION = {'not-corrupted': NoCorruption,
                           'duplication': Duplication,
                           'permutation': Permutation,
                           'random': Randomize,

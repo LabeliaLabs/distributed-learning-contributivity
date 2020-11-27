@@ -49,7 +49,8 @@ import yaml
 
 from mplc import constants, utils
 from mplc.contributivity import Contributivity
-from mplc.dataset import Mnist, Cifar10, Imdb, Titanic, Esc50
+from mplc.corruption import Permutation, PermutationCircular, Randomize, Redundancy, RandomizeUniform, Duplication
+from mplc.dataset import Mnist, Cifar10, Titanic
 from mplc.mpl_utils import UniformAggregator
 from mplc.multi_partner_learning import FederatedAverageLearning
 from mplc.partner import Partner
@@ -66,7 +67,7 @@ from mplc.scenario import Scenario
 
 # create_Mpl uses create_Dataset and create_Contributivity uses create_Scenario
 
-@pytest.fixture(scope="class", params=(Mnist, Cifar10, Titanic, Imdb, Esc50))
+@pytest.fixture(scope="class", params=(Mnist, Titanic))  # params=(Mnist, Cifar10, Titanic, Imdb, Esc50))
 def create_all_datasets(request):
     return request.param()
 
@@ -100,22 +101,30 @@ def create_Partner(create_all_datasets):
 
 
 @pytest.fixture(scope="class",
-                params=((Mnist, ["basic", "random"]),
-                        (Mnist, ["advanced", [[4, "shared"], [6, "shared"], [4, "specific"]]]),
-                        (Cifar10, ["basic", "random"]),
-                        (Cifar10, ["advanced", [[4, "shared"], [6, "shared"], [4, "specific"]]])),
-                ids=['Mnist - basic', 'Mnist - advanced', 'Cifar10 - basic', 'Cifar10 - advanced'])
+                params=((Mnist, ["basic", "random"], ['not-corrupted'] * 3),
+                        (Mnist, ["basic", "random"],
+                         ['permutation', Redundancy(0.2), Duplication(duplicated_partner_id=0)]),
+                        (Mnist, ["advanced", [[4, "specific"], [6, "shared"], [4, "shared"]]], ['not-corrupted'] * 3),
+                        (Cifar10, ["basic", "random"], ['not-corrupted'] * 3),
+                        (
+                                Cifar10, ["advanced", [[4, "specific"], [6, "shared"], [4, "shared"]]],
+                                ['not-corrupted'] * 3)),
+                ids=['Mnist - basic',
+                     'Mnist - basic - corrupted',
+                     'Mnist - advanced',
+                     'Cifar10 - basic',
+                     'Cifar10 - advanced'])
 def create_Scenario(request):
     dataset = request.param[0]()
     samples_split_option = request.param[1]
-
+    corruption = request.param[2]
     params = {"dataset": dataset}
     params.update(
         {
             "partners_count": 3,
-            "amounts_per_partner": [0.2, 0.5, 0.3],
+            "amounts_per_partner": [0.3, 0.5, 0.2],
             "samples_split_option": samples_split_option,
-            "corruption_parameters": [{}] * 3,
+            "corruption_parameters": corruption,
         }
     )
     params.update(
@@ -191,44 +200,52 @@ class Test_Scenario:
             scenario.instantiate_scenario_partners()
 
 
-class Test_Partner:
-    def test_permute_labels_circular(self, create_Partner):
-        """partner.y_train should be a numpy.ndarray"""
+class Test_Corruption:
+    def test_permutation_circular(self, create_Partner):
         partner = create_Partner
-        partner.permute_labels_circular()
+        partner.corruption = PermutationCircular(partner=partner)
+        partner.corrupt()
         assert ((partner.y_train == 0) + (partner.y_train == 1)).all()
         if partner.y_train.ndim > 1:
             assert partner.y_train[-1].max() == 1
             assert partner.y_train[-1].sum() == 1
 
-    def test_permute_labels(self, create_Partner):
-        """partner.y_train should be a numpy.ndarray"""
+    def test_permutation(self, create_Partner):
         partner = create_Partner
-        partner.proportion_corrupted = 1.
-        partner.permute_labels()
+        partner.corruption = Permutation(partner=partner)
+        partner.corrupt()
         assert ((partner.y_train == 0) + (partner.y_train == 1)).all()
-        ones_vect = np.ones(partner.corruption_matrix.shape[1])
-        assert (partner.corruption_matrix.sum(axis=1) == ones_vect).all()
-        assert (partner.corruption_matrix.sum(axis=0) == ones_vect.T).all()
+        ones_vect = np.ones(partner.corruption.matrix.shape[1])
+        assert (partner.corruption.matrix.sum(axis=1) == ones_vect).all()
+        assert (partner.corruption.matrix.sum(axis=0) == ones_vect.T).all()
 
-    def test_random_labels(self, create_Partner):
+    def test_random(self, create_Partner):
         partner = create_Partner
-        partner.random_labels()
+        partner.corruption = Randomize(partner=partner)
+        partner.corrupt()
         assert ((partner.y_train == 0) + (partner.y_train == 1)).all()
         if partner.y_train.ndim > 1:
             assert partner.y_train[-1].max() == 1
             assert partner.y_train[-1].sum() == 1
-        ones_vect = np.ones(partner.corruption_matrix.shape[1])
-        assert (partner.corruption_matrix.sum(axis=1).round(1) == ones_vect).all()
+        ones_vect = np.ones(partner.corruption.matrix.shape[1])
+        assert (partner.corruption.matrix.sum(axis=1).round(1) == ones_vect).all()
 
-    def test_random_labels_uniform(self, create_Partner):
-        """partner.y_train should be a numpy.ndarray"""
+    def test_random_uniform(self, create_Partner):
         partner = create_Partner
-        partner.random_labels_uniform()
+        partner.corruption = RandomizeUniform(partner=partner)
+        partner.corrupt()
         assert ((partner.y_train == 0) + (partner.y_train == 1)).all()
         if partner.y_train.ndim > 1:
             assert partner.y_train[-1].max() == 1
             assert partner.y_train[-1].sum() == 1
+        assert (partner.corruption.matrix == partner.corruption.matrix[0][0]).all(), 'Distribution isn\'t uniform'
+
+    def test_redundancy(self, create_Partner):
+        partner = create_Partner
+        partner.corruption = Redundancy(partner=partner)
+        partner.corrupt()
+        assert (partner.y_train == partner.y_train[0]).all()
+        assert (partner.x_train == partner.x_train[0]).all()
 
 
 class Test_Mpl:

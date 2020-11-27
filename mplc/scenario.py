@@ -213,12 +213,12 @@ class Scenario:
             )  # default
 
         # For configuring if the data of the partners are corrupted or not (useful for testing contributivity measures)
-        if corruption_parameters is not None:
+        if corruption_parameters:
             self.corruption_parameters = list(
                 map(lambda x: x if isinstance(x, Corruption) else IMPLEMENTED_CORRUPTION[x](),
                     corruption_parameters))
         else:
-            self.corruption_parameters = [NoCorruption() for _ in self.partners_list]  # default
+            self.corruption_parameters = [NoCorruption() for _ in range(self.partners_count)]  # default
 
         # ---------------------------------------------------
         #  Configuration of the distributed learning approach
@@ -743,8 +743,8 @@ class Scenario:
                 if not partner.corruption.duplicated_partner_id:
                     data_volume = np.array([p.data_volume for p in self.partners_list if p.id != partner.id])
                     ids = np.array([p.id for p in self.partners_list if p.id != partner.id])
-                    candidates = ids[data_volume >= partner.data_volume * partner.proportion_corrupted]
-                    partner.corruption.duplicated_partner_id = np.choice(candidates)
+                    candidates = ids[data_volume >= partner.data_volume * partner.corruption.proportion]
+                    partner.corruption.duplicated_partner_id = np.random.choice(candidates)
                 partner.corruption.set_duplicated_partner(self.partners_list)
             partner.corrupt()
 

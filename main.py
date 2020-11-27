@@ -43,7 +43,7 @@ def main():
 
     experiment_path = config["experiment_path"]
     n_repeats = config["n_repeats"]
-
+    print(scenario_params_list)
     validate_scenario_list(scenario_params_list, experiment_path)
 
     for scenario_id, scenario_params in enumerate(scenario_params_list):
@@ -100,6 +100,7 @@ def validate_scenario_list(scenario_params_list, experiment_path):
         logger.debug(f"Validation scenario {scenario_id + 1}/{len(scenario_params_list)}")
 
         # TODO: we should not create scenario folder at this point
+        print(scenario_params)
         current_scenario = scenario.Scenario(**scenario_params, experiment_path=experiment_path, is_dry_run=True)
         current_scenario.instantiate_scenario_partners()
 
