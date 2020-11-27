@@ -21,7 +21,7 @@ from keras.layers import Dense, Dropout
 from keras.layers import Embedding, Conv1D, MaxPooling1D, Flatten
 from keras.losses import categorical_crossentropy
 from keras.models import Sequential
-from keras.optimizers import RMSprop
+from keras.optimizers import Adam
 from keras.preprocessing import sequence
 from keras.utils import to_categorical
 from librosa import load as wav_load
@@ -189,10 +189,8 @@ class Cifar10(Dataset):
         model.add(Dense(self.num_classes))
         model.add(Activation('softmax'))
 
-        # initiate RMSprop optimizer
-        opt = RMSprop(learning_rate=0.0001, decay=1e-6)
-
-        # Let's train the model using RMSprop
+        # initiate Adam optimizer
+        opt = Adam(learning_rate=0.001, decay=1e-5)
         model.compile(loss='categorical_crossentropy',
                       optimizer=opt,
                       metrics=['accuracy'])
