@@ -252,16 +252,16 @@ There are 2 ways to select a dataset. You can either choose a pre-implemented da
     All the Corruptions class are defined in the mplc.corruption module, and are listed below:
     - `NoCorruption`. (default): the data remains unchanged. 
       + String id: `'not_corrupted'`
-    - `Permutation`. The labels are permuted. Permutation matrix (randomly generated), is available as `.corruption.matrix` attribute of Partner.
+    - `Permutation`. The labels are permuted. Permutation matrix (randomly generated), is available as `.corruption.matrix` attribute of `Partner`.
       + String id: `'permutation'`
     - `PermutationCircular`. The labels are permuted. The circular permutation is used. 
       + String id: `'permutation-circular'`
-    - `Randomize`. The labels are flipped randomly, according to Dirichlet distribution, which is available as `.corruption.matrix` attribute of Partner.
+    - `Randomize`. The labels are flipped randomly, according to Dirichlet distribution, which is available as `.corruption.matrix` attribute of `Partner`.
       + String id: `'random'`
     - `RandomizeUniform`. The labels are flipped randomly, according to uniform distribution
       + String id: `'random-uniform'`
     - `Duplication`, The data are replaced by the data of another partner.
-      + Extra-parameter: `'duplicated_partner_id'`: Partner_id used by the duplicate corruption method. If not provided, a random partner amongst those with enough data will be selected
+      + Extra-parameter: `'duplicated_partner_id'`: `Partner.id` used by the duplicate corruption method. If not provided, a random partner amongst those with enough data will be selected
       + String id: `'duplication'`
     - `Redundancy`. The data are replaced by a copy of an unique data. 
       + String id: `'redundancy'`
