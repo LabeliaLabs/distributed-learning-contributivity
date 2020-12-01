@@ -18,7 +18,7 @@ from sklearn.preprocessing import LabelEncoder
 
 from . import contributivity, constants
 from . import dataset as dataset_module
-from .corruption import Corruption, NoCorruption, Duplication, IMPLEMENTED_CORRUPTION
+from .corruption import Corruption, NoCorruption, IMPLEMENTED_CORRUPTION, Duplication
 from .mpl_utils import AGGREGATORS
 from .multi_partner_learning import MULTI_PARTNER_LEARNING_APPROACHES
 from .partner import Partner
@@ -91,7 +91,7 @@ class Scenario:
         :param is_early_stopping: boolean. Stop the training if scores on val_set reach a plateau
         :param contributivity_methods: A declarative list `[]` of the contributivity measurement methods to be executed.
         :param is_quick_demo: boolean. Useful for debugging
-        :param save_path: path where to save the scenario output. By default, the scenario is not saved !
+        :param save_path: path where to save the scenario outputs. By default, they are not saved!
         :param scenario_id: str
         :param **kwargs:
         """
@@ -321,17 +321,15 @@ class Scenario:
         self.scenario_name = kwargs.get('scenario_name',
                                         f"scenario_{self.scenario_id}_repeat_{self.repeat_count}_{now_str}_"
                                         f"{uuid.uuid4().hex[:3]}")  # to distinguish identical names
-        if ' ' in self.scenario_name:
+        if r'/s' in self.scenario_name:
             raise ValueError(
                 f'The scenario name "{self.scenario_name}"cannot be written with space character, please use '
                 f'underscore or dash.')
         self.short_scenario_name = f"{self.partners_count}_{self.amounts_per_partner}"
 
         if save_path is not None:
-            self.experiment_path = Path(save_path)
-            self.save_folder = self.experiment_path / self.scenario_name
+            self.save_folder = Path(save_path) / self.scenario_name
         else:
-            self.experiment_path = None
             self.save_folder = None
         # -----------------------
         # Provision the scenario
@@ -366,11 +364,11 @@ class Scenario:
                     'contributivity_list',
                     'scenario_name',
                     'short_scenario_name',
-                    'experiment_path',
                     'save_folder']:
             del params[key]
         if 'is_quick_demo' in kwargs and kwargs['is_quick_demo'] != self.is_quick_demo:
             raise ValueError("Attribute 'is_quick_demo' cannot be modified between copies.")
+        params['save_path'] = self.save_folder.parents[0]
         params.update(kwargs)
 
         return Scenario(**params)
@@ -409,7 +407,8 @@ class Scenario:
 
     def instantiate_scenario_partners(self):
         """Create the partners_list"""
-
+        if len(self.partners_list) > 0:
+            raise Exception('Partners have already been initialized')
         self.partners_list = [Partner(i, corruption=self.corruption_parameters[i]) for i in range(self.partners_count)]
 
     def split_data(self, is_logging_enabled=True):
@@ -532,7 +531,6 @@ class Scenario:
                 amounts_per_partner[p.id] * len(y_train) * final_resize_factor
             )
             p.final_nb_samples_p_cluster = int(p.final_nb_samples / p.cluster_count)
-
         # Partners receive their subsets
         shared_clusters_index = dict.fromkeys(shared_clusters, 0)
         for p in partners_list:
@@ -573,7 +571,7 @@ class Scenario:
         assert self.minibatch_count <= min(
             [len(p.x_train) for p in self.partners_list]
         ), "Error: in the provided \
-            config file and the provided dataset, a partner doesn't have enough data samples to create the minibatches "
+            config file and the provided dataset, a partner doesn't have enough data samples to create the minibatches"
 
         if is_logging_enabled:
             logger.info("Splitting data among partners (advanced split):")

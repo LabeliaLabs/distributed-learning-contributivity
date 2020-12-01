@@ -41,13 +41,11 @@ This enables to parameterize unit tests - the tests are run by Travis each time 
 # Test architecture
 # https://docs.pytest.org/en/latest/goodpractices.html#test-discovery
 
-from pathlib import Path
-
 import numpy as np
 import pytest
 import yaml
 
-from mplc import constants, utils
+from mplc import utils
 from mplc.contributivity import Contributivity
 from mplc.corruption import Permutation, PermutationCircular, Randomize, Redundancy, RandomizeUniform, Duplication
 from mplc.dataset import Mnist, Cifar10, Titanic
@@ -85,7 +83,6 @@ def create_MultiPartnerLearning(create_all_datasets):
         aggregation=UniformAggregator,
         is_early_stopping=True,
         is_save_data=False,
-        save_folder="",
     )
 
     yield mpl
@@ -145,14 +142,9 @@ def create_Scenario(request):
     params.update({"init_model_from": "random_initialization"})
     params.update({"is_quick_demo": False})
 
-    full_experiment_name = "unit-test-pytest"
-    experiment_path = (
-            Path.cwd() / constants.EXPERIMENTS_FOLDER_NAME / full_experiment_name
-    )
-
     # scenario_.dataset object is created inside the Scenario constructor
     scenario_ = Scenario(
-        **params, save_path=experiment_path, scenario_id=0
+        **params, scenario_id=0
     )
 
     scenario_.mpl = scenario_._multi_partner_learning_approach(scenario_, is_save_data=True)

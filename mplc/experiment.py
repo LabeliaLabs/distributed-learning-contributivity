@@ -21,31 +21,38 @@ class Experiment:
             self,
             experiment_name=None,
             nb_repeats=1,
-            scenarios_list=[]
+            scenarios_list=[],
+            **kwargs
     ):
         """
         :param experiment_name: string, name of the experiment
         :param nb_repeats: int, number of repeats of the experiments (as an experiment includes
-                           a number of non-deterministic phenomena. Example: 5
-        :param scenarios_list: list, list of scenarios to be run during the experiment. scenario can also be added via
+                           a number of non-deterministic phenomena). Example: 5
+        :param scenarios_list: list, list of scenarios to be run during the experiment.
+                               Scenario can also be added via the .add_scenario() method.
         """
 
         self.name = experiment_name
         if experiment_name:
-            self.experiment_path = self.define_experiment_path()
-        self.scenarios_list = []
+            self.experiment_path = self.define_experiment_path(**kwargs)
+        self._scenarios_list = []
         for scenario in scenarios_list:
             self.add_scenario(scenario)
         self.nb_repeats = nb_repeats
 
-    def define_experiment_path(self):
+    @property
+    def scenarios_list(self):
+        return self._scenarios_list
+
+    def define_experiment_path(self, **kwargs):
         """Define the path and create folder for saving results of the experiment"""
 
         now = datetime.datetime.now()
         now_str = now.strftime("%Y-%m-%d_%Hh%M")
 
         full_experiment_name = self.name + "_" + now_str
-        experiment_path = Path.cwd() / constants.EXPERIMENTS_FOLDER_NAME / full_experiment_name
+        experiment_path = Path.cwd() / kwargs.get('experiment_path',
+                                                  constants.EXPERIMENTS_FOLDER_NAME) / full_experiment_name
 
         # Check if experiment folder already exists
         while experiment_path.exists():
@@ -69,7 +76,7 @@ class Experiment:
                 f'scenario_{new_id}')
             scenario_to_add.scenario_id = new_id
             scenario_to_add.save_folder = self.experiment_path / scenario_to_add.scenario_name
-            self.scenarios_list.append(scenario_to_add)
+            self._scenarios_list.append(scenario_to_add)
         else:
             raise Exception(f"The scenario {scenario_to_add} you are trying to add is not an instance of"
                             f"object scenario.Scenario")
@@ -105,7 +112,7 @@ class Experiment:
         logger.info("All scenarios created , successfully validated and added to the experiment")
 
     def run_experiment(self):
-        """Run the experiment, starting by validating the scenarios first"""
+        """Run the experiment """
 
         # Preliminary steps
         logger.info(f"Now running experiment {self.name}")
@@ -119,14 +126,13 @@ class Experiment:
             logger.info(f"(Experiment {self.name}) Now starting repeat {repeat_index_str}")
 
             # Loop over scenarios in scenarios_list
-            for scenario_idx, white_scenario in enumerate(self.scenarios_list):
+            for scenario_idx, blank_scenario in enumerate(self.scenarios_list):
                 scenario_index_str = f"{scenario_idx + 1}/{len(self.scenarios_list)}"
                 logger.info(f"(Experiment {self.name}, repeat {repeat_index_str}) "
                             f"Now running scenario {scenario_index_str}")
 
                 # Run the scenario
-                scenario = white_scenario.copy(repeat_count=repeat_idx, save_path=self.experiment_path)
-                print(scenario.save_folder, scenario.repeat_count)
+                scenario = blank_scenario.copy(repeat_count=repeat_idx, save_path=self.experiment_path)
                 scenario.run()
 
                 # Save scenario results
