@@ -149,7 +149,7 @@ class ReweightingAggregator(Aggregator):
             self.aggregation_weights_param = param
 
 
-        # Supported aggregation weights approaches
+# Supported aggregation weights approaches
 AGGREGATORS = {
     "uniform": UniformAggregator,
     "data-volume": DataVolumeAggregator,

@@ -389,6 +389,12 @@ The methods are detailed below:
     
     - `["LFlip"]` - Label flipping method
 
+- **Re-weighting**
+
+    Re-weighting method aims at finding the best weights for the fedAvg aggregation and use them as contributivity measures. The method implemented tries to learn these weights by minimizing the validation loss. Unfortunately it seems that this procedure eventually put all the weights to zero except for the partner whose data are the closest from the validation data, and therefore is not suitable for a contributivity measurement.
+
+   - `["Reweighting"]` Re-weighting method by minimization of the validation loss
+    
 **Note:** When `methods` is omitted in the config file only the distributed learning is run.  
 Example: `["Shapley values", "Independent scores", "TMCS"]`
 

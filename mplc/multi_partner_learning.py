@@ -515,7 +515,7 @@ class Reweighting(MultiPartnerLearning):
     def __init__(self, scenario, beta=0.2, alpha=0.0, **kwargs):
         # First, if only one partner, fall back to dedicated single partner function
         super(Reweighting, self).__init__(scenario, **kwargs)
-        
+
         self.minibatch_gradient = [None] * self.partners_count
 
         self.aggregator = ReweightingAggregator(self)
@@ -615,7 +615,6 @@ class Reweighting(MultiPartnerLearning):
             # Once the aggregation_weights have converge, Do the aggregation
             self.model_weights = self.aggregator.aggregate_model_weights()
 
-
         self.minibatch_index = 0
 
     def udpate_aggregation_weights(self):
@@ -641,19 +640,18 @@ class Reweighting(MultiPartnerLearning):
         # Update the aggregation weight
         partners_sizes = [partner.data_volume for partner in self.partners_list]
         sign = np.sign(self.aggregator.aggregation_weights_param
-                       - partners_sizes / np.sum(partners_sizes) )
+                       - partners_sizes / np.sum(partners_sizes))
         e = self.aggregator.aggregation_weights_param
         for partner_index in range(self.partners_count):
             self.aggregator.aggregation_weights_param[partner_index] += (1.0 - self.alpha) * self.beta * (
                 self.scalar_product(minus_gradient_val, derivative_of_coeff[partner_index])
-            ) + self.alpha * ( sign[partner_index]- np.sum(np.multiply(sign, e)) ) * e[partner_index]
+            ) + self.alpha * (sign[partner_index] - np.sum(np.multiply(sign, e))) * e[partner_index]
 
         e = np.exp(self.aggregator.aggregation_weights_param)
         self.aggregator.aggregation_weights = e / np.sum(e)
 
         logger.debug(f"Weights: {self.aggregator.aggregation_weights}")
         logger.debug(f"Params: {self.aggregator.aggregation_weights_param}")
-
 
     def eval_and_log_model_val_perf(self):
         model = self.build_model()
@@ -668,8 +666,9 @@ class Reweighting(MultiPartnerLearning):
         if self.minibatch_index >= self.minibatch_count - 1:
             logger.info(f"   Model evaluation at the end of the epoch: "
                         f"{['%.3f' % elem for elem in hist]}")
-# Supported multipartner learning approaches
 
+
+# Supported multipartner learning approaches
 MULTI_PARTNER_LEARNING_APPROACHES = {
     "fedavg": FederatedAverageLearning,
     "seq-pure": SequentialLearning,
