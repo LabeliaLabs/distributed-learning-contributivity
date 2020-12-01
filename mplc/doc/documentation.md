@@ -424,6 +424,7 @@ The methods are detailed below:
   Initial rounds (10%) and final rounds (10%) are discarded from calculation as performance increments from the first minibatches might be huge and increments form the last minibatches might be very noisy. Discarded proportions are for now set in the code.
 
     3 contributivity methods are proposed to adjust the importance of last computation rounds compared to the first ones:
+    
     - `["Federated SBS linear"]` - Linear importance increase between computation rounds (1000th round weights 1000 times first round)
     - `["Federated SBS quadratic"]` - Quadratic importance increase between computation rounds (1000th round weights 10e6 times first round)
     - `["Federated SBS constant"]`- Constant importance increase between computation rounds (1000th round weights same as first round)
