@@ -1127,7 +1127,7 @@ class Contributivity:
             theta_estimated[i] - np.identity(mpl.dataset.num_classes)
         ) for i in range(len(self.scenario.partners_list))]))
 
-        self.name = "Label Flip"
+        self.name = "S-Model"
         self.scores_std = np.zeros(mpl.partners_count)
         self.normalized_scores = self.contributivity_scores / np.sum(self.contributivity_scores)
         end = timer()
