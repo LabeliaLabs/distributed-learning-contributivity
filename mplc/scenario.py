@@ -62,16 +62,17 @@ class Scenario:
         :param samples_split_option: ['basic', 'random'] (default),
                                      ['basic', 'stratified']
                                      or ['advanced', [[nb of clusters (int), 'shared' or 'specific']]].
-        :param corruption_parameters: list of map.  Enables to artificially corrupt the data of one or several partners.
+        :param corruption_parameters: list of map. Enables to artificially corrupt the data of one or several partners.
                                    The size of the list must be equal to the number of partners.
                                    Items of the list must be mapping. The possible keys, values are the following:
-                                    'corruption_method': 'not_corrupted' (default), 'duplication',
-                                                                                    'permutation',
-                                                                                    'permutation-circular',
-                                                                                    'random',
-                                                                                    'random-uniform' or 'redundancy'
-                                                                                    Indicating the corruption method
-                                                                                    to use to corrupt the partner's data
+                                    'corruption_method': 'not_corrupted' (default),
+                                                         'duplication',
+                                                         'permutation',
+                                                         'permutation-circular',
+                                                         'random',
+                                                         'random-uniform',
+                                                         'redundancy'
+                                    Indicating the corruption method to use to corrupt the partner's data
                                     'proportion_corrupted': 1. (default), float between 0. and 1. indicating the
                                                                           proportion of partner's data to corrupt
                                     'duplicated_partner_id': Partner_id used by the duplicate corruption method.

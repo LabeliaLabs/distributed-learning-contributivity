@@ -248,8 +248,8 @@ There are 2 ways to select a dataset. You can either choose a pre-implemented da
 
 ![Example of the advanced split option](../../img/advanced_split_example.png)
 
-- `corruption_parameters`: `[Corruption(parameters),'permutation']`  Enables to artificially corrupt the data of one or several partners. You can either instantiate a corruption before passing it to Scenario, as in the above example, or you can pass it by its string identifier. In the latter case, the default parameters for the corruption selected will be used. Each partner must be provides a corruption method, so the list of corruption-parameters' size must be equal to the number of partner. 
-    All the Corruptions class are defined in the mplc.corruption module, and are listed below:
+- `corruption_parameters`: `[Corruption(parameters),'permutation']`  Enables to artificially corrupt the data of one or several partners. You can either instantiate a corruption before passing it to Scenario, as in the below example, or you can pass it by its string identifier. In the latter case, the default parameters for the corruption selected will be used. Each partner must be provided a corruption method, so the list of corruption-parameters' size must be equal to the number of partner. 
+    All the Corruptions class are defined in the `mplc.corruption module`, and are listed below:
     - `NoCorruption`. (default): the data remains unchanged. 
       + String id: `'not_corrupted'`
     - `Permutation`. The labels are permuted. Permutation matrix (randomly generated), is available as `.corruption.matrix` attribute of `Partner`.
