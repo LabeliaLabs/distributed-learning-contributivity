@@ -43,7 +43,6 @@ def main():
 
     experiment_path = config["experiment_path"]
     n_repeats = config["n_repeats"]
-
     validate_scenario_list(scenario_params_list, experiment_path)
 
     for scenario_id, scenario_params in enumerate(scenario_params_list):

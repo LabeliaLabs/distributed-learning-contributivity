@@ -19,6 +19,7 @@ from sklearn.preprocessing import LabelEncoder
 
 from . import contributivity, constants
 from . import dataset as dataset_module
+from .corruption import Corruption, NoCorruption, Duplication, IMPLEMENTED_CORRUPTION
 from .mpl_utils import AGGREGATORS
 from .multi_partner_learning import MULTI_PARTNER_LEARNING_APPROACHES
 from .partner import Partner
@@ -33,7 +34,7 @@ class Scenario:
             dataset_name=constants.MNIST,
             dataset_proportion=1,
             samples_split_option=None,
-            corrupted_datasets=None,
+            corruption_parameters=None,
             init_model_from="random_initialization",
             multi_partner_learning_approach="fedavg",
             aggregation_weighting="data-volume",
@@ -61,21 +62,32 @@ class Scenario:
         :param samples_split_option: ['basic', 'random'] (default),
                                      ['basic', 'stratified']
                                      or ['advanced', [[nb of clusters (int), 'shared' or 'specific']]].
-        :param corrupted_datasets: ['not_corrupted' (default), 'shuffled' or 'corrupted'].
-                                   Enables to artificially corrupt the data of one or several partners.
-                                   The size of the list must be equal to the number of partners
+        :param corruption_parameters: list of map. Enables to artificially corrupt the data of one or several partners.
+                                   The size of the list must be equal to the number of partners.
+                                   Items of the list must be mapping. The possible keys, values are the following:
+                                    'corruption_method': 'not_corrupted' (default),
+                                                         'duplication',
+                                                         'permutation',
+                                                         'permutation-circular',
+                                                         'random',
+                                                         'random-uniform',
+                                                         'redundancy'
+                                    Indicating the corruption method to use to corrupt the partner's data
+                                    'proportion_corrupted': 1. (default), float between 0. and 1. indicating the
+                                                                          proportion of partner's data to corrupt
+                                    'duplicated_partner_id': Partner_id used by the duplicate corruption method.
+                                                          If not provided, a random partner amongst those
+                                                          with enough data will be selected
 
-                                   If one wants to shuffle only a part of the partner's data
-                                   it is possible to replace 'shuffled' by ['shuffled', proportion_shuffled]
-                                   where proportion_shuffled is a float between 0 and 1 indicating the
-                                   proportion of label to shuffle or corrupt within the partner.
-                                   Similarly for corruption it is possible to replace 'corrupted'
-                                   by ['corrupted', proportion_corrupted] where proportion_corrupted is a float
-                                   between 0 and 1 indicating the proportion of label to corrupt within the partner.
+                                   Example with 3 partners.
+                                   [{}, {'corruption_method':'permutation'},
+                                    {'corruption_method':'duplication',
+                                    'proportion_corrupted': 0.4,
+                                    'duplicated_partner_id': 0}]
         :param init_model_from: None (default) or path
         :param multi_partner_learning_approach: 'fedavg' (default), 'seq-pure', 'seq-with-final-agg' or 'seqavg'
                                                 Define the multi-partner learning approach
-        :param aggregation_weighting: 'uniform' (default), 'data_volume' or 'local_score'
+        :param aggregation_weighting: 'data_volume' (default), 'uniform' or 'local_score'
         :param gradient_updates_per_pass_count: int
         :param minibatch_count: int
         :param epoch_count: int
@@ -107,7 +119,7 @@ class Scenario:
         params_known += [
             "partners_count",
             "amounts_per_partner",
-            "corrupted_datasets",
+            "corruption_parameters",
             "samples_split_option",
         ]  # Partners related
         params_known += [
@@ -202,10 +214,12 @@ class Scenario:
             )  # default
 
         # For configuring if the data of the partners are corrupted or not (useful for testing contributivity measures)
-        if corrupted_datasets is not None:
-            self.corrupted_datasets = corrupted_datasets
+        if corruption_parameters:
+            self.corruption_parameters = list(
+                map(lambda x: x if isinstance(x, Corruption) else IMPLEMENTED_CORRUPTION[x](),
+                    corruption_parameters))
         else:
-            self.corrupted_datasets = ["not_corrupted"] * self.partners_count  # default
+            self.corruption_parameters = [NoCorruption() for _ in range(self.partners_count)]  # default
 
         # ---------------------------------------------------
         #  Configuration of the distributed learning approach
@@ -384,10 +398,10 @@ class Scenario:
     def instantiate_scenario_partners(self):
         """Create the partners_list - self.partners_list should be []"""
 
-        if self.partners_list != []:
+        if self.partners_list:
             raise Exception("self.partners_list should be []")
 
-        self.partners_list = [Partner(i) for i in range(self.partners_count)]
+        self.partners_list = [Partner(i, corruption=self.corruption_parameters[i]) for i in range(self.partners_count)]
 
     def split_data_advanced(self, is_logging_enabled=True):
         """Advanced split: Populates the partners with their train and test data (not pre-processed)"""
@@ -724,66 +738,16 @@ class Scenario:
             logger.debug(f"   Compute batch sizes, partner #{p.id}: {p.batch_size}")
 
     def data_corruption(self):
-        """Return scenario with central datasets (val, test) and distributed datasets (partners) pre-processed"""
-
-        # Then, datasets of each partner
-        for partner_index, partner in enumerate(self.partners_list):
-
-            # If a data corruption is configured, apply it
-            if self.corrupted_datasets[partner_index] == "corrupted":
-                logger.debug(
-                    f"   ... Corrupting (by offsetting labels) the whole of partner #{partner.id}"
-                )
-                partner.corrupt_labels(1.0)
-            elif self.corrupted_datasets[partner_index] == "shuffled":
-                logger.debug(
-                    f"   ... Corrupting (by shuffling labels) the whole dataset of partner #{partner.id}"
-                )
-                partner.shuffle_labels(1.0)
-            elif self.corrupted_datasets[partner_index] == 'permuted':
-                logger.debug(
-                    f"  ... Corrupting (by permuting the labels ) the whole dataset of partner #{partner.id}."
-                    f"Permutation matrix available"
-                )
-                partner.permute_labels(1.0)
-            elif self.corrupted_datasets[partner_index] == 'random':
-                logger.debug(
-                    f"  ... Corrupting (by randomizing the labels ) the whole dataset of partner #{partner.id}."
-                    f"Dirichlet distribution matrix available"
-                )
-                partner.random_labels(1.0)
-            elif self.corrupted_datasets[partner_index][0] == "corrupted":
-                logger.debug(
-                    f"   ... Corrupting (by offsetting labels) {self.corrupted_datasets[partner_index][1] * 100} \
-                            percent of the data of partner #{partner.id}"
-                )
-                partner.corrupt_labels(self.corrupted_datasets[partner_index][1])
-            elif self.corrupted_datasets[partner_index][0] == "shuffled":
-                logger.debug(
-                    f"   ... Corrupting (by shuffling labels) {self.corrupted_datasets[partner_index][1] * 100} \
-                            percent of the data of partner #{partner.id}"
-                )
-                partner.shuffle_labels(self.corrupted_datasets[partner_index][1])
-            elif self.corrupted_datasets[partner_index][0] == 'permuted':
-                logger.debug(
-                    f"  ... Corrupting (by permuting the labels ) {self.corrupted_datasets[partner_index][1] * 100} "
-                    f"percent of the data of partner #{partner.id}."
-                    f"Permutation matrix available"
-                )
-                partner.permute_labels(self.corrupted_datasets[partner_index][1])
-            elif self.corrupted_datasets[partner_index][0] == 'random':
-                logger.debug(
-                    f"  ... Corrupting (by randomizing the labels ) {self.corrupted_datasets[partner_index][1] * 100} "
-                    f"percent of the data of partner #{partner.id}."
-                    f"Dirichlet distribution matrix available"
-                )
-                partner.random_labels(self.corrupted_datasets[partner_index][1])
-            elif self.corrupted_datasets[partner_index] == "not_corrupted":
-                pass
-            else:
-                logger.debug("Unexpected label of corruption, no corruption performed!")
-
-            logger.debug(f"   Partner #{partner.id}: done.")
+        """perform corruption on partner if needed"""
+        for partner in self.partners_list:
+            if isinstance(partner.corruption, Duplication):
+                if not partner.corruption.duplicated_partner_id:
+                    data_volume = np.array([p.data_volume for p in self.partners_list if p.id != partner.id])
+                    ids = np.array([p.id for p in self.partners_list if p.id != partner.id])
+                    candidates = ids[data_volume >= partner.data_volume * partner.corruption.proportion]
+                    partner.corruption.duplicated_partner_id = np.random.choice(candidates)
+                partner.corruption.set_duplicated_partner(self.partners_list)
+            partner.corrupt()
 
     def to_dataframe(self):
 

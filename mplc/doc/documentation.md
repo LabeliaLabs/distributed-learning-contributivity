@@ -248,14 +248,35 @@ There are 2 ways to select a dataset. You can either choose a pre-implemented da
 
 ![Example of the advanced split option](../../img/advanced_split_example.png)
 
-- `corrupted_datasets`: `[not_corrupted (default), shuffled or corrupted]`  
-  Enables to artificially corrupt the data of one or several partners:
-
-    - `not_corrupted`: data are not corrupted
-    - `shuffled`: each label is randomly shuffled
-    - `corrupted`: each label is offset of one class
-
-  Example: `corrupted_datasets=[not_corrupted, not_corrupted, not_corrupted, shuffled]`
+- `corruption_parameters`: `[Corruption(parameters),'permutation']`  Enables to artificially corrupt the data of one or several partners. You can either instantiate a corruption before passing it to Scenario, as in the below example, or you can pass it by its string identifier. In the latter case, the default parameters for the corruption selected will be used. Each partner must be provided a corruption method, so the list of corruption-parameters' size must be equal to the number of partner. 
+    All the Corruptions class are defined in the `mplc.corruption module`, and are listed below:
+    - `NoCorruption`. (default): the data remains unchanged. 
+      + String id: `'not_corrupted'`
+    - `Permutation`. The labels are permuted. Permutation matrix (randomly generated), is available as `.corruption.matrix` attribute of `Partner`.
+      + String id: `'permutation'`
+    - `PermutationCircular`. The labels are permuted. The circular permutation is used. 
+      + String id: `'permutation-circular'`
+    - `Randomize`. The labels are flipped randomly, according to Dirichlet distribution, which is available as `.corruption.matrix` attribute of `Partner`.
+      + String id: `'random'`
+    - `RandomizeUniform`. The labels are flipped randomly, according to uniform distribution
+      + String id: `'random-uniform'`
+    - `Duplication`, The data are replaced by the data of another partner.
+      + Extra-parameter: `'duplicated_partner_id'`: `Partner.id` used by the duplicate corruption method. If not provided, a random partner amongst those with enough data will be selected
+      + String id: `'duplication'`
+    - `Redundancy`. The data are replaced by a copy of an unique data. 
+      + String id: `'redundancy'`
+      
+    All of these can use the parameter `'proportion'`: 1. (default), float between 0. and 1. Indicating the proportion of partner's data to corrupt
+     
+  Example with 4 partners:
+  ```python
+  from mplc.corruption import Duplication, Permutation
+  from mplc.scenario import Scenario
+  partner2_corr = Permutation(proportion=0.3)
+  partner3_corr = Duplication(duplicated_partner_id=1) #  proportion is equal to 1 by default
+  my_scenario = Scenario(4, amounts_per_partner=[0.2, 0.3,0.2,0.3],
+                         corruption_parameters=['not-corrupted', 'random', partner2_corr, partner3_corr])
+  ```  
 
 ### Configuration of the collaborative and distributed learning
 
