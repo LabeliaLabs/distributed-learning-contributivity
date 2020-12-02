@@ -491,6 +491,57 @@ These are not mandatory, by default the local dataset will not be split.
 
 > Note: currently, the local validation and test set are not used, but they are available for further developments of multi-partner learning and contributivity measurement approaches.
 
+## Experiments
+
+At some point of your use of the library you might need to launch several scenarios in a rows. It the same spirit, you might want to repeat one scenario's run, to get rid of the randomness of training, and end with more meaningful results.
+
+The `Experiment` object allows you to set a list of scenarios to run, along with a wanted number of repetition.
+Once instancied, scenarios can be added via the `.add_scenario()`.
+Eventually, all the scenarios can be run, and repeated, by calling the `.run()` method. 
+### Experiment's parameters
+Few parameters can be set:
+    - `experiment_name`: String, default `None`. Name of the experiment, will be used for the save path. if `None` the result will not be saved on disk
+    - `nb_repeat`: int, Number of repetition for the experiment, in which each scenario will be run 
+    - `scenario_list`: list of scenarios to be run during the experiment. Scenario can also be added via the `.add_scenario()` method
+
+### Save folder
+Another parameter can be passed via the kwargs : `experiment_path`, string which will be used to define the path where the save folder will be created. 
+The default path is set in the `mplc.constant` module, at `EXPERIMENTS_FOLDER_NAME`. 
+The save path follows this pattern : `experiment_path` / `experiment_name`.
+Save folder architecture :
+ ------------
+
+    ├── scenario_0_repeat_0_...                         <- Folder result of the first scenario, first repeat
+    ├── scenario_0_repeat_1_...                         <- Folder result of the first scenario, second repeat
+    .       ├── graphs                                  <- default graphs for the scenario
+    .       |     ├── all_partners_val_acc.png          <- Accuracy of intermediate models per partners
+    .       |     ├── data_distribution.png             <- Data distribution amounst the partner
+    .       |     ├── federated_training_val_acc.png    <- Validation loss for the mpl model
+    .       |     └── federated_training_val_loss.png   <- Validation accuracy for the mpl model
+    .       └── main_mpl                                <- Folder with main mpl result
+    .             ├── model                             <- Store the final model weights (numpy format)
+    .             └── history.csv                       <- Store all the metrics computed during the training
+    ├── scenario_k_repeat_n_...                         <- Folder result of the last scenario, last repetition
+    ├── debug.log                                       <- Record of the log output, debug level
+    ├── info.log                                        <- Record of the log output, info level
+    └── result.csv                                      <- Result of all the scenarios, all repeats. 
+ ------------
+ 
+### Example
+````python
+from mplc.experiment import Experiment
+from mplc.scenario import Scenario
+
+scenario0 = Scenario(4, [0.25]*4)
+scenario1 = Scenario(10, [0.1]*10)
+scenario2 = Scenario(4, [0.8, 0.1, 0.05, 0.05])
+
+exp = Experiment(experiment_name='my_experiment', nb_repeat=10, scenarios_list=[scenario0, scenario1])
+exp.add_scenario(scenario2)
+
+exp.run()
+````
+
 ## Contacts, contributions, collaborations
 
 Should you be interested in this open effort and would like to share any question, suggestion or input, you can use the following channels:

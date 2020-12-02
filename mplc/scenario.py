@@ -6,6 +6,7 @@ This enables to parameterize a desired scenario to mock a multi-partner ML proje
 import datetime
 import operator
 import random
+import re
 import uuid
 from pathlib import Path
 
@@ -321,7 +322,7 @@ class Scenario:
         self.scenario_name = kwargs.get('scenario_name',
                                         f"scenario_{self.scenario_id}_repeat_{self.repeat_count}_{now_str}_"
                                         f"{uuid.uuid4().hex[:3]}")  # to distinguish identical names
-        if r'/s' in self.scenario_name:
+        if re.search(r'\s', self.scenario_name):
             raise ValueError(
                 f'The scenario name "{self.scenario_name}"cannot be written with space character, please use '
                 f'underscore or dash.')
@@ -810,9 +811,9 @@ class Scenario:
         self.mpl = self._multi_partner_learning_approach(self, custom_name='main_mpl')
         self.mpl.fit()
 
-        # ----------------------------------------------------------
+        # -------------------------------------------------------------------------
         # Instantiate and run the contributivity measurement contributivity_methods
-        # ----------------------------------------------------------
+        # -------------------------------------------------------------------------
 
         for method in self.contributivity_methods:
             logger.info(f"{method}")
