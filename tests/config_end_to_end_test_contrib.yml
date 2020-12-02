@@ -12,8 +12,8 @@ scenario_params_list:
      - ['basic', 'random']
    multi_partner_learning_approach:
      - 'fedavg'
-   methods:
-    - ["Shapley values", "Independent scores"]
+   contributivity_methods:
+     - [ "Shapley values", "Independent scores" ]
    epoch_count: 
      - 1
    minibatch_count: 

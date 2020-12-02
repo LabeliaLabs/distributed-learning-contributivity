@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 
 import numpy as np
+from keras.utils import to_categorical
 from loguru import logger
 
 
@@ -156,8 +157,15 @@ class Duplication(Corruption):
             raise Exception('Missing the Partner to duplicate')
         self.generate_matrix()
         idx = self.corrupted_index
+        if self.duplicated_partner.y_train.ndim == 1:
+            self.duplicated_partner.y_train = to_categorical(self.duplicated_partner.y_train.reshape(-1, 1))
+            one_label = True
+        else:
+            one_label = False
         self.partner.y_train[idx] = self.duplicated_partner.y_train[:len(idx)]
         self.partner.x_train[idx] = self.duplicated_partner.x_train[:len(idx)]
+        if one_label:
+            self.duplicated_partner.y_train = np.argmax(self.duplicated_partner.y_train, axis=1).astype('float32')
         logger.debug(f"   Partner #{self.partner.id}: Done.")
 
 

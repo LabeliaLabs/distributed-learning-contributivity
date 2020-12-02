@@ -56,7 +56,7 @@ class Partner:
         self.corruption.apply()
 
         if one_label:
-            self.y_train = np.argmax(self.y_train, axis=1)
+            self.y_train = np.argmax(self.y_train, axis=1).astype('float32')
         logger.debug(f"   Partner #{self.id}: Done.")
 
 

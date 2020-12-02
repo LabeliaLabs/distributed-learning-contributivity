@@ -16,7 +16,61 @@ from . import utils, constants
 DEFAULT_CONFIG_FILE = "../config.yml"
 
 
+class ScenarioList(list):
+    def __init__(self, experiment):
+        self.experiment = experiment
+        super().__init__()
+
+    def append(self, scenario_to_add: scenario_module.Scenario) -> None:
+        """Add a scenario to the list of scenarios to be run"""
+
+        if isinstance(scenario_to_add, scenario_module.Scenario):
+            new_id = self.__len__()
+            scenario_to_add.scenario_name = scenario_to_add.scenario_name.replace(
+                f'scenario_{scenario_to_add.scenario_id}',
+                f'scenario_{new_id}')
+            scenario_to_add.scenario_id = new_id
+            scenario_to_add.save_folder = self.experiment.experiment_path / scenario_to_add.scenario_name
+            super(ScenarioList, self).append(scenario_to_add)
+        else:
+            raise Exception(f"The scenario {scenario_to_add} you are trying to add is not an instance of"
+                            f"object scenario.Scenario")
+
+    def extend(self, __iterable) -> None:
+        for i in __iterable:
+            self.append(i)
+
+    def insert(self, __index: int, __scenario_to_insert) -> None:
+        """Insert a scenario in the list of scenarios to be run"""
+
+        if isinstance(__scenario_to_insert, scenario_module.Scenario):
+            new_id = self.__len__()
+            __scenario_to_insert.scenario_name = __scenario_to_insert.scenario_name.replace(
+                f'scenario_{__scenario_to_insert.scenario_id}',
+                f'scenario_{new_id}')
+            __scenario_to_insert.scenario_id = new_id
+            __scenario_to_insert.save_folder = self.experiment.experiment_path / __scenario_to_insert.scenario_name
+            super(ScenarioList, self).insert(__index, __scenario_to_insert)
+        else:
+            raise Exception(f"The scenario {__scenario_to_insert} you are trying to add is not an instance of"
+                            f"object scenario.Scenario")
+
+    def __setitem__(self, key, scenario_to_set):
+        if isinstance(scenario_to_set, scenario_module.Scenario):
+            new_id = self.__len__()
+            scenario_to_set.scenario_name = scenario_to_set.scenario_name.replace(
+                f'scenario_{scenario_to_set.scenario_id}',
+                f'scenario_{new_id}')
+            scenario_to_set.scenario_id = new_id
+            scenario_to_set.save_folder = self.experiment.experiment_path / scenario_to_set.scenario_name
+            return super(ScenarioList, self).__setitem__(key, scenario_to_set)
+        else:
+            raise Exception(f"The scenario {scenario_to_set} you are trying to add is not an instance of"
+                            f"object scenario.Scenario")
+
+
 class Experiment:
+
     def __init__(
             self,
             experiment_name=None,
@@ -35,14 +89,10 @@ class Experiment:
         self.name = experiment_name
         if experiment_name:
             self.experiment_path = self.define_experiment_path(**kwargs)
-        self._scenarios_list = []
+        self.scenarios_list = ScenarioList(self)
         for scenario in scenarios_list:
             self.add_scenario(scenario)
         self.nb_repeats = nb_repeats
-
-    @property
-    def scenarios_list(self):
-        return self._scenarios_list
 
     def define_experiment_path(self, **kwargs):
         """Define the path and create folder for saving results of the experiment"""
@@ -66,20 +116,7 @@ class Experiment:
         return experiment_path
 
     def add_scenario(self, scenario_to_add):
-        """Add a scenario to the list of scenarios to be run"""
-
-        if isinstance(scenario_to_add, scenario_module.Scenario):
-            scenario_to_add.experiment_path = self.experiment_path
-            new_id = len(self.scenarios_list)
-            scenario_to_add.scenario_name = scenario_to_add.scenario_name.replace(
-                f'scenario_{scenario_to_add.scenario_id}',
-                f'scenario_{new_id}')
-            scenario_to_add.scenario_id = new_id
-            scenario_to_add.save_folder = self.experiment_path / scenario_to_add.scenario_name
-            self._scenarios_list.append(scenario_to_add)
-        else:
-            raise Exception(f"The scenario {scenario_to_add} you are trying to add is not an instance of"
-                            f"object scenario.Scenario")
+        self.scenarios_list.append(scenario_to_add)
 
     def init_experiment_from_config_file(self, path_to_config_file=DEFAULT_CONFIG_FILE):
         """Create scenarios from a config file passed as argument,
@@ -111,7 +148,7 @@ class Experiment:
 
         logger.info("All scenarios created , successfully validated and added to the experiment")
 
-    def run_experiment(self):
+    def run(self):
         """Run the experiment """
 
         # Preliminary steps

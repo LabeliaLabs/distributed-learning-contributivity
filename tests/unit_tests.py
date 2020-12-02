@@ -48,7 +48,8 @@ import yaml
 from mplc import utils
 from mplc.contributivity import Contributivity
 from mplc.corruption import Permutation, PermutationCircular, Randomize, Redundancy, RandomizeUniform, Duplication
-from mplc.dataset import Mnist, Cifar10, Titanic
+from mplc.dataset import Mnist, Cifar10, Titanic, Imdb, Esc50
+from mplc.experiment import Experiment
 from mplc.mpl_utils import UniformAggregator
 from mplc.multi_partner_learning import FederatedAverageLearning
 from mplc.partner import Partner
@@ -65,7 +66,7 @@ from mplc.scenario import Scenario
 
 # create_Mpl uses create_Dataset and create_Contributivity uses create_Scenario
 
-@pytest.fixture(scope="class", params=(Mnist, Titanic))  # params=(Mnist, Cifar10, Titanic, Imdb, Esc50))
+@pytest.fixture(scope="class", params=(Mnist, Cifar10, Titanic, Imdb, Esc50))
 def create_all_datasets(request):
     return request.param()
 
@@ -152,6 +153,11 @@ def create_Scenario(request):
     return scenario_
 
 
+@pytest.fixture(scope='class')
+def create_experiment():
+    return Experiment(experiment_name='test_exp', nb_repeats=10)
+
+
 @pytest.fixture(scope="class")
 def create_Contributivity(create_Scenario):
     scenario = create_Scenario
@@ -171,6 +177,31 @@ def create_Contributivity(create_Scenario):
 # Tests modules with Objects
 #
 ######
+class Test_Experiment:
+    def test_add_scenario(self, create_experiment):
+        exp = create_experiment
+        sc = Scenario(2, [0.5, 0.5], dataset_name='titanic')
+        assert len(exp.scenarios_list) == 0, 'Scenario list should be empty when initialized'
+        exp.add_scenario(sc)
+        assert exp.scenarios_list[0] is sc, 'Failed to add a scenario'
+
+    def test_raise_error_when_adding_a_string(self, create_experiment):
+        exp = create_experiment
+        with pytest.raises(Exception):
+            exp.scenarios_list[0] = 'not a scenario'
+        with pytest.raises(Exception):
+            exp.scenarios_list.append('Still not a scenario')
+        with pytest.raises(Exception):
+            exp.add_scenario('for the last time, a string is NOT a scenario')
+
+    def test_def_path(self, create_experiment):
+        exp = create_experiment
+        exp.name = 'new_name'
+        path = exp.define_experiment_path()
+        assert path != exp.experiment_path, 'the path should have changed'
+        assert 'new_name' in str(path), 'the new name should be in path'
+        assert path.exists(), f'{path} should exist'
+
 
 class Test_Scenario:
     def test_scenar(self, create_Scenario):
@@ -300,7 +331,7 @@ class Test_Dataset:
 ######
 
 
-class TestDemoClass:
+class _TestDemoClass:
     def test_ok(self):
         """
         Demo test
