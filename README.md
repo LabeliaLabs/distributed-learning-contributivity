@@ -1,4 +1,6 @@
 [![Build Status](https://travis-ci.org/SubstraFoundation/distributed-learning-contributivity.svg?branch=master)](https://travis-ci.org/SubstraFoundation/distributed-learning-contributivity)
+[![Code Coverage](https://codecov.io/gh/SubstraFoundation/distributed-learning-contributivity/branch/cov_to_travis/graphs/badge.svg)](
+https://codecov.io/gh/SubstraFoundation/distributed-learning-contributivity/branch/cov_to_travis/graphs/badge.svg)
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/SubstraFoundation/distributed-learning-contributivity/blob/master/run_experiment_on_google_collab.ipynb)
 [![Discuss on Slack](https://img.shields.io/badge/chat-on%20slack-orange)](https://substra.us18.list-manage.com/track/click?e=2effed55c9&id=fa49875322&u=385fa3f9736ea94a1fcca969f)
 
