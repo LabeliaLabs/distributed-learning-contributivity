@@ -62,7 +62,7 @@ class Permutation(Corruption):
         # Generate the permutation matrix to use
         self.generate_matrix()
         # Permute the labels
-        self.partner.y_train[idx] = np.dot(self.partner.y_train[idx], self.matrix.T)
+        self.partner.y_train[idx] = np.dot(self.partner.y_train[idx], self.matrix)
         logger.debug(f"   Partner #{self.partner.id}: Done.")
 
 
