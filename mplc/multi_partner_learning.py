@@ -31,6 +31,8 @@ ALLOWED_PARAMETERS = ('partners_list',
 
 
 class MultiPartnerLearning(ABC):
+    name = 'abstract'
+
     def __init__(self, scenario, **kwargs):
         """
 
@@ -96,6 +98,9 @@ class MultiPartnerLearning(ABC):
             self.save_folder.mkdir()
 
         logger.debug("MultiPartnerLearning object instantiated.")
+
+    def __str__(self):
+        return f'{self.name}'
 
     @property
     def partners_count(self):
@@ -196,7 +201,7 @@ class MultiPartnerLearning(ABC):
                     self.epoch_index >= constants.PATIENCE
                     and self.history.history['mpl_model']['val_loss'][self.epoch_index,
                                                                       self.minibatch_index] >
-                    self.history.history['mpl_model']['val_loss'][self.epoch_index-constants.PATIENCE,
+                    self.history.history['mpl_model']['val_loss'][self.epoch_index - constants.PATIENCE,
                                                                   self.minibatch_index]
             ):
                 logger.debug("         -> Early stopping criteria are met, stopping here.")
@@ -242,6 +247,8 @@ class MultiPartnerLearning(ABC):
 
 
 class SinglePartnerLearning(MultiPartnerLearning):
+    name = 'Single partner learning'
+
     def __init__(self, scenario, partner, **kwargs):
         kwargs['partners_list'] = [partner]
         super(SinglePartnerLearning, self).__init__(scenario, **kwargs)
@@ -290,6 +297,8 @@ class SinglePartnerLearning(MultiPartnerLearning):
 
 
 class FederatedAverageLearning(MultiPartnerLearning):
+    name = 'Federated averaging'
+
     def __init__(self, scenario, **kwargs):
         # First, if only one partner, fall back to dedicated single partner function
         super(FederatedAverageLearning, self).__init__(scenario, **kwargs)
@@ -349,6 +358,8 @@ class FederatedAverageLearning(MultiPartnerLearning):
 
 
 class SequentialLearning(MultiPartnerLearning):  # seq-pure
+    name = 'Sequential learning'
+
     def __init__(self, scenario, **kwargs):
         super(SequentialLearning, self).__init__(scenario, **kwargs)
         if self.partners_count == 1:
@@ -400,6 +411,8 @@ class SequentialLearning(MultiPartnerLearning):  # seq-pure
 
 
 class SequentialWithFinalAggLearning(SequentialLearning):
+    name = 'Sequential learning with final aggregation'
+
     def __init__(self, scenario, **kwargs):
         super(SequentialWithFinalAggLearning, self).__init__(scenario, **kwargs)
         if self.partners_count == 1:
@@ -424,6 +437,8 @@ class SequentialWithFinalAggLearning(SequentialLearning):
 
 
 class SequentialAverageLearning(SequentialLearning):
+    name = 'Sequential averaged learning'
+
     def __init__(self, scenario, **kwargs):
         super(SequentialAverageLearning, self).__init__(scenario, **kwargs)
         if self.partners_count == 1:
@@ -448,6 +463,8 @@ class SequentialAverageLearning(SequentialLearning):
 
 
 class MplLabelFlip(FederatedAverageLearning):
+    name = 'Federated learning with label flipping'
+
     def __init__(self, scenario, epsilon=0.01, **kwargs):
         super(MplLabelFlip, self).__init__(scenario, **kwargs)
 

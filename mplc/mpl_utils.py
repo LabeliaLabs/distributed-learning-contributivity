@@ -110,12 +110,17 @@ class History:
 
 
 class Aggregator(ABC):
+    name = 'abstract'
+
     def __init__(self, mpl):
         """
         :type mpl: MultiPartnerLearning
         """
         self.mpl = mpl
         self.aggregation_weights = np.zeros(self.mpl.partners_count)
+
+    def __str__(self):
+        return f'{self.name} aggregator'
 
     def aggregate_model_weights(self):
         """Aggregate model weights from the list of partner's models, with a weighted average"""
@@ -133,12 +138,16 @@ class Aggregator(ABC):
 
 
 class UniformAggregator(Aggregator):
+    name = 'Uniform'
+
     def __init__(self, mpl):
         super(UniformAggregator, self).__init__(mpl)
         self.aggregation_weights = [1 / self.mpl.partners_count] * self.mpl.partners_count
 
 
 class DataVolumeAggregator(Aggregator):
+    name = 'Data volume'
+
     def __init__(self, mpl):
         super(DataVolumeAggregator, self).__init__(mpl)
         partners_sizes = [partner.data_volume for partner in self.mpl.partners_list]
@@ -146,6 +155,8 @@ class DataVolumeAggregator(Aggregator):
 
 
 class ScoresAggregator(Aggregator):
+    name = 'Local scores'
+
     def __init__(self, mpl):
         super(ScoresAggregator, self).__init__(mpl)
 
