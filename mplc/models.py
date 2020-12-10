@@ -121,7 +121,7 @@ class NoiseAdaptationChannel(Dense):
         # convert W to the channel probability (stochastic) matrix
         # channel_matrix.sum(axis=-1) == 1
         # channel_matrix.shape == (input_dim, input_dim)
-        channel_matrix = self.activation(10.0 * self.kernel)
+        channel_matrix = self.activation(self.kernel)
 
         # multiply the channel matrix with the baseline output:
         # channel_matrix[0,0] is the probability that baseline output 0 will get

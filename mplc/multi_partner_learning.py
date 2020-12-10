@@ -475,19 +475,6 @@ class MplSModel(FederatedAverageLearning):
                                                          epoch_count=self.pretrain_epochs,
                                                          is_save_data=False)
 
-    def generate_noise_adaptation_layer(self, w):
-
-        model_input = Input(shape=(self.dataset.num_classes,))
-        outputs = NoiseAdaptationChannel(weights=w)(model_input)
-        noise_layer = Model(inputs=model_input, outputs=outputs)
-
-        noise_layer.compile(
-            loss=categorical_crossentropy,
-            optimizer="adam",
-            metrics=["accuracy"],
-        )
-        return noise_layer
-
     def fit(self):
         if self.pretrain_epochs > 0:
             logger.info('Start pre-train...')
@@ -523,13 +510,12 @@ class MplSModel(FederatedAverageLearning):
         for partner_index, partner in enumerate(self.partners_list):
             # Reference the partner's model
             partner_model = partner.build_model()
-            s_model = self.generate_noise_adaptation_layer(w=partner.noise_layer_weights)
             x_batch = partner.minibatched_x_train[self.minibatch_index]
             y_batch = partner.minibatched_y_train[self.minibatch_index]
 
             model_input = Input(shape=self.dataset.input_shape)
             x = partner_model(model_input)
-            outputs = s_model(x)
+            outputs = NoiseAdaptationChannel(w=partner.noise_layer_weights, name='s-model')(x)
             full_model = Model(inputs=model_input, outputs=outputs, name=f"full_model_partner_{partner_index}")
 
             full_model.compile(
@@ -549,7 +535,7 @@ class MplSModel(FederatedAverageLearning):
             self.log_partner_perf(partner.id, partner_index, history.history)
 
             # Update the partner's model in the models' list
-            partner.petit_weights = s_model.get_weights()
+            partner.noise_layer_weights = full_model.get_layer('s-model').get_weights()
             partner.model_weights = partner_model.get_weights()
 
         logger.debug("End of S-Model collaborative round.")
