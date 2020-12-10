@@ -187,19 +187,53 @@ class Duplication(Corruption):
             raise Exception('Please provide either a Partner to duplicate, or its id')
 
     @property
-    def corrupted_index(self):
-        if self._corrupted_idx is None:
+    def corrupted_train_index(self):
+        if self._corrupted_train_idx is None:
             n = int(len(self.partner.y_train) * self.proportion)
             if len(self.duplicated_partner.y_train) > n:
-                self._corrupted_idx = np.random.choice(len(self.partner.y_train), size=n, replace=False)
+                self._corrupted_train_idx = np.random.choice(len(self.partner.y_train), size=n, replace=False)
             else:
                 n = int(len(self.duplicated_partner.y_train))
-                self._corrupted_idx = np.random.choice(len(self.partner.y_train), size=n, replace=False)
+                self._corrupted_train_idx = np.random.choice(len(self.partner.y_train), size=n, replace=False)
                 logger.warning(f"The partner which dataset would have been copied does not have enough data"
                                f" to corrupt {self.proportion * 100}% of this partner's dataset."
                                f" Only {np.round((n / len(self.partner.y_train)), 2) * 100} percent will be corrupted")
                 self.proportion = np.round((n / len(self.partner.y_train)), 2)
-        return self._corrupted_idx
+        return self._corrupted_train_idx
+
+    @property
+    def corrupted_val_index(self):
+        if self._corrupted_val_idx is None:
+            n = int(len(self.partner.y_val) * self.proportion)
+            if len(self.duplicated_partner.y_val) > n:
+                self._corrupted_val_idx = np.random.choice(len(self.partner.y_val), size=n, replace=False)
+            elif n == 0:
+                self._corrupted_val_idx = []
+            else:
+                n = int(len(self.duplicated_partner.y_val))
+                self._corrupted_val_idx = np.random.choice(len(self.partner.y_val), size=n, replace=False)
+                logger.warning(f"The partner which dataset would have been copied does not have enough data"
+                               f" to corrupt {self.proportion * 100}% of this partner's dataset."
+                               f" Only {np.round((n / len(self.partner.y_val)), 2) * 100} percent will be corrupted")
+                self.proportion = np.round((n / len(self.partner.y_val)), 2)
+        return self._corrupted_val_idx
+
+    @property
+    def corrupted_test_index(self):
+        if self._corrupted_test_idx is None:
+            n = int(len(self.partner.y_test) * self.proportion)
+            if len(self.duplicated_partner.y_test) > n:
+                self._corrupted_test_idx = np.random.choice(len(self.partner.y_test), size=n, replace=False)
+            elif n == 0:
+                self._corrupted_test_idx = []
+            else:
+                n = int(len(self.duplicated_partner.y_test))
+                self._corrupted_test_idx = np.random.choice(len(self.partner.y_test), size=n, replace=False)
+                logger.warning(f"The partner which dataset would have been copied does not have enough data"
+                               f" to corrupt {self.proportion * 100}% of this partner's dataset."
+                               f" Only {np.round((n / len(self.partner.y_test)), 2) * 100} percent will be corrupted")
+                self.proportion = np.round((n / len(self.partner.y_test)), 2)
+        return self._corrupted_test_idx
 
     def set_duplicated_partner(self, partner_list):
         if not self.duplicated_partner_id:
@@ -220,6 +254,17 @@ class Duplication(Corruption):
         self.partner.x_train[idx] = self.duplicated_partner.x_train[:len(idx)]
         if one_label:
             self.duplicated_partner.y_train = np.argmax(self.duplicated_partner.y_train, axis=1).astype('float32')
+
+        if len(self.corrupted_val_index) > 0:
+            self.partner.y_val[self.corrupted_val_index] = self.duplicated_partner.y_val[
+                                                           :len(self.corrupted_val_index)]
+            self.partner.x_val[self.corrupted_val_index] = self.duplicated_partner.x_val[
+                                                           :len(self.corrupted_val_index)]
+        if len(self.corrupted_test_index) > 0:
+            self.partner.y_test[self.corrupted_test_index] = self.duplicated_partner.y_test[
+                                                             :len(self.corrupted_test_index)]
+            self.partner.x_test[self.corrupted_test_index] = self.duplicated_partner.x_test[
+                                                             :len(self.corrupted_test_index)]
         logger.debug(f"   Partner #{self.partner.id}: Done.")
 
 

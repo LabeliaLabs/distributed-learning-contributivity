@@ -290,15 +290,6 @@ class Test_Dataset:
         with pytest.raises(Exception):
             data.train_val_split_global()
 
-    def test_local_split(self, create_all_datasets):
-        data = create_all_datasets
-        x_train, x_val, y_train, y_val = data.train_val_split_local(data.x_train, data.y_train)
-        assert len(x_train) == len(y_train)
-        assert len(x_val) == len(y_val)
-        x_train, x_test, y_train, y_test = data.train_val_split_local(data.x_train, data.y_train)
-        assert len(x_train) == len(y_train)
-        assert len(x_test) == len(y_test)
-
     def test_data_shape(self, create_all_datasets):
         data = create_all_datasets
         assert len(data.x_train) == len(data.y_train), "Number of train label is not equal to the number of data"

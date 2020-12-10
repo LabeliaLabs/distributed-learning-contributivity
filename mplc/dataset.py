@@ -272,7 +272,7 @@ class Titanic(Dataset):
         y = raw_dataset['Survived']
         y = y.to_numpy(dtype='float32')
 
-        x_train, x_test, y_train, y_test = self.train_test_split_global(x, y)
+        x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.1, random_state=42)
 
         return (x_train, y_train), (x_test, y_test)
 
