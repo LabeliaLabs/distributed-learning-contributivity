@@ -439,7 +439,7 @@ Example: `methods=["Shapley values", "Independent scores", "TMCS"]`
   
 ## Experiments
 
-At some point of your use of the library you might need to launch several scenarios in a rows. It the same spirit, you might want to repeat one scenario's run, to get rid of the randomness of training, and end with more meaningful results.
+At some point of your use of the library you might need to launch several scenarios in a row. It the same spirit, you might want to repeat one scenario's run, to get rid of the randomness of training, and end with more meaningful results.
 
 The `Experiment` object allows you to set a list of scenarios to run, along with a wanted number of repetition.
 Once instancied, scenarios can be added via the `.add_scenario()`.
@@ -447,9 +447,10 @@ Eventually, all the scenarios can be run, and repeated, by calling the `.run()` 
 
 ### Experiment's parameters
 Few parameters can be set:
-    - `experiment_name`: String, default `None`. Name of the experiment, will be used for the save path. if `None` the result will not be saved on disk
+    - `experiment_name`: String, default `'experiment'`. Name of the experiment, will be used for the save path. The full experiment name will be followed by creation date/time, and by a hash if the experiment name already exists.
     - `nb_repeat`: int, Number of repetition for the experiment, in which each scenario will be run 
     - `scenario_list`: list of scenarios to be run during the experiment. Scenario can also be added via the `.add_scenario()` method
+    -  `is_save`: boolean. If set to True, the experiment will be save on disk.
 
 ### Save folder
 Another parameter can be passed via the kwargs : `experiment_path`, string which will be used to define the path where the save folder will be created. 

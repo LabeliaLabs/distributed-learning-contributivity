@@ -32,7 +32,10 @@ class ScenarioList(list):
                 f'scenario_{scenario_to_add.scenario_id}',
                 f'scenario_{new_id}')
             scenario_to_add.scenario_id = new_id
-            scenario_to_add.save_folder = self.experiment.experiment_path / scenario_to_add.scenario_name
+            if self.experiment.is_save:
+                scenario_to_add.save_folder = self.experiment.experiment_path / scenario_to_add.scenario_name
+            else:
+                scenario_to_add.save_folder = None
             super(ScenarioList, self).append(scenario_to_add)
         else:
             raise Exception(f"The scenario {scenario_to_add} you are trying to add is not an instance of"
@@ -51,7 +54,10 @@ class ScenarioList(list):
                 f'scenario_{__scenario_to_insert.scenario_id}',
                 f'scenario_{new_id}')
             __scenario_to_insert.scenario_id = new_id
-            __scenario_to_insert.save_folder = self.experiment.experiment_path / __scenario_to_insert.scenario_name
+            if self.experiment.is_save:
+                __scenario_to_insert.save_folder = self.experiment.experiment_path / __scenario_to_insert.scenario_name
+            else:
+                __scenario_to_insert.save_folder = None
             super(ScenarioList, self).insert(__index, __scenario_to_insert)
         else:
             raise Exception(f"The scenario {__scenario_to_insert} you are trying to add is not an instance of"
@@ -64,7 +70,10 @@ class ScenarioList(list):
                 f'scenario_{scenario_to_set.scenario_id}',
                 f'scenario_{new_id}')
             scenario_to_set.scenario_id = new_id
-            scenario_to_set.save_folder = self.experiment.experiment_path / scenario_to_set.scenario_name
+            if self.experiment.is_save:
+                scenario_to_set.save_folder = self.experiment.experiment_path / scenario_to_set.scenario_name
+            else:
+                scenario_to_set.save_folder = None
             return super(ScenarioList, self).__setitem__(key, scenario_to_set)
         else:
             raise Exception(f"The scenario {scenario_to_set} you are trying to add is not an instance of"
@@ -75,7 +84,7 @@ class Experiment:
 
     def __init__(
             self,
-            experiment_name=None,
+            experiment_name='experiment',
             nb_repeats=1,
             scenarios_list=[],
             is_save=False,
@@ -97,8 +106,8 @@ class Experiment:
         self.is_save = is_save
         if is_save:
             self.experiment_path = self.define_experiment_path(**kwargs)
-        else:
-            self.result = pd.DataFrame({})
+
+        self.result = pd.DataFrame({})
         self.scenarios_list = ScenarioList(self)
         for scenario in scenarios_list:
             self.add_scenario(scenario)
@@ -160,7 +169,8 @@ class Experiment:
         # Preliminary steps
         logger.info(f"Now running experiment {self.name}")
         plt.close("all")  # Close open figures
-        utils.set_log_file(self.experiment_path)  # Move log files to experiment folder
+        if self.is_save:
+            utils.set_log_file(self.experiment_path)  # Move log files to experiment folder
 
         # Loop over nb_repeats
         for repeat_idx in range(self.nb_repeats):
@@ -175,7 +185,10 @@ class Experiment:
                             f"Now running scenario {scenario_index_str}")
 
                 # Run the scenario
-                scenario = blank_scenario.copy(repeat_count=repeat_idx, save_path=self.experiment_path)
+                if self.is_save:
+                    scenario = blank_scenario.copy(repeat_count=repeat_idx, save_path=self.experiment_path)
+                else:
+                    scenario = blank_scenario.copy(repeat_count=repeat_idx)
                 scenario.run()
 
                 # Save scenario results
@@ -189,8 +202,8 @@ class Experiment:
                         logger.info(
                             f"(Experiment {self.name}, repeat {repeat_index_str}, scenario {scenario_index_str}) "
                             f"Results saved to results.csv in folder {os.path.relpath(self.experiment_path)}")
-                else:
-                    self.result = self.result.append(df_results)
+
+                self.result = self.result.append(df_results)
 
         # TODO: Produce a default analysis notebook
         pass

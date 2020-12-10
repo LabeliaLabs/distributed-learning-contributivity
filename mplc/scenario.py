@@ -369,7 +369,10 @@ class Scenario:
             del params[key]
         if 'is_quick_demo' in kwargs and kwargs['is_quick_demo'] != self.is_quick_demo:
             raise ValueError("Attribute 'is_quick_demo' cannot be modified between copies.")
-        params['save_path'] = self.save_folder.parents[0]
+        if self.save_folder is not None:
+            params['save_path'] = self.save_folder.parents[0]
+        else:
+            params['save_path'] = None
         params.update(kwargs)
 
         return Scenario(**params)
