@@ -155,7 +155,7 @@ def create_Scenario(request):
 
 @pytest.fixture(scope='class')
 def create_experiment():
-    return Experiment(experiment_name='test_exp', nb_repeats=10)
+    return Experiment(experiment_name='test_exp', nb_repeats=10, is_save=True)
 
 
 @pytest.fixture(scope="class")
