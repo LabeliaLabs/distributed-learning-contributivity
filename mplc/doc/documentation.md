@@ -444,6 +444,7 @@ At some point of your use of the library you might need to launch several scenar
 The `Experiment` object allows you to set a list of scenarios to run, along with a wanted number of repetition.
 Once instancied, scenarios can be added via the `.add_scenario()`.
 Eventually, all the scenarios can be run, and repeated, by calling the `.run()` method. 
+
 ### Experiment's parameters
 Few parameters can be set:
     - `experiment_name`: String, default `None`. Name of the experiment, will be used for the save path. if `None` the result will not be saved on disk
@@ -487,7 +488,6 @@ exp.add_scenario(scenario2)
 
 exp.run()
 ````
-
 
 ## Dataset generation
 

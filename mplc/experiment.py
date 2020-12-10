@@ -5,9 +5,11 @@ An Experiment regroups multiple scenarios and enables to run them and analyze th
 
 import datetime
 import os
+import uuid
 from pathlib import Path
 
 import matplotlib.pyplot as plt
+import pandas as pd
 from loguru import logger
 
 from . import scenario as scenario_module
@@ -76,6 +78,7 @@ class Experiment:
             experiment_name=None,
             nb_repeats=1,
             scenarios_list=[],
+            is_save=False,
             **kwargs
     ):
         """
@@ -84,11 +87,18 @@ class Experiment:
                            a number of non-deterministic phenomena). Example: 5
         :param scenarios_list: list, list of scenarios to be run during the experiment.
                                Scenario can also be added via the .add_scenario() method.
+        :param is_save: boolean. If set to True, the experiment will be save on disk.
         """
 
-        self.name = experiment_name
-        if experiment_name:
+        now = datetime.datetime.now()
+        now_str = now.strftime("%Y-%m-%d_%Hh%M")
+        self.name = experiment_name + "_" + now_str
+
+        self.is_save = is_save
+        if is_save:
             self.experiment_path = self.define_experiment_path(**kwargs)
+        else:
+            self.result = pd.DataFrame({})
         self.scenarios_list = ScenarioList(self)
         for scenario in scenarios_list:
             self.add_scenario(scenario)
@@ -97,17 +107,13 @@ class Experiment:
     def define_experiment_path(self, **kwargs):
         """Define the path and create folder for saving results of the experiment"""
 
-        now = datetime.datetime.now()
-        now_str = now.strftime("%Y-%m-%d_%Hh%M")
-
-        full_experiment_name = self.name + "_" + now_str
         experiment_path = Path.cwd() / kwargs.get('experiment_path',
-                                                  constants.EXPERIMENTS_FOLDER_NAME) / full_experiment_name
+                                                  constants.EXPERIMENTS_FOLDER_NAME) / self.name
 
         # Check if experiment folder already exists
-        while experiment_path.exists():
+        if experiment_path.exists():
             logger.warning(f"Experiment folder {experiment_path} already exists")
-            new_experiment_name = Path(str(experiment_path) + "_bis")
+            new_experiment_name = Path(f"{experiment_path}_{uuid.uuid4().hex[:3]}")  # to distinguish identical names
             experiment_path = Path.cwd() / constants.EXPERIMENTS_FOLDER_NAME / new_experiment_name
             logger.warning(f"Experiment folder has been renamed to: {experiment_path}")
 
@@ -177,10 +183,14 @@ class Experiment:
                 df_results["repeat_index"] = repeat_idx
                 df_results["scenario_index"] = scenario_idx
 
-                with open(self.experiment_path / "results.csv", "a") as f:
-                    df_results.to_csv(f, header=f.tell() == 0, index=False)
-                    logger.info(f"(Experiment {self.name}, repeat {repeat_index_str}, scenario {scenario_index_str}) "
-                                f"Results saved to results.csv in folder {os.path.relpath(self.experiment_path)}")
+                if self.is_save:
+                    with open(self.experiment_path / "results.csv", "a") as f:
+                        df_results.to_csv(f, header=f.tell() == 0, index=False)
+                        logger.info(
+                            f"(Experiment {self.name}, repeat {repeat_index_str}, scenario {scenario_index_str}) "
+                            f"Results saved to results.csv in folder {os.path.relpath(self.experiment_path)}")
+                else:
+                    self.result = self.result.append(df_results)
 
         # TODO: Produce a default analysis notebook
         pass
