@@ -42,6 +42,7 @@ class Dataset(ABC):
                  y_train,
                  x_test,
                  y_test,
+                 val_proportion=0.1,
                  proportion=1
                  ):
         self.name = dataset_name
@@ -51,10 +52,8 @@ class Dataset(ABC):
         self.model_metrics_names = ['loss', 'accuracy']
 
         self.x_train = x_train
-        self.x_val = None
         self.x_test = x_test
         self.y_train = y_train
-        self.y_val = None
         self.y_test = y_test
 
         self.proportion = 1
@@ -63,23 +62,6 @@ class Dataset(ABC):
 
     def __str__(self):
         return f'{self.name} dataset'
-
-    def train_val_split_global(self):
-        """Called once, at the end of Dataset's constructor"""
-        if self.x_val or self.y_val:
-            raise Exception("x_val and y_val should be of NoneType")
-        self.x_train, self.x_val, self.y_train, self.y_val = train_test_split(self.x_train,
-                                                                              self.y_train,
-                                                                              test_size=0.1,
-                                                                              random_state=42)
-
-    @staticmethod
-    def train_test_split_local(x, y):
-        return x, np.array([]), y, np.array([])
-
-    @staticmethod
-    def train_val_split_local(x, y):
-        return x, np.array([]), y, np.array([])
 
     @abstractmethod
     def generate_new_model(self):
@@ -204,15 +186,6 @@ class Cifar10(Dataset):
 
         return model
 
-    # train, test, val splits
-    @staticmethod
-    def train_test_split_local(x, y):
-        return train_test_split(x, y, test_size=0.1, random_state=42)
-
-    @staticmethod
-    def train_val_split_local(x, y):
-        return train_test_split(x, y, test_size=0.1, random_state=42)
-
 
 class Titanic(Dataset):
     def __init__(self):
@@ -312,18 +285,78 @@ class Titanic(Dataset):
         clf.metrics_names = ["loss", "accuracy"]  # Mimic Keras's
         return clf
 
-    # train, test, val splits
-    @staticmethod
-    def train_test_split_local(x, y):
-        return train_test_split(x, y, test_size=0.1, random_state=42)
+    class LogisticRegression(skLR):
+        def __init__(self):
+            super(Titanic.LogisticRegression, self).__init__(max_iter=10000, warm_start=1, random_state=0)
+            self.coef_ = None
+            self.intercept_ = None
 
-    @staticmethod
-    def train_val_split_local(x, y):
-        return train_test_split(x, y, test_size=0.1, random_state=42)
+        def fit(self, x_train, y_train, batch_size, validation_data, epochs=1, verbose=False):
+            history = super(Titanic.LogisticRegression, self).fit(x_train, y_train)
+            [loss, acc] = self.evaluate(x_train, y_train)
+            [val_loss, val_acc] = self.evaluate(*validation_data)
+            # Mimic Keras' history
+            history.history = {
+                'loss': [loss],
+                'accuracy': [acc],
+                'val_loss': [val_loss],
+                'val_accuracy': [val_acc]
+            }
 
-    @staticmethod
-    def train_test_split_global(x, y):
-        return train_test_split(x, y, test_size=0.1, random_state=42)
+            return history
+
+        def evaluate(self, x_eval, y_eval, **kwargs):
+            if self.coef_ is None:
+                model_evaluation = [0] * 2
+            else:
+                loss = log_loss(y_eval, self.predict(x_eval))  # mimic keras model evaluation
+                accuracy = self.score(x_eval, y_eval)
+                model_evaluation = [loss, accuracy]
+
+            return model_evaluation
+
+        def save_weights(self, path):
+            if self.coef_ is None:
+                raise ValueError(
+                    'Coef and intercept are set to None, it seems the model has not been fit properly.')
+            if '.h5' in path:
+                logger.debug('Automatically switch file format from .h5 to .npy')
+                path.replace('.h5', '.npy')
+            np.save(path, self.get_weights())
+
+        def load_weights(self, path):
+            if '.h5' in path:
+                logger.debug('Automatically switch file format from .h5 to .npy')
+                path.replace('.h5', '.npy')
+            weights = load(path)
+            self.set_weights(weights)
+
+        def get_weights(self):
+            if self.coef_ is None:
+                return None
+            else:
+                return np.concatenate((self.coef_, self.intercept_.reshape(1, 1)), axis=1)
+
+        def set_weights(self, weights):
+            if weights is None:
+                self.coef_ = None
+                self.intercept_ = None
+            else:
+                self.coef_ = np.array(weights[0][:-1]).reshape(1, -1)
+                self.intercept_ = np.array(weights[0][-1]).reshape(1)
+
+        def save_model(self, path):
+            if '.h5' in path:
+                logger.debug('Automatically switch file format from .h5 to .joblib')
+                path.replace('.h5', '.joblib')
+            dump(self, path)
+
+        @staticmethod
+        def load_model(path):
+            if '.h5' in path:
+                logger.debug('Automatically switch file format from .h5 to .joblib')
+                path.replace('.h5', '.joblib')
+            return load(path)
 
 
 class Mnist(Dataset):
@@ -410,15 +443,6 @@ class Mnist(Dataset):
 
         return model
 
-    # train, test, val splits
-    @staticmethod
-    def train_test_split_local(x, y):
-        return train_test_split(x, y, test_size=0.1, random_state=42)
-
-    @staticmethod
-    def train_val_split_local(x, y):
-        return train_test_split(x, y, test_size=0.1, random_state=42)
-
 
 class Imdb(Dataset):
     def __init__(self):
@@ -497,16 +521,6 @@ class Imdb(Dataset):
                       metrics=self.model_metrics_names[1:])
 
         return model
-
-    # train, test, val splits
-    @staticmethod
-    def train_test_split_local(x, y):
-        return x, np.array([]), y, np.array([])
-
-    @staticmethod
-    def train_val_split_local(x, y):
-        return x, np.array([]), y, np.array([])
-
 
 class Esc50(Dataset):
     def __init__(self):
@@ -652,8 +666,3 @@ class Esc50(Dataset):
             metrics=self.model_metrics_names[1:],
         )
         return model
-
-    # train, test, val splits
-    @staticmethod
-    def train_test_split_global(data):
-        return train_test_split(data, test_size=0.1, random_state=42)
