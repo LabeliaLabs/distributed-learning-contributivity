@@ -186,7 +186,7 @@ class Scenario:
         else:
             raise ValueError(f'Test set can be \'local\', \'global\' or \'both\', not {test_set}')
         if test_set in ['local', 'global', 'both']:
-            self.val_set = self.val_set
+            self.val_set = val_set
         else:
             raise ValueError(f'Validation set can be \'local\', \'global\' or \'both\', not {val_set}')
 
@@ -887,7 +887,7 @@ class Scenario:
             p.clusters_list = list(set(y_train[train_idx]))
 
         if self.val_set == 'local':
-            for partner_idx, val_idx in val_idx_idx_list:
+            for partner_idx, val_idx in enumerate(val_idx_idx_list):
                 p = self.partners_list[partner_idx]
 
                 # Finalize selection of val data
@@ -896,7 +896,7 @@ class Scenario:
                 p.y_val = self.dataset.y_val[val_idx]
 
         if self.test_set == 'local':
-            for partner_idx, test_idx in test_idx_idx_list:
+            for partner_idx, test_idx in enumerate(test_idx_idx_list):
                 p = self.partners_list[partner_idx]
 
                 # Finalize selection of test data

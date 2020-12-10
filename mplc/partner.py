@@ -29,13 +29,13 @@ class Partner:
         self.final_nb_samples: int
         self.final_nb_samples_p_cluster: int
 
-        self.x_train = None
-        self.x_val = None
-        self.x_test = None
+        self.x_train = []
+        self.x_val = []
+        self.x_test = []
 
-        self.y_train = None
-        self.y_val = None
-        self.y_test = None
+        self.y_train = []
+        self.y_val = []
+        self.y_test = []
 
     @property
     def num_labels(self):
