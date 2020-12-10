@@ -131,7 +131,7 @@ class Scenario:
                          "scenario_name",
                          "repeat_count"]
 
-        unrecognised_parameters = [x for x in kwargs.keys() if x not in params_known]
+        unrecognised_parameters = [x for x in kwargs.keys() if (x not in params_known and not x.startswith('mpl_'))]
         if len(unrecognised_parameters) > 0:
             for x in unrecognised_parameters:
                 logger.debug(f"Unrecognised parameter: {x}")
@@ -376,6 +376,18 @@ class Scenario:
         params.update(kwargs)
 
         return Scenario(**params)
+
+        # ------------------------------------------------------------------
+        # Select in the kwargs the parameters to be transferred to sub object
+        # ------------------------------------------------------------------
+        self.mpl_kwargs = {}
+        for key, value in kwargs.items():
+            if key.startswith('mpl_'):
+                self.mpl_kwargs[key.replace('mpl_', '')] = value
+
+        # ------------------------------------------------
+        # Print the description of the scenario configured
+        # ------------------------------------------------
 
     def log_scenario_description(self):
         """Log the description of the scenario configured"""
@@ -811,7 +823,7 @@ class Scenario:
         # Instantiate and run the distributed learning approach
         # -----------------------------------------------------
 
-        self.mpl = self._multi_partner_learning_approach(self, custom_name='main_mpl')
+        self.mpl = self._multi_partner_learning_approach(self, custom_name='main_mpl', **self.mpl_kwargs)
         self.mpl.fit()
 
         # -------------------------------------------------------------------------

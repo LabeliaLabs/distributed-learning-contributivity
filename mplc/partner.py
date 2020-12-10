@@ -77,6 +77,30 @@ class PartnerMpl:
         self.minibatched_y_train = np.nan * np.zeros(self.minibatch_count)
 
     @property
+    def y_train(self):
+        return self.partner_parent.y_train
+
+    @property
+    def y_test(self):
+        return self.partner_parent.y_test
+
+    @property
+    def y_val(self):
+        return self.partner_parent.y_val
+
+    @property
+    def x_train(self):
+        return self.partner_parent.x_train
+
+    @property
+    def x_test(self):
+        return self.partner_parent.x_test
+
+    @property
+    def x_val(self):
+        return self.partner_parent.x_val
+
+    @property
     def data_volume(self):
         return len(self.partner_parent.y_train)
 

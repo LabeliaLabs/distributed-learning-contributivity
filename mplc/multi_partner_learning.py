@@ -10,11 +10,13 @@ from timeit import default_timer as timer
 
 import numpy as np
 from loguru import logger
+from sklearn.metrics import confusion_matrix
 from sklearn.preprocessing import normalize
 from tensorflow.keras.backend import clear_session
 from tensorflow.keras.callbacks import EarlyStopping
 
 from . import constants
+from .models import NoiseAdaptationChannel
 from .mpl_utils import History, Aggregator
 from .partner import Partner, PartnerMpl
 
@@ -462,82 +464,45 @@ class SequentialAverageLearning(SequentialLearning):
             self.model_weights = self.aggregator.aggregate_model_weights()
 
 
-class Channel(Dense):
-    """
-    Implement simple noise adaptation layer.
-    References
-        Goldberger & Ben-Reuven, Training deep neural-networks using a noise
-        adaptation layer, ICLR 2017
-        https://openreview.net/forum?id=H12GRgcxg
-    # Arguments
-        output_dim: int > 0
-              default is input_dim which is known at build time
-        See Dense layer for more arguments. There is no bias and the arguments
-        `bias`, `b_regularizer`, `b_constraint` are not used.
-    """
-
-    def __init__(self, units=None, **kwargs):
-        kwargs['use_bias'] = False
-        if 'activation' not in kwargs:
-            kwargs['activation'] = 'softmax'
-        super(Channel, self).__init__(units, **kwargs)
-
-    def build(self, input_shape):
-        if self.units is None:
-            self.units = input_shape[-1]
-        super(Channel, self).build(input_shape)
-
-    def call(self, x):
-        """
-        :param x: the output of a baseline classifier model passed as an input
-        It has a shape of (batch_size, input_dim) and
-        baseline_output.sum(axis=-1) == 1
-        :param mask: ignored
-        :return: the baseline output corrected by a channel matrix
-        """
-        # convert W to the channel probability (stochastic) matrix
-        # channel_matrix.sum(axis=-1) == 1
-        # channel_matrix.shape == (input_dim, input_dim)
-        channel_matrix = self.activation(10.0 * self.kernel)
-
-        # multiply the channel matrix with the baseline output:
-        # channel_matrix[0,0] is the probability that baseline output 0 will get
-        #  to channeled_output 0
-        # channel_matrix[0,1] is the probability that baseline output 0 will get
-        #  to channeled_output 1 ...
-        # ...
-        # channel_matrix[1,0] is the probability that baseline output 1 will get
-        #  to channeled_output 0 ...
-        #
-        # we want output[b,0] = x[b,0] * channel_matrix[0,0] + \
-        #                              x[b,1] * channel_matrix[1,0] + ...
-        # so we do a dot product of axis -1 in x with axis 0 in channel_matrix
-        return dot(x, channel_matrix)
-
-
 class MplSModel(FederatedAverageLearning):
     name = 'Federated learning with label flipping'
-    def __init__(self, scenario, log_theta_list, **kwargs):
+    def __init__(self, scenario, pretrain_epochs=0, epsilon=0.5, **kwargs):
         super(MplSModel, self).__init__(scenario, **kwargs)
+        self.pretrain_epochs = pretrain_epochs
+        self.epsilon = epsilon
+        if pretrain_epochs > 0:
+            self.pretrain_mpl = FederatedAverageLearning(scenario=scenario,
+                                                         epoch_count=self.pretrain_epochs,
+                                                         is_save_data=False)
 
-        self.K = self.dataset.num_classes
-
-        for i, partner in enumerate(self.partners_list):
-            petit_model = self.generate_petit_model(w=[log_theta_list[i]])
-            partner.petit_weights = petit_model.get_weights()
-
-    def generate_petit_model(self, w):
+    def generate_noise_adaptation_layer(self, w):
 
         model_input = Input(shape=(self.dataset.num_classes,))
-        outputs = Channel(weights=w)(model_input)
-        petitmodel = Model(inputs=model_input, outputs=outputs)
+        outputs = NoiseAdaptationChannel(weights=w)(model_input)
+        noise_layer = Model(inputs=model_input, outputs=outputs)
 
-        petitmodel.compile(
+        noise_layer.compile(
             loss=categorical_crossentropy,
             optimizer="adam",
             metrics=["accuracy"],
         )
-        return petitmodel
+        return noise_layer
+
+    def fit(self):
+        if self.pretrain_epochs > 0:
+            logger.info('Start pre-train...')
+            self.pretrain_mpl.fit()
+            pretrain_model = self.pretrain_mpl.build_model()
+            for p in self.partners_list:
+                confusion = confusion_matrix(np.argmax(p.y_train, axis=1), pretrain_model.predict_classes(p.x_train),
+                                             normalize='pred')
+                p.noise_layer_weights = [np.log(confusion + 1e-8)]
+            self.model_weights[:-1] = self.pretrain_mpl.model_weights[:-1]
+        else:
+            for p in self.partners_list:
+                confusion = np.identity(10) * (1 - self.epsilon) + (self.epsilon / 10)
+                p.noise_layer_weights = [np.log(confusion + 1e-8)]
+        super(MplSModel, self).fit()
 
     def fit_minibatch(self):
         """Proceed to a collaborative round with a S-Model federated averaging approach"""
@@ -558,19 +523,19 @@ class MplSModel(FederatedAverageLearning):
         for partner_index, partner in enumerate(self.partners_list):
             # Reference the partner's model
             partner_model = partner.build_model()
-            petit_model = self.generate_petit_model(w=partner.petit_weights)
+            s_model = self.generate_noise_adaptation_layer(w=partner.noise_layer_weights)
             x_batch = partner.minibatched_x_train[self.minibatch_index]
             y_batch = partner.minibatched_y_train[self.minibatch_index]
 
             model_input = Input(shape=self.dataset.input_shape)
             x = partner_model(model_input)
-            outputs = petit_model(x)
+            outputs = s_model(x)
             full_model = Model(inputs=model_input, outputs=outputs, name=f"full_model_partner_{partner_index}")
 
             full_model.compile(
-                loss=categorical_crossentropy,
-                optimizer="adam",
-                metrics=["accuracy"],
+                loss=partner_model.loss,
+                optimizer=partner_model.optimizer,
+                metrics=partner_model.metrics_names[1:],
             )
 
             # Train on partner local data set
@@ -584,7 +549,7 @@ class MplSModel(FederatedAverageLearning):
             self.log_partner_perf(partner.id, partner_index, history.history)
 
             # Update the partner's model in the models' list
-            partner.petit_weights = petit_model.get_weights()
+            partner.petit_weights = s_model.get_weights()
             partner.model_weights = partner_model.get_weights()
 
         logger.debug("End of S-Model collaborative round.")
