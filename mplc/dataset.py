@@ -522,6 +522,7 @@ class Imdb(Dataset):
 
         return model
 
+
 class Esc50(Dataset):
     def __init__(self):
         # Load data

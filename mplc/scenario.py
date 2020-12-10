@@ -609,7 +609,7 @@ class Scenario:
                 idx_in_full_valset = np.where(y_val == label)
                 x_val_for_cluster[label] = self.dataset.x_val[idx_in_full_valset]
                 y_val_for_cluster[label] = self.dataset.y_val[idx_in_full_valset]
-                nb_samples_per_cluster[label] = len(y_val_for_cluster[label])
+                nb_samples_per_cluster_val[label] = len(y_val_for_cluster[label])
 
             # We need to enforce the relative data amounts configured.
             # It might not be possible to distribute all data samples, depending on...
@@ -621,7 +621,7 @@ class Scenario:
             resize_factor_specific_val = 1
             for p in partners_with_specific_clusters:
                 nb_available_samples = sum(
-                    [nb_samples_per_cluster[cl] for cl in p.clusters_list]
+                    [nb_samples_per_cluster_val[cl] for cl in p.clusters_list]
                 )
                 nb_samples_requested = int(amounts_per_partner[p.id] * len(y_val))
                 ratio = nb_available_samples / nb_samples_requested
@@ -645,7 +645,7 @@ class Scenario:
             for cl in nb_samples_needed_per_cluster:
                 resize_factor_shared_val = min(
                     resize_factor_shared_val,
-                    nb_samples_per_cluster[cl] / nb_samples_needed_per_cluster[cl],
+                    nb_samples_per_cluster_val[cl] / nb_samples_needed_per_cluster[cl],
                 )
 
             # Compute the final resize factor
@@ -701,7 +701,7 @@ class Scenario:
                 idx_in_full_testset = np.where(y_test == label)
                 x_test_for_cluster[label] = self.dataset.x_test[idx_in_full_testset]
                 y_test_for_cluster[label] = self.dataset.y_test[idx_in_full_testset]
-                nb_samples_per_cluster[label] = len(y_test_for_cluster[label])
+                nb_samples_per_cluster_test[label] = len(y_test_for_cluster[label])
 
             # We need to enforce the relative data amounts configured.
             # It might not be possible to distribute all data samples, depending on...
@@ -713,7 +713,7 @@ class Scenario:
             resize_factor_specific_test = 1
             for p in partners_with_specific_clusters:
                 nb_available_samples = sum(
-                    [nb_samples_per_cluster[cl] for cl in p.clusters_list]
+                    [nb_samples_per_cluster_test[cl] for cl in p.clusters_list]
                 )
                 nb_samples_requested = int(amounts_per_partner[p.id] * len(y_test))
                 ratio = nb_available_samples / nb_samples_requested
@@ -737,7 +737,7 @@ class Scenario:
             for cl in nb_samples_needed_per_cluster:
                 resize_factor_shared_test = min(
                     resize_factor_shared_test,
-                    nb_samples_per_cluster[cl] / nb_samples_needed_per_cluster[cl],
+                    nb_samples_per_cluster_test[cl] / nb_samples_needed_per_cluster[cl],
                 )
 
             # Compute the final resize factor
