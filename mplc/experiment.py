@@ -140,6 +140,7 @@ class Experiment:
         logger.debug(f"Initializing experiment with config file at path {DEFAULT_CONFIG_FILE}")
 
         config = utils.get_config_from_file(path_to_config_file)
+        self.is_save = True  # When using a config file, it's likely that you want to save the result on disk
         self.name = config["experiment_name"]
         self.nb_repeats = config["n_repeats"]
         self.experiment_path = self.define_experiment_path()

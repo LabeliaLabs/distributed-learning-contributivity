@@ -51,7 +51,10 @@ class Test_EndToEndTest:
         titanic_scenario_2 = Scenario(3, [0.2, 0.2, 0.6],
                                       corruption_parameters=['not-corrupted', corruption_1, 'not-corrupted'],
                                       epoch_count=3, minibatch_count=1, dataset_name='titanic')
-        exp = Experiment(experiment_name='end_to_end_titanic', scenarios_list=[titanic_scenario_1], nb_repeats=2)
+        exp = Experiment(experiment_name='end_to_end_titanic',
+                         scenarios_list=[titanic_scenario_1],
+                         nb_repeats=2,
+                         is_save=True)
         exp.add_scenario(titanic_scenario_2)
         exp.run()
         titanic_scenario_1.run()
