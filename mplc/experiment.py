@@ -87,7 +87,7 @@ class Experiment:
             experiment_name='experiment',
             nb_repeats=1,
             scenarios_list=[],
-            is_save=False,
+            is_save=True,
             **kwargs
     ):
         """
