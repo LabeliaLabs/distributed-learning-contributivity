@@ -10,16 +10,17 @@ import numpy as np
 import pandas as pd
 
 from mplc import constants  # noqa: E402
+from mplc.corruption import Duplication
+from mplc.experiment import Experiment
 from mplc.scenario import Scenario
 
 
 class Test_EndToEndTest:
 
     @staticmethod
-    def get_latest_dataframe(pattern):
-
+    def get_latest_dataframe(pattern, path=constants.EXPERIMENTS_FOLDER_NAME):
         # Get latest experiment folder
-        root_folder = Path().absolute() / constants.EXPERIMENTS_FOLDER_NAME
+        root_folder = Path().absolute() / path
         subfolder_list = list(root_folder.glob('*end_to_end_test*'))
         subfolder_list_creation_time = [f.stat().st_ctime for f in subfolder_list]
         latest_subfolder_idx = subfolder_list_creation_time.index(max(subfolder_list_creation_time))
@@ -45,11 +46,21 @@ class Test_EndToEndTest:
         """
         Test performance on titanic dataset
         """
-
-        titanic_scenario = Scenario(2, [0.4, 0.6], epoch_count=3, minibatch_count=1, dataset_name='titanic')
-        titanic_scenario.run()
-
-        assert np.min(titanic_scenario.mpl.history.score) > 0.65
+        corruption_1 = Duplication(proportion=0.8, duplicated_partner_id=0)
+        titanic_scenario_1 = Scenario(2, [0.4, 0.6], epoch_count=3, minibatch_count=1, dataset_name='titanic')
+        titanic_scenario_2 = Scenario(3, [0.2, 0.2, 0.6],
+                                      corruption_parameters=['not-corrupted', corruption_1, 'not-corrupted'],
+                                      epoch_count=3, minibatch_count=1, dataset_name='titanic')
+        exp = Experiment(experiment_name='end_to_end_titanic',
+                         scenarios_list=[titanic_scenario_1],
+                         nb_repeats=2,
+                         is_save=True)
+        exp.add_scenario(titanic_scenario_2)
+        exp.run()
+        titanic_scenario_1.run()
+        assert np.min(titanic_scenario_1.mpl.history.score) > 0.65
+        result = pd.read_csv(exp.experiment_path / 'results.csv')
+        assert (result.groupby('scenario_index').mean().mpl_test_score > 0.65).all()
 
     def test_contrib(self):
         """
@@ -60,7 +71,7 @@ class Test_EndToEndTest:
 
         df = Test_EndToEndTest.get_latest_dataframe("*end_to_end_test*")
 
-        # 2 contributivity methods for each partner --> 4 lines
+        # 2 contributivity contributivity_methods for each partner --> 4 lines
         assert len(df) == 4
 
         for contributivity_method in df.contributivity_method.unique():

@@ -43,7 +43,8 @@ class Dataset(ABC):
                  x_train,
                  y_train,
                  x_test,
-                 y_test
+                 y_test,
+                 proportion=1
                  ):
         self.name = dataset_name
 
@@ -57,7 +58,12 @@ class Dataset(ABC):
         self.y_val = None
         self.y_test = y_test
 
+        self.proportion = 1
+        self.shorten_dataset_proportion(proportion)
         self.train_val_split_global()
+
+    def __str__(self):
+        return f'{self.name} dataset'
 
     def train_val_split_global(self):
         """Called once, at the end of Dataset's constructor"""
@@ -81,12 +87,13 @@ class Dataset(ABC):
         pass
 
     def shorten_dataset_proportion(self, dataset_proportion):
-        """Truncate the dataset depending on self.dataset_proportion"""
+        """Truncate the dataset depending on dataset_proportion"""
 
-        if dataset_proportion == 1:
+        if dataset_proportion == self.proportion:
             return
-        elif dataset_proportion < 0:
-            raise ValueError("The dataset proportion should be strictly between 0 and 1")
+        elif not 0 < dataset_proportion < self.proportion:
+            raise ValueError(f"The dataset proportion should be strictly between 0 and {self.proportion} "
+                             f"which is the actual used proportion of the dataset.")
         else:
             logger.info(f"We don't use the full dataset: only {dataset_proportion * 100}%")
 
@@ -104,6 +111,7 @@ class Dataset(ABC):
             self.y_train = self.y_train[train_idx[0:skip_train_idx]]
             self.x_val = self.x_val[val_idx[0:skip_val_idx]]
             self.y_val = self.y_val[val_idx[0:skip_val_idx]]
+            self.proportion = dataset_proportion
 
 
 class Cifar10(Dataset):

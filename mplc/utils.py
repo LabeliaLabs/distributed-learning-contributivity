@@ -5,11 +5,8 @@ Some utils functions.
 from __future__ import print_function
 
 import argparse
-import datetime
 import sys
 from itertools import product
-from pathlib import Path
-from shutil import copyfile
 
 import tensorflow as tf
 from loguru import logger
@@ -91,45 +88,6 @@ def get_scenario_params_list(config):
     return scenario_params_list
 
 
-def init_result_folder(yaml_filepath, cfg):
-    """
-    Init the result folder.
-
-    Args:
-        yaml_filepath : str
-        cfg
-
-    Returns:
-        folder_name
-    """
-
-    logger.info("Init result folder")
-
-    now = datetime.datetime.now()
-    now_str = now.strftime("%Y-%m-%d_%Hh%M")
-
-    full_experiment_name = cfg["experiment_name"] + "_" + now_str
-    experiment_path = Path.cwd() / constants.EXPERIMENTS_FOLDER_NAME / full_experiment_name
-
-    # Check if experiment folder already exists
-    while experiment_path.exists():
-        logger.warning(f"Experiment folder, {experiment_path} already exists")
-        new_experiment_name = Path(str(experiment_path) + "_bis")
-        experiment_path = Path.cwd() / constants.EXPERIMENTS_FOLDER_NAME / new_experiment_name
-        logger.warning(f"Experiment folder has been renamed to: {experiment_path}")
-
-    experiment_path.mkdir(parents=True, exist_ok=False)
-
-    cfg["experiment_path"] = experiment_path
-    logger.info("experiment folder " + str(experiment_path) + " created.")
-
-    target_yaml_filepath = experiment_path / Path(yaml_filepath).name
-    copyfile(yaml_filepath, target_yaml_filepath)
-
-    logger.info("Result folder initiated")
-    return cfg
-
-
 def init_gpu_config():
     gpus = tf.config.experimental.list_physical_devices("GPU")
     if gpus:
@@ -144,13 +102,6 @@ def init_gpu_config():
         )
     else:
         logger.info("No GPU found")
-
-
-def get_config_from_file(config_filepath):
-    config = load_cfg(config_filepath)
-    config = init_result_folder(config_filepath, config)
-
-    return config
 
 
 def parse_command_line_arguments():

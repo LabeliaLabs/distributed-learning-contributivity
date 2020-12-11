@@ -27,7 +27,7 @@ class History:
                                      'val_loss': np.zeros((mpl.epoch_count, mpl.minibatch_count))}
 
     def partners_to_dataframe(self):
-        temp_dict = {'Partner': [],
+        temp_dict = {'Model': [],
                      'Epoch': [],
                      'Minibatch': []}
         for key in self.metrics:
@@ -36,56 +36,91 @@ class History:
             epoch_count, minibatch_count = self.history['mpl_model']['val_loss'].shape
             for epoch in range(epoch_count):
                 for mb in range(minibatch_count):
-                    temp_dict['Partner'].append(partner_id)
+                    temp_dict['Model'].append(f'partner_{partner_id}')
                     temp_dict['Epoch'].append(epoch)
                     temp_dict['Minibatch'].append(mb)
                     for metric, matrix in hist.items():
                         temp_dict[metric].append(matrix[epoch, mb])
         return pd.DataFrame.from_dict(temp_dict)
 
-    def save_data(self):
-        """Save figures, losses and metrics to disk"""
+    def global_model_to_dataframe(self):
+        temp_dict = {'Epoch': [],
+                     'Minibatch': []}
+        for key in self.history['mpl_model'].keys():
+            temp_dict[key] = []
+        epoch_count, minibatch_count = self.history['mpl_model']['val_loss'].shape
+        for epoch in range(epoch_count):
+            for mb in range(minibatch_count):
+                temp_dict['Epoch'].append(epoch)
+                temp_dict['Minibatch'].append(mb)
+                for metric, matrix in self.history['mpl_model'].items():
+                    temp_dict[metric].append(matrix[epoch, mb])
+        return pd.DataFrame.from_dict(temp_dict)
 
-        with open(self.save_folder / "history_data.p", 'wb') as f:
-            pickle.dump(self.history, f)
+    def history_to_dataframe(self):
+        partners_df = self.partners_to_dataframe()
+        mpl_model_df = self.global_model_to_dataframe()
+        mpl_model_df['Model'] = 'mpl_model'
+
+        return partners_df.append(mpl_model_df, ignore_index=True)
+
+    def save_data(self, binary=False):
+        """Save figures, losses and metrics to disk
+            :param binary : bool, set to false by default.
+                            If True, the history.history dictionary is pickled and saved in binary format.
+                            If True, the pandas dataframe version of the history are saved as .csv file"""
+
+        if self.save_folder is None:
+            raise ValueError("The path to the save folder is None, history data cannot be saved")
+        if binary:
+            with open(self.save_folder / "history_data.p", 'wb') as f:
+                pickle.dump(self.history, f)
+        else:
+            history_df = self.history_to_dataframe()
+            history_df.to_csv(self.mpl.save_folder / "history.csv")
 
         if not os.path.exists(self.save_folder / 'graphs/'):
             os.makedirs(self.save_folder / 'graphs/')
         plt.figure()
-        plt.plot(self.history['mpl_model']['val_loss'][:self.mpl.epoch_index + 1, self.mpl.minibatch_count])
+        plt.plot(self.history['mpl_model']['val_loss'][:, -1])
         plt.ylabel("Loss")
         plt.xlabel("Epoch")
-        plt.savefig(self.save_folder / "graphs/federated_training_loss.png")
+        plt.savefig(self.save_folder / "graphs/federated_training_val_loss.png")
         plt.close()
 
         plt.figure()
-        plt.plot(self.history['mpl_model']['val_accuracy'][:self.mpl.epoch_index + 1, self.mpl.minibatch_count])
+        plt.plot(self.history['mpl_model']['val_accuracy'][:, -1])
         plt.ylabel("Accuracy")
         plt.xlabel("Epoch")
         plt.ylim([0, 1])
-        plt.savefig(self.save_folder / "graphs/federated_training_acc.png")
+        plt.savefig(self.save_folder / "graphs/federated_training_val_acc.png")
         plt.close()
 
         plt.figure()
         for key, value in self.history.items():
-            plt.plot(value['val_accuracy'][:self.mpl.epoch_index + 1, self.mpl.minibatch_count],
+            plt.plot(value['val_accuracy'][:, -1],
                      label=(f'partner {key}' if key != 'mpl_model' else key))
         plt.title("Model accuracy")
         plt.ylabel("Accuracy")
         plt.xlabel("Epoch")
         plt.legend()
         plt.ylim([0, 1])
-        plt.savefig(self.save_folder / "graphs/all_partners.png")
+        plt.savefig(self.save_folder / "graphs/all_partners_val_acc.png")
         plt.close()
 
 
 class Aggregator(ABC):
+    name = 'abstract'
+
     def __init__(self, mpl):
         """
         :type mpl: MultiPartnerLearning
         """
         self.mpl = mpl
         self.aggregation_weights = np.zeros(self.mpl.partners_count)
+
+    def __str__(self):
+        return f'{self.name} aggregator'
 
     def aggregate_model_weights(self):
         """Aggregate model weights from the list of partner's models, with a weighted average"""
@@ -103,12 +138,16 @@ class Aggregator(ABC):
 
 
 class UniformAggregator(Aggregator):
+    name = 'Uniform'
+
     def __init__(self, mpl):
         super(UniformAggregator, self).__init__(mpl)
         self.aggregation_weights = [1 / self.mpl.partners_count] * self.mpl.partners_count
 
 
 class DataVolumeAggregator(Aggregator):
+    name = 'Data volume'
+
     def __init__(self, mpl):
         super(DataVolumeAggregator, self).__init__(mpl)
         partners_sizes = [partner.data_volume for partner in self.mpl.partners_list]
@@ -116,6 +155,8 @@ class DataVolumeAggregator(Aggregator):
 
 
 class ScoresAggregator(Aggregator):
+    name = 'Local scores'
+
     def __init__(self, mpl):
         super(ScoresAggregator, self).__init__(mpl)
 
@@ -128,7 +169,7 @@ class ScoresAggregator(Aggregator):
         super(ScoresAggregator, self).aggregate_model_weights()
 
 
-# Supported aggregation weights approaches
+# Supported _aggregation weights approaches
 AGGREGATORS = {
     "uniform": UniformAggregator,
     "data-volume": DataVolumeAggregator,

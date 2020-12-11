@@ -3,6 +3,7 @@ from . import contributivity  # noqa
 from . import dataset  # noqa
 from . import multi_partner_learning  # noqa
 from . import scenario  # noqa
+from . import experiment  # noqa
 from . import utils  # noqa
 
 utils.init_gpu_config()

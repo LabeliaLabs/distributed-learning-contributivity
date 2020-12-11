@@ -31,6 +31,8 @@ ALLOWED_PARAMETERS = ('partners_list',
 
 
 class MultiPartnerLearning(ABC):
+    name = 'abstract'
+
     def __init__(self, scenario, **kwargs):
         """
 
@@ -47,11 +49,10 @@ class MultiPartnerLearning(ABC):
         self.minibatch_count = scenario.minibatch_count
         self.is_early_stopping = scenario.is_early_stopping
 
-        # Attributes related to the aggregation approach
-        self.aggregation_method = scenario.aggregation
+        # Attributes related to the _aggregation approach
+        self.aggregation_method = scenario._aggregation
 
         # Attributes to store results
-        self.is_save_data = False  # default value
         self.save_folder = scenario.save_folder
 
         # Erase the default parameters (which mostly come from the scenario) if some parameters have been specified
@@ -88,7 +89,18 @@ class MultiPartnerLearning(ABC):
         # Initialize History
         self.history = History(self)
 
+        # Initialize result folder
+        if self.save_folder is not None:
+            if 'custom_name' in kwargs:
+                self.save_folder = self.save_folder / kwargs["custom_name"]
+            else:
+                self.save_folder = self.save_folder / 'mpl'
+            self.save_folder.mkdir()
+
         logger.debug("MultiPartnerLearning object instantiated.")
+
+    def __str__(self):
+        return f'{self.name}'
 
     @property
     def partners_count(self):
@@ -126,6 +138,13 @@ class MultiPartnerLearning(ABC):
 
         model_to_save = self.build_model()
         model_to_save.save_weights(os.path.join(model_folder, self.dataset_name + '_final_weights.h5'))
+
+    def save_data(self):
+        if self.save_folder is None:
+            raise ValueError("The path to the save folder is None, history data cannot be saved, nor model weights")
+
+        self.save_final_model()
+        self.history.save_data()
 
     def log_partner_perf(self, partner_id, partner_index, history):
         for key_history in self.history.metrics:
@@ -182,7 +201,7 @@ class MultiPartnerLearning(ABC):
                     self.epoch_index >= constants.PATIENCE
                     and self.history.history['mpl_model']['val_loss'][self.epoch_index,
                                                                       self.minibatch_index] >
-                    self.history.history['mpl_model']['val_loss'][self.epoch_index-constants.PATIENCE,
+                    self.history.history['mpl_model']['val_loss'][self.epoch_index - constants.PATIENCE,
                                                                   self.minibatch_index]
             ):
                 logger.debug("         -> Early stopping criteria are met, stopping here.")
@@ -207,13 +226,13 @@ class MultiPartnerLearning(ABC):
 
         # After last epoch or if early stopping was triggered, evaluate model on the global testset
         self.eval_and_log_final_model__test_perf()
-        # Save the model's weights
-        self.save_final_model()
 
         end = timer()
         self.learning_computation_time = end - start
         logger.info(f"Training and evaluation on multiple partners: "
                     f"done. ({np.round(self.learning_computation_time, 3)} seconds)")
+        if self.save_folder is not None:
+            self.save_data()  # Save the model weights and the history data
 
     @abstractmethod
     def fit_epoch(self):
@@ -228,6 +247,8 @@ class MultiPartnerLearning(ABC):
 
 
 class SinglePartnerLearning(MultiPartnerLearning):
+    name = 'Single partner learning'
+
     def __init__(self, scenario, partner, **kwargs):
         kwargs['partners_list'] = [partner]
         super(SinglePartnerLearning, self).__init__(scenario, **kwargs)
@@ -276,6 +297,8 @@ class SinglePartnerLearning(MultiPartnerLearning):
 
 
 class FederatedAverageLearning(MultiPartnerLearning):
+    name = 'Federated averaging'
+
     def __init__(self, scenario, **kwargs):
         # First, if only one partner, fall back to dedicated single partner function
         super(FederatedAverageLearning, self).__init__(scenario, **kwargs)
@@ -335,6 +358,8 @@ class FederatedAverageLearning(MultiPartnerLearning):
 
 
 class SequentialLearning(MultiPartnerLearning):  # seq-pure
+    name = 'Sequential learning'
+
     def __init__(self, scenario, **kwargs):
         super(SequentialLearning, self).__init__(scenario, **kwargs)
         if self.partners_count == 1:
@@ -386,6 +411,8 @@ class SequentialLearning(MultiPartnerLearning):  # seq-pure
 
 
 class SequentialWithFinalAggLearning(SequentialLearning):
+    name = 'Sequential learning with final aggregation'
+
     def __init__(self, scenario, **kwargs):
         super(SequentialWithFinalAggLearning, self).__init__(scenario, **kwargs)
         if self.partners_count == 1:
@@ -410,6 +437,8 @@ class SequentialWithFinalAggLearning(SequentialLearning):
 
 
 class SequentialAverageLearning(SequentialLearning):
+    name = 'Sequential averaged learning'
+
     def __init__(self, scenario, **kwargs):
         super(SequentialAverageLearning, self).__init__(scenario, **kwargs)
         if self.partners_count == 1:
@@ -434,6 +463,8 @@ class SequentialAverageLearning(SequentialLearning):
 
 
 class MplLabelFlip(FederatedAverageLearning):
+    name = 'Federated learning with label flipping'
+
     def __init__(self, scenario, epsilon=0.01, **kwargs):
         super(MplLabelFlip, self).__init__(scenario, **kwargs)
 
@@ -516,7 +547,7 @@ class MplLabelFlip(FederatedAverageLearning):
         logger.debug("End of LFlip collaborative round.")
 
 
-# Supported multipartner learning approaches
+# Supported multi-partner learning approaches
 
 MULTI_PARTNER_LEARNING_APPROACHES = {
     "fedavg": FederatedAverageLearning,

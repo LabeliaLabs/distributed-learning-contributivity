@@ -140,7 +140,7 @@ Documentation of module
 
 # 6. definition of other classes
 
-# 7. definition of methods
+# 7. definition of contributivity_methods
 
 # 8. Python main function
 def main():

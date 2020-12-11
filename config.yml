@@ -22,8 +22,8 @@ scenario_params_list:
      - 'uniform'
    epoch_count: 
      - 38
-   methods:
-     - ["Shapley values", "Independent scores", "TMCS"]
+   contributivity_methods:
+     - [ "Shapley values", "Independent scores", "TMCS" ]
    minibatch_count: 
      - 20
    gradient_updates_per_pass_count:

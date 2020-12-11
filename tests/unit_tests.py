@@ -24,7 +24,7 @@ This enables to parameterize unit tests - the tests are run by Travis each time 
 # -v run the tests in verbose mode, outputting one line per test
 # pytest -v tests.py
 
-# A "test_" prefix in classes and methods is needed to make a test discoverable by pytest
+# A "test_" prefix in classes and contributivity_methods is needed to make a test discoverable by pytest
 
 # Main documentation:
 # https://docs.pytest.org/en/latest/contents.html
@@ -41,16 +41,15 @@ This enables to parameterize unit tests - the tests are run by Travis each time 
 # Test architecture
 # https://docs.pytest.org/en/latest/goodpractices.html#test-discovery
 
-from pathlib import Path
-
 import numpy as np
 import pytest
 import yaml
 
-from mplc import constants, utils
+from mplc import utils
 from mplc.contributivity import Contributivity
 from mplc.corruption import Permutation, PermutationCircular, Randomize, Redundancy, RandomizeUniform, Duplication
-from mplc.dataset import Mnist, Cifar10, Titanic
+from mplc.dataset import Mnist, Cifar10, Titanic, Imdb, Esc50
+from mplc.experiment import Experiment
 from mplc.mpl_utils import UniformAggregator
 from mplc.multi_partner_learning import FederatedAverageLearning
 from mplc.partner import Partner
@@ -67,7 +66,7 @@ from mplc.scenario import Scenario
 
 # create_Mpl uses create_Dataset and create_Contributivity uses create_Scenario
 
-@pytest.fixture(scope="class", params=(Mnist, Titanic))  # params=(Mnist, Cifar10, Titanic, Imdb, Esc50))
+@pytest.fixture(scope="class", params=(Mnist, Cifar10, Titanic, Imdb, Esc50))
 def create_all_datasets(request):
     return request.param()
 
@@ -85,7 +84,6 @@ def create_MultiPartnerLearning(create_all_datasets):
         aggregation=UniformAggregator,
         is_early_stopping=True,
         is_save_data=False,
-        save_folder="",
     )
 
     yield mpl
@@ -129,7 +127,7 @@ def create_Scenario(request):
     )
     params.update(
         {
-            "methods": ["Shapley values", "Independent scores"],
+            "contributivity_methods": ["Shapley values", "Independent scores"],
             "multi_partner_learning_approach": "fedavg",
             "aggregation": "uniform",
         }
@@ -145,29 +143,19 @@ def create_Scenario(request):
     params.update({"init_model_from": "random_initialization"})
     params.update({"is_quick_demo": False})
 
-    full_experiment_name = "unit-test-pytest"
-    experiment_path = (
-            Path.cwd() / constants.EXPERIMENTS_FOLDER_NAME / full_experiment_name
-    )
-
     # scenario_.dataset object is created inside the Scenario constructor
     scenario_ = Scenario(
-        **params, experiment_path=experiment_path, scenario_id=0, repeats_count=1
+        **params, scenario_id=0
     )
 
-    scenario_.mpl = scenario_.multi_partner_learning_approach(scenario_, is_save_data=True)
-
-    scenario_.instantiate_scenario_partners()
-    # Split data according to scenario and then pre-process successively...
-    # ... train data, early stopping validation data, test data
-    if scenario_.samples_split_type == "basic":
-        scenario_.split_data()
-    elif scenario_.samples_split_type == "advanced":
-        scenario_.split_data_advanced()
-    scenario_.compute_batch_sizes()
-    scenario_.data_corruption()
+    scenario_.mpl = scenario_._multi_partner_learning_approach(scenario_, is_save_data=True)
 
     return scenario_
+
+
+@pytest.fixture(scope='class')
+def create_experiment():
+    return Experiment(experiment_name='test_exp', nb_repeats=10, is_save=True)
 
 
 @pytest.fixture(scope="class")
@@ -189,6 +177,31 @@ def create_Contributivity(create_Scenario):
 # Tests modules with Objects
 #
 ######
+class Test_Experiment:
+    def test_add_scenario(self, create_experiment):
+        exp = create_experiment
+        sc = Scenario(2, [0.5, 0.5], dataset_name='titanic')
+        assert len(exp.scenarios_list) == 0, 'Scenario list should be empty when initialized'
+        exp.add_scenario(sc)
+        assert exp.scenarios_list[0] is sc, 'Failed to add a scenario'
+
+    def test_raise_error_when_adding_a_string(self, create_experiment):
+        exp = create_experiment
+        with pytest.raises(Exception):
+            exp.scenarios_list[0] = 'not a scenario'
+        with pytest.raises(Exception):
+            exp.scenarios_list.append('Still not a scenario')
+        with pytest.raises(Exception):
+            exp.add_scenario('for the last time, a string is NOT a scenario')
+
+    def test_def_path(self, create_experiment):
+        exp = create_experiment
+        exp.name = 'new_name'
+        path = exp.define_experiment_path()
+        assert path != exp.experiment_path, 'the path should have changed'
+        assert 'new_name' in str(path), 'the new name should be in path'
+        assert path.exists(), f'{path} should exist'
+
 
 class Test_Scenario:
     def test_scenar(self, create_Scenario):
@@ -318,7 +331,7 @@ class Test_Dataset:
 ######
 
 
-class TestDemoClass:
+class _TestDemoClass:
     def test_ok(self):
         """
         Demo test
