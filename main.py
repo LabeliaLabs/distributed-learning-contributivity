@@ -8,8 +8,8 @@ A script for:
 
 from loguru import logger
 
-from mplc import experiment
 from mplc import utils
+from mplc.experiment import init_experiment_from_config_file
 from mplc.utils import parse_command_line_arguments
 
 DEFAULT_CONFIG_FILE = "./config.yml"
@@ -28,14 +28,11 @@ def main():
     # Initialize GPU configuration
     utils.init_gpu_config()
 
-    # Instantiate an Experiment
-    main_experiment = experiment.Experiment()
-
     # Initialize experiment from configuration file
     config_filepath = args.file if args.file else DEFAULT_CONFIG_FILE
     if not args.file:
         logger.info(f"No config file specified, using default config file: {DEFAULT_CONFIG_FILE}")
-    main_experiment.init_experiment_from_config_file(config_filepath)
+    main_experiment = init_experiment_from_config_file(config_filepath)
 
     # Run the experiment
     main_experiment.run()

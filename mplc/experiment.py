@@ -7,6 +7,7 @@ import datetime
 import os
 import uuid
 from pathlib import Path
+from shutil import copyfile
 
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -14,6 +15,7 @@ from loguru import logger
 
 from . import scenario as scenario_module
 from . import utils, constants
+from .utils import get_scenario_params_list, load_cfg
 
 DEFAULT_CONFIG_FILE = "../config.yml"
 
@@ -133,37 +135,6 @@ class Experiment:
     def add_scenario(self, scenario_to_add):
         self.scenarios_list.append(scenario_to_add)
 
-    def init_experiment_from_config_file(self, path_to_config_file=DEFAULT_CONFIG_FILE):
-        """Create scenarios from a config file passed as argument,
-           and populates scenarios list accordingly"""
-
-        logger.debug(f"Initializing experiment with config file at path {DEFAULT_CONFIG_FILE}")
-
-        config = utils.get_config_from_file(path_to_config_file)
-        self.is_save = True  # When using a config file, it's likely that you want to save the result on disk
-        self.name = config["experiment_name"]
-        self.nb_repeats = config["n_repeats"]
-        self.experiment_path = self.define_experiment_path()
-        scenario_params_list = utils.get_scenario_params_list(config["scenario_params_list"])
-
-        logger.info("Creating scenarios from config file")
-
-        for scenario_params_idx, scenario_params in enumerate(scenario_params_list):
-            scenario_params_index_str = f"{scenario_params_idx + 1}/{len(scenario_params_list)}"
-            logger.debug(f"Scenario {scenario_params_index_str}: {scenario_params}")
-
-            current_scenario = scenario_module.Scenario(
-                **scenario_params,
-                save_path=self.experiment_path,
-                scenario_id=scenario_params_idx + 1,
-            )
-
-            self.add_scenario(current_scenario)
-            logger.info(f"Scenario {current_scenario.scenario_name} successfully validated "
-                        f"and added to the experiment")
-
-        logger.info("All scenarios created , successfully validated and added to the experiment")
-
     def run(self):
         """Run the experiment """
 
@@ -208,3 +179,39 @@ class Experiment:
 
         # TODO: Produce a default analysis notebook
         pass
+
+
+def init_experiment_from_config_file(path_to_config_file):
+    """
+    Create experiment, populate with scenarios according with a config file passed as argument,
+    """
+    logger.debug(f"Initializing experiment with config file at path {path_to_config_file}")
+
+    config = load_cfg(path_to_config_file)
+    exp_params = {'is_save': True,
+                  'experiment_name': config["experiment_name"],
+                  'nb_repeats': config["n_repeats"]}
+
+    experiment = Experiment(**exp_params)
+
+    #  copy the config file into the result folder
+    target_yaml_filepath = experiment.experiment_path / Path(path_to_config_file).name
+    copyfile(path_to_config_file, target_yaml_filepath)
+
+    scenario_params_list = get_scenario_params_list(config["scenario_params_list"])
+
+    logger.info("Creating scenarios from config file")
+
+    for scenario_params_idx, scenario_params in enumerate(scenario_params_list):
+        scenario_params_index_str = f"{scenario_params_idx + 1}/{len(scenario_params_list)}"
+        logger.debug(f"Scenario {scenario_params_index_str}: {scenario_params}")
+
+        current_scenario = scenario_module.Scenario(**scenario_params, scenario_id=scenario_params_idx + 1)
+
+        experiment.add_scenario(current_scenario)
+        logger.info(f"Scenario {current_scenario.scenario_name} successfully validated "
+                    f"and added to the experiment")
+
+    logger.info("All scenarios created , successfully validated and added to the experiment")
+
+    return experiment
