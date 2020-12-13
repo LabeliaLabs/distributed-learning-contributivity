@@ -61,24 +61,3 @@ class Test_EndToEndTest:
         assert np.min(titanic_scenario_1.mpl.history.score) > 0.65
         result = pd.read_csv(exp.experiment_path / 'results.csv')
         assert (result.groupby('scenario_index').mean().mpl_test_score > 0.65).all()
-
-    def test_contrib(self):
-        """
-        Test contrib score
-        """
-        # run test
-        subprocess.run(["python", "main.py", "-f", "tests/config_end_to_end_test_contrib.yml"])
-
-        df = Test_EndToEndTest.get_latest_dataframe("*end_to_end_test*")
-
-        # 2 contributivity contributivity_methods for each partner --> 4 lines
-        assert len(df) == 4
-
-        for contributivity_method in df.contributivity_method.unique():
-
-            current_df = df[df.contributivity_method == contributivity_method]
-
-            small_dataset_score = current_df.loc[current_df.dataset_fraction_of_partner == 0.1, "contributivity_score"]
-            big_dataset_score = current_df.loc[current_df.dataset_fraction_of_partner == 0.9, "contributivity_score"]
-
-            assert small_dataset_score.values < big_dataset_score.values
