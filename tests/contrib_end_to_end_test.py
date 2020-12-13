@@ -6,11 +6,9 @@ This enables to parameterize end to end tests - the tests are run by Travis each
 import subprocess
 from pathlib import Path
 
-import numpy as np
 import pandas as pd
 
 from mplc import constants  # noqa: E402
-from mplc.scenario import Scenario
 
 
 class Test_EndToEndTest:
@@ -49,8 +47,12 @@ class Test_EndToEndTest:
 
         df = Test_EndToEndTest.get_latest_dataframe("*end_to_end_test*")
 
-        # 3 contributivity methods for each partner --> 4 lines
+        # Three contributivity methods for each partner --> 6 lines
         assert len(df) == 6
+
+        # Every contributivity estimate should be between 0 and 1
+        assert df.contributivity_score.max() < 1
+        assert df.contributivity_score.min() > 0
 
         for contributivity_method in df.contributivity_method.unique():
 
