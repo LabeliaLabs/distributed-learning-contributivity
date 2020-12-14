@@ -92,7 +92,7 @@ This tool might seem a little bit radical, but it is based on PEPs and offers se
 
 You don't have to take all the suggested modifications (with the help of `git diff`) but it is a good reference based on PEP rules that will ensure **validity**, **maintainability** and **readability** of the code.
 
-Link: [Black package pepository](https://github.com/psf/black).
+Link: [Black package repository](https://github.com/psf/black).
 
 ##### Installation
 
