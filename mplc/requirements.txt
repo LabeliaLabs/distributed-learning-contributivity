@@ -9,5 +9,5 @@ scikit-learn==0.22.1
 pandas==1.0.5
 seaborn==0.10.0
 loguru==0.4.1
-tensorflow==2.2.1
+tensorflow==2.4.0
 ruamel.yaml==0.16.10
