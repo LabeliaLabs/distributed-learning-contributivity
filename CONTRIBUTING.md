@@ -92,7 +92,7 @@ This tool might seem a little bit radical, but it is based on PEPs and offers se
 
 You don't have to take all the suggested modifications (with the help of `git diff`) but it is a good reference based on PEP rules that will ensure **validity**, **maintainability** and **readability** of the code.
 
-Link: [Black package pepository](https://github.com/psf/black).
+Link: [Black package repository](https://github.com/psf/black).
 
 ##### Installation
 
@@ -164,7 +164,7 @@ https://ipywidgets.readthedocs.io/en/latest/).
 
 Note: [Jupyter lab](https://github.com/jupyterlab/jupyterlab) is like the future of Notebook, be sure to have a look, you might like it!
 
-#### 2.v. Sharing & online rendering
+### 2.v. Sharing & online rendering
 
 Notebooks now have really efficient ways to share your code and display your outputs, among them, you will find:
 
@@ -172,7 +172,22 @@ Notebooks now have really efficient ways to share your code and display your out
 - [Voila](https://github.com/voila-dashboards/voila) is a newcomer that will allow to build dashboards for your presentations!
 - [Colab](https://colab.research.google.com/) offers online, cloud-hosted notebooks and its free plan enables usage of GPUs
 
-#### 2.vi. Release a new build
+### 2.vi. Run the tests
+
+You will first need to install the dev dependencies with `pip3 install -r dev-requirements.txt` and then run:
+
+```sh
+# Run unit tests
+pytest -vv tests/unit_tests.py
+# or 
+python3 -m pytest -vv tests/unit_tests.py
+# Fall in debugger breakpoint in case of error
+pytest -vv tests/unit_tests.py --pdb
+# Run tests and produce a coverage measure. This will output a .coverage file
+pytest -vv --cov=mplc tests/unit_tests.py
+```
+
+### 2.vii. Release a new build
 
 To release a new version on PyPI, go at the root of the repository, and trigger the build with `pip`.
 You will need all the `dev-requirements` installed.
