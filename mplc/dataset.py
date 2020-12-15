@@ -15,13 +15,6 @@ import numpy as np
 import pandas as pd
 from joblib import dump, load
 from keras.datasets import cifar10, mnist, imdb
-from keras.layers import Activation
-from keras.layers import Conv2D, GlobalAveragePooling2D, MaxPooling2D
-from keras.layers import Dense, Dropout
-from keras.layers import Embedding, Conv1D, MaxPooling1D, Flatten
-from keras.losses import categorical_crossentropy
-from keras.models import Sequential
-from keras.optimizers import Adam
 from keras.preprocessing import sequence
 from keras.utils import to_categorical
 from librosa import load as wav_load
@@ -30,6 +23,13 @@ from loguru import logger
 from sklearn.linear_model import LogisticRegression as skLR
 from sklearn.metrics import log_loss
 from sklearn.model_selection import train_test_split
+from tensorflow.keras.layers import Activation
+from tensorflow.keras.layers import Conv2D, GlobalAveragePooling2D, MaxPooling2D
+from tensorflow.keras.layers import Dense, Dropout
+from tensorflow.keras.layers import Embedding, Conv1D, MaxPooling1D, Flatten
+from tensorflow.keras.losses import categorical_crossentropy
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.optimizers import Adam
 
 from . import constants
 
