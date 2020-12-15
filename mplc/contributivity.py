@@ -1021,13 +1021,12 @@ class Contributivity:
         # Calculate contributivity score with linear importance function
         contributivity_scores = np.array(np.arange(comp_rounds_kept)) \
             .dot(np.nan_to_num(relative_perf_matrix))
+        norm_contributivity_scores = contributivity_scores / np.sum(contributivity_scores)
 
         # Return contributivity scores
         self.name = "Federated step by step linear scores"
-        self.contributivity_scores = contributivity_scores
-        self.normalized_scores = self.contributivity_scores / np.sum(
-            self.contributivity_scores
-        )
+        self.contributivity_scores = norm_contributivity_scores
+        self.normalized_scores = norm_contributivity_scores
         end = timer()
         self.computation_time_sec = end - start
 
@@ -1043,13 +1042,12 @@ class Contributivity:
         # Calculate contributivity score with quadratic importance function
         contributivity_scores = np.array(np.square(np.arange(comp_rounds_kept))) \
             .dot(np.nan_to_num(relative_perf_matrix))
+        norm_contributivity_scores = contributivity_scores / np.sum(contributivity_scores)
 
         # Return contributivity scores
         self.name = "Federated step by step quadratic scores"
-        self.contributivity_scores = contributivity_scores
-        self.normalized_scores = self.contributivity_scores / np.sum(
-            self.contributivity_scores
-        )
+        self.contributivity_scores = norm_contributivity_scores
+        self.normalized_scores = norm_contributivity_scores
         end = timer()
         self.computation_time_sec = end - start
 
@@ -1063,13 +1061,12 @@ class Contributivity:
 
         # Calculate contributivity score as average of the relative performance for each round for each partner
         contributivity_scores = np.nanmean(relative_perf_matrix, axis=0)
+        norm_contributivity_scores = contributivity_scores / np.sum(contributivity_scores)
 
         # Return contributivity scores
         self.name = "Federated step by step constant scores"
-        self.contributivity_scores = contributivity_scores
-        self.normalized_scores = self.contributivity_scores / np.sum(
-            self.contributivity_scores
-        )
+        self.contributivity_scores = norm_contributivity_scores
+        self.normalized_scores = norm_contributivity_scores
         end = timer()
         self.computation_time_sec = end - start
 
