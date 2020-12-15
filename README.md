@@ -11,19 +11,19 @@ In short, MPLC enables to:
 - experiment and benchmark multi-partner learning approaches
 - experiment and benchmark contributivity measurement approaches
 
-## Table of content:
+## Table of content
 
 - [Introduction](#introduction)
-  * [Context of this work](#context-of-this-work)
-  * [How to interact with this project?](#how-to-interact-with-this-project)
+  - [Context of this work](#context-of-this-work)
+  - [How to interact with this project?](#how-to-interact-with-this-project)
 - [About this repository](#about-this-repository)
-  * [Structure of the library](#structure-of-the-library)
-    + [Scenarios](#scenarios)
-    + [Multi-partner learning approaches](#multi-partner-learning-approaches)
-    + [Contributivity measurement approaches](#contributivity-measurement-approaches)
-  * [Installation](#installation)
-  * [Run an experiment](#run-an-experiment)
-  * [Ongoing work and improvement plan](#ongoing-work-and-improvement-plan)
+  - [Structure of the library](#structure-of-the-library)
+    - [Scenarios](#scenarios)
+    - [Multi-partner learning approaches](#multi-partner-learning-approaches)
+    - [Contributivity measurement approaches](#contributivity-measurement-approaches)
+  - [Installation](#installation)
+  - [Run an experiment](#run-an-experiment)
+  - [Ongoing work and improvement plan](#ongoing-work-and-improvement-plan)
 - [Contacts, contributions, collaborations](#contacts,-contributions,-collaborations)
 
 ___
@@ -79,26 +79,26 @@ Once a given scenario is configured, it is then possible to configure the multi-
 
 Finally, with a given scenario and selected multi-partner learning approaches, it becomes possible to address contributivity measurement approaches. See the related documentation's sections [Configuration of contributivity measurement methods to be tested](mplc/doc/documentation.md#scenario-parameters) and [Contributivity measurement approaches studied and implemented](mplc/doc/documentation.md#configuration-of-contributivity-measurement-methods-to-be-tested).
 
-### Installation 
+### Installation
 
-##### Using pip
+#### Using pip
 
 ```sh
-$ pip install mplc
+pip install mplc
 ```
 
 This installs the last packaged version available on PyPI.
 
-##### Build from Source 
+#### Build from Source
 
-If you want to install mplc from the repository, make sure that you got the latest version of `pip`. 
+If you want to install mplc from the repository, make sure that you got the latest version of `pip`.
 
 Then clone the repository, and trigger the installation from local sources.
 
 ```sh
-$ git clone https://github.com/SubstraFoundation/distributed-learning-contributivity.git
-$ cd distributed-learning-contributivity
-$ pip install -e . 
+git clone https://github.com/SubstraFoundation/distributed-learning-contributivity.git
+cd distributed-learning-contributivity
+pip install -e . 
 ```
 
 ### Run an experiment
@@ -126,49 +126,49 @@ Alternatively, you can also use the `main.py` provided in the repository, with a
 
 1. Define your mock scenario(s) in the `config.yml` file by changing the values of the suggested parameters of the example scenario (you can browse more available parameters in [the documentation](mplc/doc/documentation.md)). For example:
 
-    ```yaml
-    experiment_name: my_custom_experiment
-    n_repeats: 5
-    scenario_params_list:
-     - dataset_name:
-       'mnist':
-        - 'random_initialization'
-       'cifar10':
-        - 'random_initialization'
-       dataset_proportion:
-	     - 0.5
-       partners_count: 
-         - 3
-       amounts_per_partner:
-         - [0.4, 0.3, 0.3]
-       samples_split_option:
-         - 'random'
-         - ['advanced', [[7, 'shared'], [6, 'shared'], [2, 'specific']]]
-       multi_partner_learning_approach:
-         - 'fedavg'
-       aggregation_weighting:
-         - 'data_volume'
-         - 'uniform'
-       methods:
-         - ["Shapley values", "Independent scores", "TMCS"]
-       epoch_count:
-         - 20
-       minibatch_count:
-         - 20
-       gradient_updates_per_pass_count:
-         - 8
-    ```
+```yaml
+experiment_name: my_custom_experiment
+n_repeats: 5
+scenario_params_list:
+  - dataset_name:
+    'mnist':
+    - 'random_initialization'
+    'cifar10':
+    - 'random_initialization'
+    dataset_proportion:
+      - 0.5
+    partners_count: 
+      - 3
+    amounts_per_partner:
+      - [0.4, 0.3, 0.3]
+    samples_split_option:
+      - 'random'
+      - ['advanced', [[7, 'shared'], [6, 'shared'], [2, 'specific']]]
+    multi_partner_learning_approach:
+      - 'fedavg'
+    aggregation_weighting:
+      - 'data_volume'
+      - 'uniform'
+    methods:
+      - ["Shapley values", "Independent scores", "TMCS"]
+    epoch_count:
+      - 20
+    minibatch_count:
+      - 20
+    gradient_updates_per_pass_count:
+      - 8
+```
 
-   Under `scenario_params_list`, enter a list of sets of scenario(s). Each set starts with ` - dataset_name:` and must have only one `partners_count` value. The length of `amount_per_partners`, `corrupted_datasets` (and `samples_split_option` when the advanced definition is used) must match the `partner_counts` value. If for a given parameter multiple values are specified, e.g. like for `agregation_weighting` in the example scenario above, all possible combinations of parameters will be assembled as separate scenarios and run.
+Under `scenario_params_list`, enter a list of sets of scenario(s). Each set starts with `- dataset_name:` and must have only one `partners_count` value. The length of `amount_per_partners`, `corrupted_datasets` (and `samples_split_option` when the advanced definition is used) must match the `partner_counts` value. If for a given parameter multiple values are specified, e.g. like for `agregation_weighting` in the example scenario above, all possible combinations of parameters will be assembled as separate scenarios and run.
 
 2. Then execute `main.py -f config.yml`. Add the `-v` argument if you want a more verbose output.
 
 3. A `results.csv` file will be generated in a new folder for your experiment under `/experiments/<your_experiment>`. You can read this raw `results.csv` file or use the notebooks in `/notebooks`.  
 
-   **Note**: example experiment(s) are stored in folder `/saved_experiments` to illustrate the use of the library. The notebooks include graphs, like for example the following:
-   
-   ![Example graphs](./img/results_graphs_example.png)
- 
+**Note**: example experiment(s) are stored in folder `/saved_experiments` to illustrate the use of the library. The notebooks include graphs, like for example the following:
+
+![Example graphs](./img/results_graphs_example.png)
+
 ### Ongoing work and improvement plan
 
 The current work focuses on the following 4 priorities:
@@ -191,4 +191,3 @@ Should you be interested in this open effort and would like to share any questio
 - Email: hello@substra.org
 
  ![logo Substra Foundation](./img/substra_logo_couleur_rvb_w150px.png)
-
