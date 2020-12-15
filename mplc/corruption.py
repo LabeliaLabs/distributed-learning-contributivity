@@ -1,3 +1,8 @@
+# -*- coding: utf-8 -*-
+"""
+This enables to corrupt partner's datasets.
+"""
+
 from abc import ABC, abstractmethod
 
 import numpy as np

@@ -837,6 +837,7 @@ class Scenario:
 
         # Configure the desired data distribution scenario
         # In the 'stratified' scenario we sort by labels
+
         if self.samples_split_description == "stratified":
             # Sort by labels
             train_idx = y_train.argsort()
