@@ -17,6 +17,7 @@ script:
   - flake8 --max-line-length=120
   - pytest -v --cov=mplc tests/unit_tests.py
   - travis_wait 30 pytest -v tests/end_to_end_tests.py
+  - travis_wait 30 pytest -v tests/contrib_end_to_end_test.py
 
 after_script:
   - bash <(curl -s https://codecov.io/bash) -t $CODECOV_TOKEN
