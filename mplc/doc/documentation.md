@@ -6,44 +6,44 @@ Table of content:
 
 - [Pre-requisites](#pre-requisites)
 - [Quick start](#quick-start)
-  * [My first scenario](#my-first-scenario)
-  * [Select a pre-implemented dataset](#select-a-pre-implemented-dataset)
-  * [Set some ML parameters](#set-some-ml-parameters)
-  * [Run it](#run-it)
-  * [Results](#Browsing-results)
-  * [Contributivity measurement methods](#contributivity-measurement-methods)
+  - [My first scenario](#my-first-scenario)
+  - [Select a pre-implemented dataset](#select-a-pre-implemented-dataset)
+  - [Set some ML parameters](#set-some-ml-parameters)
+  - [Run it](#run-it)
+  - [Results](#Browsing-results)
+  - [Contributivity measurement methods](#contributivity-measurement-methods)
 - [Scenario parameters](#scenario-parameters)
-  * [Choice of dataset](#choice-of-dataset)
-  * [Definition of collaborative scenarios](#definition-of-collaborative-scenarios)
-  * [Configuration of the collaborative and distributed learning](#configuration-of-the-collaborative-and-distributed-learning)
-  * [Configuration of contributivity measurement methods to be tested](#configuration-of-contributivity-measurement-methods-to-be-tested)
-  * [Miscellaneous](#miscellaneous)
+  - [Choice of dataset](#choice-of-dataset)
+  - [Definition of collaborative scenarios](#definition-of-collaborative-scenarios)
+  - [Configuration of the collaborative and distributed learning](#configuration-of-the-collaborative-and-distributed-learning)
+  - [Configuration of contributivity measurement methods to be tested](#configuration-of-contributivity-measurement-methods-to-be-tested)
+  - [Miscellaneous](#miscellaneous)
 - [Dataset generation](#dataset-generation)
-  * [Dataset](#dataset)
-  * [Model generator](#model-generator)
-  * [Preprocessing](#data-labels)
-  * [Split in train, validation and test sets](#split-in-train-validation-and-test-sets)
+  - [Dataset](#dataset)
+  - [Model generator](#model-generator)
+  - [Preprocessing](#data-labels)
+  - [Split in train, validation and test sets](#split-in-train-validation-and-test-sets)
 - [Contacts, contributions, collaborations](#Contacts,-contributions,-collaborations)
 
 ## Pre-requisites
 
-First you need to install mplc. All the dependencies will be installed automatically. 
+First you need to install mplc. All the dependencies will be installed automatically.
 
-```bash
-$ pip install mplc
+```sh
+pip install mplc
 ```
 
 This installs the last packaged version on PyPI.
 
 If you want to install `mplc` from the repository:
 
-- first make sure that you got the latest version of `pip`. 
+- first make sure that you got the latest version of `pip`.
 - then clone the repository, and trigger the installation using `pip`:
 
-```bash
-$ git clone https://github.com/SubstraFoundation/distributed-learning-contributivity.git
-$ cd distributed-learning-contributivity
-$ pip install -e . 
+```sh
+git clone https://github.com/SubstraFoundation/distributed-learning-contributivity.git
+cd distributed-learning-contributivity
+pip install -e . 
 ```
 
 ## Quick start
@@ -51,12 +51,12 @@ $ pip install -e .
 First a few words of context! This library enables to run a multi-partner learning and contributivity measurement experiment. This breaks down into three relatively independent blocks:
 
 1. Creating a mock collaborative multi-partner learning scenario
-1. Running a multi-partner ML algorithm to learn a model on all partners respective 
+1. Running a multi-partner ML algorithm to learn a model on all partners respective
 1. Running one or several contributivity measurement methods to evaluate the performance contribution of each partner's dataset to the model performance.
 
 ### My first scenario
 
-To run a multi-partner learning and contributivity measurement experiment, you have to define the scenario for your experiment. For that you'll use the `Scenario` object, in which you will define: 
+To run a multi-partner learning and contributivity measurement experiment, you have to define the scenario for your experiment. For that you'll use the `Scenario` object, in which you will define:
 
 - what dataset will be used and how it will be partitioned among the partners
 - what multi-partner learning approach will be used, with what options
@@ -79,7 +79,7 @@ At this point, you can already launch your first scenario! But before hitting th
 
 ### Select a pre-implemented dataset
 
-You might also want to consider other parameters such as the dataset to be used, for instance. The easiest way to select a dataset is to use those which are already implemented in `mplc`. 
+You might also want to consider other parameters such as the dataset to be used, for instance. The easiest way to select a dataset is to use those which are already implemented in `mplc`.
 Currently MNIST, CIFAR10, TITANIC, IMDB and ESC50 are supported. You can use one of those by simply passing the parameter `dataset_name` to your scenario object:
 
 ```python
@@ -92,11 +92,11 @@ my_scenario = Scenario(partners_count=3,
 With each dataset, a model architecture is provided by default, so you do not need to care of it. Moreover, the split between the validation and train sets is done by the constructor's of the dataset, even if you can finetune it.
 If you want to use an homemade dataset or a homemade model, you will have to use the [dataset class](#dataset-generation).
 
-> Note: this parameter is not mandatory as the MNIST dataset is selected by default. 
+> Note: this parameter is not mandatory as the MNIST dataset is selected by default.
 
 ### Set some ML parameters
 
-Even if default values are provided for iterations parameters, it is strongly advised to adapt these to your particular use case. 
+Even if default values are provided for iterations parameters, it is strongly advised to adapt these to your particular use case.
 For instance you might want your training to go for `10` epochs and `3` mini-batches per epoch.
 
 ```python
@@ -123,8 +123,10 @@ Each `MultiPartnerLearning` object holds a `History` object, which stores all th
 
 ```python
 history = my_scenario.mpl.history 
-``` 
-The main attribute of the `history` object is an `history` dictionary, which is structured as followed :
+```
+
+The main attribute of the `history` object is an `history` dictionary, which is structured as followed:
+
 ```python
 history.history = { 1: {'val_accuracy' : matrix[epoch, minibatch]
                     .   'val_loss'     : matrix[epoch, minibatch]
@@ -135,16 +137,19 @@ history.history = { 1: {'val_accuracy' : matrix[epoch, minibatch]
                         'val_loss'     : matrix[epoch, minibatch] }
                    } 
 ```
-The n first keys correspond to the partner id, and the data referenced by the `'mpl_model'` key are those of the global model. 
+
+The n first keys correspond to the partner id, and the data referenced by the `'mpl_model'` key are those of the global model.
 As this dictionary is not really user friendly, you can convert it to a Pandas DataFrame, and use the pandas API to performed advanced analysis easily.
 Here is an instance:
+
 ```python
 history_df = my_scenario.mpl.history.partners_to_dataframe()
 losses_per_partners = history_df[history_df.Minibatch==2].pivot(index='Epoch', columns='Partner', values='val_loss')
 ```
+
 Check out [Tutorial 1](https://github.com/SubstraFoundation/distributed-learning-contributivity/blob/master/notebooks/tutorials/Tutorial-1_Run_your_first_scenario.ipynb) for more instances.
 
-There is few other `History` attributes : 
+There is few other `History` attributes:
 
 ```python
 history.save_folder     # Path to the folder where is saved plots
@@ -197,12 +202,12 @@ There are 2 ways to select a dataset. You can either choose a pre-implemented da
   If None, the dataset provided by the `dataset_name` parameter will be used.  
   Note about validation and test datasets:
 
-    - The `load_data()` method must provide separated train and test sets (referred to as global train set and global test set).
-    - The global train set is then further automatically split into a global train set and a global validation set.
-    - In the multi-partner learning computations, the global validation set is used for early stopping and the global test set is used for performance evaluation.
-    - The global train set is split amongst partner (according to the scenario configuration) to populate the partner's local datasets.
-    - For each partner, the local dataset can be split into separate train, validation and test sets, depending on the dataset configuration, by dedicated split method in the dataset subclass.  
-      > Note: currently, the local validation and test set are not used, but they are available for further developments of multi-partner learning and contributivity measurement approaches.
+  - The `load_data()` method must provide separated train and test sets (referred to as global train set and global test set).
+  - The global train set is then further automatically split into a global train set and a global validation set.
+  - In the multi-partner learning computations, the global validation set is used for early stopping and the global test set is used for performance evaluation.
+  - The global train set is split amongst partner (according to the scenario configuration) to populate the partner's local datasets.
+  - For each partner, the local dataset can be split into separate train, validation and test sets, depending on the dataset configuration, by dedicated split method in the dataset subclass.  
+    > Note: currently, the local validation and test set are not used, but they are available for further developments of multi-partner learning and contributivity measurement approaches.
 
 - `dataset_name`: `'mnist'` (default), `'cifar10'`, `'esc50'`, `'imdb'` or `'titanic'`  
   MNIST, CIFAR10, ESC50, IMDB and Titanic are currently supported. They come as subclass of the `Dataset` object (`./mplc/dataset.py`), with their corresponding methods for loading data, pre-processing inputs, define a model architecture, etc.
@@ -252,27 +257,28 @@ There are 2 ways to select a dataset. You can either choose a pre-implemented da
 
 ![Example of the advanced split option](../../img/advanced_split_example.png)
 
-- `corruption_parameters`: `[Corruption(parameters),'permutation']`  Enables to artificially corrupt the data of one or several partners. You can either instantiate a corruption before passing it to Scenario, as in the below example, or you can pass it by its string identifier. In the latter case, the default parameters for the corruption selected will be used. Each partner must be provided a corruption method, so the list of corruption-parameters' size must be equal to the number of partner. 
-    All the Corruptions class are defined in the `mplc.corruption module`, and are listed below:
-    - `NoCorruption`. (default): the data remains unchanged. 
-      + String id: `'not_corrupted'`
-    - `Permutation`. The labels are permuted. Permutation matrix (randomly generated), is available as `.corruption.matrix` attribute of `Partner`.
-      + String id: `'permutation'`
-    - `PermutationCircular`. The labels are permuted. The circular permutation is used. 
-      + String id: `'permutation-circular'`
-    - `Randomize`. The labels are flipped randomly, according to Dirichlet distribution, which is available as `.corruption.matrix` attribute of `Partner`.
-      + String id: `'random'`
-    - `RandomizeUniform`. The labels are flipped randomly, according to uniform distribution
-      + String id: `'random-uniform'`
-    - `Duplication`, The data are replaced by the data of another partner.
-      + Extra-parameter: `'duplicated_partner_id'`: `Partner.id` used by the duplicate corruption method. If not provided, a random partner amongst those with enough data will be selected
-      + String id: `'duplication'`
-    - `Redundancy`. The data are replaced by a copy of an unique data. 
-      + String id: `'redundancy'`
-      
+- `corruption_parameters`: `[Corruption(parameters),'permutation']`  Enables to artificially corrupt the data of one or several partners. You can either instantiate a corruption before passing it to Scenario, as in the below example, or you can pass it by its string identifier. In the latter case, the default parameters for the corruption selected will be used. Each partner must be provided a corruption method, so the list of corruption-parameters' size must be equal to the number of partner. All the Corruptions class are defined in the `mplc.corruption module`, and are listed below:
+
+  - `NoCorruption`. (default): the data remains unchanged.
+    - String id: `'not_corrupted'`
+  - `Permutation`. The labels are permuted. Permutation matrix (randomly generated), is available as `.corruption.matrix` attribute of `Partner`.
+    - String id: `'permutation'`
+  - `PermutationCircular`. The labels are permuted. The circular permutation is used.
+    - String id: `'permutation-circular'`
+  - `Randomize`. The labels are flipped randomly, according to Dirichlet distribution, which is available as `.corruption.matrix` attribute of `Partner`.
+    - String id: `'random'`
+  - `RandomizeUniform`. The labels are flipped randomly, according to uniform distribution
+    - String id: `'random-uniform'`
+  - `Duplication`, The data are replaced by the data of another partner.
+    - Extra-parameter: `'duplicated_partner_id'`: `Partner.id` used by the duplicate corruption method. If not provided, a random partner amongst those with enough data will be selected
+    - String id: `'duplication'`
+  - `Redundancy`. The data are replaced by a copy of an unique data.
+    - String id: `'redundancy'`
+
     All of these can use the parameter `'proportion'`: 1. (default), float between 0. and 1. Indicating the proportion of partner's data to corrupt
-     
+
   Example with 4 partners:
+
   ```python
   from mplc.corruption import Duplication, Permutation
   from mplc.scenario import Scenario
@@ -308,10 +314,10 @@ There are several parameters influencing how the collaborative and distributed l
 - `aggregation_weighting`: `'uniform'` (default), `'data_volume'` or `'local_score'`  
   After a training iteration over a given mini-batch, how individual models of each partner are aggregated:
 
-    - `'uniform'`: simple average (non-weighted)
-    - `'data_volume'`: average weighted with per the amounts of data of partners (number of data samples)
-    - `'local_score'`: average weighted with the performance (on a central validation set) of the individual models
-    
+  - `'uniform'`: simple average (non-weighted)
+  - `'data_volume'`: average weighted with per the amounts of data of partners (number of data samples)
+  - `'local_score'`: average weighted with the performance (on a central validation set) of the individual models
+
   Example: `aggregation_weighting='data_volume'`
 
 - `epoch_count`: `int` (default: `40`)  
@@ -338,24 +344,25 @@ There are several parameters influencing how the collaborative and distributed l
   A declarative list `[]` of the contributivity measurement methods to be executed.
   All methods available are:
 
-    ```sh
-    - "Shapley values"
-    - "Independent scores"
-    - "TMCS"
-    - "ITMCS"
-    - "IS_lin_S"
-    - "IS_reg_S"
-    - "AIS_Kriging_S"
-    - "SMCS"
-    - "WR_SMC"
-    - "Federated SBS linear"
-    - "Federated SBS quadratic"
-    - "Federated SBS constant"
-    - "LFlip"
-    - "PVRL"
-    ```
+  ```sh
+  - "Shapley values"
+  - "Independent scores"
+  - "TMCS"
+  - "ITMCS"
+  - "IS_lin_S"
+  - "IS_reg_S"
+  - "AIS_Kriging_S"
+  - "SMCS"
+  - "WR_SMC"
+  - "Federated SBS linear"
+  - "Federated SBS quadratic"
+  - "Federated SBS constant"
+  - "LFlip"
+  - "PVRL"
+  ```
 
-The methods are detailed below: 
+The methods are detailed below:
+
 - **Independent training**:
 
   - `["Independent scores"]` **Performance scores** of models trained independently on each partner
@@ -407,14 +414,14 @@ The methods are detailed below:
 
     With PVRL, we modify the learning process of the main model so it includes a dataset's partner valuation part. Namely we assign weight to each dataset, and at each learning step these weights are used to sample the learning batch. These weight are updated at each learning iteration of the main model using the REINFORCE method.
 
-   - `["PVRL"]` **Partner Valuation by Reinforcement Learning** 
-    
+  - `["PVRL"]` **Partner Valuation by Reinforcement Learning**
+
 - **Federated step-by-step**:
 
-    Federated step by step contributivity methods measure the performance variation on the global validation dataset after each minibatch training - These methods give an estimation on how the model improved on every node.
-    The methods are best suited for federated averaging learning.
-    For each computation round, the contributivity for each partner is calculated as the ratio between the validation score of the newly trained model for each partner and the validation score from the previously trained collective model.
-    Initial rounds (10%) and final rounds (10%) are discarded from calculation as performance increments from the first minibatches might be huge and increments form the last minibatches might be very noisy. Discarded proportions are for now set in the code.
+  Federated step by step contributivity methods measure the performance variation on the global validation dataset after each minibatch training - These methods give an estimation on how the model improved on every node.
+  The methods are best suited for federated averaging learning.
+  For each computation round, the contributivity for each partner is calculated as the ratio between the validation score of the newly trained model for each partner and the validation score from the previously trained collective model.
+  Initial rounds (10%) and final rounds (10%) are discarded from calculation as performance increments from the first minibatches might be huge and increments form the last minibatches might be very noisy. Discarded proportions are for now set in the code.
 
     3 contributivity methods are proposed to adjust the importance of last computation rounds compared to the first ones:
     - `["Federated SBS linear"]` - Linear importance increase between computation rounds (1000th round weights 1000 times first round)
@@ -444,23 +451,22 @@ Example: `methods=["Shapley values", "Independent scores", "TMCS"]`
 
 At some point of your use of the library you might need to launch several scenarios in a row. It the same spirit, you might want to repeat one scenario's run, to get rid of the randomness of training, and end with more meaningful results.
 
-The `Experiment` object allows you to set a list of scenarios to run, along with a wanted number of repetition.
-Once instancied, scenarios can be added via the `.add_scenario()`.
-Eventually, all the scenarios can be run, and repeated, by calling the `.run()` method. 
+The `Experiment` object allows you to set a list of scenarios to run, along with a wanted number of repetition. Once instancied, scenarios can be added via the `.add_scenario()`. Eventually, all the scenarios can be run, and repeated, by calling the `.run()` method.
 
 ### Experiment's parameters
+
 Few parameters can be set:
-    - `experiment_name`: String, default `'experiment'`. Name of the experiment, will be used for the save path. The full experiment name will be followed by creation date/time, and by a hash if the experiment name already exists.
-    - `nb_repeats`: int, Number of repetition for the experiment, in which each scenario will be run 
-    - `scenario_list`: list of scenarios to be run during the experiment. Scenario can also be added via the `.add_scenario()` method
-    -  `is_save`: boolean. If set to True, the experiment will be save on disk.
+
+- `experiment_name`: String, default `'experiment'`. Name of the experiment, will be used for the save path. The full experiment name will be followed by creation date/time, and by a hash if the experiment name already exists.
+- `nb_repeats`: int, Number of repetition for the experiment, in which each scenario will be run
+- `scenario_list`: list of scenarios to be run during the experiment. Scenario can also be added via the `.add_scenario()` method
+- `is_save`: boolean. If set to True, the experiment will be save on disk.
 
 ### Save folder
-Another parameter can be passed via the kwargs : `experiment_path`, string which will be used to define the path where the save folder will be created. 
-The default path is set in the `mplc.constant` module, at `EXPERIMENTS_FOLDER_NAME`. 
-The save path follows this pattern : `experiment_path` / `experiment_name`.
-Save folder architecture :
- ------------
+
+Another parameter can be passed via the kwargs: `experiment_path`, string which will be used to define the path where the save folder will be created. The default path is set in the `mplc.constant` module, at `EXPERIMENTS_FOLDER_NAME`. The save path follows this pattern: `experiment_path` / `experiment_name`. Save folder architecture:
+
+```sh
 experiment_name
         ├── scenario_0_repeat_0_...                         <- Folder result of the first scenario, first repeat
         ├── scenario_0_repeat_1_...                         <- Folder result of the first scenario, second repeat
@@ -476,9 +482,10 @@ experiment_name
         ├── debug.log                                       <- Record of the log output, debug level
         ├── info.log                                        <- Record of the log output, info level
         └── result.csv                                      <- Result of all the scenarios, all repeats. 
- ------------
- 
+```
+
 ### Example
+
 ````python
 from mplc.experiment import Experiment
 from mplc.scenario import Scenario
@@ -500,7 +507,7 @@ The `Dataset` object is useful if you want to define custom datasets and related
 ### Dataset
 
 The `Dataset` abstract class implements most of the methods needed by the library. To use an custom dataset, you must define a new class, which inherit from the `Dataset` one
-Don't forget to call the `Dataset.__init__()` via the super function. It will requires some parameters. 
+Don't forget to call the `Dataset.__init__()` via the super function. It will requires some parameters.
 Here is the structure of the `Dataset` generator:
 
 ```python
@@ -521,6 +528,7 @@ class MyDataset(Dataset):
         return model 
      
 ```
+
 ### Model generator
 
 The method `generate_new_model()` needs to be implemented and provide the model to be trained.
@@ -528,6 +536,7 @@ The method `generate_new_model()` needs to be implemented and provide the model 
 > Note: it is mandatory to have loss and accuracy as metrics for your model.
 
 Currently the library handles compiled Keras' models (see MNIST, ESC50, IMDB and CIFAR10 datasets). Scikit-Learn Logistic Regression models can be adapted to work with the library (see the TITANIC dataset).
+
 ### Data labels
 
 The data labels can take whatever shape you need, with only one condition. The labels need to be convertible into string format, and with respect to the condition that if `label1` is equal to `label2` (reciprocally different from), therefore `str(label1)` must be equal to `str(label2)` (reciprocally different from).
@@ -536,14 +545,14 @@ The data labels can take whatever shape you need, with only one condition. The l
 
 The `Dataset` object must provide separate train and test sets (referred to as global train set and global test set).
 
-The global train set is then further split into a global train set and a global validation set, by the function `train_val_split_global()`. Please note that if this function is not overwritten, the SKLearn's `train_test_split()` function will be called by default, and `10%` of the training set will be use as validation set. 
+The global train set is then further split into a global train set and a global validation set, by the function `train_val_split_global()`. Please note that if this function is not overwritten, the SKLearn's `train_test_split()` function will be called by default, and `10%` of the training set will be use as validation set.
 
 In the multi-partner learning computations, the global validation set is used for early stopping and the global test set is used for performance evaluation.
 
 The global train set is then split amongst partners (according to the scenario configuration) to populate the partner's local datasets.
 
 For each partner, the local dataset will be split into separated train, validation and test sets, using the `train_test_split_local()` and `train_val_split_local()` functions.
-These are not mandatory, by default the local dataset will not be split. 
+These are not mandatory, by default the local dataset will not be split.
 
 > Note: currently, the local validation and test set are not used, but they are available for further developments of multi-partner learning and contributivity measurement approaches.
 
