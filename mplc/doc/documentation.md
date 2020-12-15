@@ -544,6 +544,23 @@ These are not mandatory, by default the local dataset will not be split.
 
 > Note: currently, the local validation and test set are not used, but they are available for further developments of multi-partner learning and contributivity measurement approaches.
 
+## Run the tests
+
+You will first need to install the dev dependencies with `pip3 install -r dev-requirements.txt` and then run:
+
+```sh
+# Run unit tests
+pytest -vv tests/unit_tests.py
+# or 
+python3 -m pytest -vv tests/unit_tests.py
+
+# Fall in debugger breakpoint in case of error
+pytest -vv tests/unit_tests.py --pdb
+
+# Run tests and produce a coverage measure. This will output a .coverage file
+pytest -vv --cov=mplc tests/unit_tests.py
+```
+
 ## Contacts, contributions, collaborations
 
 Should you be interested in this open effort and would like to share any question, suggestion or input, you can use the following channels:
