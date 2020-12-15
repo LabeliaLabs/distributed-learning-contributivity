@@ -188,6 +188,6 @@ Should you be interested in this open effort and would like to share any questio
 
 - This Github repository (issues or PRs)
 - Substra Foundation's [Slack workspace](https://substra-workspace.slack.com/join/shared_invite/zt-cpyedcab-FHYgpy08efKJ2FCadE2yCA), channel `#workgroup-mpl-contributivity`
-- Email: hello@substra.org
+- Email: <hello@substra.org>
 
  ![logo Substra Foundation](./img/substra_logo_couleur_rvb_w150px.png)
