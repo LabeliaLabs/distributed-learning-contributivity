@@ -90,14 +90,14 @@ my_scenario = Scenario(partners_count=3,
 ```
 
 With each dataset, a model architecture is provided by default, so you do not need to care of it. Moreover, the split between the validation and train sets is done by the constructor's of the dataset, even if you can finetune it.
-If you want to use an homemade dataset or a homemade model, you will have to use the [dataset class](#dataset-generation).
+If you want to use a homemade dataset or a homemade model, you will have to use the [dataset class](#dataset-generation).
 
 > Note: this parameter is not mandatory as the MNIST dataset is selected by default.
 
 ### Set some ML parameters
 
 Even if default values are provided for iterations parameters, it is strongly advised to adapt these to your particular use case.
-For instance you might want your training to go for `10` epochs and `3` mini-batches per epoch.
+For instance, you might want your training to go for `10` epochs and `3` mini-batches per epoch.
 
 ```python
 from mplc.scenario import Scenario
@@ -139,7 +139,7 @@ history.history = { 1: {'val_accuracy' : matrix[epoch, minibatch]
 ```
 
 The n first keys correspond to the partner id, and the data referenced by the `'mpl_model'` key are those of the global model.
-As this dictionary is not really user friendly, you can convert it to a Pandas DataFrame, and use the pandas API to performed advanced analysis easily.
+As this dictionary is not really user-friendly, you can convert it to a Pandas DataFrame, and use the pandas API to performed advanced analysis easily.
 Here is an instance:
 
 ```python
@@ -269,10 +269,10 @@ There are 2 ways to select a dataset. You can either choose a pre-implemented da
     - String id: `'random'`
   - `RandomizeUniform`. The labels are flipped randomly, according to uniform distribution
     - String id: `'random-uniform'`
-  - `Duplication`, The data are replaced by the data of another partner.
+  - `Duplication`: The data are replaced by the data of another partner.
     - Extra-parameter: `'duplicated_partner_id'`: `Partner.id` used by the duplicate corruption method. If not provided, a random partner amongst those with enough data will be selected
     - String id: `'duplication'`
-  - `Redundancy`. The data are replaced by a copy of an unique data.
+  - `Redundancy`. The data are replaced by a copy of a unique data.
     - String id: `'redundancy'`
 
     All of these can use the parameter `'proportion'`: 1. (default), float between 0. and 1. Indicating the proportion of partner's data to corrupt
@@ -511,8 +511,8 @@ The `Dataset` object is useful if you want to define custom datasets and related
 
 ### Dataset
 
-The `Dataset` abstract class implements most of the methods needed by the library. To use an custom dataset, you must define a new class, which inherit from the `Dataset` one
-Don't forget to call the `Dataset.__init__()` via the super function. It will require some parameters.
+The `Dataset` abstract class implements most of the methods needed by the library. To use a custom dataset, you must define a new class, which inherit from the `Dataset` one
+Don't forget to call the `Dataset.__init__()` via the super function. It will require some parameters. 
 Here is the structure of the `Dataset` generator:
 
 ```python
@@ -579,4 +579,4 @@ Should you be interested in this open effort and would like to share any questio
 - Substra Foundation's Slack workspace, channel #workgroup-mpl-contributivity
 - Email: <hello@substra.org>
 
- ![logo Substra Foundation](../../img/substra_logo_couleur_rvb_w150px.png)
+![logo Substra Foundation](../../img/substra_logo_couleur_rvb_w150px.png)
