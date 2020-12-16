@@ -132,7 +132,7 @@ class Aggregator(ABC):
             avg_weights_for_layer = np.average(
                 np.array(weights_for_layer), axis=0, weights=self.aggregation_weights
             )
-            new_weights.append(list(avg_weights_for_layer))
+            new_weights.append(avg_weights_for_layer)
 
         return new_weights
 

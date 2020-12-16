@@ -9,10 +9,10 @@ from abc import ABC, abstractmethod
 from timeit import default_timer as timer
 
 import numpy as np
-from keras.backend import clear_session
-from keras.callbacks import EarlyStopping
 from loguru import logger
 from sklearn.preprocessing import normalize
+from tensorflow.keras.backend import clear_session
+from tensorflow.keras.callbacks import EarlyStopping
 
 from . import constants
 from .mpl_utils import History, Aggregator
