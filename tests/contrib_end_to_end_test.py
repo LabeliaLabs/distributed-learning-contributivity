@@ -19,7 +19,19 @@ class Test_EndToEndTest:
                                              contributivity_methods=["Federated SBS linear", "Shapley values"])
         titanic_scenario.run()
 
-        assert True
+        df = test_utils.get_latest_dataframe("*end_to_end_test*")
+
+        # Two contributivity methods for each partner --> 4 lines
+        assert len(df) == 4
+
+        for contributivity_method in df.contributivity_method.unique():
+
+            current_df = df[df.contributivity_method == contributivity_method]
+
+            small_dataset_score = current_df.loc[current_df.dataset_fraction_of_partner == 0.2, "contributivity_score"]
+            big_dataset_score = current_df.loc[current_df.dataset_fraction_of_partner == 0.8, "contributivity_score"]
+
+            assert small_dataset_score.values < big_dataset_score.values
 
     def test_mnist_contrib(self):
         """
