@@ -26,7 +26,6 @@ class Partner:
         self.cluster_count: int
         self.cluster_split_option: str
         self.clusters_list = []
-        self.final_nb_samples: int
         self.final_nb_samples_p_cluster: int
 
         self.x_train = []
@@ -44,6 +43,14 @@ class Partner:
     @property
     def data_volume(self):
         return len(self.y_train)
+
+    @property
+    def final_nb_samples(self):
+        return len(self.y_train)
+
+    @property
+    def labels(self):
+        return list(set(self.y_train))
 
     def corrupt(self):
         # Check if the labels are encoded into categorical. If not, convert them

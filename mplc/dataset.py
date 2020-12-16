@@ -42,8 +42,8 @@ class Dataset(ABC):
                  y_train,
                  x_test,
                  y_test,
-                 val_proportion=0.1,
-                 proportion=1
+                 proportion=1,
+                 val_proportion=0.1
                  ):
         self.name = dataset_name
 
@@ -96,7 +96,8 @@ class Dataset(ABC):
 
 
 class Cifar10(Dataset):
-    def __init__(self):
+    def __init__(self, proportion=1,
+                 val_proportion=0.1):
         self.input_shape = (32, 32, 3)
         self.num_classes = 10
         x_test, x_train, y_test, y_train = self.load_data()
@@ -107,7 +108,9 @@ class Cifar10(Dataset):
                                       x_train=x_train,
                                       y_train=y_train,
                                       x_test=x_test,
-                                      y_test=y_test)
+                                      y_test=y_test,
+                                      proportion=proportion,
+                                      val_proportion=val_proportion)
 
     def load_data(self):
         attempts = 0
@@ -188,7 +191,8 @@ class Cifar10(Dataset):
 
 
 class Titanic(Dataset):
-    def __init__(self):
+    def __init__(self, proportion=1,
+                 val_proportion=0.1):
         self.num_classes = 2
         self.input_shape = (27,)
         # Load data
@@ -200,7 +204,9 @@ class Titanic(Dataset):
                                       x_train=x_train,
                                       y_train=y_train,
                                       x_test=x_test,
-                                      y_test=y_test
+                                      y_test=y_test,
+                                      proportion=proportion,
+                                      val_proportion=val_proportion
                                       )
 
     # Init dataset-specific functions
@@ -360,7 +366,8 @@ class Titanic(Dataset):
 
 
 class Mnist(Dataset):
-    def __init__(self):
+    def __init__(self, proportion=1,
+                 val_proportion=0.1):
         # Init dataset-specific variables
         self.img_rows = 28
         self.img_cols = 28
@@ -374,7 +381,9 @@ class Mnist(Dataset):
                                     x_train=x_train,
                                     y_train=y_train,
                                     x_test=x_test,
-                                    y_test=y_test
+                                    y_test=y_test,
+                                    proportion=proportion,
+                                    val_proportion=val_proportion
                                     )
 
     def load_data(self):
@@ -445,7 +454,8 @@ class Mnist(Dataset):
 
 
 class Imdb(Dataset):
-    def __init__(self):
+    def __init__(self, proportion=1,
+                 val_proportion=0.1):
         self.num_words = 5000
         self.num_classes = 2
         self.input_shape = (500,)
@@ -457,7 +467,9 @@ class Imdb(Dataset):
                                    x_train=x_train,
                                    y_train=y_train,
                                    x_test=x_test,
-                                   y_test=y_test
+                                   y_test=y_test,
+                                   proportion=proportion,
+                                   val_proportion=val_proportion
                                    )
 
     def load_data(self):
@@ -524,7 +536,8 @@ class Imdb(Dataset):
 
 
 class Esc50(Dataset):
-    def __init__(self):
+    def __init__(self, proportion=1,
+                 val_proportion=0.1):
         # Load data
         self.num_classes = 50
         self.input_shape = (40, 431, 1)
@@ -537,7 +550,9 @@ class Esc50(Dataset):
                                     x_train=x_train,
                                     y_train=y_train,
                                     x_test=x_test,
-                                    y_test=y_test
+                                    y_test=y_test,
+                                    proportion=proportion,
+                                    val_proportion=val_proportion
                                     )
 
     # Init dataset-specific functions
