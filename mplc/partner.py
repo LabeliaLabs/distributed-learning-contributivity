@@ -50,7 +50,10 @@ class Partner:
 
     @property
     def labels(self):
-        return list(set(self.y_train))
+        if self.y_train.ndim == 1:
+            return np.unique(self.y_train)
+        else:
+            return np.unique(np.argmax(self.y_train, axis=1))
 
     def corrupt(self):
         # Check if the labels are encoded into categorical. If not, convert them

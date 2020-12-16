@@ -4,8 +4,6 @@ This enables to parameterize a desired scenario to mock a multi-partner ML proje
 """
 
 import datetime
-import operator
-import random
 import re
 import uuid
 from pathlib import Path
@@ -22,6 +20,7 @@ from .corruption import Corruption, NoCorruption, IMPLEMENTED_CORRUPTION, Duplic
 from .mpl_utils import AGGREGATORS
 from .multi_partner_learning import MULTI_PARTNER_LEARNING_APPROACHES
 from .partner import Partner
+from .splitter import Splitter, IMPLEMENTED_SPLITTERS
 
 
 class Scenario:
@@ -32,7 +31,7 @@ class Scenario:
             dataset=None,
             dataset_name=constants.MNIST,
             dataset_proportion=1,
-            samples_split_option=None,
+            samples_split_option='random',
             corruption_parameters=None,
             init_model_from="random_initialization",
             multi_partner_learning_approach="fedavg",
@@ -121,6 +120,7 @@ class Scenario:
             "amounts_per_partner",
             "corruption_parameters",
             "samples_split_option",
+            "samples_split_configuration"
         ]  # Partners related
         params_known += [
             "gradient_updates_per_pass_count",
@@ -181,16 +181,6 @@ class Scenario:
                 f"Computation use the full dataset for scenario #{scenario_id}"
             )
 
-        if test_set in ['local', 'global', 'both']:
-            self.test_set = test_set
-        else:
-            raise ValueError(f'Test set can be \'local\', \'global\' or \'both\', not {test_set}')
-        if test_set in ['local', 'global', 'both']:
-            self.val_set = val_set
-        else:
-            raise ValueError(f'Validation set can be \'local\', \'global\' or \'both\', not {val_set}')
-
-
         # --------------------------------------
         #  Definition of collaborative scenarios
         # --------------------------------------
@@ -204,14 +194,36 @@ class Scenario:
         # ... has to sum to 1, and number of items has to equal partners_count)
         self.amounts_per_partner = amounts_per_partner
 
-        # For configuring if data samples are split between partners randomly or in a stratified way...
-        # ... so that they cover distinct areas of the samples space
-        if samples_split_option:
-            (self.samples_split_type, self.samples_split_description) = samples_split_option
+        #  To configure how validation set and test set will be organized.
+        if test_set in ['local', 'global', 'both']:
+            self.test_set = test_set
         else:
-            (self.samples_split_type, self.samples_split_description) = ("basic", "random")  # default
+            raise ValueError(f'Test set can be \'local\', \'global\' or \'both\', not {test_set}')
+        if test_set in ['local', 'global', 'both']:
+            self.val_set = val_set
+        else:
+            raise ValueError(f'Validation set can be \'local\', \'global\' or \'both\', not {val_set}')
 
-        # For configuring if the data of the partners are corrupted or not (useful for testing contributivity measures)
+        # To configure if data samples are split between partners randomly or in a stratified way...
+        # ... so that they cover distinct areas of the samples space
+        if isinstance(samples_split_option, Splitter):
+            if self.val_set != samples_split_option.val_set:
+                logger.warning('The validation set organisation (local/global) is differently configured between the '
+                               'provided Splitter and Scenario')
+            if self.test_set != samples_split_option.test_set:
+                logger.warning('The test set organisation (local/global) is differently configured between the '
+                               'provided Splitter and Scenario')
+            self.splitter = samples_split_option
+        else:
+            splitter_param = {'amounts_per_partner': self.amounts_per_partner,
+                              'val_set': self.val_set,
+                              'test_set': self.test_set,
+                              }
+            if "samples_split_configuration" in kwargs.keys():
+                splitter_param.update({'configuration': kwargs["samples_split_configuration"]})
+            self.splitter = IMPLEMENTED_SPLITTERS[samples_split_option](**splitter_param)
+
+        # To configure if the data of the partners are corrupted or not (useful for testing contributivity measures)
         if corruption_parameters:
             self.corruption_parameters = list(
                 map(lambda x: x if isinstance(x, Corruption) else IMPLEMENTED_CORRUPTION[x](),
@@ -412,7 +424,7 @@ class Scenario:
         # Describe scenario
         logger.info("Description of data scenario configured:")
         logger.info(f"   Number of partners defined: {self.partners_count}")
-        logger.info(f"   Data distribution scenario chosen: {self.samples_split_description}")
+        logger.info(f"   Data distribution scenario chosen: {self.splitter}")
         logger.info(f"   Multi-partner learning approach: {self.multi_partner_learning_approach}")
         logger.info(f"   Weighting option: {self.aggregation}")
         logger.info(f"   Iterations parameters: "
@@ -444,481 +456,8 @@ class Scenario:
             raise Exception('Partners have already been initialized')
         self.partners_list = [Partner(i, corruption=self.corruption_parameters[i]) for i in range(self.partners_count)]
 
-    def split_data(self, is_logging_enabled=True):
-        if self.samples_split_type == "basic":
-            self.split_data_basic(is_logging_enabled)
-        elif self.samples_split_type == "advanced":
-            self.split_data_advanced(is_logging_enabled)
-
-    def split_data_advanced(self, is_logging_enabled=True):
-        """Advanced split: Populates the partners with their train and test data (not pre-processed)"""
-
-        y_train = LabelEncoder().fit_transform([str(y) for y in self.dataset.y_train])
-        partners_list = self.partners_list
-        amounts_per_partner = self.amounts_per_partner
-        advanced_split_description = self.samples_split_description
-
-        # Compose the lists of partners with data samples from shared clusters and those with specific clusters
-        for p in partners_list:
-            p.cluster_count = int(advanced_split_description[p.id][0])
-            p.cluster_split_option = advanced_split_description[p.id][1]
-        partners_with_shared_clusters = [
-            p for p in partners_list if p.cluster_split_option == "shared"
-        ]
-        partners_with_specific_clusters = [
-            p for p in partners_list if p.cluster_split_option == "specific"
-        ]
-        partners_with_shared_clusters.sort(
-            key=operator.attrgetter("cluster_count"), reverse=True
-        )
-        partners_with_specific_clusters.sort(
-            key=operator.attrgetter("cluster_count"), reverse=True
-        )
-
-        # Compose the list of different labels in the dataset
-        labels = list(set(y_train))
-        random.seed(42)
-        random.shuffle(labels)
-
-        # Check coherence of the split option:
-        nb_diff_labels = len(labels)
-        specific_clusters_count = sum(
-            [p.cluster_count for p in partners_with_specific_clusters]
-        )
-        if partners_with_shared_clusters:
-            shared_clusters_count = max(
-                [p.cluster_count for p in partners_with_shared_clusters]
-            )
-        else:
-            shared_clusters_count = 0
-        assert (
-                specific_clusters_count + shared_clusters_count <= nb_diff_labels
-        ), "Error: data samples from the \
-            initial dataset are split in clusters per data labels - Incompatibility between the split arguments \
-            and the dataset provided \
-            - Example: ['advanced', [[7, 'shared'], [6, 'shared'], [2, 'specific'], [1, 'specific']]] \
-            means 7 shared clusters and 2 + 1 = 3 specific clusters ==> This scenario can't work with a dataset with \
-            less than 10 labels"
-
-        # Stratify the dataset into clusters per labels
-        x_train_for_cluster, y_train_for_cluster, nb_samples_per_cluster = {}, {}, {}
-        for label in labels:
-            idx_in_full_trainset = np.where(y_train == label)
-            x_train_for_cluster[label] = self.dataset.x_train[idx_in_full_trainset]
-            y_train_for_cluster[label] = self.dataset.y_train[idx_in_full_trainset]
-            nb_samples_per_cluster[label] = len(y_train_for_cluster[label])
-
-        # For each partner compose the list of clusters from which they will draw data samples
-        index = 0
-        for p in partners_with_specific_clusters:
-            p.clusters_list = labels[index: index + p.cluster_count]
-            index += p.cluster_count
-
-        shared_clusters = labels[index: index + shared_clusters_count]
-        for p in partners_with_shared_clusters:
-            p.clusters_list = random.sample(shared_clusters, k=p.cluster_count)
-
-        # We need to enforce the relative data amounts configured.
-        # It might not be possible to distribute all data samples, depending on...
-        # ... the coherence of the relative data amounts and the split option.
-        # We will compute a resize factor to determine the total nb of samples to be distributed per partner
-
-        # For partners getting data samples from specific clusters...
-        # ... compare the nb of available samples vs. the nb of samples initially configured
-        resize_factor_specific = 1
-        for p in partners_with_specific_clusters:
-            nb_available_samples = sum(
-                [nb_samples_per_cluster[cl] for cl in p.clusters_list]
-            )
-            nb_samples_requested = int(amounts_per_partner[p.id] * len(y_train))
-            ratio = nb_available_samples / nb_samples_requested
-            resize_factor_specific = min(resize_factor_specific, ratio)
-
-        # For each partner getting data samples from shared clusters:
-        # ... compute the nb of samples initially configured and resize it,
-        # ... then sum per cluster how many samples are needed.
-        # Then, find if a cluster is requested more samples than it has, and if yes by which factor
-        resize_factor_shared = 1
-        nb_samples_needed_per_cluster = dict.fromkeys(shared_clusters, 0)
-        for p in partners_with_shared_clusters:
-            initial_amount_resized = int(
-                amounts_per_partner[p.id] * len(y_train) * resize_factor_specific
-            )
-            initial_amount_resized_per_cluster = int(
-                initial_amount_resized / p.cluster_count
-            )
-            for cl in p.clusters_list:
-                nb_samples_needed_per_cluster[cl] += initial_amount_resized_per_cluster
-        for cl in nb_samples_needed_per_cluster:
-            resize_factor_shared = min(
-                resize_factor_shared,
-                nb_samples_per_cluster[cl] / nb_samples_needed_per_cluster[cl],
-            )
-
-        # Compute the final resize factor
-        final_resize_factor = resize_factor_specific * resize_factor_shared
-
-        # Size correctly each partner's subset. For each partner:
-        for p in partners_list:
-            p.final_nb_samples = int(
-                amounts_per_partner[p.id] * len(y_train) * final_resize_factor
-            )
-            p.final_nb_samples_p_cluster = int(p.final_nb_samples / p.cluster_count)
-        # Partners receive their subsets
-        shared_clusters_index = dict.fromkeys(shared_clusters, 0)
-        for p in partners_list:
-
-            list_arrays_x, list_arrays_y = [], []
-
-            if p in partners_with_shared_clusters:
-                for cl in p.clusters_list:
-                    idx = shared_clusters_index[cl]
-                    list_arrays_x.append(
-                        x_train_for_cluster[cl][idx: idx + p.final_nb_samples_p_cluster]
-                    )
-                    list_arrays_y.append(
-                        y_train_for_cluster[cl][idx: idx + p.final_nb_samples_p_cluster]
-                    )
-                    shared_clusters_index[cl] += p.final_nb_samples_p_cluster
-            elif p in partners_with_specific_clusters:
-                for cl in p.clusters_list:
-                    list_arrays_x.append(
-                        x_train_for_cluster[cl][: p.final_nb_samples_p_cluster]
-                    )
-                    list_arrays_y.append(
-                        y_train_for_cluster[cl][: p.final_nb_samples_p_cluster]
-                    )
-
-            p.x_train = np.concatenate(list_arrays_x)
-            p.y_train = np.concatenate(list_arrays_y)
-
-        # Check coherence of number of mini-batches versus partner with small dataset
-        assert self.minibatch_count <= min(
-            [len(p.x_train) for p in self.partners_list]
-        ), "Error: in the provided \
-            config file and the provided dataset, a partner doesn't have enough data samples to create the minibatches"
-
-        if self.val_set == 'local':
-            # Advanced split: Populates the partners with their val data
-
-            y_val = LabelEncoder().fit_transform([str(y) for y in self.dataset.y_val])
-
-            # Stratify the dataset into clusters per labels
-            x_val_for_cluster, y_val_for_cluster, nb_samples_per_cluster_val = {}, {}, {}
-            for label in labels:
-                idx_in_full_valset = np.where(y_val == label)
-                x_val_for_cluster[label] = self.dataset.x_val[idx_in_full_valset]
-                y_val_for_cluster[label] = self.dataset.y_val[idx_in_full_valset]
-                nb_samples_per_cluster_val[label] = len(y_val_for_cluster[label])
-
-            # We need to enforce the relative data amounts configured.
-            # It might not be possible to distribute all data samples, depending on...
-            # ... the coherence of the relative data amounts and the split option.
-            # We will compute a resize factor to determine the total nb of samples to be distributed per partner
-
-            # For partners getting data samples from specific clusters...
-            # ... compare the nb of available samples vs. the nb of samples initially configured
-            resize_factor_specific_val = 1
-            for p in partners_with_specific_clusters:
-                nb_available_samples = sum(
-                    [nb_samples_per_cluster_val[cl] for cl in p.clusters_list]
-                )
-                nb_samples_requested = int(amounts_per_partner[p.id] * len(y_val))
-                ratio = nb_available_samples / nb_samples_requested
-                resize_factor_specific_val = min(resize_factor_specific_val, ratio)
-
-            # For each partner getting data samples from shared clusters:
-            # ... compute the nb of samples initially configured and resize it,
-            # ... then sum per cluster how many samples are needed.
-            # Then, find if a cluster is requested more samples than it has, and if yes by which factor
-            resize_factor_shared_val = 1
-            nb_samples_needed_per_cluster = dict.fromkeys(shared_clusters, 0)
-            for p in partners_with_shared_clusters:
-                initial_amount_resized = int(
-                    amounts_per_partner[p.id] * len(y_val) * resize_factor_specific
-                )
-                initial_amount_resized_per_cluster = int(
-                    initial_amount_resized / p.cluster_count
-                )
-                for cl in p.clusters_list:
-                    nb_samples_needed_per_cluster[cl] += initial_amount_resized_per_cluster
-            for cl in nb_samples_needed_per_cluster:
-                resize_factor_shared_val = min(
-                    resize_factor_shared_val,
-                    nb_samples_per_cluster_val[cl] / nb_samples_needed_per_cluster[cl],
-                )
-
-            # Compute the final resize factor
-            final_resize_factor_val = resize_factor_specific_val * resize_factor_shared_val
-
-            # Size correctly each partner's subset. For each partner:
-            for p in partners_list:
-                p.final_nb_samples_val = int(
-                    amounts_per_partner[p.id] * len(y_val) * final_resize_factor_val
-                )
-                p.final_nb_samples_p_cluster_val = int(p.final_nb_samples_val / p.cluster_count)
-            self.nb_samples_used = sum([p.final_nb_samples_val for p in partners_list])
-            self.final_relative_nb_samples = [
-                p.final_nb_samples_val / self.nb_samples_used for p in partners_list
-            ]
-
-            # Partners receive their subsets
-            shared_clusters_index = dict.fromkeys(shared_clusters, 0)
-            for p in partners_list:
-
-                list_arrays_x, list_arrays_y = [], []
-
-                if p in partners_with_shared_clusters:
-                    for cl in p.clusters_list:
-                        idx = shared_clusters_index[cl]
-                        list_arrays_x.append(
-                            x_val_for_cluster[cl][idx: idx + p.final_nb_samples_p_cluster_val]
-                        )
-                        list_arrays_y.append(
-                            y_val_for_cluster[cl][idx: idx + p.final_nb_samples_p_cluster_val]
-                        )
-                        shared_clusters_index[cl] += p.final_nb_samples_p_cluster_val
-                elif p in partners_with_specific_clusters:
-                    for cl in p.clusters_list:
-                        list_arrays_x.append(
-                            x_val_for_cluster[cl][: p.final_nb_samples_p_cluster_val]
-                        )
-                        list_arrays_y.append(
-                            y_val_for_cluster[cl][: p.final_nb_samples_p_cluster_val]
-                        )
-
-                p.x_val = np.concatenate(list_arrays_x)
-                p.y_val = np.concatenate(list_arrays_y)
-
-        if self.test_set == 'local':
-            # Advanced split: Populates the partners with their test data
-
-            y_test = LabelEncoder().fit_transform([str(y) for y in self.dataset.y_test])
-
-            # Stratify the dataset into clusters per labels
-            x_test_for_cluster, y_test_for_cluster, nb_samples_per_cluster_test = {}, {}, {}
-            for label in labels:
-                idx_in_full_testset = np.where(y_test == label)
-                x_test_for_cluster[label] = self.dataset.x_test[idx_in_full_testset]
-                y_test_for_cluster[label] = self.dataset.y_test[idx_in_full_testset]
-                nb_samples_per_cluster_test[label] = len(y_test_for_cluster[label])
-
-            # We need to enforce the relative data amounts configured.
-            # It might not be possible to distribute all data samples, depending on...
-            # ... the coherence of the relative data amounts and the split option.
-            # We will compute a resize factor to determine the total nb of samples to be distributed per partner
-
-            # For partners getting data samples from specific clusters...
-            # ... compare the nb of available samples vs. the nb of samples initially configured
-            resize_factor_specific_test = 1
-            for p in partners_with_specific_clusters:
-                nb_available_samples = sum(
-                    [nb_samples_per_cluster_test[cl] for cl in p.clusters_list]
-                )
-                nb_samples_requested = int(amounts_per_partner[p.id] * len(y_test))
-                ratio = nb_available_samples / nb_samples_requested
-                resize_factor_specific_test = min(resize_factor_specific_test, ratio)
-
-            # For each partner getting data samples from shared clusters:
-            # ... compute the nb of samples initially configured and resize it,
-            # ... then sum per cluster how many samples are needed.
-            # Then, find if a cluster is requested more samples than it has, and if yes by which factor
-            resize_factor_shared_test = 1
-            nb_samples_needed_per_cluster = dict.fromkeys(shared_clusters, 0)
-            for p in partners_with_shared_clusters:
-                initial_amount_resized = int(
-                    amounts_per_partner[p.id] * len(y_test) * resize_factor_specific
-                )
-                initial_amount_resized_per_cluster = int(
-                    initial_amount_resized / p.cluster_count
-                )
-                for cl in p.clusters_list:
-                    nb_samples_needed_per_cluster[cl] += initial_amount_resized_per_cluster
-            for cl in nb_samples_needed_per_cluster:
-                resize_factor_shared_test = min(
-                    resize_factor_shared_test,
-                    nb_samples_per_cluster_test[cl] / nb_samples_needed_per_cluster[cl],
-                )
-
-            # Compute the final resize factor
-            final_resize_factor_test = resize_factor_specific_test * resize_factor_shared_test
-
-            # Size correctly each partner's subset. For each partner:
-            for p in partners_list:
-                p.final_nb_samples_test = int(
-                    amounts_per_partner[p.id] * len(y_test) * final_resize_factor_test
-                )
-                p.final_nb_samples_p_cluster_test = int(p.final_nb_samples_test / p.cluster_count)
-            self.nb_samples_used = sum([p.final_nb_samples_test for p in partners_list])
-            self.final_relative_nb_samples = [
-                p.final_nb_samples_test / self.nb_samples_used for p in partners_list
-            ]
-
-            # Partners receive their subsets
-            shared_clusters_index = dict.fromkeys(shared_clusters, 0)
-            for p in partners_list:
-
-                list_arrays_x, list_arrays_y = [], []
-
-                if p in partners_with_shared_clusters:
-                    for cl in p.clusters_list:
-                        idx = shared_clusters_index[cl]
-                        list_arrays_x.append(
-                            x_test_for_cluster[cl][idx: idx + p.final_nb_samples_p_cluster_test]
-                        )
-                        list_arrays_y.append(
-                            y_test_for_cluster[cl][idx: idx + p.final_nb_samples_p_cluster_test]
-                        )
-                        shared_clusters_index[cl] += p.final_nb_samples_p_cluster_test
-                elif p in partners_with_specific_clusters:
-                    for cl in p.clusters_list:
-                        list_arrays_x.append(
-                            x_test_for_cluster[cl][: p.final_nb_samples_p_cluster_test]
-                        )
-                        list_arrays_y.append(
-                            y_test_for_cluster[cl][: p.final_nb_samples_p_cluster_test]
-                        )
-
-                p.x_test = np.concatenate(list_arrays_x)
-                p.y_test = np.concatenate(list_arrays_y)
-
-        if is_logging_enabled:
-            logger.info("Splitting data among partners (advanced split):")
-            logger.info(f"Nb of samples split amongst partners: {self.nb_samples_used}")
-            logger.debug(
-                f"Partners' relative nb of samples: {[round(p, 2) for p in self.final_relative_nb_samples]} "
-                f"(versus initially configured: {amounts_per_partner})"
-            )
-            for partner in self.partners_list:
-                logger.info(
-                    f"Partner #{partner.id}: {len(partner.x_train)} "
-                    f"samples with labels {partner.clusters_list}"
-                )
-        return 0
-
-    def split_data_basic(self, is_logging_enabled=True):
-        """Populates the partners with their train and test data (not pre-processed)"""
-
-        # Fetch parameters of scenario
-
-        # Configure the desired splitting scenario - Datasets sizes
-        # Should the partners receive an equivalent amount of samples each...
-        # ... or receive different amounts?
-
-        # Check the percentages of samples per partner and control its coherence
-        assert (
-                len(self.amounts_per_partner) == self.partners_count
-        ), "Error: in the provided config file, \
-            amounts_per_partner list should have a size equals to partners_count"
-        assert (
-                np.sum(self.amounts_per_partner) == 1
-        ), "Error: in the provided config file, \
-            amounts_per_partner argument: the sum of the proportions you provided isn't equal to 1"
-
-        # Then we parameterize this via the splitting_indices to be passed to np.split
-        # This is to transform the percentages from the scenario configuration into indices where to split the data
-        if self.partners_count == 1:
-            splitting_indices_train = 1
-        else:
-            splitting_indices = np.empty((self.partners_count - 1,))
-            splitting_indices[0] = self.amounts_per_partner[0]
-            for i in range(self.partners_count - 2):
-                splitting_indices[i + 1] = (
-                        splitting_indices[i] + self.amounts_per_partner[i + 1]
-                )
-            y_train = LabelEncoder().fit_transform([str(y) for y in self.dataset.y_train])
-            splitting_indices_train = (splitting_indices * len(y_train)).astype(int)
-            if self.val_set == 'local':
-                y_val = LabelEncoder().fit_transform([str(y) for y in self.dataset.y_val])
-                splitting_indices_val = (splitting_indices * len(y_val)).astype(int)
-            if self.test_set == 'local':
-                y_test = LabelEncoder().fit_transform([str(y) for y in self.dataset.y_test])
-                splitting_indices_test = (splitting_indices * len(y_test)).astype(int)
-
-        # Configure the desired data distribution scenario
-        # In the 'stratified' scenario we sort by labels
-
-        if self.samples_split_description == "stratified":
-            # Sort by labels
-            train_idx = y_train.argsort()
-            if self.val_set == 'local':
-                val_idx = y_val.argsort()
-            if self.test_set == 'local':
-                test_idx = y_test.argsort()
-
-        # In the 'random' scenario we shuffle randomly the indexes
-        elif self.samples_split_description == "random":
-            train_idx = np.arange(len(y_train))
-            np.random.seed(42)
-            np.random.shuffle(train_idx)
-            if self.val_set == 'local':
-                val_idx = np.arange(len(y_val))
-                np.random.shuffle(val_idx)
-            if self.test_set == 'local':
-                test_idx = np.arange(len(y_test))
-                np.random.shuffle(test_idx)
-        # If neither 'stratified' nor 'random', we raise an exception
-        else:
-            raise NameError(
-                "This samples_split option ["
-                + self.samples_split_description
-                + "] is not recognized."
-            )
-
-        # Do the partitioning among partners according to desired scenarios
-        # Split data between partners
-        train_idx_idx_list = np.split(train_idx, splitting_indices_train)
-        if self.val_set == 'local':
-            val_idx_idx_list = np.split(val_idx, splitting_indices_val)
-        if self.test_set == 'local':
-            test_idx_idx_list = np.split(test_idx, splitting_indices_test)
-
-        # Populate partners train_set
-
-        for partner_idx, train_idx in enumerate(train_idx_idx_list):
-            p = self.partners_list[partner_idx]
-
-            # Finalize selection of train data
-            # Populate the partner's train dataset
-            p.x_train = self.dataset.x_train[train_idx, :]
-            p.y_train = self.dataset.y_train[train_idx]
-
-            # Update other attributes from partner
-            p.final_nb_samples = len(p.x_train)
-            p.clusters_list = list(set(y_train[train_idx]))
-
-        if self.val_set == 'local':
-            for partner_idx, val_idx in enumerate(val_idx_idx_list):
-                p = self.partners_list[partner_idx]
-
-                # Finalize selection of val data
-                # Populate the partner's val dataset
-                p.x_val = self.dataset.x_val[val_idx, :]
-                p.y_val = self.dataset.y_val[val_idx]
-
-        if self.test_set == 'local':
-            for partner_idx, test_idx in enumerate(test_idx_idx_list):
-                p = self.partners_list[partner_idx]
-
-                # Finalize selection of test data
-                # Populate the partner's test dataset
-                p.x_test = self.dataset.x_test[test_idx, :]
-                p.y_test = self.dataset.y_test[test_idx]
-
-        # Check coherence of number of mini-batches versus smaller partner
-        assert self.minibatch_count <= (
-                min(self.amounts_per_partner) * len(y_train)
-        ), "Error: in the provided config \
-            file and dataset, a partner doesn't have enough data samples to create the minibatches"
-
-        if is_logging_enabled:
-            logger.info("Splitting data among partners (simple split):")
-            logger.info(f"Nb of samples split amongst partners: {self.nb_samples_used}")
-            for partner in self.partners_list:
-                logger.info(
-                    f"Partner #{partner.id}: {partner.final_nb_samples} samples with labels {partner.clusters_list}"
-                )
-
+    def split_data(self):
+        self.splitter.split(self.partners_list, self.dataset)
         return 0
 
     def plot_data_distribution(self):

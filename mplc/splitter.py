@@ -12,6 +12,8 @@ from sklearn.preprocessing import LabelEncoder
 
 
 class Splitter(ABC):
+    name = 'Abstract Splitter'
+
     def __init__(self, amounts_per_partner, val_set='global', test_set='global'):
 
         self.amounts_per_partner = amounts_per_partner
@@ -28,6 +30,9 @@ class Splitter(ABC):
     @property
     def partners_count(self):
         return len(self.partners_list)
+
+    def __str__(self):
+        return self.name
 
     def split(self, partners_list, dataset):
         self.dataset = dataset
@@ -76,11 +81,12 @@ class Splitter(ABC):
 
 
 class RandomSplitter(Splitter):
+    name = 'Random samples split'
+
     def _generate_subset(self, x, y):
         if self.partners_count == 1:
             return [(x, y)]
         else:
-            y = LabelEncoder().fit_transform([str(label) for label in y])
             splitting_indices = (np.cumsum(self.amounts_per_partner)[:-1] * len(y)).astype(int)
             idxs = np.arange(len(y))
             np.random.shuffle(idxs)
@@ -92,13 +98,15 @@ class RandomSplitter(Splitter):
 
 
 class StratifiedSplitter(Splitter):
+    name = 'Stratified samples split'
+
     def _generate_subset(self, x, y):
         if self.partners_count == 1:
             return [(x, y)]
         else:
-            y = LabelEncoder().fit_transform([str(label) for label in y])
+            y_str = LabelEncoder().fit_transform([str(label) for label in y])
             splitting_indices = (np.cumsum(self.amounts_per_partner)[:-1] * len(y)).astype(int)
-            idxs = y.argsort()
+            idxs = y_str.argsort()
             idx_list = np.split(idxs, splitting_indices)
             res = []
             for slice_idx in idx_list:
@@ -107,14 +115,16 @@ class StratifiedSplitter(Splitter):
 
 
 class AdvancedSplitter(Splitter):
+    name = 'Advanced samples split'
+
     def __init__(self, amounts_per_partner, samples_split_description, **kwargs):
         self.num_clusters, self.specific_shared = list(zip(*samples_split_description))
         super().__init__(amounts_per_partner, **kwargs)
 
     def _generate_subset(self, x, y):
         lb = LabelEncoder()
-        y = lb.fit_transform([str(label) for label in y])
-        labels = list(set(y))
+        y_str = lb.fit_transform([str(label) for label in y])
+        labels = list(set(y_str))
         np.random.shuffle(labels)
         nb_diff_labels = len(lb.classes_)
 
@@ -149,7 +159,7 @@ class AdvancedSplitter(Splitter):
 
         x_for_cluster, y_for_cluster, nb_samples_per_cluster = {}, {}, {}
         for label in labels:
-            idx_in_full_set = np.where(y == label)
+            idx_in_full_set = np.where(y_str == label)
             x_for_cluster[label] = x[idx_in_full_set]
             y_for_cluster[label] = y[idx_in_full_set]
             nb_samples_per_cluster[label] = len(y_for_cluster[label])
@@ -246,3 +256,10 @@ class AdvancedSplitter(Splitter):
         )
 
         return res
+
+
+IMPLEMENTED_SPLITTERS = {
+    'random': RandomSplitter,
+    'stratified': StratifiedSplitter,
+    'advanced': AdvancedSplitter
+}

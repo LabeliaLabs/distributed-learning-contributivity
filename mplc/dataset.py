@@ -13,6 +13,7 @@ from urllib.request import urlretrieve
 
 import numpy as np
 import pandas as pd
+from joblib import dump, load
 from librosa import load as wav_load
 from librosa.feature import mfcc
 from loguru import logger
@@ -58,7 +59,10 @@ class Dataset(ABC):
 
         self.proportion = 1
         self.shorten_dataset_proportion(proportion)
-        self.train_val_split_global()
+
+        self.x_train, self.x_val, self.y_train, self.y_val = train_test_split(self.x_train,
+                                                                              self.y_train,
+                                                                              test_size=val_proportion)
 
     def __str__(self):
         return f'{self.name} dataset'
