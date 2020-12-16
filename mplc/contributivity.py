@@ -100,11 +100,11 @@ class Contributivity:
             small_partners_list = np.array([self.scenario.partners_list[i] for i in subset])
             if len(small_partners_list) > 1:
                 mpl = self.scenario._multi_partner_learning_approach(self.scenario,
-                                                                    partners_list=small_partners_list,
-                                                                    is_early_stopping=True,
-                                                                    save_folder=None,,
-                                                                    **self.scenario.mpl_kwargs
-                                                                    )
+                                                                     partners_list=small_partners_list,
+                                                                     is_early_stopping=True,
+                                                                     save_folder=None,
+                                                                     **self.scenario.mpl_kwargs
+                                                                     )
             else:
                 mpl = multi_partner_learning.SinglePartnerLearning(self.scenario,
                                                                    partner=small_partners_list[0],

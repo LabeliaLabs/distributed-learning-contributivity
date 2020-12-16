@@ -9,9 +9,9 @@ from abc import ABC, abstractmethod
 from timeit import default_timer as timer
 
 import numpy as np
+from tensorflow.keras import Input, Model
 from loguru import logger
 from sklearn.metrics import confusion_matrix
-from sklearn.preprocessing import normalize
 from tensorflow.keras.backend import clear_session
 from tensorflow.keras.callbacks import EarlyStopping
 
@@ -466,6 +466,7 @@ class SequentialAverageLearning(SequentialLearning):
 
 class MplSModel(FederatedAverageLearning):
     name = 'Federated learning with label flipping'
+
     def __init__(self, scenario, pretrain_epochs=0, epsilon=0.5, **kwargs):
         super(MplSModel, self).__init__(scenario, **kwargs)
         self.pretrain_epochs = pretrain_epochs

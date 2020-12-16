@@ -1,10 +1,10 @@
 import numpy as np
 from joblib import dump, load
-from keras.backend import dot
-from keras.layers import Dense
 from loguru import logger
 from sklearn.linear_model import LogisticRegression as skLR
 from sklearn.metrics import log_loss
+from tensorflow.keras.backend import dot
+from tensorflow.keras.layers import Dense
 
 
 class LogisticRegression(skLR):

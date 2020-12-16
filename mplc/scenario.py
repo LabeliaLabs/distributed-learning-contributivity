@@ -332,6 +332,14 @@ class Scenario:
             self.save_folder = Path(save_path) / self.scenario_name
         else:
             self.save_folder = None
+        # ------------------------------------------------------------------
+        # Select in the kwargs the parameters to be transferred to sub object
+        # ------------------------------------------------------------------
+        self.mpl_kwargs = {}
+        for key, value in kwargs.items():
+            if key.startswith('mpl_'):
+                self.mpl_kwargs[key.replace('mpl_', '')] = value
+
         # -----------------------
         # Provision the scenario
         # -----------------------
@@ -340,6 +348,11 @@ class Scenario:
         self.split_data()
         self.compute_batch_sizes()
         self.apply_data_alteration_configuration()
+
+        # ------------------------------------------------
+        # Print the description of the scenario configured
+        # ------------------------------------------------
+
         self.log_scenario_description()
 
     @property
@@ -376,18 +389,6 @@ class Scenario:
         params.update(kwargs)
 
         return Scenario(**params)
-
-        # ------------------------------------------------------------------
-        # Select in the kwargs the parameters to be transferred to sub object
-        # ------------------------------------------------------------------
-        self.mpl_kwargs = {}
-        for key, value in kwargs.items():
-            if key.startswith('mpl_'):
-                self.mpl_kwargs[key.replace('mpl_', '')] = value
-
-        # ------------------------------------------------
-        # Print the description of the scenario configured
-        # ------------------------------------------------
 
     def log_scenario_description(self):
         """Log the description of the scenario configured"""
