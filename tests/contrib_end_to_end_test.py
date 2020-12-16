@@ -4,6 +4,7 @@ This enables to parameterize end to end tests - the tests are run by Travis each
 """
 
 import subprocess
+from mplc import scenario
 
 from . import test_utils
 
@@ -14,10 +15,9 @@ class Test_EndToEndTest:
         """
         Test contributivity score on titanic dataset
         """
-        # This fails to run
-        # titanic_scenario = Scenario(2, [0.2, 0.8], epoch_count=3, minibatch_count=1, dataset_name='titanic',
-        #                             contributivity_methods=["Federated SBS linear", "Shapley values"])
-        # titanic_scenario.run()
+        titanic_scenario = scenario.Scenario(2, [0.2, 0.8], epoch_count=3, minibatch_count=1, dataset_name='titanic',
+                                             contributivity_methods=["Federated SBS linear", "Shapley values"])
+        titanic_scenario.run()
 
         assert True
 
