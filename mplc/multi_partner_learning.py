@@ -67,7 +67,7 @@ class MultiPartnerLearning(ABC):
         # Initialize the model
         model = self.init_model()
         self.model_weights = model.get_weights()
-        self.metrics_names = model.metrics_names
+        self.metrics_names = self.dataset.model_metrics_names
 
         # Initialize iterators
         self.epoch_index = 0
