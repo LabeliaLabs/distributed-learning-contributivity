@@ -249,7 +249,7 @@ class Duplication(Corruption):
         if not self.duplicated_partner:
             raise Exception('Missing the Partner to duplicate')
         self.generate_matrix()
-        idx = self.corrupted_index
+        idx = self.corrupted_train_index
         if self.duplicated_partner.y_train.ndim == 1:
             self.duplicated_partner.y_train = to_categorical(self.duplicated_partner.y_train.reshape(-1, 1))
             one_label = True

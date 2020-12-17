@@ -598,7 +598,7 @@ class Esc50(Dataset):
             logger.info('ESC-50 dataset found')
 
         esc50_df = pd.read_csv(folder / 'esc50.csv')
-        train, test = self.train_test_split_global(esc50_df)
+        train, test = train_test_split(esc50_df, test_size=0.1)
         y_train = train.target.to_numpy()
         y_test = test.target.to_numpy()
         x_train = (wav_load((folder / 'audio' / file_name).resolve(), sr=None)

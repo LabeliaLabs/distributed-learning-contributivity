@@ -57,31 +57,12 @@ class Scenario:
         :param dataset: dataset.Dataset object. Use it if you want to use your own dataset, otherwise use dataset_name.
         :param dataset_name: str. 'mnist', 'cifar10', 'esc50' and 'titanic' are currently supported (default: mnist)
         :param dataset_proportion: float (default: 1)
-        :param samples_split_option: ['basic', 'random'] (default),
-                                     ['basic', 'stratified']
-                                     or ['advanced', [[nb of clusters (int), 'shared' or 'specific']]].
-        :param corruption_parameters: list of map. Enables to artificially corrupt the data of one or several partners.
-                                   The size of the list must be equal to the number of partners.
-                                   Items of the list must be mapping. The possible keys, values are the following:
-                                    'corruption_method': 'not_corrupted' (default),
-                                                         'duplication',
-                                                         'permutation',
-                                                         'permutation-circular',
-                                                         'random',
-                                                         'random-uniform',
-                                                         'redundancy'
-                                    Indicating the corruption method to use to corrupt the partner's data
-                                    'proportion_corrupted': 1. (default), float between 0. and 1. indicating the
-                                                                          proportion of partner's data to corrupt
-                                    'duplicated_partner_id': Partner_id used by the duplicate corruption method.
-                                                          If not provided, a random partner amongst those
-                                                          with enough data will be selected
-
-                                   Example with 3 partners.
-                                   [{}, {'corruption_method':'permutation'},
-                                    {'corruption_method':'duplication',
-                                    'proportion_corrupted': 0.4,
-                                    'duplicated_partner_id': 0}]
+        :param samples_split_option: Splitter object, or its string identifier (for instance 'random', or 'stratified')
+                                     Define the strategy to use to split the data samples between the partners.
+                                     Default, RandomSplitter.
+        :param corruption_parameters: list of Corruption object, or its string identifier, one ofr each partner.
+                                      Enable to artificially corrupt partner's data.
+                                      For instance: [Permutation(proportion=0.2), 'random', 'not-corrupted']
         :param init_model_from: None (default) or path
         :param multi_partner_learning_approach: 'fedavg' (default), 'seq-pure', 'seq-with-final-agg' or 'seqavg'
                                                 Define the multi-partner learning approach

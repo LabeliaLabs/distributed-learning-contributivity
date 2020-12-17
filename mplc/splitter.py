@@ -14,7 +14,7 @@ from sklearn.preprocessing import LabelEncoder
 class Splitter(ABC):
     name = 'Abstract Splitter'
 
-    def __init__(self, amounts_per_partner, val_set='global', test_set='global'):
+    def __init__(self, amounts_per_partner, val_set='global', test_set='global', **kwargs):
 
         self.amounts_per_partner = amounts_per_partner
         self.test_set = test_set
@@ -117,8 +117,8 @@ class StratifiedSplitter(Splitter):
 class AdvancedSplitter(Splitter):
     name = 'Advanced samples split'
 
-    def __init__(self, amounts_per_partner, samples_split_description, **kwargs):
-        self.num_clusters, self.specific_shared = list(zip(*samples_split_description))
+    def __init__(self, amounts_per_partner, configuration, **kwargs):
+        self.num_clusters, self.specific_shared = list(zip(*configuration))
         super().__init__(amounts_per_partner, **kwargs)
 
     def _generate_subset(self, x, y):

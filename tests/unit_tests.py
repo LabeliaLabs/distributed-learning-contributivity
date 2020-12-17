@@ -54,6 +54,8 @@ from mplc.mpl_utils import UniformAggregator
 from mplc.multi_partner_learning import FederatedAverageLearning
 from mplc.partner import Partner
 from mplc.scenario import Scenario
+# create_Mpl uses create_Dataset and create_Contributivity uses create_Scenario
+from mplc.splitter import AdvancedSplitter
 
 
 ######
@@ -64,7 +66,6 @@ from mplc.scenario import Scenario
 # to be free to create weird objects, then give them to the test functions.
 ######
 
-# create_Mpl uses create_Dataset and create_Contributivity uses create_Scenario
 
 @pytest.fixture(scope="class", params=(Mnist, Cifar10, Titanic, Imdb, Esc50))
 def create_all_datasets(request):
@@ -99,14 +100,15 @@ def create_Partner(create_all_datasets):
 
 
 @pytest.fixture(scope="class",
-                params=((Mnist, ["basic", "random"], ['not-corrupted'] * 3),
-                        (Mnist, ["basic", "random"],
-                         ['permutation', Redundancy(0.2), Duplication(duplicated_partner_id=0)]),
-                        (Mnist, ["advanced", [[4, "specific"], [6, "shared"], [4, "shared"]]], ['not-corrupted'] * 3),
-                        (Cifar10, ["basic", "random"], ['not-corrupted'] * 3),
-                        (
-                                Cifar10, ["advanced", [[4, "specific"], [6, "shared"], [4, "shared"]]],
-                                ['not-corrupted'] * 3)),
+                params=((Mnist, "random", ['not-corrupted'] * 3),
+                        (Mnist, "random", ['permutation', Redundancy(0.2), Duplication(duplicated_partner_id=0)]),
+                        (Mnist,
+                         AdvancedSplitter([0.3, 0.5, 0.2], [[4, "specific"], [6, "shared"], [4, "shared"]]),
+                         ['not-corrupted'] * 3),
+                        (Cifar10, "random", ['not-corrupted'] * 3),
+                        (Cifar10,
+                         AdvancedSplitter([0.3, 0.5, 0.2], [[4, "specific"], [6, "shared"], [4, "shared"]]),
+                         ['not-corrupted'] * 3)),
                 ids=['Mnist - basic',
                      'Mnist - basic - corrupted',
                      'Mnist - advanced',
@@ -213,7 +215,7 @@ class Test_Scenario:
             scenario.instantiate_scenario_partners()
 
 
-class Test_Corruption:
+class iTest_Corruption:
     def test_permutation_circular(self, create_Partner):
         partner = create_Partner
         partner.corruption = PermutationCircular(partner=partner)
@@ -279,7 +281,7 @@ class Test_Contributivity:
 #
 ######
 
-class Test_Dataset:
+class iTest_Dataset:
 
     def test_train_split_global(self, create_all_datasets):
         """train_val_split is used once, just after Dataset being instantiated

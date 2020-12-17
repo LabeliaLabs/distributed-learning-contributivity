@@ -76,9 +76,12 @@ def get_scenario_params_list(config):
             scenario = dict(zip(params_name, el))
             if scenario['partners_count'] != len(scenario['amounts_per_partner']):
                 raise Exception("Length of amounts_per_partner does not match number of partners.")
-            if scenario['samples_split_option'][0] == 'advanced' \
-                    and (scenario['partners_count'] != len(scenario['samples_split_option'][1])):
-                raise Exception("Length of samples_split_option does not match number of partners.")
+            if scenario['samples_split_option'][0] == 'advanced':
+                if scenario['partners_count'] != len(scenario['samples_split_option'][1]):
+                    raise Exception("Length of samples_split_option does not match number of partners.")
+                else:
+                    scenario['samples_split_configuration'] = scenario['samples_split_option'][1]
+                    scenario['samples_split_option'] = scenario['samples_split_option'][0]
             if 'corruption_parameters' in params_name:
                 if scenario['partners_count'] != len(scenario['corruption_parameters']):
                     raise Exception("Length of corruption_parameters does not match number of partners.")
