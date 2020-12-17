@@ -15,7 +15,7 @@ install:
 # command to run tests
 script:
   - flake8 --max-line-length=120
-  - pytest -v --cov=mplc --cov-append tests/unit_tests.py
+  - pytest -v --cov=mplc tests/unit_tests.py
   - travis_wait 30 pytest -v --cov=mplc --cov-append tests/ml_perf_end_to_end_tests.py
   - travis_wait 30 pytest -v --cov=mplc --cov-append tests/contrib_end_to_end_test.py
 
