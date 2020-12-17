@@ -378,8 +378,6 @@ class Scenario:
     def copy(self, **kwargs):
         params = self.__dict__.copy()
         for key in ['partners_list',
-                    'samples_split_type',
-                    'samples_split_description',
                     'mpl',
                     '_multi_partner_learning_approach',
                     '_aggregation',
@@ -387,7 +385,8 @@ class Scenario:
                     'contributivity_list',
                     'scenario_name',
                     'short_scenario_name',
-                    'save_folder']:
+                    'save_folder',
+                    'splitter']:
             del params[key]
         if 'is_quick_demo' in kwargs and kwargs['is_quick_demo'] != self.is_quick_demo:
             raise ValueError("Attribute 'is_quick_demo' cannot be modified between copies.")
@@ -395,6 +394,8 @@ class Scenario:
             params['save_path'] = self.save_folder.parents[0]
         else:
             params['save_path'] = None
+        params['samples_split_option'] = self.splitter.copy()
+
         params.update(kwargs)
 
         return Scenario(**params)

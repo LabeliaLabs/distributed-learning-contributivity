@@ -79,6 +79,15 @@ class Splitter(ABC):
     def _generate_subset(self, x, y):
         return [(x, y) for _ in self.partners_list]
 
+    def __copy__(self):
+        kwargs = self.__dict__.copy()
+        del kwargs['dataset']
+        del kwargs['partners_list']
+        return self.__class__(**kwargs)
+
+    def copy(self):
+        return self.__copy__()
+
 
 class RandomSplitter(Splitter):
     name = 'Random samples split'

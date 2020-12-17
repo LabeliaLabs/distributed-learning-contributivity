@@ -215,7 +215,7 @@ class Test_Scenario:
             scenario.instantiate_scenario_partners()
 
 
-class iTest_Corruption:
+class Test_Corruption:
     def test_permutation_circular(self, create_Partner):
         partner = create_Partner
         partner.corruption = PermutationCircular(partner=partner)
@@ -281,7 +281,7 @@ class Test_Contributivity:
 #
 ######
 
-class iTest_Dataset:
+class Test_Dataset:
 
     def test_train_split_global(self, create_all_datasets):
         """train_val_split is used once, just after Dataset being instantiated
