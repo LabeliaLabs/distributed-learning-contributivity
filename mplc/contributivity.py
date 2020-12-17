@@ -103,12 +103,14 @@ class Contributivity:
                                                                      partners_list=small_partners_list,
                                                                      is_early_stopping=True,
                                                                      save_folder=None,
+                                                                     **self.scenario.mpl_kwargs
                                                                      )
             else:
                 mpl = multi_partner_learning.SinglePartnerLearning(self.scenario,
                                                                    partner=small_partners_list[0],
                                                                    is_early_stopping=True,
                                                                    save_folder=None,
+                                                                   **self.scenario.mpl_kwargs
                                                                    )
             mpl.fit()
             self.charac_fct_values[tuple(subset)] = mpl.history.score
@@ -951,7 +953,8 @@ class Contributivity:
             is_early_stopping=False,
             init_model_from="random_initialization",
             use_saved_weights=False,
-            custom_name='PVRL'
+            custom_name='PVRL',
+            **self.scenario.mpl_kwargs
         )
         full_partners_list = mpl.partners_list  # this list must be a list of PartnerMpl
         initial_model = mpl.build_model()
@@ -1108,18 +1111,27 @@ class Contributivity:
 
         return relative_perf_matrix
 
-    def flip_label(self):  # TOD refacto
+    def s_model(self):  # TOD refacto
         start = timer()
-        mpl = multi_partner_learning.MplLabelFlip(self.scenario)
+        log_thetas = []
+        epsilon = 0.5
+        for _ in range(10):
+            identity = np.identity(10)
+            theta = identity * (1 - epsilon) + (epsilon / 10)
+            log_thetas.append(np.log(theta + 1e-8) / 10.0)
+        mpl = multi_partner_learning.MplSModel(self.scenario, log_theta_list=log_thetas)
         mpl.fit()
-        self.thetas_history = mpl.history.theta
-        self.score = mpl.history.score
+        theta_estimated = np.zeros((mpl.partners_count,
+                                    mpl.dataset.num_classes,
+                                    mpl.dataset.num_classes))
+        for i, partnerMpl in enumerate(mpl.partners_list):
+            theta_estimated[i] = (np.exp(partnerMpl.noise_adaptation_layer_weights) / np.sum(
+                np.exp(partnerMpl.noise_adaptation_layer_weights), axis=2))
         self.contributivity_scores = np.exp(- np.array([np.linalg.norm(
-            mpl.history.theta[mpl.epoch_index - 1][i] - np.identity(
-                mpl.history.theta[mpl.epoch_index - 1][i].shape[0])
+            theta_estimated[i] - np.identity(mpl.dataset.num_classes)
         ) for i in range(len(self.scenario.partners_list))]))
 
-        self.name = "Label Flip"
+        self.name = "S-Model"
         self.scores_std = np.zeros(mpl.partners_count)
         self.normalized_scores = self.contributivity_scores / np.sum(self.contributivity_scores)
         end = timer()
@@ -1186,8 +1198,8 @@ class Contributivity:
         elif method_to_compute == "PVRL":
             # Contributivity 10: Partner valuation by reinforcement learning
             self.PVRL(learning_rate=0.2)
-        elif method_to_compute == "LFlip":
-            self.flip_label()
+        elif method_to_compute == "S-Model":
+            self.s_model()
         else:
             logger.warning("Unrecognized name of method, statement ignored!")
 

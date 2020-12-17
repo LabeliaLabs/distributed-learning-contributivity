@@ -10,11 +10,13 @@ from timeit import default_timer as timer
 
 import numpy as np
 from loguru import logger
-from sklearn.preprocessing import normalize
+from sklearn.metrics import confusion_matrix
+from tensorflow.keras import Input, Model
 from tensorflow.keras.backend import clear_session
 from tensorflow.keras.callbacks import EarlyStopping
 
 from . import constants
+from .models import NoiseAdaptationChannel
 from .mpl_utils import History, Aggregator
 from .partner import Partner, PartnerMpl
 
@@ -462,31 +464,42 @@ class SequentialAverageLearning(SequentialLearning):
             self.model_weights = self.aggregator.aggregate_model_weights()
 
 
-class MplLabelFlip(FederatedAverageLearning):
+class MplSModel(FederatedAverageLearning):
     name = 'Federated learning with label flipping'
 
-    def __init__(self, scenario, epsilon=0.01, **kwargs):
-        super(MplLabelFlip, self).__init__(scenario, **kwargs)
-
+    def __init__(self, scenario, pretrain_epochs=0, epsilon=0.5, **kwargs):
+        super(MplSModel, self).__init__(scenario, **kwargs)
+        self.pretrain_epochs = pretrain_epochs
         self.epsilon = epsilon
-        self.K = self.dataset.num_classes
-        self.history.theta = [[None for _ in self.partners_list] for _ in range(self.epoch_count)]
-        self.history.theta_ = [[None for _ in self.partners_list] for _ in range(self.epoch_count)]
-        for partner in self.partners_list:
-            partner.theta = self.init_flip_proba()
-            partner.theta_ = None
+        if pretrain_epochs > 0:
+            self.pretrain_mpl = FederatedAverageLearning(scenario=scenario,
+                                                         epoch_count=self.pretrain_epochs,
+                                                         is_save_data=False)
 
-    def init_flip_proba(self):
-        identity = np.identity(self.K)
-        return identity * (1 - self.epsilon) + (1 - identity) * (self.epsilon / (self.K - 1))
+    def fit(self):
+        if self.pretrain_epochs > 0:
+            logger.info('Start pre-train...')
+            self.pretrain_mpl.fit()
+            pretrain_model = self.pretrain_mpl.build_model()
+            for p in self.partners_list:
+                confusion = confusion_matrix(np.argmax(p.y_train, axis=1),
+                                             np.argmax(pretrain_model.predict(p.x_train), axis=1),
+                                             normalize='pred')
+                p.noise_layer_weights = [np.log(confusion + 1e-8)]
+            self.model_weights[:-1] = self.pretrain_mpl.model_weights[:-1]
+        else:
+            for p in self.partners_list:
+                confusion = np.identity(10) * (1 - self.epsilon) + (self.epsilon / 10)
+                p.noise_layer_weights = [np.log(confusion + 1e-8)]
+        super(MplSModel, self).fit()
 
     def fit_minibatch(self):
-        """Proceed to a collaborative round with a label flipped federated averaging approach"""
+        """Proceed to a collaborative round with a S-Model federated averaging approach"""
 
-        logger.debug("Start new LFlip collaborative round ...")
+        logger.debug("Start new S-Model collaborative round ...")
 
         # Starting model for each partner is the aggregated model from the previous mini-batch iteration
-        logger.info(f"(LFlip) Minibatch n°{self.minibatch_index} of epoch n°{self.epoch_index}, "
+        logger.info(f"(S-Model) Minibatch n°{self.minibatch_index} of epoch n°{self.epoch_index}, "
                     f"init each partner's models with a copy of the global model")
 
         for partner in self.partners_list:
@@ -499,52 +512,35 @@ class MplLabelFlip(FederatedAverageLearning):
         for partner_index, partner in enumerate(self.partners_list):
             # Reference the partner's model
             partner_model = partner.build_model()
-
             x_batch = partner.minibatched_x_train[self.minibatch_index]
             y_batch = partner.minibatched_y_train[self.minibatch_index]
 
-            predictions = partner_model.predict(x_batch)
-            partner.theta_ = predictions  # Initialize the theta_
+            model_input = Input(shape=self.dataset.input_shape)
+            x = partner_model(model_input)
+            outputs = NoiseAdaptationChannel(weights=partner.noise_layer_weights, name='s-model')(x)
+            full_model = Model(inputs=model_input, outputs=outputs, name=f"full_model_partner_{partner_index}")
 
-            for idx, y in enumerate(y_batch):
-                partner.theta_[idx, :] *= partner.theta[:, np.argmax(y)]
-            partner.theta_ = normalize(partner.theta_, axis=0, norm='l1')
-            self.history.theta_[self.epoch_index][partner_index] = partner.theta_
+            full_model.compile(
+                loss=partner_model.loss,
+                optimizer=partner_model.optimizer,
+                metrics='accuracy',
+            )
 
-            partner.theta = partner.theta_.T.dot(y_batch)
-            partner.theta = normalize(partner.theta, axis=1, norm='l1')
-            self.history.theta[self.epoch_index][partner_index] = partner.theta
-
-            partner.theta_ = predictions
-            for idx, y in enumerate(y_batch):
-                partner.theta_[idx, :] *= partner.theta[:, np.argmax(y)]
-            partner.theta_ = normalize(partner.theta_, axis=0, norm='l1')
-
-            # draw of x_i
-            rand_idx = np.arange(len(x_batch))
-            # rand_idx =  np.random.randint(low=0, high=len(x_batch), size=(len(x_batch)))
-            flipped_minibatch_x_train = x_batch
-            flipped_minibatch_y_train = np.zeros(y_batch.shape)
-            for i, idx in enumerate(rand_idx):  # TODO vectorize
-                repartition = np.cumsum(
-                    partner.theta_[idx, :])
-                a = np.random.random() - repartition  # draw
-                flipped_minibatch_y_train[i][np.argmin(np.where(a > 0, a, 0))] = 1
-                # not responsive to labels type.
             # Train on partner local data set
-            history = partner_model.fit(flipped_minibatch_x_train,
-                                        flipped_minibatch_y_train,
-                                        batch_size=partner.batch_size,
-                                        verbose=0,
-                                        validation_data=self.val_data)
+            history = full_model.fit(x_batch,
+                                     y_batch,
+                                     batch_size=partner.batch_size,
+                                     verbose=0,
+                                     validation_data=self.val_data)
 
             # Log results of the round
             self.log_partner_perf(partner.id, partner_index, history.history)
 
             # Update the partner's model in the models' list
+            partner.noise_layer_weights = full_model.get_layer('s-model').get_weights()
             partner.model_weights = partner_model.get_weights()
 
-        logger.debug("End of LFlip collaborative round.")
+        logger.debug("End of S-Model collaborative round.")
 
 
 # Supported multi-partner learning approaches
@@ -554,5 +550,5 @@ MULTI_PARTNER_LEARNING_APPROACHES = {
     "seq-pure": SequentialLearning,
     "seq-with-final-agg": SequentialWithFinalAggLearning,
     "seqavg": SequentialAverageLearning,
-    "lflip": MplLabelFlip
+    "lflip": MplSModel
 }
