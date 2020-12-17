@@ -4,8 +4,8 @@ This enables to parameterize the partners that participate to the simulated fede
 """
 
 import numpy as np
-from keras.utils import to_categorical
 from loguru import logger
+from tensorflow.keras.utils import to_categorical
 
 from . import constants
 from .corruption import NoCorruption

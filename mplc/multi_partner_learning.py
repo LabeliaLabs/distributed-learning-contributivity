@@ -9,10 +9,10 @@ from abc import ABC, abstractmethod
 from timeit import default_timer as timer
 
 import numpy as np
-from keras.backend import clear_session
-from keras.callbacks import EarlyStopping
 from loguru import logger
 from sklearn.preprocessing import normalize
+from tensorflow.keras.backend import clear_session
+from tensorflow.keras.callbacks import EarlyStopping
 
 from . import constants
 from .mpl_utils import History, Aggregator
@@ -67,7 +67,7 @@ class MultiPartnerLearning(ABC):
         # Initialize the model
         model = self.init_model()
         self.model_weights = model.get_weights()
-        self.metrics_names = model.metrics_names
+        self.metrics_names = self.dataset.model_metrics_names
 
         # Initialize iterators
         self.epoch_index = 0

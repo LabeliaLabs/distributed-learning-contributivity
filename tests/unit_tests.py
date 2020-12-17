@@ -43,7 +43,7 @@ This enables to parameterize unit tests - the tests are run by Travis each time 
 
 import numpy as np
 import pytest
-import yaml
+from ruamel.yaml import YAML
 
 from mplc import utils
 from mplc.contributivity import Contributivity
@@ -360,7 +360,8 @@ class _TestDemoClass:
         Check if the two config files are present
         and loaded with the load method
         """
+        yaml = YAML(typ='safe')
         with open("config.yml", "r") as config_file:
-            assert yaml.load(config_file, Loader=yaml.FullLoader)
+            assert yaml.load(config_file)
         with open("config_quick_debug.yml", "r") as config_quick_debug_file:
-            assert yaml.load(config_quick_debug_file, Loader=yaml.FullLoader)
+            assert yaml.load(config_quick_debug_file)

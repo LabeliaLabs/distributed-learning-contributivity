@@ -14,22 +14,22 @@ from urllib.request import urlretrieve
 import numpy as np
 import pandas as pd
 from joblib import dump, load
-from keras.datasets import cifar10, mnist, imdb
-from keras.layers import Activation
-from keras.layers import Conv2D, GlobalAveragePooling2D, MaxPooling2D
-from keras.layers import Dense, Dropout
-from keras.layers import Embedding, Conv1D, MaxPooling1D, Flatten
-from keras.losses import categorical_crossentropy
-from keras.models import Sequential
-from keras.optimizers import Adam
-from keras.preprocessing import sequence
-from keras.utils import to_categorical
 from librosa import load as wav_load
 from librosa.feature import mfcc
 from loguru import logger
 from sklearn.linear_model import LogisticRegression as skLR
 from sklearn.metrics import log_loss
 from sklearn.model_selection import train_test_split
+from tensorflow.keras.datasets import cifar10, mnist, imdb
+from tensorflow.keras.layers import Activation
+from tensorflow.keras.layers import Conv2D, GlobalAveragePooling2D, MaxPooling2D
+from tensorflow.keras.layers import Dense, Dropout
+from tensorflow.keras.layers import Embedding, Conv1D, MaxPooling1D, Flatten
+from tensorflow.keras.losses import categorical_crossentropy
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.optimizers import Adam
+from tensorflow.keras.preprocessing import sequence
+from tensorflow.keras.utils import to_categorical
 
 from . import constants
 
@@ -50,6 +50,7 @@ class Dataset(ABC):
 
         self.input_shape = input_shape
         self.num_classes = num_classes
+        self.model_metrics_names = ['loss', 'accuracy']
 
         self.x_train = x_train
         self.x_val = None
@@ -201,7 +202,7 @@ class Cifar10(Dataset):
         opt = Adam(learning_rate=0.001, decay=1e-5)
         model.compile(loss='categorical_crossentropy',
                       optimizer=opt,
-                      metrics=['accuracy'])
+                      metrics=self.model_metrics_names[1:])
 
         return model
 
@@ -310,7 +311,7 @@ class Titanic(Dataset):
 
         clf = self.LogisticRegression()
         clf.classes_ = np.array([0, 1])
-        clf.metrics_names = ["log_loss", "Accuracy"]  # Mimic Keras's
+        clf.metrics_names = ["loss", "accuracy"]  # Mimic Keras's
         return clf
 
     # train, test, val splits
@@ -479,7 +480,7 @@ class Mnist(Dataset):
         model.compile(
             loss=categorical_crossentropy,
             optimizer="adam",
-            metrics=["accuracy"],
+            metrics=self.model_metrics_names[1:],
         )
 
         return model
@@ -568,7 +569,7 @@ class Imdb(Dataset):
 
         model.compile(loss='binary_crossentropy',
                       optimizer='adam',
-                      metrics=['accuracy'])
+                      metrics=self.model_metrics_names[1:])
 
         return model
 
@@ -723,7 +724,7 @@ class Esc50(Dataset):
         model.compile(
             loss=categorical_crossentropy,
             optimizer="adam",
-            metrics=["accuracy"],
+            metrics=self.model_metrics_names[1:],
         )
         return model
 
