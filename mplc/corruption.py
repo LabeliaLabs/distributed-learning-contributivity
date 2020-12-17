@@ -1,8 +1,8 @@
 from abc import ABC, abstractmethod
 
 import numpy as np
-from keras.utils import to_categorical
 from loguru import logger
+from tensorflow.keras.utils import to_categorical
 
 
 class Corruption(ABC):
