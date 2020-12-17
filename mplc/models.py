@@ -106,7 +106,7 @@ class NoiseAdaptationChannel(Dense):
         super(NoiseAdaptationChannel, self).__init__(units, **kwargs)
 
     def build(self, input_shape):
-        if self.units is 0:
+        if self.units == 0:
             self.units = input_shape[-1]
         super(NoiseAdaptationChannel, self).build(input_shape)
 
