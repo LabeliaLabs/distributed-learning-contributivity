@@ -9,9 +9,9 @@ from abc import ABC, abstractmethod
 from timeit import default_timer as timer
 
 import numpy as np
-from tensorflow.keras import Input, Model
 from loguru import logger
 from sklearn.metrics import confusion_matrix
+from tensorflow.keras import Input, Model
 from tensorflow.keras.backend import clear_session
 from tensorflow.keras.callbacks import EarlyStopping
 
@@ -482,7 +482,8 @@ class MplSModel(FederatedAverageLearning):
             self.pretrain_mpl.fit()
             pretrain_model = self.pretrain_mpl.build_model()
             for p in self.partners_list:
-                confusion = confusion_matrix(np.argmax(p.y_train, axis=1), pretrain_model.predict_classes(p.x_train),
+                confusion = confusion_matrix(np.argmax(p.y_train, axis=1),
+                                             np.argmax(pretrain_model.predict(p.x_train), axis=1),
                                              normalize='pred')
                 p.noise_layer_weights = [np.log(confusion + 1e-8)]
             self.model_weights[:-1] = self.pretrain_mpl.model_weights[:-1]
@@ -516,13 +517,13 @@ class MplSModel(FederatedAverageLearning):
 
             model_input = Input(shape=self.dataset.input_shape)
             x = partner_model(model_input)
-            outputs = NoiseAdaptationChannel(w=partner.noise_layer_weights, name='s-model')(x)
+            outputs = NoiseAdaptationChannel(weights=partner.noise_layer_weights, name='s-model')(x)
             full_model = Model(inputs=model_input, outputs=outputs, name=f"full_model_partner_{partner_index}")
 
             full_model.compile(
                 loss=partner_model.loss,
                 optimizer=partner_model.optimizer,
-                metrics=partner_model.metrics_names[1:],
+                metrics='accuracy',
             )
 
             # Train on partner local data set

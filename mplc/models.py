@@ -99,14 +99,14 @@ class NoiseAdaptationChannel(Dense):
         `bias`, `b_regularizer`, `b_constraint` are not used.
     """
 
-    def __init__(self, units=None, **kwargs):
+    def __init__(self, units=0, **kwargs):
         kwargs['use_bias'] = False
         if 'activation' not in kwargs:
             kwargs['activation'] = 'softmax'
         super(NoiseAdaptationChannel, self).__init__(units, **kwargs)
 
     def build(self, input_shape):
-        if self.units is None:
+        if self.units is 0:
             self.units = input_shape[-1]
         super(NoiseAdaptationChannel, self).build(input_shape)
 
