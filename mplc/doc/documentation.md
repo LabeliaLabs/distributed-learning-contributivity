@@ -18,6 +18,7 @@ Table of content:
   - [Configuration of the collaborative and distributed learning](#configuration-of-the-collaborative-and-distributed-learning)
   - [Configuration of contributivity measurement methods to be tested](#configuration-of-contributivity-measurement-methods-to-be-tested)
   - [Miscellaneous](#miscellaneous)
+- [Experiments](#Experiments)
 - [Dataset generation](#dataset-generation)
   - [Dataset](#dataset)
   - [Model generator](#model-generator)
