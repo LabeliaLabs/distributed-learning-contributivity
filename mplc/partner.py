@@ -26,16 +26,15 @@ class Partner:
         self.cluster_count: int
         self.cluster_split_option: str
         self.clusters_list = []
-        self.final_nb_samples: int
         self.final_nb_samples_p_cluster: int
 
-        self.x_train = None
-        self.x_val = None
-        self.x_test = None
+        self.x_train = []
+        self.x_val = []
+        self.x_test = []
 
-        self.y_train = None
-        self.y_val = None
-        self.y_test = None
+        self.y_train = []
+        self.y_val = []
+        self.y_test = []
 
     @property
     def num_labels(self):
@@ -44,6 +43,17 @@ class Partner:
     @property
     def data_volume(self):
         return len(self.y_train)
+
+    @property
+    def final_nb_samples(self):
+        return len(self.y_train)
+
+    @property
+    def labels(self):
+        if self.y_train.ndim == 1:
+            return np.unique(self.y_train)
+        else:
+            return np.unique(np.argmax(self.y_train, axis=1))
 
     def corrupt(self):
         # Check if the labels are encoded into categorical. If not, convert them

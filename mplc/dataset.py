@@ -42,7 +42,8 @@ class Dataset(ABC):
                  y_train,
                  x_test,
                  y_test,
-                 proportion=1
+                 proportion=1,
+                 val_proportion=0.1
                  ):
         self.name = dataset_name
 
@@ -51,35 +52,20 @@ class Dataset(ABC):
         self.model_metrics_names = ['loss', 'accuracy']
 
         self.x_train = x_train
-        self.x_val = None
         self.x_test = x_test
         self.y_train = y_train
-        self.y_val = None
         self.y_test = y_test
 
         self.proportion = 1
         self.shorten_dataset_proportion(proportion)
-        self.train_val_split_global()
+
+        self.x_train, self.x_val, self.y_train, self.y_val = train_test_split(self.x_train,
+                                                                              self.y_train,
+                                                                              test_size=val_proportion,
+                                                                              stratify=self.y_train)
 
     def __str__(self):
         return f'{self.name} dataset'
-
-    def train_val_split_global(self):
-        """Called once, at the end of Dataset's constructor"""
-        if self.x_val or self.y_val:
-            raise Exception("x_val and y_val should be of NoneType")
-        self.x_train, self.x_val, self.y_train, self.y_val = train_test_split(self.x_train,
-                                                                              self.y_train,
-                                                                              test_size=0.1,
-                                                                              random_state=42)
-
-    @staticmethod
-    def train_test_split_local(x, y):
-        return x, np.array([]), y, np.array([])
-
-    @staticmethod
-    def train_val_split_local(x, y):
-        return x, np.array([]), y, np.array([])
 
     @abstractmethod
     def generate_new_model(self):
@@ -114,7 +100,8 @@ class Dataset(ABC):
 
 
 class Cifar10(Dataset):
-    def __init__(self):
+    def __init__(self, proportion=1,
+                 val_proportion=0.1):
         self.input_shape = (32, 32, 3)
         self.num_classes = 10
         x_test, x_train, y_test, y_train = self.load_data()
@@ -125,7 +112,9 @@ class Cifar10(Dataset):
                                       x_train=x_train,
                                       y_train=y_train,
                                       x_test=x_test,
-                                      y_test=y_test)
+                                      y_test=y_test,
+                                      proportion=proportion,
+                                      val_proportion=val_proportion)
 
     def load_data(self):
         attempts = 0
@@ -204,18 +193,10 @@ class Cifar10(Dataset):
 
         return model
 
-    # train, test, val splits
-    @staticmethod
-    def train_test_split_local(x, y):
-        return train_test_split(x, y, test_size=0.1, random_state=42)
-
-    @staticmethod
-    def train_val_split_local(x, y):
-        return train_test_split(x, y, test_size=0.1, random_state=42)
-
 
 class Titanic(Dataset):
-    def __init__(self):
+    def __init__(self, proportion=1,
+                 val_proportion=0.1):
         self.num_classes = 2
         self.input_shape = (27,)
         # Load data
@@ -227,7 +208,9 @@ class Titanic(Dataset):
                                       x_train=x_train,
                                       y_train=y_train,
                                       x_test=x_test,
-                                      y_test=y_test
+                                      y_test=y_test,
+                                      proportion=proportion,
+                                      val_proportion=val_proportion
                                       )
 
     # Init dataset-specific functions
@@ -299,7 +282,7 @@ class Titanic(Dataset):
         y = raw_dataset['Survived']
         y = y.to_numpy(dtype='float32')
 
-        x_train, x_test, y_train, y_test = self.train_test_split_global(x, y)
+        x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.1, random_state=42)
 
         return (x_train, y_train), (x_test, y_test)
 
@@ -312,22 +295,10 @@ class Titanic(Dataset):
         clf.metrics_names = ["loss", "accuracy"]  # Mimic Keras's
         return clf
 
-    # train, test, val splits
-    @staticmethod
-    def train_test_split_local(x, y):
-        return train_test_split(x, y, test_size=0.1, random_state=42)
-
-    @staticmethod
-    def train_val_split_local(x, y):
-        return train_test_split(x, y, test_size=0.1, random_state=42)
-
-    @staticmethod
-    def train_test_split_global(x, y):
-        return train_test_split(x, y, test_size=0.1, random_state=42)
-
 
 class Mnist(Dataset):
-    def __init__(self):
+    def __init__(self, proportion=1,
+                 val_proportion=0.1):
         # Init dataset-specific variables
         self.img_rows = 28
         self.img_cols = 28
@@ -341,7 +312,9 @@ class Mnist(Dataset):
                                     x_train=x_train,
                                     y_train=y_train,
                                     x_test=x_test,
-                                    y_test=y_test
+                                    y_test=y_test,
+                                    proportion=proportion,
+                                    val_proportion=val_proportion
                                     )
 
     def load_data(self):
@@ -410,18 +383,10 @@ class Mnist(Dataset):
 
         return model
 
-    # train, test, val splits
-    @staticmethod
-    def train_test_split_local(x, y):
-        return train_test_split(x, y, test_size=0.1, random_state=42)
-
-    @staticmethod
-    def train_val_split_local(x, y):
-        return train_test_split(x, y, test_size=0.1, random_state=42)
-
 
 class Imdb(Dataset):
-    def __init__(self):
+    def __init__(self, proportion=1,
+                 val_proportion=0.1):
         self.num_words = 5000
         self.num_classes = 2
         self.input_shape = (500,)
@@ -433,7 +398,9 @@ class Imdb(Dataset):
                                    x_train=x_train,
                                    y_train=y_train,
                                    x_test=x_test,
-                                   y_test=y_test
+                                   y_test=y_test,
+                                   proportion=proportion,
+                                   val_proportion=val_proportion
                                    )
 
     def load_data(self):
@@ -498,18 +465,10 @@ class Imdb(Dataset):
 
         return model
 
-    # train, test, val splits
-    @staticmethod
-    def train_test_split_local(x, y):
-        return x, np.array([]), y, np.array([])
-
-    @staticmethod
-    def train_val_split_local(x, y):
-        return x, np.array([]), y, np.array([])
-
 
 class Esc50(Dataset):
-    def __init__(self):
+    def __init__(self, proportion=1,
+                 val_proportion=0.1):
         # Load data
         self.num_classes = 50
         self.input_shape = (40, 431, 1)
@@ -522,7 +481,9 @@ class Esc50(Dataset):
                                     x_train=x_train,
                                     y_train=y_train,
                                     x_test=x_test,
-                                    y_test=y_test
+                                    y_test=y_test,
+                                    proportion=proportion,
+                                    val_proportion=val_proportion
                                     )
 
     # Init dataset-specific functions
@@ -564,7 +525,7 @@ class Esc50(Dataset):
             logger.info('ESC-50 dataset found')
 
         esc50_df = pd.read_csv(folder / 'esc50.csv')
-        train, test = self.train_test_split_global(esc50_df)
+        train, test = train_test_split(esc50_df, test_size=0.1, stratify=esc50_df.target.to_numpy())
         y_train = train.target.to_numpy()
         y_test = test.target.to_numpy()
         x_train = (wav_load((folder / 'audio' / file_name).resolve(), sr=None)
@@ -652,8 +613,3 @@ class Esc50(Dataset):
             metrics=self.model_metrics_names[1:],
         )
         return model
-
-    # train, test, val splits
-    @staticmethod
-    def train_test_split_global(data):
-        return train_test_split(data, test_size=0.1, random_state=42)

@@ -142,7 +142,7 @@ Alternatively, you can also use the `main.py` provided in the repository, with a
        amounts_per_partner:
          - [0.4, 0.3, 0.3]
        samples_split_option:
-         - ['basic', 'random']
+         - 'random'
          - ['advanced', [[7, 'shared'], [6, 'shared'], [2, 'specific']]]
        multi_partner_learning_approach:
          - 'fedavg'

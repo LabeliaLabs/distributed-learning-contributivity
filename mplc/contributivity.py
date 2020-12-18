@@ -996,7 +996,7 @@ class Contributivity:
             partner_values = np.exp(w) / (1.0 + np.exp(w))
             previous_loss = loss
 
-        mpl.eval_and_log_final_model__test_perf()
+        mpl.eval_and_log_final_model_test_perf()
         mpl.save_data()
         end = timer()
         mpl.learning_computation_time = end - start

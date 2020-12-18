@@ -8,8 +8,8 @@ scenario_params_list:
      - 2
    amounts_per_partner: 
      - [0.1, 0.9]
-   samples_split_option: 
-     - ['basic', 'random']
+   samples_split_option:
+     - 'random'
    multi_partner_learning_approach:
      - 'fedavg'
    contributivity_methods:

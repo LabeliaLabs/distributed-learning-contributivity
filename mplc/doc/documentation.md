@@ -232,19 +232,23 @@ There are 2 ways to select a dataset. You can either choose a pre-implemented da
   Example: `amounts_per_partner=[0.3, 0.3, 0.1, 0.3]`
 
 <a id="sample_split_option"></a>
-- `samples_split_option`: `['basic', 'random']` (default), `['basic', 'stratified']` or `['advanced', [[nb of clusters (int), 'shared' or 'specific']]]`   
+- `samples_split_option`: Used to set the strategy of samples data split. You can either instantiate a Splitter before passing it to Scenario, as in the below example, or you can pass it by its string identifier. In the latter case, the default parameters for the Splitter selected will be used.
   How the original dataset data samples are split among partners:
-  
-    - `'basic'` approaches:
-      - `'random'`: the dataset is shuffled and partners receive data samples selected randomly
-      - `'stratified'`: the dataset is stratified per class and each partner receives certain classes only (note: depending on the `amounts_per_partner` specified, there might be small overlaps of classes)
-    - `'advanced'` approach `[[nb of clusters (int), 'shared' or 'specific']]`: in certain cases it might be interesting to split the dataset among partners in a more elaborate way. For that we consider the data samples from the initial dataset as split in clusters per data labels. The advanced split is configured by indicating, for each partner in sequence, the following 2 elements:
-      - `nb of clusters (int)`: the given partner will receive data samples from that many different clusters (clusters of data samples per labels/classes)
-      - `'shared'` or `'specific'`:
-        - `'shared'`: all partners with option `'shared'` receive data samples picked from clusters they all share data samples from
-        - `'specific'`: each partner with option `'specific'` receives data samples picked from cluster(s) it is the only one to receive from
+    - `RandomSplitter`: the dataset is shuffled and partners receive data samples selected randomly
+        String identifier: `'random'`
+    - `StratifiedSplitter`: the dataset is stratified per class and each partner receives certain classes only (note: depending on the `amounts_per_partner` specified, there might be small overlaps of classes)
+        String identifier: `'stratified'``[[nb of clusters (int), 'shared' or 'specific']]`
+    - `'AdvancedSplitter'`: in certain cases it might be interesting to split the dataset among partners in a more elaborate way. For that we consider the data samples from the initial dataset as split in clusters per data labels. The advanced split is configured by indicating, for each partner in sequence, the following 2 elements: `[[nb of clusters (int), 'shared' or 'specific']]`. Practically, you can either instantiate your `AdvancedSplitter` object, and pass this list `[[nb of clusters (int), 'shared' or 'specific']]` to the keyword argument `description`, or use the string identifier and pass the list `[[nb of clusters (int), 'shared' or 'specific']]` to the scenario via the keyword argument `samples_split_configuration`.
+        String identifier:`'advanced'`.
+        Configuration:  
+        - `nb of clusters (int)`: the given partner will receive data samples from that many different clusters (clusters of data samples per labels/classes)
+        - `'shared'` or `'specific'`:
+         - `'shared'`: all partners with option `'shared'` receive data samples picked
+                       from clusters they all share data samples from
+         - `'specific'`: each partner with option `'specific'` receives data samples picked 
+                         from cluster(s) it is the only one to receive from
 
-  Example: `samples_split_option=['advanced', [[7, 'shared'], [6, 'shared'], [2, 'specific'], [1, 'specific']]]`
+  Example: `samples_split_option='advanced', samples_split_configuration=[[7, 'shared'], [6, 'shared'], [2, 'specific'], [1, 'specific']]]`
 
 ![Example of the advanced split option](../../img/advanced_split_example.png)
 

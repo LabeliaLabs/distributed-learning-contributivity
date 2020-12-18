@@ -45,6 +45,8 @@ class MultiPartnerLearning(ABC):
         self.partners_list = scenario.partners_list
         self.init_model_from = scenario.init_model_from
         self.use_saved_weights = scenario.use_saved_weights
+        self.val_set = scenario.val_set
+        self.test_set = scenario.test_set
 
         # Attributes related to iterating at different levels
         self.epoch_count = scenario.epoch_count
@@ -162,11 +164,25 @@ class MultiPartnerLearning(ABC):
 
     def eval_and_log_model_val_perf(self):
         model = self.build_model()
-        hist = model.evaluate(self.val_data[0],
-                              self.val_data[1],
-                              batch_size=constants.DEFAULT_BATCH_SIZE,
-                              verbose=0,
-                              )
+        if self.val_set == 'global':
+            hist = model.evaluate(self.val_data[0],
+                                  self.val_data[1],
+                                  batch_size=constants.DEFAULT_BATCH_SIZE,
+                                  verbose=0,
+                                  )
+        elif self.val_set == 'local':
+            hist = [0.0, 0.0]
+            for p in self.partners_list:
+                hist_partner = model.evaluate(p.x_val,
+                                              p.y_val,
+                                              batch_size=constants.DEFAULT_BATCH_SIZE,
+                                              verbose=0,
+                                              )
+                hist[0] += hist_partner[0] / self.partners_count
+                hist[1] += hist_partner[1] / self.partners_count
+        else:
+            raise ValueError("validation set should be 'local' or 'global', not {self.val_set}")
+
         self.history.history['mpl_model']['val_loss'][self.epoch_index, self.minibatch_index] = hist[0]
         self.history.history['mpl_model']['val_accuracy'][self.epoch_index, self.minibatch_index] = hist[1]
 
@@ -176,14 +192,28 @@ class MultiPartnerLearning(ABC):
                         f"{epoch_nb_str}: "
                         f"{['%.3f' % elem for elem in hist]}")
 
-    def eval_and_log_final_model__test_perf(self):
+    def eval_and_log_final_model_test_perf(self):
         logger.info("### Evaluating model on test data:")
         model = self.build_model()
-        hist = model.evaluate(self.test_data[0],
-                              self.test_data[1],
-                              batch_size=constants.DEFAULT_BATCH_SIZE,
-                              verbose=0,
-                              )
+        if self.test_set == 'global':
+            hist = model.evaluate(self.test_data[0],
+                                  self.test_data[1],
+                                  batch_size=constants.DEFAULT_BATCH_SIZE,
+                                  verbose=0,
+                                  )
+        elif self.test_set == 'local':
+            hist = [0.0, 0.0]
+            for p in self.partners_list:
+                hist_partner = model.evaluate(p.x_test,
+                                              p.y_test,
+                                              batch_size=constants.DEFAULT_BATCH_SIZE,
+                                              verbose=0,
+                                              )
+                hist[0] += hist_partner[0] / self.partners_count
+                hist[1] += hist_partner[1] / self.partners_count
+        else:
+            raise ValueError("test set should be 'local' or 'global', not {self.val_set}")
+
         self.history.score = hist[1]
         self.history.nb_epochs_done = self.epoch_index + 1
         logger.info(f"   Model metrics names: {self.metrics_names}")
@@ -227,7 +257,7 @@ class MultiPartnerLearning(ABC):
             self.epoch_index += 1
 
         # After last epoch or if early stopping was triggered, evaluate model on the global testset
-        self.eval_and_log_final_model__test_perf()
+        self.eval_and_log_final_model_test_perf()
 
         end = timer()
         self.learning_computation_time = end - start
@@ -274,18 +304,30 @@ class SinglePartnerLearning(MultiPartnerLearning):
         # Train model
         logger.info("   Training model...")
         model = self.build_model()
-        history = model.fit(self.partner.x_train,
-                            self.partner.y_train,
-                            batch_size=self.partner.batch_size,
-                            epochs=self.epoch_count,
-                            verbose=0,
-                            validation_data=self.val_data,
-                            callbacks=cb)
+        if self.val_set == 'global':
+            history = model.fit(self.partner.x_train,
+                                self.partner.y_train,
+                                batch_size=self.partner.batch_size,
+                                epochs=self.epoch_count,
+                                verbose=0,
+                                validation_data=self.val_data,
+                                callbacks=cb)
+        elif self.val_set == 'local':
+            history = model.fit(self.partner.x_train,
+                                self.partner.y_train,
+                                batch_size=self.partner.batch_size,
+                                epochs=self.epoch_count,
+                                verbose=0,
+                                validation_data=(self.partner.x_val, self.partner.y_val),
+                                callbacks=cb)
+        else:
+            raise ValueError("validation set should be 'local' or 'global', not {self.val_set}")
+
         self.model_weights = model.get_weights()
         self.log_partner_perf(self.partner.id, 0, history.history)
         del self.history.history['mpl_model']
         # Evaluate trained model on test data
-        self.eval_and_log_final_model__test_perf()
+        self.eval_and_log_final_model_test_perf()
         self.history.nb_epochs_done = (es.stopped_epoch + 1) if es.stopped_epoch != 0 else self.epoch_count
 
         end = timer()
@@ -344,11 +386,20 @@ class FederatedAverageLearning(MultiPartnerLearning):
             partner_model = partner.build_model()
 
             # Train on partner local data set
-            history = partner_model.fit(partner.minibatched_x_train[self.minibatch_index],
-                                        partner.minibatched_y_train[self.minibatch_index],
-                                        batch_size=partner.batch_size,
-                                        verbose=0,
-                                        validation_data=self.val_data)
+            if self.val_set == 'global':
+                history = partner_model.fit(partner.minibatched_x_train[self.minibatch_index],
+                                            partner.minibatched_y_train[self.minibatch_index],
+                                            batch_size=partner.batch_size,
+                                            verbose=0,
+                                            validation_data=self.val_data)
+            elif self.val_set == 'local':
+                history = partner_model.fit(partner.minibatched_x_train[self.minibatch_index],
+                                            partner.minibatched_y_train[self.minibatch_index],
+                                            batch_size=partner.batch_size,
+                                            verbose=0,
+                                            validation_data=(partner.x_val, partner.y_val))
+            else:
+                raise ValueError("validation set should be 'local' or 'global', not {self.val_set}")
 
             # Log results of the round
             self.log_partner_perf(partner.id, partner_index, history.history)
@@ -396,11 +447,20 @@ class SequentialLearning(MultiPartnerLearning):  # seq-pure
             partner = self.partners_list[partner_index]
 
             # Train on partner local data set
-            history = model_for_round.fit(partner.minibatched_x_train[self.minibatch_index],
-                                          partner.minibatched_y_train[self.minibatch_index],
-                                          batch_size=partner.batch_size,
-                                          verbose=0,
-                                          validation_data=self.val_data)
+            if self.val_set == 'global':
+                history = model_for_round.fit(partner.minibatched_x_train[self.minibatch_index],
+                                              partner.minibatched_y_train[self.minibatch_index],
+                                              batch_size=partner.batch_size,
+                                              verbose=0,
+                                              validation_data=self.val_data)
+            elif self.val_set == 'local':
+                history = model_for_round.fit(partner.minibatched_x_train[self.minibatch_index],
+                                              partner.minibatched_y_train[self.minibatch_index],
+                                              batch_size=partner.batch_size,
+                                              verbose=0,
+                                              validation_data=(partner.x_val, partner.y_val))
+            else:
+                raise ValueError("validation set should be 'local' or 'global', not {self.val_set}")
 
             # Log results
             self.log_partner_perf(partner.id, idx, history.history)

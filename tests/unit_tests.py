@@ -54,17 +54,16 @@ from mplc.mpl_utils import UniformAggregator
 from mplc.multi_partner_learning import FederatedAverageLearning
 from mplc.partner import Partner
 from mplc.scenario import Scenario
-
-
-######
-# These are outdated comments, but they
-# Fixture Create: to generate the objects that are used in the test functions,
-#  use the 'iterate' fixtures to generate their parameters.
-# It's probably better to maintain their independence in order
-# to be free to create weird objects, then give them to the test functions.
-######
-
 # create_Mpl uses create_Dataset and create_Contributivity uses create_Scenario
+from mplc.splitter import AdvancedSplitter, RandomSplitter, StratifiedSplitter
+
+
+######
+#
+# Fixture definitions
+#
+######
+
 
 @pytest.fixture(scope="class", params=(Mnist, Cifar10, Titanic, Imdb, Esc50))
 def create_all_datasets(request):
@@ -89,6 +88,14 @@ def create_MultiPartnerLearning(create_all_datasets):
     yield mpl
 
 
+@pytest.fixture(scope="class", params=(RandomSplitter([0.1, 0.2, 0.3, 0.4]),
+                                       StratifiedSplitter([0.1, 0.2, 0.3, 0.4]),
+                                       AdvancedSplitter([0.3, 0.5, 0.2],
+                                                        [[4, "specific"], [6, "shared"], [4, "shared"]])))
+def create_splitter(request):
+    return request.param()
+
+
 @pytest.fixture(scope='class')
 def create_Partner(create_all_datasets):
     data = create_all_datasets
@@ -99,14 +106,15 @@ def create_Partner(create_all_datasets):
 
 
 @pytest.fixture(scope="class",
-                params=((Mnist, ["basic", "random"], ['not-corrupted'] * 3),
-                        (Mnist, ["basic", "random"],
-                         ['permutation', Redundancy(0.2), Duplication(duplicated_partner_id=0)]),
-                        (Mnist, ["advanced", [[4, "specific"], [6, "shared"], [4, "shared"]]], ['not-corrupted'] * 3),
-                        (Cifar10, ["basic", "random"], ['not-corrupted'] * 3),
-                        (
-                                Cifar10, ["advanced", [[4, "specific"], [6, "shared"], [4, "shared"]]],
-                                ['not-corrupted'] * 3)),
+                params=((Mnist, "random", ['not-corrupted'] * 3),
+                        (Mnist, "random", ['permutation', Redundancy(0.2), Duplication(duplicated_partner_id=0)]),
+                        (Mnist,
+                         AdvancedSplitter([0.3, 0.5, 0.2], [[4, "specific"], [6, "shared"], [4, "shared"]]),
+                         ['not-corrupted'] * 3),
+                        (Cifar10, "random", ['not-corrupted'] * 3),
+                        (Cifar10,
+                         AdvancedSplitter([0.3, 0.5, 0.2], [[4, "specific"], [6, "shared"], [4, "shared"]]),
+                         ['not-corrupted'] * 3)),
                 ids=['Mnist - basic',
                      'Mnist - basic - corrupted',
                      'Mnist - advanced',
@@ -168,15 +176,10 @@ def create_Contributivity(create_Scenario):
 
 ######
 #
-# Sub-function of fixture create to generate a sub-object without a call to another fixture create
-#
-######
-
-######
-#
 # Tests modules with Objects
 #
 ######
+
 class Test_Experiment:
     def test_add_scenario(self, create_experiment):
         exp = create_experiment
@@ -212,6 +215,163 @@ class Test_Scenario:
         with pytest.raises(Exception):
             scenario.instantiate_scenario_partners()
 
+
+class Test_Mpl:
+    def test_Mpl(self, create_MultiPartnerLearning):
+        mpl = create_MultiPartnerLearning
+        assert type(mpl) == FederatedAverageLearning
+
+
+class Test_Contributivity:
+    def test_Contributivity(self, create_Contributivity):
+        contri = create_Contributivity
+        assert type(contri) == Contributivity
+
+
+######
+#
+# Test supported datasets
+#
+######
+
+class Test_Dataset:
+
+    def test_train_split_global(self, create_all_datasets):
+        """train_val_split is used once, just after Dataset being instantiated
+         - this is written to prevent its call from another place"""
+        data = create_all_datasets
+        assert len(data.x_val) < len(data.x_train)
+        assert len(data.x_test) < len(data.x_train)
+        with pytest.raises(Exception):
+            data.train_val_split_global()
+
+    def test_data_shape(self, create_all_datasets):
+        data = create_all_datasets
+        assert len(data.x_train) == len(data.y_train), "Number of train label is not equal to the number of data"
+        assert len(data.x_val) == len(data.y_val), "Number of val label is not equal to the number of data"
+        assert len(data.x_test) == len(data.y_test), "Number of test label is not equal to the number of data"
+
+        if data.num_classes > 2:
+            assert data.y_train[0].shape == (data.num_classes,)
+            assert data.y_val[0].shape == (data.num_classes,)
+            assert data.y_test[0].shape == (data.num_classes,)
+        assert data.x_train[0].shape == data.input_shape
+        assert data.x_test[0].shape == data.input_shape
+        assert data.x_val[0].shape == data.input_shape
+
+    def test_generate_new_model(self, create_all_datasets):
+        dataset = create_all_datasets
+        model = dataset.generate_new_model()
+        assert callable(model.fit), ".fit() method is required for model"
+        assert callable(model.evaluate), ".evaluate() method is required for model"
+        assert callable(model.save_weights), ".save_weights() method is required for model"
+        assert callable(model.load_weights), ".load_weights() method is required for model"
+        assert callable(model.get_weights), ' .get_weights() method is required for model'
+        assert callable(model.set_weights), ".set_weights() method is required for model"
+
+
+######
+#
+# Test supported Splitter
+#
+######
+
+class Test_Splitter:
+    def test_random_splitter_global(self, create_all_datasets):
+        splitter = RandomSplitter([0.1, 0.2, 0.3, 0.4])
+        dataset = create_all_datasets
+        partners_list = [Partner(i) for i in range(len(splitter.amounts_per_partner))]
+        splitter.split(partners_list, dataset)
+        for p in partners_list:
+            assert len(p.y_val) == 0, "validation set is not empty in spite of the val_set == 'global'"
+            assert len(p.y_test) == 0, "test set is not empty in spite of the val_set == 'global'"
+            assert len(p.x_train) == len(p.y_train), 'labels and samples numbers mismatches'
+            assert (p.final_nb_samples / len(dataset.y_train) - splitter.amounts_per_partner[p.id]) \
+                   < (1 / len(dataset.y_train)), "Amounts of data not respected"
+
+    def test_stratified_splitter_global(self, create_all_datasets):
+        splitter = StratifiedSplitter([0.1, 0.2, 0.3, 0.4])
+        dataset = create_all_datasets
+        partners_list = [Partner(i) for i in range(len(splitter.amounts_per_partner))]
+        splitter.split(partners_list, dataset)
+        for p in partners_list:
+            assert len(p.y_val) == 0, "validation set is not empty in spite of the val_set == 'global'"
+            assert len(p.y_test) == 0, "test set is not empty in spite of the val_set == 'global'"
+            assert len(p.x_train) == len(p.y_train), 'labels and samples numbers mismatches'
+            if dataset.num_classes >= 3:
+                assert len(p.labels) < dataset.num_classes, f'Partner {p.id} has all labels.'
+            assert (p.final_nb_samples / len(dataset.y_train) - splitter.amounts_per_partner[p.id]) \
+                   < (1 / len(dataset.y_train)), "Amounts of data not respected"
+
+    def test_random_splitter_local(self, create_all_datasets):
+        splitter = RandomSplitter([0.1, 0.2, 0.3, 0.4], val_set='local', test_set='local')
+        dataset = create_all_datasets
+        partners_list = [Partner(i) for i in range(len(splitter.amounts_per_partner))]
+        splitter.split(partners_list, dataset)
+        for p in partners_list:
+            assert len(p.y_val) > 0, "validation set is empty in spite of the val_set == 'local'"
+            assert len(p.y_test) > 0, "test set is empty in spite of the val_set == 'local'"
+            assert len(p.x_train) == len(p.y_train), 'labels and samples numbers mismatches'
+            assert (p.final_nb_samples / len(dataset.y_train) - splitter.amounts_per_partner[p.id]) \
+                   < (1 / len(dataset.y_train)), "Amounts of data not respected"
+
+    def test_stratified_splitter_local(self, create_all_datasets):
+        splitter = StratifiedSplitter([0.1, 0.2, 0.3, 0.4], val_set='local', test_set='local')
+        dataset = create_all_datasets
+        partners_list = [Partner(i) for i in range(len(splitter.amounts_per_partner))]
+        splitter.split(partners_list, dataset)
+        for p in partners_list:
+            assert len(p.y_val) > 0, "validation set is empty in spite of the val_set == 'local'"
+            assert len(p.y_test) > 0, "test set is empty in spite of the val_set == 'local'"
+            assert len(p.x_train) == len(p.y_train), 'labels and samples numbers mismatches'
+            if dataset.num_classes >= 3:
+                assert len(p.labels) < dataset.num_classes, f'Partner {p.id} has all labels.'
+            assert (p.final_nb_samples / len(dataset.y_train) - splitter.amounts_per_partner[p.id]) \
+                   < (1 / len(dataset.y_train)), "Amounts of data not respected"
+
+    def test_advanced_splitter_global(self, create_all_datasets):
+        dataset = create_all_datasets
+        splitter = AdvancedSplitter([0.3, 0.3, 0.4], configuration=[[4 * (dataset.num_classes // 10), "specific"],
+                                                                    [6 * (dataset.num_classes // 10), "shared"],
+                                                                    [4 * (dataset.num_classes // 10), "shared"]])
+        partners_list = [Partner(i) for i in range(len(splitter.amounts_per_partner))]
+        if dataset.num_classes >= 10:
+            splitter.split(partners_list, dataset)
+            for p in partners_list:
+                assert len(p.y_val) == 0, "validation set is not empty in spite of the val_set == 'global'"
+                assert len(p.y_test) == 0, "test set is not empty in spite of the val_set == 'global'"
+                assert len(p.x_train) == len(p.y_train), 'labels and samples numbers mismatches'
+                if dataset.num_classes >= 3:
+                    assert len(p.labels) < dataset.num_classes, f'Partner {p.id} has all labels.'
+        else:
+            with pytest.raises(Exception):
+                splitter.split(partners_list, dataset)
+
+    def test_advanced_splitter_local(self, create_all_datasets):
+        dataset = create_all_datasets
+        splitter = AdvancedSplitter([0.3, 0.3, 0.4], configuration=[[4 * (dataset.num_classes // 10), "specific"],
+                                                                    [6 * (dataset.num_classes // 10), "shared"],
+                                                                    [4 * (dataset.num_classes // 10), "shared"]],
+                                    val_set='local', test_set='local')
+        partners_list = [Partner(i) for i in range(len(splitter.amounts_per_partner))]
+        if dataset.num_classes >= 10:
+            splitter.split(partners_list, dataset)
+            for p in partners_list:
+                assert len(p.y_val) > 0, "validation set is empty in spite of the val_set == 'local'"
+                assert len(p.y_test) > 0, "test set is empty in spite of the val_set == 'local'"
+                assert len(p.x_train) == len(p.y_train), 'labels and samples numbers mismatches'
+                if dataset.num_classes >= 3:
+                    assert len(p.labels) < dataset.num_classes, f'Partner {p.id} has all labels.'
+        else:
+            with pytest.raises(Exception):
+                splitter.split(partners_list, dataset)
+
+
+######
+#
+# Test supported corruption
+#
+######
 
 class Test_Corruption:
     def test_permutation_circular(self, create_Partner):
@@ -259,69 +419,6 @@ class Test_Corruption:
         partner.corrupt()
         assert (partner.y_train == partner.y_train[0]).all()
         assert (partner.x_train == partner.x_train[0]).all()
-
-
-class Test_Mpl:
-    def test_Mpl(self, create_MultiPartnerLearning):
-        mpl = create_MultiPartnerLearning
-        assert type(mpl) == FederatedAverageLearning
-
-
-class Test_Contributivity:
-    def test_Contributivity(self, create_Contributivity):
-        contri = create_Contributivity
-        assert type(contri) == Contributivity
-
-
-######
-#
-# Test supported datasets
-#
-######
-
-class Test_Dataset:
-
-    def test_train_split_global(self, create_all_datasets):
-        """train_val_split is used once, just after Dataset being instantiated
-         - this is written to prevent its call from another place"""
-        data = create_all_datasets
-        assert len(data.x_val) < len(data.x_train)
-        assert len(data.x_test) < len(data.x_train)
-        with pytest.raises(Exception):
-            data.train_val_split_global()
-
-    def test_local_split(self, create_all_datasets):
-        data = create_all_datasets
-        x_train, x_val, y_train, y_val = data.train_val_split_local(data.x_train, data.y_train)
-        assert len(x_train) == len(y_train)
-        assert len(x_val) == len(y_val)
-        x_train, x_test, y_train, y_test = data.train_val_split_local(data.x_train, data.y_train)
-        assert len(x_train) == len(y_train)
-        assert len(x_test) == len(y_test)
-
-    def test_data_shape(self, create_all_datasets):
-        data = create_all_datasets
-        assert len(data.x_train) == len(data.y_train), "Number of train label is not equal to the number of data"
-        assert len(data.x_val) == len(data.y_val), "Number of val label is not equal to the number of data"
-        assert len(data.x_test) == len(data.y_test), "Number of test label is not equal to the number of data"
-
-        if data.num_classes > 2:
-            assert data.y_train[0].shape == (data.num_classes,)
-            assert data.y_val[0].shape == (data.num_classes,)
-            assert data.y_test[0].shape == (data.num_classes,)
-        assert data.x_train[0].shape == data.input_shape
-        assert data.x_test[0].shape == data.input_shape
-        assert data.x_val[0].shape == data.input_shape
-
-    def test_generate_new_model(self, create_all_datasets):
-        dataset = create_all_datasets
-        model = dataset.generate_new_model()
-        assert callable(model.fit), ".fit() method is required for model"
-        assert callable(model.evaluate), ".evaluate() method is required for model"
-        assert callable(model.save_weights), ".save_weights() method is required for model"
-        assert callable(model.load_weights), ".load_weights() method is required for model"
-        assert callable(model.get_weights), ' .get_weights() method is required for model'
-        assert callable(model.set_weights), ".set_weights() method is required for model"
 
 
 #####
