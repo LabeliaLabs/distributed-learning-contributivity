@@ -130,6 +130,9 @@ class AdvancedSplitter(Splitter):
         self.num_clusters, self.specific_shared = list(zip(*configuration))
         super().__init__(amounts_per_partner, **kwargs)
 
+    def __str__(self):
+        return self.name + str(list(zip(self.num_clusters, self.specific_shared)))
+
     def _generate_subset(self, x, y):
         lb = LabelEncoder()
         y_str = lb.fit_transform([str(label) for label in y])
@@ -159,12 +162,12 @@ class AdvancedSplitter(Splitter):
             shared_clusters_count = 0
         assert (
                 specific_clusters_count + shared_clusters_count <= nb_diff_labels
-        ), "Error: data samples from the \
-            initial dataset are split in clusters per data labels - Incompatibility between the split arguments \
-            and the dataset provided \
-            - Example: ['advanced', [[7, 'shared'], [6, 'shared'], [2, 'specific'], [1, 'specific']]] \
-            means 7 shared clusters and 2 + 1 = 3 specific clusters ==> This scenario can't work with a dataset with \
-            less than 10 labels"
+        ), f"Error: data samples from the initial dataset are split in clusters per data labels - " \
+           f"Incompatibility between the split arguments and the dataset provided: " \
+           f"{specific_clusters_count + shared_clusters_count}, {nb_diff_labels} " \
+           f"- Example: ['advanced', [[7, 'shared'], [6, 'shared'], [2, 'specific'], [1, 'specific']]] means 7" \
+           f" shared clusters and 2 + 1 = 3 specific clusters " \
+           f"==> This scenario can't work with a dataset with less than 10 labels"
 
         x_for_cluster, y_for_cluster, nb_samples_per_cluster = {}, {}, {}
         for label in labels:

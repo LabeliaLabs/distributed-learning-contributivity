@@ -61,7 +61,8 @@ class Dataset(ABC):
 
         self.x_train, self.x_val, self.y_train, self.y_val = train_test_split(self.x_train,
                                                                               self.y_train,
-                                                                              test_size=val_proportion)
+                                                                              test_size=val_proportion,
+                                                                              stratify=self.y_train)
 
     def __str__(self):
         return f'{self.name} dataset'
@@ -524,7 +525,7 @@ class Esc50(Dataset):
             logger.info('ESC-50 dataset found')
 
         esc50_df = pd.read_csv(folder / 'esc50.csv')
-        train, test = train_test_split(esc50_df, test_size=0.1)
+        train, test = train_test_split(esc50_df, test_size=0.1, stratify=esc50_df.target.to_numpy())
         y_train = train.target.to_numpy()
         y_test = test.target.to_numpy()
         x_train = (wav_load((folder / 'audio' / file_name).resolve(), sr=None)

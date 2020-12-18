@@ -55,15 +55,13 @@ from mplc.multi_partner_learning import FederatedAverageLearning
 from mplc.partner import Partner
 from mplc.scenario import Scenario
 # create_Mpl uses create_Dataset and create_Contributivity uses create_Scenario
-from mplc.splitter import AdvancedSplitter
+from mplc.splitter import AdvancedSplitter, RandomSplitter, StratifiedSplitter
 
 
 ######
-# These are outdated comments, but they
-# Fixture Create: to generate the objects that are used in the test functions,
-#  use the 'iterate' fixtures to generate their parameters.
-# It's probably better to maintain their independence in order
-# to be free to create weird objects, then give them to the test functions.
+#
+# Fixture definitions
+#
 ######
 
 
@@ -88,6 +86,14 @@ def create_MultiPartnerLearning(create_all_datasets):
     )
 
     yield mpl
+
+
+@pytest.fixture(scope="class", params=(RandomSplitter([0.1, 0.2, 0.3, 0.4]),
+                                       StratifiedSplitter([0.1, 0.2, 0.3, 0.4]),
+                                       AdvancedSplitter([0.3, 0.5, 0.2],
+                                                        [[4, "specific"], [6, "shared"], [4, "shared"]])))
+def create_splitter(request):
+    return request.param()
 
 
 @pytest.fixture(scope='class')
@@ -170,15 +176,10 @@ def create_Contributivity(create_Scenario):
 
 ######
 #
-# Sub-function of fixture create to generate a sub-object without a call to another fixture create
-#
-######
-
-######
-#
 # Tests modules with Objects
 #
 ######
+
 class Test_Experiment:
     def test_add_scenario(self, create_experiment):
         exp = create_experiment
@@ -213,54 +214,6 @@ class Test_Scenario:
         scenario = create_Scenario
         with pytest.raises(Exception):
             scenario.instantiate_scenario_partners()
-
-
-class Test_Corruption:
-    def test_permutation_circular(self, create_Partner):
-        partner = create_Partner
-        partner.corruption = PermutationCircular(partner=partner)
-        partner.corrupt()
-        assert ((partner.y_train == 0) + (partner.y_train == 1)).all()
-        if partner.y_train.ndim > 1:
-            assert partner.y_train[-1].max() == 1
-            assert partner.y_train[-1].sum() == 1
-
-    def test_permutation(self, create_Partner):
-        partner = create_Partner
-        partner.corruption = Permutation(partner=partner)
-        partner.corrupt()
-        assert ((partner.y_train == 0) + (partner.y_train == 1)).all()
-        ones_vect = np.ones(partner.corruption.matrix.shape[1])
-        assert (partner.corruption.matrix.sum(axis=1) == ones_vect).all()
-        assert (partner.corruption.matrix.sum(axis=0) == ones_vect.T).all()
-
-    def test_random(self, create_Partner):
-        partner = create_Partner
-        partner.corruption = Randomize(partner=partner)
-        partner.corrupt()
-        assert ((partner.y_train == 0) + (partner.y_train == 1)).all()
-        if partner.y_train.ndim > 1:
-            assert partner.y_train[-1].max() == 1
-            assert partner.y_train[-1].sum() == 1
-        ones_vect = np.ones(partner.corruption.matrix.shape[1])
-        assert (partner.corruption.matrix.sum(axis=1).round(1) == ones_vect).all()
-
-    def test_random_uniform(self, create_Partner):
-        partner = create_Partner
-        partner.corruption = RandomizeUniform(partner=partner)
-        partner.corrupt()
-        assert ((partner.y_train == 0) + (partner.y_train == 1)).all()
-        if partner.y_train.ndim > 1:
-            assert partner.y_train[-1].max() == 1
-            assert partner.y_train[-1].sum() == 1
-        assert (partner.corruption.matrix == partner.corruption.matrix[0][0]).all(), 'Distribution isn\'t uniform'
-
-    def test_redundancy(self, create_Partner):
-        partner = create_Partner
-        partner.corruption = Redundancy(partner=partner)
-        partner.corrupt()
-        assert (partner.y_train == partner.y_train[0]).all()
-        assert (partner.x_train == partner.x_train[0]).all()
 
 
 class Test_Mpl:
@@ -315,6 +268,157 @@ class Test_Dataset:
         assert callable(model.load_weights), ".load_weights() method is required for model"
         assert callable(model.get_weights), ' .get_weights() method is required for model'
         assert callable(model.set_weights), ".set_weights() method is required for model"
+
+
+######
+#
+# Test supported Splitter
+#
+######
+
+class Test_Splitter:
+    def test_random_splitter_global(self, create_all_datasets):
+        splitter = RandomSplitter([0.1, 0.2, 0.3, 0.4])
+        dataset = create_all_datasets
+        partners_list = [Partner(i) for i in range(len(splitter.amounts_per_partner))]
+        splitter.split(partners_list, dataset)
+        for p in partners_list:
+            assert len(p.y_val) == 0, "validation set is not empty in spite of the val_set == 'global'"
+            assert len(p.y_test) == 0, "test set is not empty in spite of the val_set == 'global'"
+            assert len(p.x_train) == len(p.y_train), 'labels and samples numbers mismatches'
+            assert (p.final_nb_samples / len(dataset.y_train) - splitter.amounts_per_partner[p.id]) \
+                   < (1 / len(dataset.y_train)), "Amounts of data not respected"
+
+    def test_stratified_splitter_global(self, create_all_datasets):
+        splitter = StratifiedSplitter([0.1, 0.2, 0.3, 0.4])
+        dataset = create_all_datasets
+        partners_list = [Partner(i) for i in range(len(splitter.amounts_per_partner))]
+        splitter.split(partners_list, dataset)
+        for p in partners_list:
+            assert len(p.y_val) == 0, "validation set is not empty in spite of the val_set == 'global'"
+            assert len(p.y_test) == 0, "test set is not empty in spite of the val_set == 'global'"
+            assert len(p.x_train) == len(p.y_train), 'labels and samples numbers mismatches'
+            if dataset.num_classes >= 3:
+                assert len(p.labels) < dataset.num_classes, f'Partner {p.id} has all labels.'
+            assert (p.final_nb_samples / len(dataset.y_train) - splitter.amounts_per_partner[p.id]) \
+                   < (1 / len(dataset.y_train)), "Amounts of data not respected"
+
+    def test_random_splitter_local(self, create_all_datasets):
+        splitter = RandomSplitter([0.1, 0.2, 0.3, 0.4], val_set='local', test_set='local')
+        dataset = create_all_datasets
+        partners_list = [Partner(i) for i in range(len(splitter.amounts_per_partner))]
+        splitter.split(partners_list, dataset)
+        for p in partners_list:
+            assert len(p.y_val) > 0, "validation set is empty in spite of the val_set == 'local'"
+            assert len(p.y_test) > 0, "test set is empty in spite of the val_set == 'local'"
+            assert len(p.x_train) == len(p.y_train), 'labels and samples numbers mismatches'
+            assert (p.final_nb_samples / len(dataset.y_train) - splitter.amounts_per_partner[p.id]) \
+                   < (1 / len(dataset.y_train)), "Amounts of data not respected"
+
+    def test_stratified_splitter_local(self, create_all_datasets):
+        splitter = StratifiedSplitter([0.1, 0.2, 0.3, 0.4], val_set='local', test_set='local')
+        dataset = create_all_datasets
+        partners_list = [Partner(i) for i in range(len(splitter.amounts_per_partner))]
+        splitter.split(partners_list, dataset)
+        for p in partners_list:
+            assert len(p.y_val) > 0, "validation set is empty in spite of the val_set == 'local'"
+            assert len(p.y_test) > 0, "test set is empty in spite of the val_set == 'local'"
+            assert len(p.x_train) == len(p.y_train), 'labels and samples numbers mismatches'
+            if dataset.num_classes >= 3:
+                assert len(p.labels) < dataset.num_classes, f'Partner {p.id} has all labels.'
+            assert (p.final_nb_samples / len(dataset.y_train) - splitter.amounts_per_partner[p.id]) \
+                   < (1 / len(dataset.y_train)), "Amounts of data not respected"
+
+    def test_advanced_splitter_global(self, create_all_datasets):
+        dataset = create_all_datasets
+        splitter = AdvancedSplitter([0.3, 0.3, 0.4], configuration=[[4 * (dataset.num_classes // 10), "specific"],
+                                                                    [6 * (dataset.num_classes // 10), "shared"],
+                                                                    [4 * (dataset.num_classes // 10), "shared"]])
+        partners_list = [Partner(i) for i in range(len(splitter.amounts_per_partner))]
+        if dataset.num_classes >= 10:
+            splitter.split(partners_list, dataset)
+            for p in partners_list:
+                assert len(p.y_val) == 0, "validation set is not empty in spite of the val_set == 'global'"
+                assert len(p.y_test) == 0, "test set is not empty in spite of the val_set == 'global'"
+                assert len(p.x_train) == len(p.y_train), 'labels and samples numbers mismatches'
+                if dataset.num_classes >= 3:
+                    assert len(p.labels) < dataset.num_classes, f'Partner {p.id} has all labels.'
+        else:
+            with pytest.raises(Exception):
+                splitter.split(partners_list, dataset)
+
+    def test_advanced_splitter_local(self, create_all_datasets):
+        dataset = create_all_datasets
+        splitter = AdvancedSplitter([0.3, 0.3, 0.4], configuration=[[4 * (dataset.num_classes // 10), "specific"],
+                                                                    [6 * (dataset.num_classes // 10), "shared"],
+                                                                    [4 * (dataset.num_classes // 10), "shared"]],
+                                    val_set='local', test_set='local')
+        partners_list = [Partner(i) for i in range(len(splitter.amounts_per_partner))]
+        if dataset.num_classes >= 10:
+            splitter.split(partners_list, dataset)
+            for p in partners_list:
+                assert len(p.y_val) > 0, "validation set is empty in spite of the val_set == 'local'"
+                assert len(p.y_test) > 0, "test set is empty in spite of the val_set == 'local'"
+                assert len(p.x_train) == len(p.y_train), 'labels and samples numbers mismatches'
+                if dataset.num_classes >= 3:
+                    assert len(p.labels) < dataset.num_classes, f'Partner {p.id} has all labels.'
+        else:
+            with pytest.raises(Exception):
+                splitter.split(partners_list, dataset)
+
+
+######
+#
+# Test supported corruption
+#
+######
+
+class Test_Corruption:
+    def test_permutation_circular(self, create_Partner):
+        partner = create_Partner
+        partner.corruption = PermutationCircular(partner=partner)
+        partner.corrupt()
+        assert ((partner.y_train == 0) + (partner.y_train == 1)).all()
+        if partner.y_train.ndim > 1:
+            assert partner.y_train[-1].max() == 1
+            assert partner.y_train[-1].sum() == 1
+
+    def test_permutation(self, create_Partner):
+        partner = create_Partner
+        partner.corruption = Permutation(partner=partner)
+        partner.corrupt()
+        assert ((partner.y_train == 0) + (partner.y_train == 1)).all()
+        ones_vect = np.ones(partner.corruption.matrix.shape[1])
+        assert (partner.corruption.matrix.sum(axis=1) == ones_vect).all()
+        assert (partner.corruption.matrix.sum(axis=0) == ones_vect.T).all()
+
+    def test_random(self, create_Partner):
+        partner = create_Partner
+        partner.corruption = Randomize(partner=partner)
+        partner.corrupt()
+        assert ((partner.y_train == 0) + (partner.y_train == 1)).all()
+        if partner.y_train.ndim > 1:
+            assert partner.y_train[-1].max() == 1
+            assert partner.y_train[-1].sum() == 1
+        ones_vect = np.ones(partner.corruption.matrix.shape[1])
+        assert (partner.corruption.matrix.sum(axis=1).round(1) == ones_vect).all()
+
+    def test_random_uniform(self, create_Partner):
+        partner = create_Partner
+        partner.corruption = RandomizeUniform(partner=partner)
+        partner.corrupt()
+        assert ((partner.y_train == 0) + (partner.y_train == 1)).all()
+        if partner.y_train.ndim > 1:
+            assert partner.y_train[-1].max() == 1
+            assert partner.y_train[-1].sum() == 1
+        assert (partner.corruption.matrix == partner.corruption.matrix[0][0]).all(), 'Distribution isn\'t uniform'
+
+    def test_redundancy(self, create_Partner):
+        partner = create_Partner
+        partner.corruption = Redundancy(partner=partner)
+        partner.corrupt()
+        assert (partner.y_train == partner.y_train[0]).all()
+        assert (partner.x_train == partner.x_train[0]).all()
 
 
 #####

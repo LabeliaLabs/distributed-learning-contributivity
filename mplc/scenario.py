@@ -509,7 +509,7 @@ class Scenario:
         dict_results["test_data_samples_count"] = len(self.dataset.x_test)
         dict_results["partners_count"] = self.partners_count
         dict_results["dataset_fraction_per_partner"] = self.amounts_per_partner
-        dict_results["samples_split_description"] = self.samples_split_description
+        dict_results["samples_split_option"] = str(self.splitter)
         dict_results["nb_samples_used"] = self.nb_samples_used
         dict_results["final_relative_nb_samples"] = self.final_relative_nb_samples
 

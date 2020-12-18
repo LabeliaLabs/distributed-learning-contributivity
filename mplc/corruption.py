@@ -241,7 +241,7 @@ class Duplication(Corruption):
         return self._corrupted_test_idx
 
     def set_duplicated_partner(self, partner_list):
-        if not self.duplicated_partner_id:
+        if self.duplicated_partner_id is None:  # We cannot use the `if not self.dupl... ` because if not 0 return True
             raise Exception('Missing the Partner-to-duplicate\'s id.')
         self.duplicated_partner = [partner for partner in partner_list if partner.id == self.duplicated_partner_id][0]
 
