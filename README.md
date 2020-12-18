@@ -59,6 +59,8 @@ In this repository, we benchmark different distributed learning and contributivi
 
 The public datasets currently supported are: MNIST, CIFAR10, TITANIC, ESC50 and IMDB. They also act as templates for using the library on custom datasets.
 
+The documentation is [here](mplc/doc/documentation.md)
+
 ### Structure of the library
 
 This library can be schematically broken down into 3 blocks:
