@@ -176,14 +176,14 @@ class Scenario:
         self.amounts_per_partner = amounts_per_partner
 
         #  To configure how validation set and test set will be organized.
-        if test_set in ['local', 'global', 'both']:
+        if test_set in ['local', 'global']:
             self.test_set = test_set
         else:
-            raise ValueError(f'Test set can be \'local\', \'global\' or \'both\', not {test_set}')
-        if test_set in ['local', 'global', 'both']:
+            raise ValueError(f'Test set can be \'local\' or \'global\' not {test_set}')
+        if val_set in ['local', 'global']:
             self.val_set = val_set
         else:
-            raise ValueError(f'Validation set can be \'local\', \'global\' or \'both\', not {val_set}')
+            raise ValueError(f'Validation set can be \'local\' or \'global\' not {val_set}')
 
         # To configure if data samples are split between partners randomly or in a stratified way...
         # ... so that they cover distinct areas of the samples space

@@ -243,8 +243,10 @@ There are 2 ways to select a dataset. You can either choose a pre-implemented da
         Configuration:  
         - `nb of clusters (int)`: the given partner will receive data samples from that many different clusters (clusters of data samples per labels/classes)
         - `'shared'` or `'specific'`:
-         - `'shared'`: all partners with option `'shared'` receive data samples picked from clusters they all share data samples from
-         - `'specific'`: each partner with option `'specific'` receives data samples picked from cluster(s) it is the only one to receive from
+         - `'shared'`: all partners with option `'shared'` receive data samples picked
+                       from clusters they all share data samples from
+         - `'specific'`: each partner with option `'specific'` receives data samples picked 
+                         from cluster(s) it is the only one to receive from
 
   Example: `samples_split_option='advanced', samples_split_configuration=[[7, 'shared'], [6, 'shared'], [2, 'specific'], [1, 'specific']]]`
 
