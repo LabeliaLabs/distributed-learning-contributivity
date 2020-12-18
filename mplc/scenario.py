@@ -264,7 +264,7 @@ class Scenario:
         # List of contributivity measures selected and computed in the scenario
         self.contributivity_list = []
 
-        # Contributivity contributivity_methods
+        # Contributivity methods
         self.contributivity_methods = []
         if contributivity_methods is not None:
             for method in contributivity_methods:

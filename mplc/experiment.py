@@ -169,7 +169,7 @@ class Experiment:
                 df_results["scenario_index"] = scenario_idx
 
                 if self.is_save:
-                    with open(self.experiment_path / "results.csv", "a") as f:
+                    with open(self.experiment_path / constants.EXPERIMENT_RESULT_FILE_NAME, "a") as f:
                         df_results.to_csv(f, header=f.tell() == 0, index=False)
                         logger.info(
                             f"(Experiment {self.name}, repeat {repeat_index_str}, scenario {scenario_index_str}) "

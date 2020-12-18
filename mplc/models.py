@@ -17,7 +17,11 @@ class LogisticRegression(skLR):
         self.coef_ = None
         self.intercept_ = None
 
-    def fit(self, x_train, y_train, batch_size, validation_data, epochs=1, verbose=False):
+    def fit(self, x_train, y_train, batch_size, validation_data, epochs=1, verbose=False, callbacks=None):
+
+        if callbacks:
+            logger.debug('Callbacks parameters are ignored for LogisticRegression')
+
         history = super(LogisticRegression, self).fit(x_train, y_train)
         [loss, acc] = self.evaluate(x_train, y_train)
         [val_loss, val_acc] = self.evaluate(*validation_data)
