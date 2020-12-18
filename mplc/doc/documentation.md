@@ -447,6 +447,10 @@ Example: `methods=["Shapley values", "Independent scores", "TMCS"]`
   When set to `True`, the amount of data samples and the number of epochs and mini-batches are significantly reduced, to minimize the duration of the run. This is particularly useful for quick demos or simply for debugging.  
   Example: `is_quick_demo=True`
   
+- `val_set`: `'local'` or `'global'`. If set to global, the validation set used is the one of the dataset. If local, the global validation set is splitted between partners, according to the samples split option. The validation data are also corrupted according to the partner-corruption's configuration.
+
+- `test_set`: `'local'` or `'global'`.Same as `val_set` but for test dataset. 
+  
 ## Experiments
 
 At some point of your use of the library you might need to launch several scenarios in a row. It the same spirit, you might want to repeat one scenario's run, to get rid of the randomness of training, and end with more meaningful results.
@@ -507,7 +511,7 @@ The `Dataset` object is useful if you want to define custom datasets and related
 ### Dataset
 
 The `Dataset` abstract class implements most of the methods needed by the library. To use an custom dataset, you must define a new class, which inherit from the `Dataset` one
-Don't forget to call the `Dataset.__init__()` via the super function. It will requires some parameters.
+Don't forget to call the `Dataset.__init__()` via the super function. It will require some parameters.
 Here is the structure of the `Dataset` generator:
 
 ```python
@@ -545,16 +549,9 @@ The data labels can take whatever shape you need, with only one condition. The l
 
 The `Dataset` object must provide separate train and test sets (referred to as global train set and global test set).
 
-The global train set is then further split into a global train set and a global validation set, by the function `train_val_split_global()`. Please note that if this function is not overwritten, the SKLearn's `train_test_split()` function will be called by default, and `10%` of the training set will be use as validation set.
+The global train set is then further split into a global train set and a global validation set, in a stratified way. Please note that you can specified the proportion of the train set used for validation via the `val_proportion` keyword argument. Default is `0.10`.
 
-In the multi-partner learning computations, the global validation set is used for early stopping and the global test set is used for performance evaluation.
-
-The global train set is then split amongst partners (according to the scenario configuration) to populate the partner's local datasets.
-
-For each partner, the local dataset will be split into separated train, validation and test sets, using the `train_test_split_local()` and `train_val_split_local()` functions.
-These are not mandatory, by default the local dataset will not be split.
-
-> Note: currently, the local validation and test set are not used, but they are available for further developments of multi-partner learning and contributivity measurement approaches.
+In the multi-partner learning computations, the validation set is used for early stopping and the test set is used for performance evaluation.
 
 ## Run the tests
 
