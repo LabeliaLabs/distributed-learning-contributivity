@@ -9,6 +9,7 @@ from abc import ABC, abstractmethod
 from timeit import default_timer as timer
 
 import numpy as np
+import tensorflow as tf
 from loguru import logger
 from sklearn.metrics import confusion_matrix
 from tensorflow.keras import Input, Model
@@ -603,6 +604,65 @@ class MplSModel(FederatedAverageLearning):
         logger.debug("End of S-Model collaborative round.")
 
 
+class GradientFusion(MultiPartnerLearning):
+    def __init__(self, scenario, **kwargs):
+        super(GradientFusion, self).__init__(scenario, **kwargs)
+        if self.partners_count == 1:
+            raise ValueError('Only one partner is provided. Please use the dedicated SinglePartnerLearning class')
+        self.model = self.build_model()
+
+    def fit_epoch(self):
+        # Split the train dataset in mini-batches
+        self.split_in_minibatches()
+        # Iterate over mini-batches and train
+        for i in range(self.minibatch_count):
+            self.minibatch_index = i
+            self.fit_minibatch()
+
+        self.minibatch_index = 0
+
+    def fit_minibatch(self):
+        """Proceed to a collaborative round with a federated averaging approach"""
+
+        logger.debug("Start new gradients fusion collaborative round ...")
+
+        # Starting model for each partner is the aggregated model from the previous mini-batch iteration
+        logger.info(f"(gradient fusion) Minibatch n°{self.minibatch_index} of epoch n°{self.epoch_index}, "
+                    f"init each partner's models with a copy of the global model")
+
+        for partner in self.partners_list:
+            # Evaluate and store accuracy of mini-batch start model
+            partner.model_weights = self.model_weights
+        self.eval_and_log_model_val_perf()
+
+        # Iterate over partners for training each individual model
+        for partner_index, partner in enumerate(self.partners_list):
+            with tf.GradientTape() as tape:
+                loss = self.model.loss(partner.minibatched_y_train[self.minibatch_index],
+                                       self.model(partner.minibatched_x_train[self.minibatch_index]))
+            partner.grads = tape.gradient(loss, self.model.trainable_weights)
+
+        global_grad = self.aggregator.aggregate_gradients()
+        self.model.optimizer.apply_gradients(zip(global_grad, self.model.trainable_weights))
+        self.model_weights = self.model.get_weights()
+
+        for partner_index, partner in enumerate(self.partners_list):
+            val_history = self.model.evaluate(self.val_data[0], self.val_data[1], verbose=False)
+            history = self.model.evaluate(partner.minibatched_x_train[self.minibatch_index],
+                                          partner.minibatched_y_train[self.minibatch_index], verbose=False)
+            history = {
+                "loss": [history[0]],
+                'accuracy': [history[1]],
+                'val_loss': [val_history[0]],
+                'val_accuracy': [val_history[1]]
+            }
+
+            # Log results of the round
+            self.log_partner_perf(partner.id, partner_index, history)
+
+        logger.debug("End of grads-fusion collaborative round.")
+
+
 # Supported multi-partner learning approaches
 
 MULTI_PARTNER_LEARNING_APPROACHES = {
@@ -610,5 +670,6 @@ MULTI_PARTNER_LEARNING_APPROACHES = {
     "seq-pure": SequentialLearning,
     "seq-with-final-agg": SequentialWithFinalAggLearning,
     "seqavg": SequentialAverageLearning,
-    "lflip": MplSModel
+    "lflip": MplSModel,
+    'grads-fusion': GradientFusion
 }
