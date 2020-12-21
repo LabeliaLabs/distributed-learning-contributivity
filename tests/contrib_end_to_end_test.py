@@ -55,3 +55,19 @@ class Test_EndToEndTest:
             big_dataset_score = current_df.loc[current_df.dataset_fraction_of_partner == 0.9, "contributivity_score"]
 
             assert small_dataset_score.values < big_dataset_score.values
+
+    def test_all_contrib_methods(self):
+        """
+        Test all available contributivity methods on mnist
+        """
+
+        all_methods = constants.CONTRIBUTIVITY_METHODS.copy()
+        all_methods.remove('AIS_Kriging_S') # This one fails
+        all_methods.remove('S-Model') # This one fails
+
+        scenario = Scenario(2, [0.4, 0.6], epoch_count=1, minibatch_count=2, dataset_name='mnist',
+                            contributivity_methods=all_methods, dataset_proportion=0.05)
+        exp = Experiment(scenarios_list=[scenario])
+        exp.run()
+
+        assert len(df) == 2 * len(all_methods)
