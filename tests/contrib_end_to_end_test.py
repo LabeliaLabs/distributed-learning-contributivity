@@ -3,6 +3,7 @@
 This enables to parameterize end to end tests - the tests are run by Travis each time you commit to the github repo
 """
 
+from mplc import constants
 from mplc.experiment import Experiment
 from mplc.scenario import Scenario
 from mplc.experiment import init_experiment_from_config_file
@@ -62,12 +63,13 @@ class Test_EndToEndTest:
         """
 
         all_methods = constants.CONTRIBUTIVITY_METHODS.copy()
-        all_methods.remove('AIS_Kriging_S') # This one fails
-        all_methods.remove('S-Model') # This one fails
+        all_methods.remove('AIS_Kriging_S')  # This one fails
+        all_methods.remove('S-Model')  # This one fails
 
         scenario = Scenario(2, [0.4, 0.6], epoch_count=1, minibatch_count=2, dataset_name='mnist',
                             contributivity_methods=all_methods, dataset_proportion=0.05)
         exp = Experiment(scenarios_list=[scenario])
         exp.run()
 
+        df = exp.result
         assert len(df) == 2 * len(all_methods)
