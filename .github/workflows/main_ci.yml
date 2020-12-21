@@ -1,0 +1,43 @@
+name: Main CI
+
+on: [push]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: [3.7, 3.8]
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v2
+      with:
+        python-version: ${{ matrix.python-version }}
+    - name: Install libsndfile
+      run: |
+        sudo apt-get install libsndfile1
+    - uses: actions/cache@v2
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
+    - name: Install python dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r dev-requirements.txt
+
+    - name: Lint with flake8
+      run: |
+        flake8 --max-line-length=120
+    - name: Test with pytest
+      run: |
+        pytest -v --cov=mplc -k Test_experiment tests/unit_tests.py
+
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v1
+      with:
+        env_vars: OS,PYTHON
