@@ -451,7 +451,7 @@ Eventually, all the scenarios can be run, and repeated, by calling the `.run()` 
 ### Experiment's parameters
 Few parameters can be set:
     - `experiment_name`: String, default `'experiment'`. Name of the experiment, will be used for the save path. The full experiment name will be followed by creation date/time, and by a hash if the experiment name already exists.
-    - `nb_repeat`: int, Number of repetition for the experiment, in which each scenario will be run 
+    - `nb_repeats`: int, Number of repetition for the experiment, in which each scenario will be run 
     - `scenario_list`: list of scenarios to be run during the experiment. Scenario can also be added via the `.add_scenario()` method
     -  `is_save`: boolean. If set to True, the experiment will be save on disk.
 
@@ -487,7 +487,7 @@ scenario0 = Scenario(4, [0.25]*4)
 scenario1 = Scenario(10, [0.1]*10)
 scenario2 = Scenario(4, [0.8, 0.1, 0.05, 0.05])
 
-exp = Experiment(experiment_name='my_experiment', nb_repeat=10, scenarios_list=[scenario0, scenario1])
+exp = Experiment(experiment_name='my_experiment', nb_repeats=10, scenarios_list=[scenario0, scenario1])
 exp.add_scenario(scenario2)
 
 exp.run()
