@@ -16,6 +16,7 @@ jobs:
       uses: actions/setup-python@v2
       with:
         python-version: ${{ matrix.python-version }}
+
     - name: Install libsndfile
       run: |
         sudo apt-get install libsndfile1
@@ -33,9 +34,11 @@ jobs:
     - name: Lint with flake8
       run: |
         flake8 --max-line-length=120
-    - name: Test with pytest
+    - name: Run unit tests
       run: |
         pytest -v --cov=mplc tests/unit_tests.py
+    - name: Run end-to-end tests
+      run: |
         pytest -v --cov=mplc --cov-append tests/ml_perf_end_to_end_tests.py
         pytest -v --cov=mplc --cov-append tests/contrib_end_to_end_test.py
 
