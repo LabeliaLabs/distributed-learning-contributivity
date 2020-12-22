@@ -81,10 +81,11 @@ class Test_EndToEndTest:
         """
 
         scenario = Scenario(4, [0.25, 0.25, 0.25, 0.25], epoch_count=1, minibatch_count=1, dataset_name='mnist',
-                                        contributivity_methods=["IS_reg_S"], dataset_proportion=0.05)
+                            contributivity_methods=["IS_reg_S"], dataset_proportion=0.05)
         exp = Experiment(scenarios_list=[scenario])
         exp.run()
 
+        df = exp.result
+
         # 1 contributivity methods X 4 partners
         assert len(df) == 4
-        
