@@ -64,6 +64,7 @@ class Test_EndToEndTest:
 
         all_methods = constants.CONTRIBUTIVITY_METHODS.copy()
         all_methods.remove('AIS_Kriging_S')  # This one fails
+        all_methods.remove('IS_reg_S')  # This one is handled in the test below
 
         scenario = Scenario(2, [0.4, 0.6], epoch_count=1, minibatch_count=2, dataset_name='mnist',
                             contributivity_methods=all_methods, dataset_proportion=0.05)
