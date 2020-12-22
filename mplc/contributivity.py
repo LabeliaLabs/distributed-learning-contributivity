@@ -1113,20 +1113,14 @@ class Contributivity:
 
     def s_model(self):  # TOD refacto
         start = timer()
-        log_thetas = []
-        epsilon = 0.5
-        for _ in range(10):
-            identity = np.identity(10)
-            theta = identity * (1 - epsilon) + (epsilon / 10)
-            log_thetas.append(np.log(theta + 1e-8) / 10.0)
-        mpl = multi_partner_learning.MplSModel(self.scenario, log_theta_list=log_thetas)
+        mpl = multi_partner_learning.MplSModel(self.scenario)
         mpl.fit()
         theta_estimated = np.zeros((mpl.partners_count,
                                     mpl.dataset.num_classes,
                                     mpl.dataset.num_classes))
         for i, partnerMpl in enumerate(mpl.partners_list):
-            theta_estimated[i] = (np.exp(partnerMpl.noise_adaptation_layer_weights) / np.sum(
-                np.exp(partnerMpl.noise_adaptation_layer_weights), axis=2))
+            theta_estimated[i] = (np.exp(partnerMpl.noise_layer_weights) / np.sum(
+                np.exp(partnerMpl.noise_layer_weights), axis=2))
         self.contributivity_scores = np.exp(- np.array([np.linalg.norm(
             theta_estimated[i] - np.identity(mpl.dataset.num_classes)
         ) for i in range(len(self.scenario.partners_list))]))
