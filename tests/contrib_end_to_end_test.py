@@ -73,3 +73,18 @@ class Test_EndToEndTest:
 
         df = exp.result
         assert len(df) == 2 * len(all_methods)
+
+    def test_IS_reg_S_contrib(self):
+        """
+        Test the IS_reg_S contrib method.
+        This method activates only when partners_count > 4
+        """
+
+        scenario = Scenario(4, [0.25, 0.25, 0.25, 0.25], epoch_count=1, minibatch_count=1, dataset_name='mnist',
+                                        contributivity_methods=["IS_reg_S"], dataset_proportion=0.05)
+        exp = Experiment(scenarios_list=[scenario])
+        exp.run()
+
+        # 1 contributivity methods X 4 partners
+        assert len(df) == 4
+        
