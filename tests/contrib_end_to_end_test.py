@@ -3,6 +3,7 @@
 This enables to parameterize end to end tests - the tests are run by Travis each time you commit to the github repo
 """
 
+from mplc import constants
 from mplc.experiment import Experiment
 from mplc.scenario import Scenario
 from mplc.experiment import init_experiment_from_config_file
@@ -55,3 +56,36 @@ class Test_EndToEndTest:
             big_dataset_score = current_df.loc[current_df.dataset_fraction_of_partner == 0.9, "contributivity_score"]
 
             assert small_dataset_score.values < big_dataset_score.values
+
+    def test_all_contrib_methods(self):
+        """
+        Test all available contributivity methods on mnist
+        """
+
+        all_methods = constants.CONTRIBUTIVITY_METHODS.copy()
+        all_methods.remove('AIS_Kriging_S')  # This one fails
+        all_methods.remove('IS_reg_S')  # This one is handled in the test below
+
+        scenario = Scenario(2, [0.4, 0.6], epoch_count=1, minibatch_count=2, dataset_name='mnist',
+                            contributivity_methods=all_methods, dataset_proportion=0.05)
+        exp = Experiment(scenarios_list=[scenario])
+        exp.run()
+
+        df = exp.result
+        assert len(df) == 2 * len(all_methods)
+
+    def test_IS_reg_S_contrib(self):
+        """
+        Test the IS_reg_S contrib method.
+        This method activates only when partners_count > 4
+        """
+
+        scenario = Scenario(4, [0.25, 0.25, 0.25, 0.25], epoch_count=1, minibatch_count=1, dataset_name='mnist',
+                            contributivity_methods=["IS_reg_S"], dataset_proportion=0.05)
+        exp = Experiment(scenarios_list=[scenario])
+        exp.run()
+
+        df = exp.result
+
+        # 1 contributivity methods X 4 partners
+        assert len(df) == 4
