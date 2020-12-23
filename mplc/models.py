@@ -2,7 +2,7 @@ import numpy as np
 from joblib import dump, load
 from loguru import logger
 from sklearn.linear_model import LogisticRegression as skLR
-from sklearn.metrics import log_loss
+from sklearn.metrics import accuracy_score, log_loss
 from tensorflow.keras.backend import dot
 from tensorflow.keras.layers import Dense
 
@@ -45,6 +45,81 @@ class LogisticRegression(skLR):
 
         return model_evaluation
 
+    def save_weights(self, path):
+        if self.coef_ is None:
+            raise ValueError(
+                'Coef and intercept are set to None, it seems the model has not been fit properly.')
+        if '.h5' in path:
+            logger.debug('Automatically switch file format from .h5 to .npy')
+            path.replace('.h5', '.npy')
+        np.save(path, self.get_weights())
+
+    def load_weights(self, path):
+        if '.h5' in path:
+            logger.debug('Automatically switch file format from .h5 to .npy')
+            path.replace('.h5', '.npy')
+        weights = load(path)
+        self.set_weights(weights)
+
+    def get_weights(self):
+        if self.coef_ is None:
+            return None
+        else:
+            return np.concatenate((self.coef_, self.intercept_.reshape(1, 1)), axis=1)
+
+    def set_weights(self, weights):
+        if weights is None:
+            self.coef_ = None
+            self.intercept_ = None
+        else:
+            self.coef_ = np.array(weights[0][:-1]).reshape(1, -1)
+            self.intercept_ = np.array(weights[0][-1]).reshape(1)
+
+    def save_model(self, path):
+        if '.h5' in path:
+            logger.debug('Automatically switch file format from .h5 to .joblib')
+            path.replace('.h5', '.joblib')
+        dump(self, path)
+
+    @staticmethod
+    def load_model(path):
+        if '.h5' in path:
+            logger.debug('Automatically switch file format from .h5 to .joblib')
+            path.replace('.h5', '.joblib')
+        return load(path)
+
+
+class EnsemblePredictionsModel():
+    """
+    Ensemble (average) prediction of several input models
+    """
+
+    def __init__(self, list_of_partner_model):
+        self.list_of_partner_model = list_of_partner_model
+
+    def fit(self, x_train, y_train, batch_size, validation_data, epochs=1, verbose=False, callbacks=None):
+
+        pass
+
+    def evaluate(self, x_eval, y_eval, **kwargs):
+        predictions_list = []
+        for partner in self.partners_list:
+
+            model = partner.build_model()
+            predictions = model.predict(x_eval)
+            predictions_list.append(predictions)
+
+        y_pred = np.mean(predictions_list, axis=0)
+
+        loss = log_loss(y_eval, y_pred)
+
+        y_true = np.argmax(y_eval, axis=1)
+        y_pred = np.argmax(y_pred, axis=1)
+        metric = accuracy_score(y_true, y_pred)
+
+        return [loss, metric]
+
+    # TODO SAVE/LOAD method: save every partners model ?
     def save_weights(self, path):
         if self.coef_ is None:
             raise ValueError(

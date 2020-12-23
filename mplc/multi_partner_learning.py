@@ -603,12 +603,71 @@ class MplSModel(FederatedAverageLearning):
         logger.debug("End of S-Model collaborative round.")
 
 
-# Supported multi-partner learning approaches
+class EnsembleResults(MultiPartnerLearning):
+    """
+    Ensemble (average) prediction of several input models
+    This approach can only be used with the EnsemblePredictionsModel
+    """
 
+    def __init__(self, scenario, **kwargs):
+        # First, if only one partner, fall back to dedicated single partner function
+        super(EnsembleResults, self).__init__(scenario, **kwargs)
+        if self.partners_count == 1:
+            raise ValueError('Only one partner is provided. Please use the dedicated SinglePartnerLearning class')
+
+    def fit_epoch(self):
+        # Clear Keras' old models
+        clear_session()
+
+        # Split the train dataset in mini-batches
+        self.split_in_minibatches()
+
+        # Iterate over mini-batches and train
+        for i in range(self.minibatch_count):
+            self.minibatch_index = i
+            self.fit_minibatch()
+
+        self.minibatch_index = 0
+
+    def fit_minibatch(self):
+        """Proceed to a collaborative round with an results ensembling approach"""
+
+        logger.debug("Start new ensembling collaborative round ...")
+        logger.info(f"(ensembling) Minibatch n°{self.minibatch_index} of epoch n°{self.epoch_index}")
+
+        for partner in self.partners_list:
+            partner.model_weights = self.model_weights
+
+        # Evaluate and store accuracy of mini-batch start model
+        self.eval_and_log_model_val_perf()
+
+        # Iterate over partners for training each individual model
+        for partner_index, partner in enumerate(self.partners_list):
+            # Reference the partner's model
+            partner_model = partner.build_model()
+
+            # Train on partner local data set
+            history = partner_model.fit(partner.minibatched_x_train[self.minibatch_index],
+                                        partner.minibatched_y_train[self.minibatch_index],
+                                        batch_size=partner.batch_size,
+                                        verbose=0,
+                                        validation_data=self.val_data)
+
+            # Log results of the round
+            self.log_partner_perf(partner.id, partner_index, history.history)
+
+            # Update the partner's model in the models' list
+            partner.model_weights = partner_model.get_weights()
+
+        logger.debug("End of ensembling collaborative round.")
+
+
+# Supported multi-partner learning approaches
 MULTI_PARTNER_LEARNING_APPROACHES = {
     "fedavg": FederatedAverageLearning,
     "seq-pure": SequentialLearning,
     "seq-with-final-agg": SequentialWithFinalAggLearning,
     "seqavg": SequentialAverageLearning,
-    "lflip": MplSModel
+    "lflip": MplSModel,
+    "ensembling": EnsembleResults
 }
