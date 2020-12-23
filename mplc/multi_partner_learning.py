@@ -16,7 +16,7 @@ from tensorflow.keras.backend import clear_session
 from tensorflow.keras.callbacks import EarlyStopping
 
 from . import constants
-from .models import NoiseAdaptationChannel
+from .models import NoiseAdaptationChannel, EnsemblePredictionsModel
 from .mpl_utils import History, Aggregator
 from .partner import Partner, PartnerMpl
 
@@ -160,7 +160,7 @@ class MultiPartnerLearning(ABC):
         partner_id_str = f"Partner partner_id #{partner_id} ({partner_index}/{self.partners_count - 1})"
         val_acc_str = f"{round(history['val_accuracy'][-1], 2)}"
 
-        logger.debug(f"{epoch_nb_str} > {mb_nb_str} > {partner_id_str} > val_acc: {val_acc_str}")
+        logger.info(f"{epoch_nb_str} > {mb_nb_str} > {partner_id_str} > val_acc: {val_acc_str}")
 
     def eval_and_log_model_val_perf(self):
         model = self.build_model()
@@ -603,7 +603,7 @@ class MplSModel(FederatedAverageLearning):
         logger.debug("End of S-Model collaborative round.")
 
 
-class EnsembleResults(MultiPartnerLearning):
+class EnsemblePredictions(MultiPartnerLearning):
     """
     Ensemble (average) prediction of several input models
     This approach can only be used with the EnsemblePredictionsModel
@@ -611,44 +611,36 @@ class EnsembleResults(MultiPartnerLearning):
 
     def __init__(self, scenario, **kwargs):
         # First, if only one partner, fall back to dedicated single partner function
-        super(EnsembleResults, self).__init__(scenario, **kwargs)
+        super(EnsemblePredictions, self).__init__(scenario, **kwargs)
+
         if self.partners_count == 1:
             raise ValueError('Only one partner is provided. Please use the dedicated SinglePartnerLearning class')
+
+        partner_model_list = [self.dataset.generate_new_model() for _ in range(self.partners_count)]
+        self.model = EnsemblePredictionsModel(partner_model_list)
+        # Issue here is that we have 2 models, the Ensemble model and
+        # the model for every partner. self.model could either be the EnsembleModel
+        # or the partner model but in both cases it's not super straightforward.
+
+        for partner in self.partners_list:
+            partner.model_weights = self.model_weights
+        # the partners should all start with a different set of weights
+        logger.info("Init EnsemblePredictionsModel model")
 
     def fit_epoch(self):
         # Clear Keras' old models
         clear_session()
 
-        # Split the train dataset in mini-batches
-        self.split_in_minibatches()
-
-        # Iterate over mini-batches and train
-        for i in range(self.minibatch_count):
-            self.minibatch_index = i
-            self.fit_minibatch()
-
-        self.minibatch_index = 0
-
-    def fit_minibatch(self):
-        """Proceed to a collaborative round with an results ensembling approach"""
-
-        logger.debug("Start new ensembling collaborative round ...")
-        logger.info(f"(ensembling) Minibatch n°{self.minibatch_index} of epoch n°{self.epoch_index}")
-
-        for partner in self.partners_list:
-            partner.model_weights = self.model_weights
-
-        # Evaluate and store accuracy of mini-batch start model
         self.eval_and_log_model_val_perf()
 
-        # Iterate over partners for training each individual model
         for partner_index, partner in enumerate(self.partners_list):
-            # Reference the partner's model
-            partner_model = partner.build_model()
+
+            partner_model = partner.build_model()  # issue here is it tries to build
+            # the partner model with the Ensembling model
 
             # Train on partner local data set
-            history = partner_model.fit(partner.minibatched_x_train[self.minibatch_index],
-                                        partner.minibatched_y_train[self.minibatch_index],
+            history = partner_model.fit(partner.x_train,
+                                        partner.y_train,
                                         batch_size=partner.batch_size,
                                         verbose=0,
                                         validation_data=self.val_data)
@@ -659,7 +651,8 @@ class EnsembleResults(MultiPartnerLearning):
             # Update the partner's model in the models' list
             partner.model_weights = partner_model.get_weights()
 
-        logger.debug("End of ensembling collaborative round.")
+    def fit_minibatch(self):
+        pass
 
 
 # Supported multi-partner learning approaches
@@ -669,5 +662,5 @@ MULTI_PARTNER_LEARNING_APPROACHES = {
     "seq-with-final-agg": SequentialWithFinalAggLearning,
     "seqavg": SequentialAverageLearning,
     "lflip": MplSModel,
-    "ensembling": EnsembleResults
+    "ensembling": EnsemblePredictions
 }

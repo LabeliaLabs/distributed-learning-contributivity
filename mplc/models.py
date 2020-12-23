@@ -94,18 +94,16 @@ class EnsemblePredictionsModel():
     Ensemble (average) prediction of several input models
     """
 
-    def __init__(self, list_of_partner_model):
-        self.list_of_partner_model = list_of_partner_model
+    def __init__(self, partners_model_list):
+        self.partners_model_list = partners_model_list
 
     def fit(self, x_train, y_train, batch_size, validation_data, epochs=1, verbose=False, callbacks=None):
-
         pass
 
     def evaluate(self, x_eval, y_eval, **kwargs):
         predictions_list = []
-        for partner in self.partners_list:
+        for model in self.partners_model_list:
 
-            model = partner.build_model()
             predictions = model.predict(x_eval)
             predictions_list.append(predictions)
 
@@ -121,47 +119,23 @@ class EnsemblePredictionsModel():
 
     # TODO SAVE/LOAD method: save every partners model ?
     def save_weights(self, path):
-        if self.coef_ is None:
-            raise ValueError(
-                'Coef and intercept are set to None, it seems the model has not been fit properly.')
-        if '.h5' in path:
-            logger.debug('Automatically switch file format from .h5 to .npy')
-            path.replace('.h5', '.npy')
-        np.save(path, self.get_weights())
+        pass
 
     def load_weights(self, path):
-        if '.h5' in path:
-            logger.debug('Automatically switch file format from .h5 to .npy')
-            path.replace('.h5', '.npy')
-        weights = load(path)
-        self.set_weights(weights)
+        raise NotImplementedError
 
     def get_weights(self):
-        if self.coef_ is None:
-            return None
-        else:
-            return np.concatenate((self.coef_, self.intercept_.reshape(1, 1)), axis=1)
+        raise NotImplementedError
 
     def set_weights(self, weights):
-        if weights is None:
-            self.coef_ = None
-            self.intercept_ = None
-        else:
-            self.coef_ = np.array(weights[0][:-1]).reshape(1, -1)
-            self.intercept_ = np.array(weights[0][-1]).reshape(1)
+        pass
 
     def save_model(self, path):
-        if '.h5' in path:
-            logger.debug('Automatically switch file format from .h5 to .joblib')
-            path.replace('.h5', '.joblib')
-        dump(self, path)
+        pass
 
     @staticmethod
     def load_model(path):
-        if '.h5' in path:
-            logger.debug('Automatically switch file format from .h5 to .joblib')
-            path.replace('.h5', '.joblib')
-        return load(path)
+        raise NotImplementedError
 
 
 class NoiseAdaptationChannel(Dense):
