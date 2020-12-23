@@ -18,7 +18,7 @@ from tensorflow.keras.callbacks import EarlyStopping
 
 from .utils import History
 from .. import constants
-from ..models import NoiseAdaptationChannel
+from ..models import NoiseAdaptationChannel, EnsemblePredictionsModel
 from ..partner import Partner, PartnerMpl
 
 ALLOWED_PARAMETERS = ('partners_list',
@@ -660,3 +660,67 @@ class FederatedGradients(MultiPartnerLearning):
             self.log_partner_perf(partner.id, partner_index, history)
 
         logger.debug("End of grads-fusion collaborative round.")
+
+
+class EnsemblePredictions(MultiPartnerLearning):
+    """
+    Ensemble (average) prediction of several input models
+    This approach can only be used with the EnsemblePredictionsModel
+    """
+
+    def __init__(self, scenario, **kwargs):
+        super(EnsemblePredictions, self).__init__(scenario, **kwargs)
+
+        # First, if only one partner, fall back to dedicated single partner function
+        if self.partners_count == 1:
+            raise ValueError('Only one partner is provided. Please use the dedicated SinglePartnerLearning class')
+
+        partner_model_list = [self.dataset.generate_new_model() for _ in range(self.partners_count)]
+        self.model = EnsemblePredictionsModel(partner_model_list)
+
+        for partner in self.partners_list:
+            partner.model_weights = self.model_weights
+
+        logger.info("Init EnsemblePredictionsModel model")
+
+    def build_model(self):
+        partner_model_list = [partner.build_model() for partner in self.partners_list]
+        return EnsemblePredictionsModel(partner_model_list)
+
+    def fit_epoch(self):
+        # Clear Keras' old models
+        clear_session()
+
+        self.eval_and_log_model_val_perf()
+
+        for partner_index, partner in enumerate(self.partners_list):
+
+            partner_model = partner.build_model()
+
+            # Train on partner local data set
+            history = partner_model.fit(partner.x_train,
+                                        partner.y_train,
+                                        batch_size=partner.batch_size,
+                                        verbose=0,
+                                        validation_data=self.val_data)
+
+            # Log results of the round
+            self.log_partner_perf(partner.id, partner_index, history.history)
+
+            # Update the partner's model in the models' list
+            partner.model_weights = partner_model.get_weights()
+
+    def fit_minibatch(self):
+        pass
+
+
+# Supported multi-partner learning approaches
+MULTI_PARTNER_LEARNING_APPROACHES = {
+    "fedavg": FederatedAverageLearning,
+    'fedgrads': FederatedGradients,
+    "seq-pure": SequentialLearning,
+    "seq-with-final-agg": SequentialWithFinalAggLearning,
+    "seqavg": SequentialAverageLearning,
+    "smodel": FedAvgSmodel,
+    "ensembling": EnsemblePredictions
+}
