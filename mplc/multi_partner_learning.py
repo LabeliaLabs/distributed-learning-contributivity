@@ -663,6 +663,79 @@ class FederatedGradients(MultiPartnerLearning):
         logger.debug("End of grads-fusion collaborative round.")
 
 
+@tf.function
+def aggregeted_grads(grads, agg_w):
+    global_grad = list()
+    for grad_per_layer in zip(*grads):
+        global_grad.append(tf.tensordot(grad_per_layer, agg_w, [0, 0]))
+    return global_grad
+
+
+@tf.function
+def train_epoch(model, train_dataset, agg_w):
+    partners_grads = [None for _ in range(agg_w.shape[0])]
+    for minibatch in zip(*train_dataset):
+        for p_id, (x_partner_batch, y_partner_batch) in enumerate(minibatch):
+            with tf.GradientTape() as tape:
+                y_pred = model(x_partner_batch)
+                loss = model.compiled_loss(y_partner_batch, y_pred)
+                partners_grads[p_id] = tape.gradient(loss, model.trainable_weights)
+            model.compiled_metrics.update_state(y_partner_batch, y_pred)
+        global_grad = aggregeted_grads(tuple(partners_grads), agg_w)
+        model.optimizer.apply_gradients(zip(global_grad, model.trainable_weights))
+    return {m.name: (m.result()) for m in model.metrics}
+
+
+class OptimizedGradAvg(FederatedAverageLearning):
+    """ This mpl approach benefit from the tensorflow api, and tensorflow dataset.
+        Experiments shown that this method can be as fast as the vanilla keras .fit() method.
+        The dataset is firstly converted into a tf.dataset.
+        Thus the batching, shuffling, and prefetching of the next minibatch is handled by this tf API
+        Each minibatch contains partner_count batches.
+        The gradients on each partner's batch is computed, then they are aggregated.
+        Eventually the optimizer apply one descent gradient step to the model, using the aggregated gradient.
+        The main speed up came from the fact that the aggregation is wrapped into tf.function, as well as the fit_epoch function.
+
+        TODO: adapt history
+
+    """
+
+    def __init__(self, scenario, **kwargs):
+        super(OptimizedGradAvg, self).__init__(scenario, **kwargs)
+        if self.partners_count == 1:
+            raise ValueError('Only one partner is provided. Please use the dedicated SinglePartnerLearning class')
+        self.agg_w = tf.constant(self.aggregator.aggregation_weights, dtype=tf.float32)
+        for p in self.partners_list:
+            p.train_data = tf.data.Dataset.from_tensor_slices((p.x_train, p.y_train))
+            p.train_data = p.train_data.shuffle(len(p.train_data), reshuffle_each_iteration=True)
+            p.train_data = p.train_data.batch(p.batch_size)
+            p.train_data = p.train_data.prefetch(1)
+        self.train_dataset = [p.train_data for p in self.partners_list]
+        self.val_data = tf.data.Dataset.from_tensor_slices((self.dataset.x_val, self.dataset.y_val))
+        self.val_data = self.val_data.shuffle(100, reshuffle_each_iteration=True)
+        self.val_data = self.val_data.batch(len(self.dataset.y_val) // self.minibatch_count).prefetch(2)
+        self.model = self.init_model()
+        self.history.history = {}
+
+    def fit_epoch(self):
+        history = train_epoch(self.model, self.train_dataset, self.agg_w)
+        history = {key: value.numpy() for key, value in history.items()}
+        val_hist = self.model.evaluate(self.val_data, return_dict=True, verbose=False)
+        history.update({f'val_{key}': value for key, value in val_hist.items()})
+        logger.info(history)
+        if not self.history.history:
+            self.history.history = {key: [value] for key, value in history.items()}
+        else:
+            for key, value in history.items():
+                self.history.history[key].append(value)
+
+    def fit_minibatch(self):
+        pass
+
+    def build_model(self):
+        return self.model
+
+
 # Supported multi-partner learning approaches
 
 MULTI_PARTNER_LEARNING_APPROACHES = {
