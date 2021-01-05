@@ -76,6 +76,7 @@ class PartnerMpl:
         :type partner_parent: Partner
         :type mpl: MultiPartnerLearning
         """
+        self.grads = None
         self.mpl = mpl
         self.id = partner_parent.id
         self.batch_size = partner_parent.batch_size

@@ -6,6 +6,7 @@ from copy import deepcopy
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+import tensorflow as tf
 
 
 class History:
@@ -109,6 +110,23 @@ class History:
         plt.close()
 
 
+#####################################
+#
+# tensorflow functions for aggregator
+#
+#####################################
+
+@tf.function
+def _tf_aggregete_grads(grads, agg_w):
+    global_grad = list()
+    for grad_per_layer in zip(*grads):
+        g = list()
+        for g_p, w in zip(grad_per_layer, agg_w):
+            g.append(g_p)
+        global_grad.append(tf.reduce_mean(g, axis=0))
+    return global_grad
+
+
 class Aggregator(ABC):
     name = 'abstract'
 
@@ -117,7 +135,7 @@ class Aggregator(ABC):
         :type mpl: MultiPartnerLearning
         """
         self.mpl = mpl
-        self.aggregation_weights = np.zeros(self.mpl.partners_count)
+        self.aggregation_weights = np.zeros(self.mpl.partners_count, dtype='float32')
 
     def __str__(self):
         return f'{self.name} aggregator'
@@ -136,13 +154,17 @@ class Aggregator(ABC):
 
         return new_weights
 
+    def aggregate_gradients(self):
+        assert isinstance(self.aggregation_weights, list), 'Aggregation weights must be a list.'
+        return _tf_aggregete_grads([p.grads for p in self.mpl.partners_list], self.aggregation_weights)
+
 
 class UniformAggregator(Aggregator):
     name = 'Uniform'
 
     def __init__(self, mpl):
         super(UniformAggregator, self).__init__(mpl)
-        self.aggregation_weights = [1 / self.mpl.partners_count] * self.mpl.partners_count
+        self.aggregation_weights = list(np.ones(self.mpl.partners_count, dtype='float32') * self.mpl.partners_count)
 
 
 class DataVolumeAggregator(Aggregator):
@@ -151,7 +173,7 @@ class DataVolumeAggregator(Aggregator):
     def __init__(self, mpl):
         super(DataVolumeAggregator, self).__init__(mpl)
         partners_sizes = [partner.data_volume for partner in self.mpl.partners_list]
-        self.aggregation_weights = partners_sizes / np.sum(partners_sizes)
+        self.aggregation_weights = list((partners_sizes / np.sum(partners_sizes).astype('float32')))
 
 
 class ScoresAggregator(Aggregator):
@@ -162,11 +184,15 @@ class ScoresAggregator(Aggregator):
 
     def prepare_aggregation_weights(self):
         last_scores = [partner.last_round_score for partner in self.mpl.partners_list]
-        self.aggregation_weights = last_scores / np.sum(last_scores)
+        self.aggregation_weights = list((last_scores / np.sum(last_scores)).astype('float32'))
 
     def aggregate_model_weights(self):
         self.prepare_aggregation_weights()
         super(ScoresAggregator, self).aggregate_model_weights()
+
+    def aggregate_gradients(self):
+        self.prepare_aggregation_weights()
+        super(ScoresAggregator, self).aggregate_gradients()
 
 
 # Supported _aggregation weights approaches
