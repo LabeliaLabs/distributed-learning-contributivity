@@ -302,7 +302,7 @@ There are several parameters influencing how the collaborative and distributed l
 
     ![Schema fedavg](../../img/collaborative_rounds_fedavg.png)
     
-  - `'gradsavg'`: stands for gradient averaging, quite similar to federated averaging, but the partner-loss's gradients are averaged before the optimization step, instead of averaged the model's weights after the optimization step.
+  - `'fedgrads'`: stands for gradient averaging, quite similar to federated averaging, but the partner-loss's gradients are averaged before the optimization step, instead of averaged the model's weights after the optimization step.
   Warning : This method needs a Keras model to work with. The `gradient_pass_per_update` is set to 1 in the current implementation. 
  
   - `'seq-...'`: stands for sequential and comes with 2 variations, `'seq-pure'` with no aggregation at all, and `'seq-with-final-agg'` where an aggregation is performed before evaluating on the validation set and test set (on last mini-batch of each epoch) for mitigating impact when the very last subset on which the model is trained is of low quality, or corrupted, or just detrimental to the model performance.
@@ -361,7 +361,7 @@ There are several parameters influencing how the collaborative and distributed l
   - "Federated SBS linear"
   - "Federated SBS quadratic"
   - "Federated SBS constant"
-  - "LFlip"
+  - "Smodel"
   - "PVRL"
   ```
 

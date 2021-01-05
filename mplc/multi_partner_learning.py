@@ -604,9 +604,9 @@ class MplSModel(FederatedAverageLearning):
         logger.debug("End of S-Model collaborative round.")
 
 
-class GradientsAverage(MultiPartnerLearning):
+class FederatedGradients(MultiPartnerLearning):
     def __init__(self, scenario, **kwargs):
-        super(GradientsAverage, self).__init__(scenario, **kwargs)
+        super(FederatedGradients, self).__init__(scenario, **kwargs)
         if self.partners_count == 1:
             raise ValueError('Only one partner is provided. Please use the dedicated SinglePartnerLearning class')
         self.model = self.build_model()
@@ -667,9 +667,10 @@ class GradientsAverage(MultiPartnerLearning):
 
 MULTI_PARTNER_LEARNING_APPROACHES = {
     "fedavg": FederatedAverageLearning,
+    'fedgrads': FederatedGradients,
     "seq-pure": SequentialLearning,
     "seq-with-final-agg": SequentialWithFinalAggLearning,
     "seqavg": SequentialAverageLearning,
-    "lflip": MplSModel,
-    'gradsavg': GradientsAverage
+    "smodel": MplSModel,
+
 }
