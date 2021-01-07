@@ -200,7 +200,7 @@ Make sure that you have the right access to [PyPI](https://pypi.org/project/mplc
 
 ```bash
 $ python3 setup.py sdist bdist_wheel
-$ python3 twine upload dist/*
+$ twine upload dist/*
 ```
 
 ## 3. Further Resources
