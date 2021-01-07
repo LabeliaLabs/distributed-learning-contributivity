@@ -8,7 +8,7 @@ jobs:
     runs-on: ubuntu-latest # We could run on other OS but we would have to change the command to install libsndfile
     strategy:
       matrix:
-        python-version: [3.6, 3.7, 3.8]
+        python-version: [3.6, 3.8]
 
     steps:
     - uses: actions/checkout@v2
