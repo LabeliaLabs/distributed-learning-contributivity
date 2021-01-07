@@ -8,10 +8,10 @@ with open("mplc/requirements.txt", "r") as fh:
 
 setup(
     name="mplc",
-    version='0.2',
+    version='0.3.0',
     author="SubstraFoundation",
     author_email="contact@substra.org",
-    description="A distributed learning contributivity package",
+    description="A distributed-learning package for the study of contributivity",
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/SubstraFoundation/distributed-learning-contributivity",
@@ -28,5 +28,5 @@ setup(
               'distributed learning'],
     license='Apache 2.0',
     install_requires=requirements,
-    python_requires='>=3.6',
+    python_requires='>=3.7',
 )
