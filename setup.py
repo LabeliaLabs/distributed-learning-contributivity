@@ -28,5 +28,5 @@ setup(
               'distributed learning'],
     license='Apache 2.0',
     install_requires=requirements,
-    python_requires='>=3.6',
+    python_requires='>=3.7',
 )
