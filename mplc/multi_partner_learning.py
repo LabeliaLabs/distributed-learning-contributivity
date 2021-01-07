@@ -663,45 +663,101 @@ class FederatedGradients(MultiPartnerLearning):
         logger.debug("End of grads-fusion collaborative round.")
 
 
-@tf.function
-def aggregeted_grads(grads, agg_w):
-    global_grad = list()
-    for grad_per_layer in zip(*grads):
-        global_grad.append(tf.tensordot(grad_per_layer, agg_w, [0, 0]))
-    return global_grad
+####################################################
+#
+#       Optimized MPL approaches.
+#
+####################################################
+
+# The fews methods implemented in this section benefit from few improvements,
+# which make them 5th to 10th times faster (even more for FastFedGrads).
+#
+# The main improvements are:
+#     - We build only one model, and never re-build
+#     - We benefit from tf.Dataset for the batching, shuffling, and prefecting of data.
+#     - We benefit from tf.function for the aggregation step.
+#
+
+class FastFedAvg(FederatedAverageLearning):
+    """ In this version each partner uses its own Adam optimizer."""
+
+    def __init__(self, scenario, opt, **kwargs):
+        super(FastFedAvg, self).__init__(scenario, **kwargs)
+        if self.partners_count == 1:
+            raise ValueError('Only one partner is provided. Please use the dedicated SinglePartnerLearning class')
+        self.agg_w = tf.constant(self.aggregator.aggregation_weights, dtype=tf.float32)
+        self.loss = []
+        for p in self.partners_list:
+            p.train_data = tf.data.Dataset.from_tensor_slices((p.x_train, p.y_train))
+            p.train_data = p.train_data.shuffle(len(p.train_data), reshuffle_each_iteration=True)
+            p.train_data = p.train_data.batch((len(p.y_train) // self.minibatch_count), drop_remainder=True)
+            p.train_data = p.train_data.prefetch(1)
+            p.opt_w = None
+        self.train_datasets = [p.train_data for p in self.partners_list]
+        self.val_data = tf.data.Dataset.from_tensor_slices((self.dataset.x_val, self.dataset.y_val)).shuffle(
+            len(self.dataset.y_val), reshuffle_each_iteration=True).batch(
+            len(self.dataset.y_val) // self.minibatch_count)
+        self.model = self.dataset.generate_new_model(opt)
+        self.model_weights = self.model.get_weights()
+        self.history_k = {'accuracy': [], 'loss': [], 'val_accuracy': [], 'val_loss': []}
+
+    def fit(self):
+        @tf.function
+        def aggregated_layer_weights(weights, agg_w):
+            return tf.tensordot(weights, agg_w, [0, 0])
+
+        @tf.function
+        def aggregated_model(list_of_layers_weights, agg_w):
+            print('trace aggregation graphe')
+            res = list()
+            for layer_weights in list_of_layers_weights:
+                res.append(aggregated_layer_weights(layer_weights, agg_w))
+            return res
+
+        super(FastFedAvg, self).fit()
+
+    def fit_epoch(self):
+        for i, batches in enumerate(zip(*self.train_datasets)):
+            self.minibatch_index = i
+            self.fit_minibatch(batches)
+            self.model_weights = aggregated_model(tuple(zip(*[p.model_weights for p in self.partners_list])),
+                                                  self.agg_w)
+            self.model.set_weights(self.model_weights)
+        train_result = self.model.evaluate(self.dataset.x_train, self.dataset.y_train,
+                                           verbose=False)  # <- this step is nor optimized neither possible
+        # as it is implemented in distributed learning, it is for comparison purpose.
+        val_result = self.model.evaluate(self.val_data, verbose=False)
+        self.history_k['val_loss'].append(val_result[0])
+        self.history_k['val_accuracy'].append(val_result[1])
+        self.history_k['loss'].append(train_result[0])
+        self.history_k['accuracy'].append(train_result[1])
+        logger.info(
+            f"Epoch n°{self.epoch_index + 1}/{self.epoch_count} ------ val loss: {np.round(val_result[0], 3)},"
+            f" val accuracy: {np.round(val_result[1], 3)}")
+        self.minibatch_index = 0
+
+    def fit_minibatch(self, batches):
+        """Proceed to a collaborative round with a federated averaging approach"""
+
+        # Starting model for each partner is the aggregated model from the previous mini-batch iteration
+        logger.info(
+            f"(FedAvg) Minibatch n°{self.minibatch_index + 1}/{self.minibatch_count} "
+            f"of epoch n°{self.epoch_index + 1}/{self.epoch_count}")
+
+        # Iterate over partners for training each individual model
+        for p, batch in zip(self.partners_list, batches):
+            x, y = batch
+            if p.opt_w is not None:
+                self.model.optimizer.set_weights(p.opt_w)
+            self.model.fit(x, y, epochs=1, batch_size=p.batch_size, verbose=False)
+            p.model_weights = self.model.get_weights()
+            p.opt_w = self.model.optimizer.get_weights()
+            self.model.set_weights(self.model_weights)
 
 
-@tf.function
-def train_epoch(model, train_dataset, agg_w):
-    partners_grads = [None for _ in range(agg_w.shape[0])]
-    for minibatch in zip(*train_dataset):
-        for p_id, (x_partner_batch, y_partner_batch) in enumerate(minibatch):
-            with tf.GradientTape() as tape:
-                y_pred = model(x_partner_batch)
-                loss = model.compiled_loss(y_partner_batch, y_pred)
-                partners_grads[p_id] = tape.gradient(loss, model.trainable_weights)
-            model.compiled_metrics.update_state(y_partner_batch, y_pred)
-        global_grad = aggregeted_grads(tuple(partners_grads), agg_w)
-        model.optimizer.apply_gradients(zip(global_grad, model.trainable_weights))
-    return {m.name: (m.result()) for m in model.metrics}
-
-
-class OptimizedGradAvg(FederatedAverageLearning):
-    """ This mpl approach benefit from the tensorflow api, and tensorflow dataset.
-        Experiments shown that this method can be as fast as the vanilla keras .fit() method.
-        The dataset is firstly converted into a tf.dataset.
-        Thus the batching, shuffling, and prefetching of the next minibatch is handled by this tf API
-        Each minibatch contains partner_count batches.
-        The gradients on each partner's batch is computed, then they are aggregated.
-        Eventually the optimizer apply one descent gradient step to the model, using the aggregated gradient.
-        The main speed up came from the fact that the aggregation is wrapped into tf.function, as well as the fit_epoch function.
-
-        TODO: adapt history
-
-    """
-
-    def __init__(self, scenario, **kwargs):
-        super(OptimizedGradAvg, self).__init__(scenario, **kwargs)
+class FastFedGrad(FederatedAverageLearning):
+    def __init__(self, scenario, opt, **kwargs):
+        super(FastFedGrad, self).__init__(scenario, **kwargs)
         if self.partners_count == 1:
             raise ValueError('Only one partner is provided. Please use the dedicated SinglePartnerLearning class')
         self.agg_w = tf.constant(self.aggregator.aggregation_weights, dtype=tf.float32)
@@ -709,25 +765,53 @@ class OptimizedGradAvg(FederatedAverageLearning):
             p.train_data = tf.data.Dataset.from_tensor_slices((p.x_train, p.y_train))
             p.train_data = p.train_data.shuffle(len(p.train_data), reshuffle_each_iteration=True)
             p.train_data = p.train_data.batch(p.batch_size)
-            p.train_data = p.train_data.prefetch(1)
+            p.train_data = p.train_data.prefetch(2)
         self.train_dataset = [p.train_data for p in self.partners_list]
         self.val_data = tf.data.Dataset.from_tensor_slices((self.dataset.x_val, self.dataset.y_val))
         self.val_data = self.val_data.shuffle(100, reshuffle_each_iteration=True)
         self.val_data = self.val_data.batch(len(self.dataset.y_val) // self.minibatch_count).prefetch(2)
-        self.model = self.init_model()
-        self.history.history = {}
+        self.model = self.dataset.generate_new_model(opt)
+        self.model_weights = self.model.get_weights()
+        self.history_k = {'accuracy': [], 'loss': [], 'val_accuracy': [], 'val_loss': []}
+
+    def fit(self):
+        @tf.function
+        def aggregeted_grads(grads, agg_w):
+            global_grad = list()
+            for grad_per_layer in zip(*grads):
+                global_grad.append(tf.tensordot(grad_per_layer, agg_w, [0, 0]))
+            return global_grad
+
+        @tf.function
+        def train_epoch(model, train_dataset, agg_w):
+            partners_grads = list()
+            for _ in range(agg_w.shape[0]):
+                partners_grads.append(None)
+            for minibatch in zip(*train_dataset):
+                for p_id, (x_partner_batch, y_partner_batch) in enumerate(minibatch):
+                    with tf.GradientTape() as tape:
+                        y_pred = model(x_partner_batch)
+                        loss = model.compiled_loss(y_partner_batch, y_pred)
+                        partners_grads[p_id] = tape.gradient(loss, model.trainable_weights)
+                    model.compiled_metrics.update_state(y_partner_batch, y_pred)
+                global_grad = aggregeted_grads(tuple(partners_grads), agg_w)
+                model.optimizer.apply_gradients(zip(global_grad, model.trainable_weights))
+            return {m.name: (m.result()) for m in model.metrics}
+
+        super(FastFedGrad, self).fit()
 
     def fit_epoch(self):
+        for m in self.model.metrics:
+            m.reset_states()
         history = train_epoch(self.model, self.train_dataset, self.agg_w)
         history = {key: value.numpy() for key, value in history.items()}
         val_hist = self.model.evaluate(self.val_data, return_dict=True, verbose=False)
         history.update({f'val_{key}': value for key, value in val_hist.items()})
-        logger.info(history)
-        if not self.history.history:
-            self.history.history = {key: [value] for key, value in history.items()}
-        else:
-            for key, value in history.items():
-                self.history.history[key].append(value)
+        for key, value in history.items():
+            self.history_k[key].append(value)
+        logger.info(
+            f"Epoch n°{self.epoch_index + 1}/{self.epoch_count} ------ val loss: {np.round(val_hist['loss'], 3)},"
+            f" val accuracy: {np.round(val_hist['accuracy'], 3)}")
 
     def fit_minibatch(self):
         pass
