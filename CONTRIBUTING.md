@@ -4,23 +4,23 @@
 > *You can also have a look at these broader [contributing guidelines](https://github.com/SubstraFoundation/.github/blob/master/CONTRIBUTING.md)*.
 
 Table of content:
-- [Contributing to mplc](#contributing-to-mplc)
-  - [1. Git workflow & branching](#1-git-workflow--branching)
-  - [2. Python](#2-python)
-    - [2.i. Python Virtual Environment](#2i-python-virtual-environment)
-    - [2.ii. Python Enhancement Proposals (PEP)](#2ii-python-enhancement-proposals-pep)
-      - [Black formatter](#black-formatter)
-        - [Installation](#installation)
-        - [Usage](#usage)
-      - [Flake8 linter](#flake8-linter)
-    - [2.iii. Basic module structure & Imports order](#2iii-basic-module-structure--imports-order)
-    - [2.iv. Jupyter Notebooks](#2iv-jupyter-notebooks)
-    - [2.v. Sharing & online rendering](#2v-sharing--online-rendering)
-    - [2.vi. Run the tests](#2vi-run-the-tests)
-    - [2.vii. Release a new build](#2vii-release-a-new-build)
-      - [Pypi](#pypi)
-      - [[wip] Conda](#wip-conda)
-  - [3. Further Resources](#3-further-resources)
+
+- [1. Git workflow & branching](#1-git-workflow--branching)
+- [2. Python](#2-python)
+  - [2.i. Python Virtual Environment](#2i-python-virtual-environment)
+  - [2.ii. Python Enhancement Proposals (PEP)](#2ii-python-enhancement-proposals-pep)
+    - [Black formatter](#black-formatter)
+      - [Installation](#installation)
+      - [Usage](#usage)
+    - [Flake8 linter](#flake8-linter)
+  - [2.iii. Basic module structure & Imports order](#2iii-basic-module-structure--imports-order)
+  - [2.iv. Jupyter Notebooks](#2iv-jupyter-notebooks)
+  - [2.v. Sharing & online rendering](#2v-sharing--online-rendering)
+  - [2.vi. Run the tests](#2vi-run-the-tests)
+  - [2.vii. Release a new build](#2vii-release-a-new-build)
+    - [Pypi](#pypi)
+    - [[wip] Conda](#wip-conda)
+- [3. Further Resources](#3-further-resources)
 
 ## 1. Git workflow & branching
 
@@ -43,18 +43,18 @@ In order to keep your installation separated from your general Python environmen
 pip3 install --user virtualenv
 
 # Create a new virtual environment
-virtualenv -p python3 NAME_OF_YOUR_VENV
+virtualenv -p python3 <VENV>
 # or even
-virtualenv -p $(which python3) NAME_OF_YOUR_VENV
+virtualenv -p $(which python3) <VENV>
 
 # Method 2: install the python3-venv package
 sudo apt install python3-venv # (Ubuntu)
 
 # Create a new virtual environment
-python3 -m venv NAME_OF_YOUR_VENV
+python3 -m venv <VENV>
 
 # Method 1 & 2: activate your new virtual env
-source NAME_OF_YOUR_VENV/bin/activate
+source <VENV>/bin/activate
 
 # Method 1 & 2: stop your virtual environment
 deactivate
@@ -64,13 +64,13 @@ Some of you might prefer to use [Anaconda](https://anaconda.org/), if so, you wi
 
 ```sh
 # Create a new virtual environment
-conda create --name NAME_OF_YOUR_VENV
+conda create --name <VENV>
 
 # Activate your new virtual environment
-conda activate NAME_OF_YOUR_VENV
+conda activate <VENV>
 
 # Stop your virtual environment
-deactivate
+conda deactivate
 ```
 
 Once inside your new virtual environment, you can install the project dependencies with the commands:
@@ -113,7 +113,7 @@ conda install -c conda-forge black
 
 ```sh
 # Inspect a file
-black FILE.py
+black <FILE.py>
 
 # Inspect files in the current folder
 black .
@@ -123,7 +123,7 @@ black .
 
 [Flake8](https://pypi.org/project/flake8/) is a famous Python linting package that might be of help within your development environment. It will help ensure the correct format of your code.
 
-> Note: `flake8` is part of the automated tests of the repository executed by Travis. Incorrect code formatting will automatically lead to failed tests. 
+> Note: `flake8` is part of the automated tests of the repository executed by Travis. Incorrect code formatting will automatically lead to failed tests.
 
 ### 2.iii. Basic module structure & Imports order
 
@@ -175,7 +175,7 @@ Note: [Jupyter lab](https://github.com/jupyterlab/jupyterlab) is like the future
 Notebooks now have really efficient ways to share your code and display your outputs, among them, you will find:
 
 - [Binder](https://mybinder.org/) that lets you turn a Git repository into a collection of interactive notebooks!
-- [Voila](https://github.com/voila-dashboards/voila) is a newcomer that will allow to build dashboards for your presentations!
+- [Voila](https://github.com/voila-dashboards/voila) allows to build dashboards for your presentations!
 - [Colab](https://colab.research.google.com/) offers online, cloud-hosted notebooks and its free plan enables usage of GPUs
 
 ### 2.vi. Run the tests
@@ -197,18 +197,17 @@ pytest -vv --cov=mplc tests/unit_tests.py
 
 #### Pypi
 
-To release a new version on PyPI, go at the root of the repository, and trigger the build with `pip`.
-You will need all the `dev-requirements` installed.
+To release a new version on PyPI, go at the root of the repository, and trigger the build with `pip`. You will need all the `dev-requirements` installed.
 
 ```bash
-$ pip install -r dev-requirements.txt
-``` 
+pip install -r dev-requirements.txt
+```
 
-Make sure that you have the right access to [PyPI](https://pypi.org/project/mplc/), and enable the 2FA for safety purpose. 
+Make sure that you have the right access to [PyPI](https://pypi.org/project/mplc/), and enable the 2FA for safety purpose.
 
 ```bash
-$ python3 setup.py sdist bdist_wheel
-$ twine upload dist/*
+python3 setup.py sdist bdist_wheel
+twine upload dist/*
 ```
 
 #### [wip] Conda
