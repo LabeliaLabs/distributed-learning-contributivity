@@ -4,17 +4,23 @@
 > *You can also have a look at these broader [contributing guidelines](https://github.com/SubstraFoundation/.github/blob/master/CONTRIBUTING.md)*.
 
 Table of content:
-
-1. [Git workflow & branching](#1-git-workflow--branching)
-1. [Python](#2-python)
-   1. [Python Virtual Environment](#2i-python-virtual-environment)
-   1. [Python Enhancement Proposals (PEP)](#2ii-python-enhancement-proposals-pep)
+- [Contributing to mplc](#contributing-to-mplc)
+  - [1. Git workflow & branching](#1-git-workflow--branching)
+  - [2. Python](#2-python)
+    - [2.i. Python Virtual Environment](#2i-python-virtual-environment)
+    - [2.ii. Python Enhancement Proposals (PEP)](#2ii-python-enhancement-proposals-pep)
       - [Black formatter](#black-formatter)
+        - [Installation](#installation)
+        - [Usage](#usage)
       - [Flake8 linter](#flake8-linter)
-   1. [Basic module structure & Imports order](#2iii-basic-module-structure--imports-order)
-   1. [Jupyter Notebooks](#2iv-jupyter-notebooks)
-   1. [Sharing & online rendering](#2v-sharing--online-rendering)
-1. [Further Resources](#3-further-resources)
+    - [2.iii. Basic module structure & Imports order](#2iii-basic-module-structure--imports-order)
+    - [2.iv. Jupyter Notebooks](#2iv-jupyter-notebooks)
+    - [2.v. Sharing & online rendering](#2v-sharing--online-rendering)
+    - [2.vi. Run the tests](#2vi-run-the-tests)
+    - [2.vii. Release a new build](#2vii-release-a-new-build)
+      - [Pypi](#pypi)
+      - [[wip] Conda](#wip-conda)
+  - [3. Further Resources](#3-further-resources)
 
 ## 1. Git workflow & branching
 
@@ -189,6 +195,8 @@ pytest -vv --cov=mplc tests/unit_tests.py
 
 ### 2.vii. Release a new build
 
+#### Pypi
+
 To release a new version on PyPI, go at the root of the repository, and trigger the build with `pip`.
 You will need all the `dev-requirements` installed.
 
@@ -201,6 +209,53 @@ Make sure that you have the right access to [PyPI](https://pypi.org/project/mplc
 ```bash
 $ python3 setup.py sdist bdist_wheel
 $ twine upload dist/*
+```
+
+#### [wip] Conda
+
+- [Build documentation](https://docs.anaconda.com/anacondaorg/user-guide/tasks/work-with-packages/) & [quick walkthrough](https://btrdb.readthedocs.io/en/latest/maintainers/anaconda.html)
+- [meta.yaml preparation](https://docs.conda.io/projects/conda-build/en/latest/resources/define-metadata.html#)
+- [Conda cheatsheet](https://docs.conda.io/projects/conda/en/4.6.0/_downloads/52a95608c49671267e40c689e0bc00ca/conda-cheatsheet.pdf) (pdf)
+
+```sh
+# Use `cond-forge` channel 
+conda config --add channels conda-forge
+
+# Create & activate a compatible env
+conda create --name conda_build_env python=3.6
+conda activate conda_build_env
+
+# Install build dependencies
+conda install conda-build anaconda-client
+
+# Generate a first template
+conda skeleton pypi mplc
+
+# Do not upload the first build, in order to test locally
+conda config --set anaconda_upload no
+
+# Build
+conda-build .
+# or
+conda build . --output-folder ~/<PATH>
+
+# Build for other OS
+# https://btrdb.readthedocs.io/en/latest/maintainers/anaconda.html#create-remaining-platform-packages
+conda convert -f -o platform-builds/ --platform all ~/<PATH>/conda-package.tar.bz2
+
+# Upload build
+conda config --set anaconda_upload yes
+anaconda login
+anaconda upload ~/<PATH>/conda-package.tar.bz2
+
+# Cleanup builds
+conda build purge
+
+# Deactivate venv
+conda deactivate
+
+# Test fix some dependencies issues
+conda config --set pip_interop_enabled True
 ```
 
 ## 3. Further Resources
