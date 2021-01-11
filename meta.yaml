@@ -1,32 +1,16 @@
-# https://docs.anaconda.com/anacondaorg/user-guide/tasks/work-with-packages/
-# Fix depedencies issues: remove docker package & `conda config --add channels conda-forge`
-# conda create --name conda_build_env python=3.6
-# conda create -n myenv python=3.7
-# conda activate myenv # or conda_build_env
-# conda install conda-build anaconda-client
-# conda skeleton pypi substra & mv meta file at the root of the repo
-# conda config --set anaconda_upload no
-# conda-build . # or conda build . --output
-# conda build . --output-folder ~/Downloads
-# when ready: conda config --set anaconda_upload yes
-# anaconda login
-# anaconda upload /path/to/conda-package.tar.bz2
-# src: https://btrdb.readthedocs.io/en/latest/maintainers/anaconda.html
-
-# conda build purge
-
 {% set name = "mplc" %}
-{% set version = "0.2" %}
+{% set version = "0.3.1" %}
 
 package:
   name: "{{ name|lower }}"
   version: "{{ version }}"
 
 source:
-  path: .
-  # url: https://files.pythonhosted.org/packages/76/71/56ebc4fb67b8dc4f4e260debce5ec99b5a325fc97bc9c47036893b11f3a9/mplc-0.2.tar.gz
+  url: https://github.com/SubstraFoundation/distributed-learning-contributivity/archive/v.0.3.1.tar.gz
   # url: "https://pypi.io/packages/source/{{ name[0] }}/{{ name }}/{{ name }}-{{ version }}.tar.gz"
-  # sha256: ea4b614c8cca196a8ed64ec7f069d38ba9c4ca76b5834bec1ae1798423ed7615
+  # url: "https://files.pythonhosted.org/packages/65/c3/ddd8ef8858e0b9c38123f81d5be6dbb025520e9b7e473b89cc36086b0eff/mplc-0.3.1.tar.gz"
+  # sha256:
+  # path: ./
 
 build:
   noarch: python
@@ -38,46 +22,29 @@ requirements:
     - pip
     - python
     - setuptools==50.3.0
-    # - h5py==2.10.0
-    # - joblib==0.15.1
-    # - librosa==0.8.0
-    # - Keras==2.3.1
-    # - matplotlib==3.1.3
-    # - numpy==1.18.5
-    # - scipy==1.4.1
-    # - scikit-learn==0.22.1
-    # - pandas==1.0.5
-    # - seaborn==0.10.0
-    # - loguru==0.4.1
-    # - tensorflow
-    # - tensorflow==2.4.0
-    # - ruamel.yaml==0.16.10
  
   run:
-    # - python
     - h5py==2.10.0
-    - joblib==0.15.1
+    - joblib==1.0.0
     - librosa==0.8.0
-    - Keras==2.3.1
-    - matplotlib==3.1.3
-    - numpy==1.18.5
-    - scipy==1.4.1
-    - scikit-learn==0.22.1
-    - pandas==1.0.5
-    - seaborn==0.10.0
-    - loguru==0.4.1
-    - tensorflow==2.3.0
-    - ruamel.yaml==0.16.10
-
-# test:
-#   imports:
-#     - mplc
+    - matplotlib==3.3.3
+    - numpy==1.19.4
+    - scipy==1.5.4
+    - scikit-learn==0.23.2
+    - pandas==1.1.5
+    - seaborn==0.11.0
+    - loguru==0.5.3
+    - tensorflow==2.4.0
+    - ruamel.yaml==0.16.12
+    - pytest==6.2.0
+    - pytest-cov==2.10.1
+    - flake8==3.8.3
 
 about:
   home: https://github.com/SubstraFoundation/distributed-learning-contributivity 
   license: Apache 2.0
   license_family: APACHE
-  license_file: ""
+  license_file: "./LICENSE"
   summary: "MPLC"
-  doc_url: 
-  dev_url: 
+  doc_url: https://github.com/SubstraFoundation/distributed-learning-contributivity/blob/master/README.md
+  dev_url: https://github.com/SubstraFoundation/distributed-learning-contributivity/blob/master/CONTRIBUTING.md
