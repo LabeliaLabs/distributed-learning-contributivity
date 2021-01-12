@@ -23,6 +23,7 @@ In short, MPLC enables to:
     - [Contributivity measurement approaches](#contributivity-measurement-approaches)
   - [Installation](#installation)
   - [Run an experiment](#run-an-experiment)
+  - [Reference scenarios](#reference-scenarios)
   - [Ongoing work and improvement plan](#ongoing-work-and-improvement-plan)
 - [Contacts, contributions, collaborations](#contacts,-contributions,-collaborations)
 
@@ -170,6 +171,20 @@ Under `scenario_params_list`, enter a list of sets of scenario(s). Each set star
 **Note**: example experiment(s) are stored in folder `/saved_experiments` to illustrate the use of the library. The notebooks include graphs, like for example the following:
 
 ![Example graphs](./img/results_graphs_example.png)
+
+### Reference scenarios
+
+#### Description of the reference scenarios
+
+We defined 5 reference scenarios on which we propose to test and benchmark the different multi-partner learning approaches and contributivity measurement methods.
+
+The 5 reference scenarios are described in the following schema:
+
+![Reference scenarios](./img/reference_scenarios.png)
+
+#### Results and benchmarks
+
+_<To be completed>_
 
 ### Ongoing work and improvement plan
 
