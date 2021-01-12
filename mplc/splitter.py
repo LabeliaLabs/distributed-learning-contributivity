@@ -89,6 +89,77 @@ class Splitter(ABC):
         return self.__copy__()
 
 
+class FlexibleSplitter(Splitter):
+    name = 'Fully flexible samples split'
+
+    def __init__(self, amounts_per_partner, configuration, **kwargs):
+
+        logger.info("Proceeding to a flexible split as requested. Please note that the flexible "
+                    "split currently discards the amounts_per_partner (if provided) and infers amounts of samples "
+                    "per partner from the samples_split_configuration provided.")
+
+        # First we re-assemble the split configuration per cluster, and check its coherence
+        self.samples_split_grouped_by_cluster = list(zip(*configuration))
+        for idx, cluster in enumerate(self.samples_split_grouped_by_cluster):
+            if np.sum(cluster) > 1:
+                raise ValueError(f"Amounts of samples of class {idx} split among partners exceed 100%, "
+                                 f"the dataset split cannot be performed.")
+
+        # Init of the superclass to inherit its methods
+        super().__init__(amounts_per_partner, **kwargs)
+
+    def __str__(self):
+        return self.name + str(list(zip(self.samples_split_grouped_by_cluster)))
+
+    def _generate_subset(self, x, y):
+
+        # Convert raw labels in y to simplify operations on the dataset
+        lb = LabelEncoder()
+        y_str = lb.fit_transform([str(label) for label in y])
+        # print(f"y: {y[0:3]} & y_str: {y_str[0:3]}")  # DEBUG
+        labels = sorted(list(set(y_str)))  # Sorted alphabetically as the convention for interpreting the user config
+
+        # print(f"labels: {labels}")  # DEBUG
+        # print(f"zip: {self.samples_split_grouped_by_cluster}")  # DEBUG
+
+        # Split the datasets (x and y) into subsets of samples of each label (called "clusters")
+        x_for_cluster, y_for_cluster, nb_samples_per_cluster = {}, {}, {}
+        for label in labels:
+            idx_in_full_set = np.where(y_str == label)
+            x_for_cluster[label] = x[idx_in_full_set]
+            y_for_cluster[label] = y[idx_in_full_set]
+            # print(f"label {label}: y[idx_in_full_set]: {y[idx_in_full_set][0:3]}")  # DEBUG
+            nb_samples_per_cluster[label] = len(y_for_cluster[label])
+
+        # Assemble datasets per partner by looping over partners and labels
+        res = []
+        nb_samples_split = []
+        for p_idx, p in enumerate(self.partners_list):
+
+            # print(f"iter p_idx {p_idx}")  # DEBUG
+            list_arrays_x, list_arrays_y = [], []
+
+            for idx, label in enumerate(labels):
+                # print(f"iter label idx {idx} and label {label}")  # DEBUG
+                nb_samples_to_pick = int(nb_samples_per_cluster[label] * self.samples_split_grouped_by_cluster[idx][
+                    p_idx])
+                # print(f"nb_samples_to_pick: {nb_samples_to_pick}")  # DEBUG
+                list_arrays_x.append(x_for_cluster[label][:nb_samples_to_pick])
+                x_for_cluster[label] = x_for_cluster[label][nb_samples_to_pick:]
+                list_arrays_y.append(y_for_cluster[label][:nb_samples_to_pick])
+                y_for_cluster[label] = y_for_cluster[label][nb_samples_to_pick:]
+
+            res.append((np.concatenate(list_arrays_x), np.concatenate(list_arrays_y)))
+            nb_samples_split.append(len(np.concatenate(list_arrays_y)))
+
+        # Log the relative amounts of samples split among partners
+        total_nb_samples_split = np.sum(nb_samples_split)
+        relative_nb_samples = [round(nb / total_nb_samples_split, 2) for nb in nb_samples_split]
+        logger.info(f"Partners' relative number of samples: {relative_nb_samples}")
+
+        return res
+
+
 class RandomSplitter(Splitter):
     name = 'Random samples split'
 
@@ -271,6 +342,7 @@ class AdvancedSplitter(Splitter):
 
 
 IMPLEMENTED_SPLITTERS = {
+    'flexible': FlexibleSplitter,
     'random': RandomSplitter,
     'stratified': StratifiedSplitter,
     'advanced': AdvancedSplitter

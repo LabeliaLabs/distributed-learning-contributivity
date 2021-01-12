@@ -341,9 +341,11 @@ class Scenario:
             self.save_folder = Path(save_path) / self.scenario_name
         else:
             self.save_folder = None
-        # ------------------------------------------------------------------
+
+        # -------------------------------------------------------------------
         # Select in the kwargs the parameters to be transferred to sub object
-        # ------------------------------------------------------------------
+        # -------------------------------------------------------------------
+
         self.mpl_kwargs = {}
         for key, value in kwargs.items():
             if key.startswith('mpl_'):
