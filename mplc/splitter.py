@@ -23,10 +23,6 @@ class Splitter(ABC):
         self.dataset = None
         self.partners_list = None
 
-        # Check the percentages of samples per partner and control its coherence
-        if np.sum(self.amounts_per_partner) != 1:
-            raise ValueError("The sum of the amount per partners you provided isn't equal to 1")
-
     @property
     def partners_count(self):
         return len(self.partners_list)
@@ -37,9 +33,6 @@ class Splitter(ABC):
     def split(self, partners_list, dataset):
         self.dataset = dataset
         self.partners_list = partners_list
-        if len(self.amounts_per_partner) != self.partners_count:
-            raise AttributeError(f"The amounts_per_partner list should have a size ({len(self.amounts_per_partner)}) "
-                                 f"equals to partners_count ({self.partners_count})")
 
         logger.info("### Splitting data among partners:")
         logger.info("Train data split:")
@@ -116,11 +109,7 @@ class FlexibleSplitter(Splitter):
         # Convert raw labels in y to simplify operations on the dataset
         lb = LabelEncoder()
         y_str = lb.fit_transform([str(label) for label in y])
-        # print(f"y: {y[0:3]} & y_str: {y_str[0:3]}")  # DEBUG
-        labels = sorted(list(set(y_str)))  # Sorted alphabetically as the convention for interpreting the user config
-
-        # print(f"labels: {labels}")  # DEBUG
-        # print(f"zip: {self.samples_split_grouped_by_cluster}")  # DEBUG
+        labels = list(set(y_str))
 
         # Split the datasets (x and y) into subsets of samples of each label (called "clusters")
         x_for_cluster, y_for_cluster, nb_samples_per_cluster = {}, {}, {}
@@ -128,7 +117,6 @@ class FlexibleSplitter(Splitter):
             idx_in_full_set = np.where(y_str == label)
             x_for_cluster[label] = x[idx_in_full_set]
             y_for_cluster[label] = y[idx_in_full_set]
-            # print(f"label {label}: y[idx_in_full_set]: {y[idx_in_full_set][0:3]}")  # DEBUG
             nb_samples_per_cluster[label] = len(y_for_cluster[label])
 
         # Assemble datasets per partner by looping over partners and labels
@@ -136,14 +124,11 @@ class FlexibleSplitter(Splitter):
         nb_samples_split = []
         for p_idx, p in enumerate(self.partners_list):
 
-            # print(f"iter p_idx {p_idx}")  # DEBUG
             list_arrays_x, list_arrays_y = [], []
 
             for idx, label in enumerate(labels):
-                # print(f"iter label idx {idx} and label {label}")  # DEBUG
                 nb_samples_to_pick = int(nb_samples_per_cluster[label] * self.samples_split_grouped_by_cluster[idx][
                     p_idx])
-                # print(f"nb_samples_to_pick: {nb_samples_to_pick}")  # DEBUG
                 list_arrays_x.append(x_for_cluster[label][:nb_samples_to_pick])
                 x_for_cluster[label] = x_for_cluster[label][nb_samples_to_pick:]
                 list_arrays_y.append(y_for_cluster[label][:nb_samples_to_pick])
