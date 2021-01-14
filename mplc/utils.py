@@ -122,7 +122,11 @@ def init_logger(debug=False):
     log_filter = MyFilter("INFO")
     logger.opt(depth=1)
     # Forward logging to standard output
-    logger.add(sys.stdout, enqueue=True, filter=log_filter, level=0)
+    logger.add(sys.stdout,
+               enqueue=True,
+               filter=log_filter,
+               format='<blue>{time:YYYY-MM-DD HH:mm:ss}</> | {level: <7} | {message}',
+               level=0)
     if debug:
         log_filter.set_to_debug_level()
     else:
