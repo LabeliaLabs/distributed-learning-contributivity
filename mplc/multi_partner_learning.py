@@ -773,7 +773,9 @@ class FastFedAvg(FederatedAverageLearning):
 
     def log_epoch(self, epoch_number, history):
         logger.info(
-            f'[{self.name}] > Epoch {str(epoch_number + 1).ljust(2)}/{self.epoch_count} - {f"{np.round(time.time() - self.epoch_timer)} s.".ljust(6)} > {" -- ".join(f"{key}: {str(np.round(value, 2)).ljust(5)}" for key, value in history.items())}')
+            f'[{self.name}] > Epoch {str(epoch_number + 1).ljust(2)}/{self.epoch_count} -'
+            f' {f"{np.round(time.time() - self.epoch_timer)} s.".ljust(6)} >'
+            f' {" -- ".join(f"{key}: {str(np.round(value, 2)).ljust(5)}" for key, value in history.items())}')
         if not self.history:
             self.history = {key: [value] for key, value in history.items()}
         else:
