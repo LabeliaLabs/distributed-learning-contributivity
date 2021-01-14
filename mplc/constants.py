@@ -8,6 +8,7 @@ DEFAULT_BATCH_SIZE = 256
 MAX_BATCH_SIZE = 2 ** 20
 DEFAULT_GRADIENT_UPDATES_PER_PASS_COUNT = 8
 PATIENCE = 10  # patience for early stopping
+MIN_DELTA = 0
 DEFAULT_BATCH_COUNT = 20
 DEFAULT_EPOCH_COUNT = 40
 # GPU
@@ -54,3 +55,5 @@ SUPPORTED_DATASETS_NAMES = [MNIST, CIFAR10, TITANIC, ESC50, IMDB]
 
 # Number of attempts allowed before raising an error while trying to download dataset
 NUMBER_OF_DOWNLOAD_ATTEMPTS = 3
+
+MIN_DELTA = 0
