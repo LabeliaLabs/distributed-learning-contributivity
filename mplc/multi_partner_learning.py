@@ -749,6 +749,7 @@ class FastFedAvg(FederatedAverageLearning):
         self.end_test_score = {}
 
         # for early stopping purpose
+        self.is_early_stopping = True
         self.best = np.Inf
         self.monitor_value = 'val_loss'
         self.monitor_op = np.less
@@ -801,6 +802,20 @@ class FastFedAvg(FederatedAverageLearning):
         self.model.reset_metrics()
         return history
 
+    def early_stop(self):
+        """
+        If the metric monitored decreases (or increases, depends on the metrics monitored)
+        during patience epoch, we stop the learning.
+        """
+        if self.monitor_op(self.history[self.monitor_value][-1] - self.min_delta, self.best):
+            self.wait = 0
+            self.best = self.history[self.monitor_value][-1]
+        else:
+            self.wait += 1
+            if self.wait >= self.patience:
+                return True
+        return False
+
     def fit(self):
 
         # TF function definition
@@ -848,10 +863,9 @@ class FastFedAvg(FederatedAverageLearning):
         self.timer = time.time()
         for e in range(self.epoch_count):
             self.epoch_timer = time.time()
-            for partners_minibatches in zip(
-                    *self.train_dataset):  # <- partners_minibatches == [(x, y)] * nb_partners
-                fit_minibatch(self.model, partners_minibatches, self.partners_optimizers,
-                              self.partners_weights, self.agg_w)
+            for partners_minibatches in zip(*self.train_dataset):  # <- partners_minibatches == [(x, y)] * nb_partners
+                fit_minibatch(self.model, partners_minibatches, self.partners_optimizers, self.partners_weights,
+                              self.agg_w)
             epoch_history = self.get_epoch_history()  # compute val and train acc and loss.
             # add the epoch history to self history, and log epoch number, and metrics values.
             self.log_epoch(e, epoch_history)
@@ -861,19 +875,152 @@ class FastFedAvg(FederatedAverageLearning):
 
         self.log_end_training()
 
-    def early_stop(self):
-        """
-        If the metric monitored decreases (or increases, depends on the metrics monitored)
-        during patience epoch, we stop the learning.
-        """
-        if self.monitor_op(self.history[self.monitor_value][-1] - self.min_delta, self.best):
-            self.wait = 0
-            self.best = self.history[self.monitor_value][-1]
+
+class FastFedSmodel(FastFedAvg):
+    name = 'FastFedSmodel'
+
+    def __init__(self, scenario, pretrain_epochs, epsilon=0.5, **kwargs):
+        super(FastFedSmodel, self).__init__(scenario, **kwargs)
+
+        self.pretrain_epochs = pretrain_epochs
+        self.epsilon = epsilon
+        self.smodel_list = [self.generate_smodel() for _ in self.partners_list]
+
+    def generate_smodel(self):
+        smodel = tf.keras.models.Sequential()
+        smodel.add(tf.keras.Input(shape=(self.model.output_shape[-1],)))
+        smodel.add(NoiseAdaptationChannel(name='s-model'))
+        opt = self.model.optimizer.from_config(self.model.optimizer.get_config())
+        smodel.compile(optimizer=opt, loss='categorical_crossentropy', metrics=self.dataset.model_metrics_names[1:])
+        return smodel
+
+    def fit(self):
+        # TF function definition
+        @tf.function
+        def aggregate_weights(weights, agg_w):
+            res = list()
+            for weights_per_layer in zip(*weights):
+                res.append(tf.tensordot(weights_per_layer, agg_w, [0, 0]))
+            return res
+
+        @tf.function
+        def fit_pretrain_minibatch(model, partners_minibatches, partners_optimizers, partners_weights, agg_w):
+
+            for p_id, minibatch in enumerate(partners_minibatches):  # minibatch == (x,y)
+                # minibatch[0] in a tensor of shape=(number of batch, batch size, img).
+                # We cannot iterate on tensors, so we convert this tensor to a list of
+                # *number of batch* tensors with shape=(batch size, img)
+                x_minibatch = tf.unstack(minibatch[0], axis=0)
+                y_minibatch = tf.unstack(minibatch[1], axis=0)  # same here, with labels
+
+                for model_w, partner_w in zip(model.trainable_weights,
+                                              partners_weights[p_id]):  # set the model weights to partner's ones
+                    model_w.assign(partner_w.read_value())
+
+                for x, y in zip(x_minibatch, y_minibatch):  # iterate over batches
+                    with tf.GradientTape() as tape:
+                        y_pred = model(x)
+                        loss = model.compiled_loss(y, y_pred)
+                    model.compiled_metrics.update_state(y, y_pred)  # log the loss and accuracy
+                    partners_optimizers[p_id].minimize(loss, model.trainable_weights,
+                                                       tape=tape)  # perform local optimization
+
+                for model_w, partner_w in zip(model.trainable_weights,
+                                              partners_weights[p_id]):  # update the partner's weights
+                    partner_w.assign(model_w.read_value())
+            # at the end of the minibatch, aggregate all the local weights
+            aggregated_weights = aggregate_weights(tuple(partners_weights),
+                                                   agg_w)
+
+            # inform the partners with the new weights
+            for p_id in range(len(partners_minibatches)):
+                for new_w, partner_w in zip(aggregated_weights, partners_weights[p_id]):
+                    partner_w.assign(new_w.read_value())
+
+        @tf.function
+        def fit_minibatch(model, partners_minibatches, partners_optimizers, partners_weights, agg_w, smodel_list):
+            for p_id, minibatch in enumerate(partners_minibatches):  # minibatch == (x,y)
+                # minibatch[0] in a tensor of shape=(number of batch, batch size, img).
+                # We cannot iterate on tensors, so we convert this tensor to a list of
+                # *number of batch* tensors with shape=(batch size, img)
+                x_minibatch = tf.unstack(minibatch[0], axis=0)
+                y_minibatch = tf.unstack(minibatch[1], axis=0)  # same here, with labels
+
+                for model_w, partner_w in zip(model.trainable_weights,
+                                              partners_weights[p_id]):  # set the model weights to partner's ones
+                    model_w.assign(partner_w.read_value())
+
+                for x, y in zip(x_minibatch, y_minibatch):  # iterate over batches
+                    s_model_p = smodel_list[p_id]
+                    with tf.GradientTape() as tape:
+                        yt_pred = model(x)
+                        yo_pred = s_model_p(yt_pred)
+                        loss = model.compiled_loss(y, yo_pred)
+                    s_model_p.optimizer.minimize(loss, s_model_p.trainable_weights, tape=tape)
+                    partners_optimizers[p_id].minimize(loss, model.trainable_weights,
+                                                       tape=tape)
+                    model.compiled_metrics.update_state(y, yo_pred)
+
+                for model_w, partner_w in zip(model.trainable_weights,
+                                              partners_weights[p_id]):  # update the partner's weights
+                    partner_w.assign(model_w.read_value())
+            # at the end of the minibatch, aggregate all the local weights
+            aggregated_weights = aggregate_weights(tuple(partners_weights),
+                                                   agg_w)
+
+            # inform the partners with the new weights
+            for p_id in range(len(partners_minibatches)):
+                for new_w, partner_w in zip(aggregated_weights, partners_weights[p_id]):
+                    partner_w.assign(new_w.read_value())
+
+        # Execution
+        self.timer = time.time()
+        if self.pretrain_epochs > 0:
+            for p_e in range(self.pretrain_epochs):
+                logger.info(f'[{self.name}] > Training {self.pretrain_epochs} pretrain epochs first.')
+                self.epoch_timer = time.time()
+                for partners_minibatches in zip(
+                        *self.train_dataset):  # <- partners_minibatches == [(x, y)] * nb_partners
+                    fit_pretrain_minibatch(self.model,
+                                           partners_minibatches,
+                                           self.partners_optimizers,
+                                           self.partners_weights,
+                                           self.agg_w)
+                epoch_history = self.get_epoch_history()  # compute val and train acc and loss.
+                # add the epoch history to self history, and log epoch number, and metrics values.
+                self.log_epoch(p_e, epoch_history)
+                self.epochs_index += 1
+
+            for p in self.partners_list:
+                confusion = confusion_matrix(np.argmax(p.y_train, axis=1),
+                                             np.argmax(self.model.predict(p.x_train), axis=1),
+                                             normalize='pred')
+                p.noise_layer_weights = [np.log(confusion.T + 1e-8)]
         else:
-            self.wait += 1
-            if self.wait >= self.patience:
-                return True
-        return False
+            for p in self.partners_list:
+                confusion = np.identity(10) * (1 - self.epsilon) + (self.epsilon / 10)
+                p.noise_layer_weights = [np.log(confusion + 1e-8)]
+
+        for p, smodel in zip(self.partners_list, self.smodel_list):
+            smodel.set_weights(p.noise_layer_weights)
+
+        for e in range(self.epoch_count - self.pretrain_epochs):
+            self.epoch_timer = time.time()
+            for partners_minibatches in zip(*self.train_dataset):  # <- partners_minibatches == [(x, y)] * nb_partners
+                fit_minibatch(self.model,
+                              partners_minibatches,
+                              self.partners_optimizers,
+                              self.partners_weights,
+                              self.agg_w,
+                              self.smodel_list)
+            epoch_history = self.get_epoch_history()  # compute val and train acc and loss.
+            # add the epoch history to self history, and log epoch number, and metrics values.
+            self.log_epoch(e, epoch_history)
+            self.epochs_index += 1
+            if self.early_stop():
+                break
+
+        self.log_end_training()
 
 
 class FastFedGrad(FastFedAvg):
@@ -931,9 +1078,9 @@ class FastFedGrad(FastFedAvg):
         self.log_end_training()
 
 
-class FastSmodel(FastFedGrad):
+class FastGradSmodel(FastFedGrad):
     def __init__(self, scenario, pretrain_epochs, epsilon=0.5, **kwargs):
-        super(FastSmodel, self).__init__(scenario, **kwargs)
+        super(FastGradSmodel, self).__init__(scenario, **kwargs)
 
         self.pretrain_epochs = pretrain_epochs
         self.epsilon = epsilon
