@@ -753,7 +753,7 @@ class FastFedAvg(FederatedAverageLearning):
         self.best = np.Inf
         self.monitor_value = 'val_loss'
         self.monitor_op = np.less
-        self.min_delta = np.abs(constants.MIN_DELTA)
+        self.min_delta = np.abs(constants.MIN_DELTA_FOR_EARLY_STOPPING)
         self.patience = constants.PATIENCE
         self.wait = 0
         self.epochs_index = 0
@@ -1024,6 +1024,18 @@ class FastFedSmodel(FastFedAvg):
 
 
 class FastFedGrad(FastFedAvg):
+    """
+    This class provides a multi-partner-learning method with is theorically the same than FedGrads.
+    Each partner computes a forward and backward propagation with its copy of the global model. Then the resulting
+     gradients are aggregated, and a global optimizer uses the aggregated gradient to update the global model weights.
+    Compared to FedAvg, this method requieres more communications between partner (one each local batch against one
+    every minibatch (what is to say every GRADIENT_UPDATE_PER_PASS local batches)
+    But because this method allows the use of a state of the art optimizer (as Adam, Adamamx, etc), much less epochs
+     are required and so this method performs in fact very well.
+
+
+
+    """
 
     def __init__(self, scenario, **kwargs):
         super(FastFedGrad, self).__init__(scenario, **kwargs)
@@ -1167,221 +1179,6 @@ class FastGradSmodel(FastFedGrad):
         self.log_end_training()
 
 
-# FedGDO
-# FedGDO stands for Federated Gradient Double Optimization.
-#
-# This method is inspired from Federated gradient, but with modification on the local computation of the gradient.
-# In this version we use a local optimizer (partner-specific) to do several minimization steps of the local-loss
-# during a minibatch. We use the sum of these weighs-updates as the gradient which is sent to the global optimizer.
-# The global optimizer aggregates these gradients-like which have been sent by the partners,
-# and performs a optimization step with this aggregated gradient.
-#
-# Here three variations of this mpl method are tested.
-#
-# - FedGDO with fresh local optimizer at each minibatch
-# - FedGDO with persistent local optimizer
-# - FedGDO with persistent and informed local optimizer
-
-class FedGDO_fresh_lopt(FastFedAvg):
-    name = 'FedGDOf'
-
-    def init_specific_tf_variable(self):
-        # generate tf Variables in which we will store the model weights.
-        self.model_stateholder = [tf.Variable(initial_value=w.read_value()) for w in self.model.trainable_weights]
-        self.partners_optimizers = [self.model.optimizer.from_config(self.model.optimizer.get_config()) for _ in
-                                    self.partners_list]
-        # TODO add the possibility to use another optimizer for local opt
-        self.partners_grads = [[tf.Variable(initial_value=w.read_value()) for w in self.model.trainable_weights] for _
-                               in self.partners_list]
-
-    def fit(self):
-        # TF function definition
-        @tf.function
-        def aggregeted_grads(grads, agg_w):
-            global_grad = list()
-            for grad_per_layer in zip(*grads):
-                global_grad.append(tf.tensordot(grad_per_layer, agg_w, [0, 0]))
-            return global_grad
-
-        # @tf.function cannot be used as we need to re-initialized the optimizer.
-        # Variables initialization is only allowed at the first call of a tf.function
-        def fit_minibatch(model, model_stateholder, partners_minibatches, partners_optimizers, partners_grads, agg_w):
-            for p_id, minibatch in enumerate(partners_minibatches):  # minibatch == (x,y)
-                # minibatch[0] in a tensor of shape=(number of batch, batch size, img).
-                # We cannot iterate on tensors, so we convert this tensor to a list of *number of batch*
-                # tensors with shape=(batch size, img)
-                x_minibatch = tf.unstack(minibatch[0], axis=0)
-                y_minibatch = tf.unstack(minibatch[1], axis=0)  # same here, with labels
-
-                for model_w, old_w in zip(model.trainable_weights, model_stateholder):  # store model weights
-                    old_w.assign(model_w.read_value())
-
-                for x, y in zip(x_minibatch, y_minibatch):  # iterate over batches
-                    with tf.GradientTape() as tape:
-                        y_pred = model(x)
-                        loss = model.compiled_loss(y, y_pred)
-                    model.compiled_metrics.update_state(y, y_pred)  # log the loss and accuracy
-                    partners_optimizers[p_id].minimize(loss, model.trainable_weights,
-                                                       tape=tape)  # perform local optimization
-
-                for grad_per_layer, w_old, w_new in zip(partners_grads[p_id], model_stateholder,
-                                                        model.trainable_weights):
-                    grad_per_layer.assign(
-                        (w_old - w_new))  # get the gradient as theta_before_minibatch - theta_after_minibatch
-
-                for model_w, old_w in zip(model.trainable_weights,
-                                          model_stateholder):  # reset the model's weights for the next partner
-                    model_w.assign(old_w.read_value())
-
-            global_grad = aggregeted_grads(tuple(partners_grads),
-                                           agg_w)  # at the end of the minibatch, aggregate all the local gradients.
-            model.optimizer.apply_gradients(
-                zip(global_grad, model.trainable_weights))  # apply the global gradients with the global optimizer
-
-        # Execution
-        self.timer = time.time()
-        for e in range(self.epoch_count):
-            self.epoch_timer = time.time()
-            for partners_minibatches in zip(*self.train_dataset):  # <- partners_minibatches == [(x, y)] * nb_partners
-                self.partners_optimizers = [self.model.optimizer.from_config(self.model.optimizer.get_config()) for _ in
-                                            self.partners_list]  # reset the local optimizers
-                fit_minibatch(self.model, self.model_stateholder, partners_minibatches, self.partners_optimizers,
-                              self.partners_grads, self.agg_w)
-            epoch_history = self.get_epoch_history()  # compute val and train acc and loss.
-            # add the epoch history to self history, and log epoch number, and metrics values.
-            self.log_epoch(e, epoch_history)
-            self.epochs_index += 1
-            if self.early_stop():
-                break
-
-        self.log_end_training()
-
-
-class FedGDO_persistent_lopt(FedGDO_fresh_lopt):
-    name = 'FedGDOp'
-
-    def fit(self):
-        @tf.function
-        def aggregeted_grads(grads, agg_w):
-            global_grad = list()
-            for grad_per_layer in zip(*grads):
-                global_grad.append(tf.tensordot(grad_per_layer, agg_w, [0, 0]))
-            return global_grad
-
-        @tf.function
-        def fit_minibatch(model, model_stateholder, partners_minibatches, partners_optimizers, partners_grads, agg_w):
-            for p_id, minibatch in enumerate(partners_minibatches):  # minibatch == (x,y)
-                x_minibatch = tf.unstack(minibatch[0], axis=0)
-                y_minibatch = tf.unstack(minibatch[1], axis=0)
-                for model_w, old_w in zip(model.trainable_weights, model_stateholder):  # store model weigths
-                    old_w.assign(model_w.read_value())
-                for x, y in zip(x_minibatch, y_minibatch):
-                    with tf.GradientTape() as tape:
-                        y_pred = model(x)
-                        loss = model.compiled_loss(y, y_pred)
-                    model.compiled_metrics.update_state(y, y_pred)
-                    partners_optimizers[p_id].minimize(loss, model.trainable_weights, tape=tape)  # local optimization
-                for grad_per_layer, w_old, w_new in zip(partners_grads[p_id], model_stateholder,
-                                                        model.trainable_weights):
-                    grad_per_layer.assign(
-                        (w_old - w_new))  # get the gradient as theta_before_minibatch - theta_after_minibatch
-                for model_w, old_w in zip(model.trainable_weights,
-                                          model_stateholder):  # reset the model's weights for the next partner
-                    model_w.assign(old_w.read_value())
-            global_grad = aggregeted_grads(tuple(partners_grads),
-                                           agg_w)  # at the end of the minibatch, aggregate the gradients.
-            model.optimizer.apply_gradients(
-                zip(global_grad, model.trainable_weights))  # apply the global gradients with the global optimizer
-
-        self.timer = time.time()
-        for e in range(self.epoch_count):
-            self.epoch_timer = time.time()
-            for partners_minibatches in zip(*self.train_dataset):  # <- partners_minibatches == [(x, y)] * nb_partners
-                fit_minibatch(self.model, self.model_stateholder, partners_minibatches, self.partners_optimizers,
-                              self.partners_grads, self.agg_w)
-            epoch_history = self.get_epoch_history()  # compute val and train acc and loss.
-            # add the epoch history to self history, and log epoch number, and metrics values.
-            self.log_epoch(e, epoch_history)
-            self.epochs_index += 1
-            if self.early_stop():
-                break
-
-        self.log_end_training()
-
-
-class FedGDO_persistent_informed_lopt(FedGDO_fresh_lopt):
-    name = 'FedGDOpi'
-
-    def fit(self):
-        @tf.function
-        def load_stored_weights(model, model_stateholder):
-            for model_w, old_w in zip(model.trainable_weights,
-                                      model_stateholder):  # reset the model's weights for the next partner
-                model_w.assign(old_w.read_value())
-
-        @tf.function
-        def store_model_weights(model, model_stateholder):
-            for model_w, old_w in zip(model.trainable_weights, model_stateholder):  # store model weigths
-                old_w.assign(model_w.read_value())
-
-        @tf.function
-        def aggregeted_grads(grads, agg_w):
-            global_grad = list()
-            for grad_per_layer in zip(*grads):
-                global_grad.append(tf.tensordot(grad_per_layer, agg_w, [0, 0]))
-            return global_grad
-
-        @tf.function
-        def fit_minibatch(model, model_stateholder, partners_minibatches, partners_optimizers, partners_grads, agg_w):
-            store_model_weights(model, model_stateholder)
-            for p_id, minibatch in enumerate(partners_minibatches):  # minibatch == (x,y)
-                x_minibatch = tf.unstack(minibatch[0], axis=0)
-                y_minibatch = tf.unstack(minibatch[1], axis=0)
-                for x, y in zip(x_minibatch, y_minibatch):
-                    with tf.GradientTape() as tape:
-                        y_pred = model(x)
-                        loss = model.compiled_loss(y, y_pred)
-                    model.compiled_metrics.update_state(y, y_pred)
-                    partners_optimizers[p_id].minimize(loss, model.trainable_weights, tape=tape)  # local optimization
-                for grad_per_layer, w_old, w_new in zip(partners_grads[p_id], model_stateholder,
-                                                        model.trainable_weights):
-                    grad_per_layer.assign(
-                        (w_old - w_new))  # get the gradient as theta_before_minibatch - theta_after_minibatch
-                load_stored_weights(model, model_stateholder)
-
-            global_grad = aggregeted_grads(tuple(partners_grads),
-                                           agg_w)  # at the end of the minibatch, aggregate the gradients.
-
-            # for each local optimizer we perform an optimization step with the global gradient,
-            # to update the momentums and learning rate with this global gradient.
-            # We informe the local optimizer of the global optimization.
-
-            for optimizer in partners_optimizers:
-                optimizer.apply_gradients(zip(global_grad, model.trainable_weights))
-                # in fact the optimization of the weights must be done by the global optimizer,
-                # so we reset the weights after the optimization
-                load_stored_weights(model, model_stateholder)
-
-            model.optimizer.apply_gradients(
-                zip(global_grad, model.trainable_weights))  # apply the global gradients with the global optimizer
-
-        self.timer = time.time()
-        for e in range(self.epoch_count):
-            self.epoch_timer = time.time()
-            for partners_minibatches in zip(*self.train_dataset):  # <- partners_minibatches == [(x, y)] * nb_partners
-                fit_minibatch(self.model, self.model_stateholder, partners_minibatches, self.partners_optimizers,
-                              self.partners_grads, self.agg_w)
-            epoch_history = self.get_epoch_history()  # compute val and train acc and loss.
-            # add the epoch history to self history, and log epoch number, and metrics values.
-            self.log_epoch(e, epoch_history)
-
-            self.epochs_index += 1
-            if self.early_stop():
-                break
-
-        self.log_end_training()
-
-
 # Supported multi-partner learning approaches
 
 MULTI_PARTNER_LEARNING_APPROACHES = {
@@ -1390,6 +1187,10 @@ MULTI_PARTNER_LEARNING_APPROACHES = {
     "seq-pure": SequentialLearning,
     "seq-with-final-agg": SequentialWithFinalAggLearning,
     "seqavg": SequentialAverageLearning,
-    "smodel": MplSModel,
+    "fedavg-smodel": MplSModel,
+    'fast-fedavg': FastFedAvg,
+    'fast-fedgrads': FastFedGrad,
+    'fast-fedavg-smodel': FastFedSmodel,
+    'fast-fedgrad-smodel': FastGradSmodel
 
 }
