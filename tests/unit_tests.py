@@ -80,7 +80,7 @@ def create_MultiPartnerLearning(create_all_datasets):
         epoch_count=2,
         minibatch_count=2,
         dataset=data,
-        aggregation=UniformAggregator,
+        aggregation_weighting=UniformAggregator,
         is_early_stopping=True,
         is_save_data=False,
     )
@@ -137,7 +137,7 @@ def create_Scenario(request):
         {
             "contributivity_methods": ["Shapley values", "Independent scores"],
             "multi_partner_learning_approach": "fedavg",
-            "aggregation": "uniform",
+            "aggregation_weighting": "uniform",
         }
     )
     params.update(

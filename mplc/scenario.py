@@ -94,7 +94,7 @@ class Scenario:
         params_known += [
             "contributivity_methods",
             "multi_partner_learning_approach",
-            "aggregation",
+            "aggregation_weighting",
         ]  # federated learning related
         params_known += [
             "partners_count",
@@ -232,9 +232,9 @@ class Scenario:
 
         # Define how federated learning aggregation steps are weighted...
         # ... Toggle between 'uniform' (default) and 'data_volume'
-        self.aggregation = aggregation_weighting
+        self.aggregation_weighting = aggregation_weighting
         try:
-            self._aggregation = AGGREGATORS[aggregation_weighting]
+            self._aggregation_weighting = AGGREGATORS[aggregation_weighting]
         except KeyError:
             raise ValueError(f"aggregation approach '{aggregation_weighting}' is not a valid approach. ")
 
@@ -380,7 +380,7 @@ class Scenario:
         for key in ['partners_list',
                     'mpl',
                     '_multi_partner_learning_approach',
-                    '_aggregation',
+                    '_aggregation_weighting',
                     'use_saved_weights',
                     'contributivity_list',
                     'scenario_name',
@@ -408,7 +408,7 @@ class Scenario:
         logger.info(f"   Number of partners defined: {self.partners_count}")
         logger.info(f"   Data distribution scenario chosen: {self.splitter}")
         logger.info(f"   Multi-partner learning approach: {self.multi_partner_learning_approach}")
-        logger.info(f"   Weighting option: {self.aggregation}")
+        logger.info(f"   Weighting option: {self.aggregation_weighting}")
         logger.info(f"   Iterations parameters: "
                     f"{self.epoch_count} epochs > "
                     f"{self.minibatch_count} mini-batches > "
@@ -515,7 +515,7 @@ class Scenario:
 
         # Multi-partner learning approach parameters
         dict_results["multi_partner_learning_approach"] = self.multi_partner_learning_approach
-        dict_results["aggregation"] = self.aggregation
+        dict_results["aggregation_weighting"] = self.aggregation_weighting
         dict_results["epoch_count"] = self.epoch_count
         dict_results["minibatch_count"] = self.minibatch_count
         dict_results["gradient_updates_per_pass_count"] = self.gradient_updates_per_pass_count

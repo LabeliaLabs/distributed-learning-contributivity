@@ -54,8 +54,8 @@ class MultiPartnerLearning(ABC):
         self.minibatch_count = scenario.minibatch_count
         self.is_early_stopping = scenario.is_early_stopping
 
-        # Attributes related to the _aggregation approach
-        self.aggregation_method = scenario._aggregation
+        # Attributes related to the _aggregation_weighting approach
+        self.aggregation_method = scenario._aggregation_weighting
 
         # Attributes to store results
         self.save_folder = scenario.save_folder
