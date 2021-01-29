@@ -19,14 +19,14 @@ from tensorflow.keras.callbacks import EarlyStopping
 
 from . import constants
 from .models import NoiseAdaptationChannel
-from .mpl_utils import History, Aggregator
+from .mpl_utils import History
 from .partner import Partner, PartnerMpl
 
 ALLOWED_PARAMETERS = ('partners_list',
                       'epoch_count',
                       'minibatch_count',
                       'dataset',
-                      'aggregation_method',
+                      'aggregation',
                       'is_early_stopping',
                       'is_save_data',
                       'save_folder',
@@ -54,9 +54,6 @@ class MultiPartnerLearning(ABC):
         self.epoch_count = scenario.epoch_count
         self.minibatch_count = scenario.minibatch_count
         self.is_early_stopping = scenario.is_early_stopping
-
-        # Attributes related to the _aggregation_weighting approach
-        self.aggregation_method = scenario._aggregation_weighting
 
         # Attributes to store results
         self.save_folder = scenario.save_folder
@@ -88,9 +85,8 @@ class MultiPartnerLearning(ABC):
             f"## Preparation of model's training on partners with ids: {['#' + str(p.id) for p in partners_list]}")
         self.partners_list = [PartnerMpl(partner, self) for partner in self.partners_list]
 
-        # Initialize aggregator
-        self.aggregator = self.aggregation_method(self)
-        assert isinstance(self.aggregator, Aggregator)
+        # Attributes related to the aggregation approach
+        self.aggregation_function = self.init_aggregation_function(scenario.aggregation)
 
         # Initialize History
         self.history = History(self)
@@ -111,6 +107,9 @@ class MultiPartnerLearning(ABC):
     @property
     def partners_count(self):
         return len(self.partners_list)
+
+    def init_aggregation_function(self, aggregator):
+        return aggregator.aggregation_function_for_model_weights(self)
 
     def build_model(self):
         return self.build_model_from_weights(self.model_weights)
@@ -364,7 +363,10 @@ class FederatedAverageLearning(MultiPartnerLearning):
             self.fit_minibatch()
 
             # At the end of each minibatch,aggregate the models
-            self.model_weights = self.aggregator.aggregate_model_weights()
+            model = self.build_model()
+            self.aggregation_function(model.trainable_weights,
+                                      [p.model_weights for p in self.partners_list])
+            self.model_weights = model.get_weights()
         self.minibatch_index = 0
 
     def fit_minibatch(self):
@@ -497,7 +499,10 @@ class SequentialWithFinalAggLearning(SequentialLearning):
             self.fit_minibatch()
 
         # At the end of each epoch, aggregate the models
-        self.model_weights = self.aggregator.aggregate_model_weights()
+        model = self.build_model()
+        self.aggregation_function(model.trainable_weights,
+                                  [p.model_weights for p in self.partners_list])
+        self.model_weights = model.get_weights()
 
 
 class SequentialAverageLearning(SequentialLearning):
@@ -523,7 +528,7 @@ class SequentialAverageLearning(SequentialLearning):
             self.fit_minibatch()
 
             # At the end of each minibatch, aggregate the models
-            self.model_weights = self.aggregator.aggregate_model_weights()
+            self.model_weights = self.aggregation_function.aggregate_model_weights()
 
 
 class FedAvgSmodel(FederatedAverageLearning):
@@ -643,7 +648,7 @@ class FederatedGradients(MultiPartnerLearning):
                                        self.model(partner.minibatched_x_train[self.minibatch_index]))
             partner.grads = tape.gradient(loss, self.model.trainable_weights)
 
-        global_grad = self.aggregator.aggregate_gradients()
+        global_grad = self.aggregation_function(tuple([p.grads for p in self.partners_list]))
         self.model.optimizer.apply_gradients(zip(global_grad, self.model.trainable_weights))
         self.model_weights = self.model.get_weights()
 
@@ -670,17 +675,24 @@ class FederatedGradients(MultiPartnerLearning):
 #
 ####################################################
 
-# The fews methods implemented in this section benefit from few improvements,
+# The few methods implemented in this section benefit from few improvements,
 # which make them 5th to 10th times faster (even more for FastFedGrads).
 #
 # The main improvements are:
-#     - We build only one model, and never re-build
-#     - We benefit from tf.Dataset for the batching, shuffling, and prefetching of data.
-#     - We benefit from tf.function for the aggregation step.
+#   - We build only one model, and never re-build. Instead, we switch the weights from
+#     tensor to tensor. Note that we need to use weight stakeholders, re-initialize.
+#   - We benefit from tf.Dataset for the
+#     batching, shuffling, and prefetching of data.
+#   - We benefit from tf.function for the aggregation and training of an epoch. The fit_minibatch or fit_epoch method
+#     must be redefined every tme we us the fit function, as it can initialize variable only at its first call.
+#     For instance if you fit a first mpl object, than a second, you will end up with an error. The previously drawn
+#     graph of the function fit_minibatch will be called, and asked to initialize  optimizer, and models weights.
 #
 
-class FastFedAvg(FederatedAverageLearning):
-    """ In this version each partner uses its own Adam optimizer."""
+class FastFedAvg:
+    """ This class defines a mpl method which is theoretically the same as FedAvgSmodel.
+     It's just way faster, due to the use of tf.Dataset, and tf.function for the training.
+     In this version each partner uses its own Adam optimizer."""
 
     name = 'FastFedAvg'
 
@@ -698,9 +710,6 @@ class FastFedAvg(FederatedAverageLearning):
         self.minibatch_count = scenario.minibatch_count
         self.gradient_updates_per_pass_count = scenario.gradient_updates_per_pass_count
 
-        # Attributes related to the _aggregation approach
-        self.aggregation_method = scenario._aggregation
-
         # Erase the default parameters (which mostly come from the scenario) if some parameters have been specified
         self.__dict__.update((k, v) for k, v in kwargs.items() if k in ALLOWED_PARAMETERS)
 
@@ -715,12 +724,8 @@ class FastFedAvg(FederatedAverageLearning):
             f"## Preparation of model's training on partners with ids: {['#' + str(p.id) for p in partners_list]}")
         self.partners_list = [PartnerMpl(partner, self) for partner in self.partners_list]
 
-        # Initialize aggregator
-        self.aggregator = self.aggregation_method(self)
-        assert isinstance(self.aggregator, Aggregator)
-        # TODO This aggregator is deprecated, as we now use tf function, which are faster.
-        # The best way to use that could be that an aggregator provides a tf.function
-        self.agg_w = tf.constant(self.aggregator.aggregation_weights, dtype=tf.float32)
+        # Attributes related to the _aggregation approach
+        self.aggregation_function = self.init_aggregation_function(scenario.aggregation)
 
         # Convert the datasets into tf ones.
         self.dataset_name = self.dataset.name
@@ -748,7 +753,7 @@ class FastFedAvg(FederatedAverageLearning):
         self.history = {}  # TODO This history definition is not the same as current mplc def
         self.end_test_score = {}
 
-        # for early stopping purpose
+        # for early stopping purpose. Those should be parameterizable
         self.is_early_stopping = True
         self.best = np.Inf
         self.monitor_value = 'val_loss'
@@ -765,12 +770,30 @@ class FastFedAvg(FederatedAverageLearning):
         self.timer = 0
         self.epoch_timer = 0
 
+    def init_model(self):
+        new_model = self.generate_new_model()
+
+        if self.use_saved_weights:
+            logger.info("Init model with previous coalition model")
+            new_model.load_weights(self.init_model_from)
+        else:
+            logger.info("Init new model")
+
+        return new_model
+
     def init_specific_tf_variable(self):
         # generate tf Variables in which we will store the model weights
         self.partners_weights = [[tf.Variable(initial_value=w.read_value()) for w in
                                   self.model.trainable_weights] for _ in self.partners_list]
         self.partners_optimizers = [self.model.optimizer.from_config(self.model.optimizer.get_config()) for _ in
                                     self.partners_list]
+
+    def init_aggregation_function(self, aggregator):
+        return aggregator.aggregation_function_for_model_weights(self)
+
+    @property
+    def partners_count(self):
+        return len(self.partners_list)
 
     def log_epoch(self, epoch_number, history):
         logger.info(
@@ -820,14 +843,7 @@ class FastFedAvg(FederatedAverageLearning):
 
         # TF function definition
         @tf.function
-        def aggregate_weights(weights, agg_w):
-            res = list()
-            for weights_per_layer in zip(*weights):
-                res.append(tf.tensordot(weights_per_layer, agg_w, [0, 0]))
-            return res
-
-        @tf.function
-        def fit_minibatch(model, partners_minibatches, partners_optimizers, partners_weights, agg_w):
+        def fit_minibatch(model, partners_minibatches, partners_optimizers, partners_weights):
             for p_id, minibatch in enumerate(partners_minibatches):  # minibatch == (x,y)
                 # minibatch[0] in a tensor of shape=(number of batch, batch size, img).
                 # We cannot iterate on tensors, so we convert this tensor to a list of
@@ -851,12 +867,11 @@ class FastFedAvg(FederatedAverageLearning):
                                               partners_weights[p_id]):  # update the partner's weights
                     partner_w.assign(model_w.read_value())
             # at the end of the minibatch, aggregate all the local weights
-            aggregated_weights = aggregate_weights(tuple(partners_weights),
-                                                   agg_w)
+            self.aggregation_function(model.trainable_weights, tuple(partners_weights))
 
             # inform the partners with the new weights
             for p_id in range(len(partners_minibatches)):
-                for new_w, partner_w in zip(aggregated_weights, partners_weights[p_id]):
+                for new_w, partner_w in zip(model.trainable_weights, partners_weights[p_id]):
                     partner_w.assign(new_w.read_value())
 
         # Execution
@@ -864,8 +879,7 @@ class FastFedAvg(FederatedAverageLearning):
         for e in range(self.epoch_count):
             self.epoch_timer = time.time()
             for partners_minibatches in zip(*self.train_dataset):  # <- partners_minibatches == [(x, y)] * nb_partners
-                fit_minibatch(self.model, partners_minibatches, self.partners_optimizers, self.partners_weights,
-                              self.agg_w)
+                fit_minibatch(self.model, partners_minibatches, self.partners_optimizers, self.partners_weights)
             epoch_history = self.get_epoch_history()  # compute val and train acc and loss.
             # add the epoch history to self history, and log epoch number, and metrics values.
             self.log_epoch(e, epoch_history)
@@ -877,6 +891,11 @@ class FastFedAvg(FederatedAverageLearning):
 
 
 class FastFedSmodel(FastFedAvg):
+    """
+    This class defines a mpl method which is theoretically the same as FedAvgSmodel.
+     It's just way faster, due to the use of tf.Dataset, and tf.function for the training.
+
+    """
     name = 'FastFedSmodel'
 
     def __init__(self, scenario, pretrain_epochs, epsilon=0.5, **kwargs):
@@ -897,14 +916,7 @@ class FastFedSmodel(FastFedAvg):
     def fit(self):
         # TF function definition
         @tf.function
-        def aggregate_weights(weights, agg_w):
-            res = list()
-            for weights_per_layer in zip(*weights):
-                res.append(tf.tensordot(weights_per_layer, agg_w, [0, 0]))
-            return res
-
-        @tf.function
-        def fit_pretrain_minibatch(model, partners_minibatches, partners_optimizers, partners_weights, agg_w):
+        def fit_pretrain_minibatch(model, partners_minibatches, partners_optimizers, partners_weights):
 
             for p_id, minibatch in enumerate(partners_minibatches):  # minibatch == (x,y)
                 # minibatch[0] in a tensor of shape=(number of batch, batch size, img).
@@ -929,16 +941,15 @@ class FastFedSmodel(FastFedAvg):
                                               partners_weights[p_id]):  # update the partner's weights
                     partner_w.assign(model_w.read_value())
             # at the end of the minibatch, aggregate all the local weights
-            aggregated_weights = aggregate_weights(tuple(partners_weights),
-                                                   agg_w)
+            self.aggregation_function(model.trainable_weights, tuple(partners_weights))
 
             # inform the partners with the new weights
             for p_id in range(len(partners_minibatches)):
-                for new_w, partner_w in zip(aggregated_weights, partners_weights[p_id]):
+                for new_w, partner_w in zip(model.trainable_weights, partners_weights[p_id]):
                     partner_w.assign(new_w.read_value())
 
         @tf.function
-        def fit_minibatch(model, partners_minibatches, partners_optimizers, partners_weights, agg_w, smodel_list):
+        def fit_minibatch(model, partners_minibatches, partners_optimizers, partners_weights, smodel_list):
             for p_id, minibatch in enumerate(partners_minibatches):  # minibatch == (x,y)
                 # minibatch[0] in a tensor of shape=(number of batch, batch size, img).
                 # We cannot iterate on tensors, so we convert this tensor to a list of
@@ -965,12 +976,11 @@ class FastFedSmodel(FastFedAvg):
                                               partners_weights[p_id]):  # update the partner's weights
                     partner_w.assign(model_w.read_value())
             # at the end of the minibatch, aggregate all the local weights
-            aggregated_weights = aggregate_weights(tuple(partners_weights),
-                                                   agg_w)
+            self.aggregation_function(model.trainable_weights, tuple(partners_weights))
 
             # inform the partners with the new weights
             for p_id in range(len(partners_minibatches)):
-                for new_w, partner_w in zip(aggregated_weights, partners_weights[p_id]):
+                for new_w, partner_w in zip(model.trainable_weights, partners_weights[p_id]):
                     partner_w.assign(new_w.read_value())
 
         # Execution
@@ -984,8 +994,7 @@ class FastFedSmodel(FastFedAvg):
                     fit_pretrain_minibatch(self.model,
                                            partners_minibatches,
                                            self.partners_optimizers,
-                                           self.partners_weights,
-                                           self.agg_w)
+                                           self.partners_weights)
                 epoch_history = self.get_epoch_history()  # compute val and train acc and loss.
                 # add the epoch history to self history, and log epoch number, and metrics values.
                 self.log_epoch(p_e, epoch_history)
@@ -1011,7 +1020,6 @@ class FastFedSmodel(FastFedAvg):
                               partners_minibatches,
                               self.partners_optimizers,
                               self.partners_weights,
-                              self.agg_w,
                               self.smodel_list)
             epoch_history = self.get_epoch_history()  # compute val and train acc and loss.
             # add the epoch history to self history, and log epoch number, and metrics values.
@@ -1025,15 +1033,13 @@ class FastFedSmodel(FastFedAvg):
 
 class FastFedGrad(FastFedAvg):
     """
-    This class provides a multi-partner-learning method with is theorically the same than FedGrads.
+    This class provides a multi-partner-learning method with is theoretically the same than FedGrads.
     Each partner computes a forward and backward propagation with its copy of the global model. Then the resulting
      gradients are aggregated, and a global optimizer uses the aggregated gradient to update the global model weights.
-    Compared to FedAvg, this method requieres more communications between partner (one each local batch against one
+    Compared to FedAvg, this method requires more communications between partner (one each local batch against one
     every minibatch (what is to say every GRADIENT_UPDATE_PER_PASS local batches)
-    But because this method allows the use of a state of the art optimizer (as Adam, Adamamx, etc), much less epochs
-     are required and so this method performs in fact very well.
-
-
+    But because this method allows the use of a state of the art optimizer (as Adam, Adamamx, etc), less epochs
+    are required and so this method performs in fact very well.
 
     """
 
@@ -1053,16 +1059,12 @@ class FastFedGrad(FastFedAvg):
         self.partners_optimizers = [self.model.optimizer.from_config(self.model.optimizer.get_config()) for _ in
                                     self.partners_list]
 
+    def init_aggregation_function(self, aggregator):
+        return aggregator.aggregation_function_for_model_gradients(self)
+
     def fit(self):
 
         # TF function definition
-        @tf.function
-        def aggregeted_grads(grads, agg_w):
-            global_grad = list()
-            for grad_per_layer in zip(*grads):
-                global_grad.append(tf.tensordot(grad_per_layer, agg_w, [0, 0]))
-            return global_grad
-
         @tf.function
         def fit_epoch(model, train_dataset, partners_grads, agg_w):
             for minibatch in zip(*train_dataset):
@@ -1072,14 +1074,14 @@ class FastFedGrad(FastFedAvg):
                         loss = model.compiled_loss(y_partner_batch, y_pred)
                         partners_grads[p_id] = tape.gradient(loss, model.trainable_weights)
                     model.compiled_metrics.update_state(y_partner_batch, y_pred)
-                global_grad = aggregeted_grads(tuple(partners_grads), agg_w)
+                global_grad = self.aggregation_function(tuple(partners_grads))
                 model.optimizer.apply_gradients(zip(global_grad, model.trainable_weights))
 
         # Execution
         self.timer = time.time()
         for e in range(self.epoch_count):
             self.epoch_timer = time.time()
-            fit_epoch(self.model, self.train_dataset, self.partners_grads, self.agg_w)
+            fit_epoch(self.model, self.train_dataset, self.partners_grads)
             epoch_history = self.get_epoch_history()  # compute val and train acc and loss.
             # add the epoch history to self history, and log epoch number, and metrics values.
             self.log_epoch(e, epoch_history)
@@ -1108,13 +1110,6 @@ class FastGradSmodel(FastFedGrad):
 
     def fit(self):
         @tf.function
-        def aggregate_grads(grads, agg_w):
-            global_grad = list()
-            for grad_per_layer in zip(*grads):
-                global_grad.append(tf.tensordot(grad_per_layer, agg_w, [0, 0]))
-            return global_grad
-
-        @tf.function
         def fit_pretrain_epoch(model, train_dataset, partners_grads, agg_w):
             for minibatch in zip(*train_dataset):
                 for p_id, (x_partner_batch, y_partner_batch) in enumerate(minibatch):
@@ -1123,11 +1118,11 @@ class FastGradSmodel(FastFedGrad):
                         loss = model.compiled_loss(y_partner_batch, y_pred)
                         partners_grads[p_id] = tape.gradient(loss, model.trainable_weights)
                     model.compiled_metrics.update_state(y_partner_batch, y_pred)
-                global_grad = aggregate_grads(tuple(partners_grads), agg_w)
+                global_grad = self.aggregation_function(tuple(partners_grads))
                 model.optimizer.apply_gradients(zip(global_grad, model.trainable_weights))
 
         @tf.function
-        def fit_epoch(model, train_dataset, agg_w, partners_grads, smodel_list):
+        def fit_epoch(model, train_dataset, partners_grads, smodel_list):
             for minibatch in zip(*train_dataset):
                 for p_id, (x_partner_batch, y_partner_batch) in enumerate(minibatch):
                     with tf.GradientTape() as tape:
@@ -1138,7 +1133,7 @@ class FastGradSmodel(FastFedGrad):
                     partners_grads[p_id] = tape.gradient(loss, model.trainable_weights)
                     s_model_p.optimizer.minimize(loss, s_model_p.trainable_weights, tape=tape)
                     model.compiled_metrics.update_state(y_partner_batch, yo_pred)
-                global_grad = aggregate_grads(tuple(partners_grads), agg_w)
+                global_grad = self.aggregation_function(tuple(partners_grads))
                 model.optimizer.apply_gradients(zip(global_grad, model.trainable_weights))
 
         # Execution
@@ -1147,7 +1142,7 @@ class FastGradSmodel(FastFedGrad):
             for p_e in range(self.pretrain_epochs):
                 logger.info(f'[{self.name}] > Training {self.pretrain_epochs} pretrain epochs first.')
                 self.epoch_timer = time.time()
-                fit_pretrain_epoch(self.model, self.train_dataset, self.partners_grads, self.agg_w)
+                fit_pretrain_epoch(self.model, self.train_dataset, self.partners_grads)
                 epoch_history = self.get_epoch_history()  # compute val and train acc and loss.
                 # add the epoch history to self history, and log epoch number, and metrics values.
                 self.log_epoch(p_e, epoch_history)
@@ -1168,7 +1163,7 @@ class FastGradSmodel(FastFedGrad):
 
         for e in range(self.epoch_count - self.pretrain_epochs):
             self.epoch_timer = time.time()
-            fit_epoch(self.model, self.train_dataset, self.partners_grads, self.agg_w)
+            fit_epoch(self.model, self.train_dataset, self.partners_grads)
             epoch_history = self.get_epoch_history()  # compute val and train acc and loss.
             # add the epoch history to self history, and log epoch number, and metrics values.
             self.log_epoch(e, epoch_history)

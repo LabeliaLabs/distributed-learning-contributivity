@@ -17,7 +17,7 @@ from sklearn.preprocessing import LabelEncoder
 from . import contributivity, constants
 from . import dataset as dataset_module
 from .corruption import Corruption, NoCorruption, IMPLEMENTED_CORRUPTION, Duplication
-from .mpl_utils import AGGREGATORS
+from .mpl_utils import AGGREGATORS, Aggregator
 from .multi_partner_learning import MULTI_PARTNER_LEARNING_APPROACHES
 from .partner import Partner
 from .splitter import Splitter, IMPLEMENTED_SPLITTERS
@@ -34,7 +34,7 @@ class Scenario:
             corruption_parameters=None,
             init_model_from="random_initialization",
             multi_partner_learning_approach="fedavg",
-            aggregation_weighting="data-volume",
+            aggregation="data-volume",
             gradient_updates_per_pass_count=constants.DEFAULT_GRADIENT_UPDATES_PER_PASS_COUNT,
             minibatch_count=constants.DEFAULT_BATCH_COUNT,
             epoch_count=constants.DEFAULT_EPOCH_COUNT,
@@ -64,7 +64,7 @@ class Scenario:
         :param init_model_from: None (default) or path
         :param multi_partner_learning_approach: 'fedavg' (default), 'seq-pure', 'seq-with-final-agg' or 'seqavg'
                                                 Define the multi-partner learning approach
-        :param aggregation_weighting: 'data_volume' (default), 'uniform' or 'local_score'
+        :param aggregation:Aggregator object, or string identifier: 'data_volume' (default), 'uniform' or 'local_score'
         :param gradient_updates_per_pass_count: int
         :param minibatch_count: int
         :param epoch_count: int
@@ -91,7 +91,7 @@ class Scenario:
         params_known += [
             "contributivity_methods",
             "multi_partner_learning_approach",
-            "aggregation_weighting",
+            "aggregation",
         ]  # federated learning related
         params_known += [
             "partners_count",
@@ -236,11 +236,13 @@ class Scenario:
 
         # Define how federated learning aggregation steps are weighted...
         # ... Toggle between 'uniform' (default) and 'data_volume'
-        self.aggregation_weighting = aggregation_weighting
-        try:
-            self._aggregation_weighting = AGGREGATORS[aggregation_weighting]
-        except KeyError:
-            raise ValueError(f"aggregation approach '{aggregation_weighting}' is not a valid approach. ")
+        if isinstance(aggregation, Aggregator):
+            self.aggregation = aggregation
+        else:
+            try:
+                self.aggregation = AGGREGATORS[aggregation]
+            except KeyError:
+                raise ValueError(f"aggregation approach '{aggregation}' is not a valid approach. ")
 
         # Number of epochs, mini-batches and fit_batches in ML training
         self.epoch_count = epoch_count
@@ -386,7 +388,7 @@ class Scenario:
         for key in ['partners_list',
                     'mpl',
                     '_multi_partner_learning_approach',
-                    '_aggregation_weighting',
+                    'aggregation',
                     'use_saved_weights',
                     'contributivity_list',
                     'scenario_name',
@@ -401,6 +403,7 @@ class Scenario:
         else:
             params['save_path'] = None
         params['samples_split_option'] = self.splitter.copy()
+        params['aggregation'] = self.aggregation.name
 
         params.update(kwargs)
 
@@ -414,7 +417,7 @@ class Scenario:
         logger.info(f"   Number of partners defined: {self.partners_count}")
         logger.info(f"   Data distribution scenario chosen: {self.splitter}")
         logger.info(f"   Multi-partner learning approach: {self.multi_partner_learning_approach}")
-        logger.info(f"   Weighting option: {self.aggregation_weighting}")
+        logger.info(f"   Weighting option: {self.aggregation.name}")
         logger.info(f"   Iterations parameters: "
                     f"{self.epoch_count} epochs > "
                     f"{self.minibatch_count} mini-batches > "
@@ -521,7 +524,7 @@ class Scenario:
 
         # Multi-partner learning approach parameters
         dict_results["multi_partner_learning_approach"] = self.multi_partner_learning_approach
-        dict_results["aggregation_weighting"] = self.aggregation_weighting
+        dict_results["aggregation_weighting"] = self.aggregation.name
         dict_results["epoch_count"] = self.epoch_count
         dict_results["minibatch_count"] = self.minibatch_count
         dict_results["gradient_updates_per_pass_count"] = self.gradient_updates_per_pass_count

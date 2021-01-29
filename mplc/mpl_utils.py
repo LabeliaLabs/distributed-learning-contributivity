@@ -1,6 +1,6 @@
 import os
 import pickle
-from abc import ABC
+from abc import ABC, abstractmethod
 from copy import deepcopy
 
 import matplotlib.pyplot as plt
@@ -112,59 +112,72 @@ class History:
 
 #####################################
 #
-# tensorflow functions for aggregator
+# Aggregators
 #
 #####################################
-
-@tf.function
-def _tf_aggregete_grads(grads, agg_w):
-    global_grad = list()
-    for grad_per_layer in zip(*grads):
-        g = list()
-        for g_p, w in zip(grad_per_layer, agg_w):
-            g.append(g_p)
-        global_grad.append(tf.reduce_mean(g, axis=0))
-    return global_grad
 
 
 class Aggregator(ABC):
     name = 'abstract'
 
-    def __init__(self, mpl):
-        """
-        :type mpl: MultiPartnerLearning
-        """
-        self.mpl = mpl
-        self.aggregation_weights = np.zeros(self.mpl.partners_count, dtype='float32')
+    def __init__(self):
+
+        self._aggregation_weights = None
+        self.mpl = None
 
     def __str__(self):
         return f'{self.name} aggregator'
 
-    def aggregate_model_weights(self):
-        """Aggregate model weights from the list of partner's models, with a weighted average"""
+    def aggregation_function_for_model_weights(self, mpl):
+        """Build the tf.function which aggregate model weights from the list of partner's models,
+        with a weighted average
+        """
+        aggregation_weights = self.aggregation_weights(mpl)
+        self.mpl = mpl
 
-        weights_per_layer = list(zip(*[partner.model_weights for partner in self.mpl.partners_list]))
-        new_weights = list()
+        @tf.function
+        def aggregator(global_weights, local_weights):
+            for i, weights_per_layer in enumerate(zip(*local_weights)):
+                global_weights[i].assign(tf.tensordot(weights_per_layer, aggregation_weights, [0, 0]))
 
-        for weights_for_layer in weights_per_layer:
-            avg_weights_for_layer = np.average(
-                np.array(weights_for_layer), axis=0, weights=self.aggregation_weights
-            )
-            new_weights.append(avg_weights_for_layer)
+        return aggregator
 
-        return new_weights
+    def aggregation_function_for_model_gradients(self, mpl):
+        """Build the tf.function which aggregate gradients from the list of partner's gradients,
+        with a weighted average
+        """
+        self.mpl
+        aggregation_weights = self.aggregation_weights()
 
-    def aggregate_gradients(self):
-        assert isinstance(self.aggregation_weights, list), 'Aggregation weights must be a list.'
-        return _tf_aggregete_grads([p.grads for p in self.mpl.partners_list], self.aggregation_weights)
+        @tf.function
+        def aggregator(local_grad):
+            global_grad = list()
+            for weights_per_layer in zip(*local_grad):
+                global_grad.append(tf.tensordot(weights_per_layer, aggregation_weights, [0, 0]))
+
+            return global_grad
+
+        return aggregator
+
+    @abstractmethod
+    def aggregation_weights(self):
+        assert self.mpl is not None, "aggregation_function_for_model_weights or grads should have been called"
+        if self._aggregation_weights:
+            return self._aggregation_weights
+        else:
+            temp = np.zeros(self.mpl.partners_count, dtype='float32')
+            self._aggregation_weights = tf.constant(temp, dtype=tf.float32)
 
 
 class UniformAggregator(Aggregator):
     name = 'Uniform'
 
-    def __init__(self, mpl):
-        super(UniformAggregator, self).__init__(mpl)
-        self.aggregation_weights = list(np.ones(self.mpl.partners_count, dtype='float32') * self.mpl.partners_count)
+    def aggregation_weights(self, mpl):
+        if self._aggregation_weights:
+            return self._aggregation_weights
+        else:
+            temp = np.ones(mpl.partners_count, dtype='float32')
+            self._aggregation_weights = tf.constant(temp, dtype=tf.float32)
 
 
 class DataVolumeAggregator(Aggregator):
@@ -175,24 +188,54 @@ class DataVolumeAggregator(Aggregator):
         partners_sizes = [partner.data_volume for partner in self.mpl.partners_list]
         self.aggregation_weights = list((partners_sizes / np.sum(partners_sizes).astype('float32')))
 
+    def aggregation_weights(self, mpl):
+        if self._aggregation_weights:
+            return self._aggregation_weights
+        else:
+            partners_sizes = [partner.data_volume for partner in self.mpl.partners_list]
+            temp = (partners_sizes / np.sum(partners_sizes).astype('float32'))
+            self._aggregation_weights = tf.constant(temp, dtype=tf.float32)
+
 
 class ScoresAggregator(Aggregator):
     name = 'Local scores'
 
-    def __init__(self, mpl):
-        super(ScoresAggregator, self).__init__(mpl)
+    def aggregation_function_for_model_weights(self, mpl):
+        """Build the tf.function which aggregate model weights from the list of partner's models,
+        with a weighted average
+        """
+        self.mpl = mpl
+        mpl._aggregation_weights = tf.Variable(np.zeros(mpl.partners_count, dtype='float32'))
 
-    def prepare_aggregation_weights(self):
-        last_scores = [partner.last_round_score for partner in self.mpl.partners_list]
-        self.aggregation_weights = list((last_scores / np.sum(last_scores)).astype('float32'))
+        def aggregator(global_weights, local_weights):
+            last_scores = np.array([partner.last_round_score for partner in mpl.partners_list])
+            mpl._aggregation_weights.assign(last_scores / np.sum(last_scores))
+            for i, weights_per_layer in enumerate(zip(*local_weights)):
+                global_weights[i].assign(tf.tensordot(weights_per_layer, mpl._aggregation_weights, [0, 0]))
 
-    def aggregate_model_weights(self):
-        self.prepare_aggregation_weights()
-        super(ScoresAggregator, self).aggregate_model_weights()
+        return aggregator
 
-    def aggregate_gradients(self):
-        self.prepare_aggregation_weights()
-        super(ScoresAggregator, self).aggregate_gradients()
+    def aggregation_function_for_model_gradients(self, mpl):
+        """Build the tf.function which aggregate gradients from the list of partner's gradients,
+        with a weighted average
+        """
+        self.mpl = mpl
+        mpl._aggregation_weights = tf.Variable(np.zeros(mpl.partners_count, dtype='float32'))
+
+        @tf.function
+        def aggregator(local_grad):
+            global_grad = list()
+            last_scores = np.array([partner.last_round_score for partner in mpl.partners_list])
+            mpl._aggregation_weights.assign(last_scores / np.sum(last_scores))
+            for weights_per_layer in zip(*local_grad):
+                global_grad.append(tf.tensordot(weights_per_layer, mpl._aggregation_weights, [0, 0]))
+
+            return global_grad
+
+        return aggregator
+
+    def aggregation_weights(self):
+        return self.mpl._aggregation_weights
 
 
 # Supported _aggregation weights approaches
