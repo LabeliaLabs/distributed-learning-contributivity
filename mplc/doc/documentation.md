@@ -81,16 +81,16 @@ At this point, you can already launch your first scenario! But before hitting th
 ### Select a pre-implemented dataset
 
 You might also want to consider other parameters such as the dataset to be used, for instance. The easiest way to select a dataset is to use those which are already implemented in `mplc`.
-Currently MNIST, CIFAR10, TITANIC, IMDB and ESC50 are supported. You can use one of those by simply passing the parameter `dataset_name` to your scenario object:
+Currently MNIST, CIFAR10, TITANIC, IMDB and ESC50 are supported. You can use one of those by simply passing a string identifier to the parameter `dataset` of your scenario object:
 
 ```python
 from mplc.scenario import Scenario
 my_scenario = Scenario(partners_count=3,
                        amounts_per_partner=[0.2, 0.3, 0.5],
-                       dataset_name='mnist')
+                       dataset='mnist')
 ```
 
-With each dataset, a model architecture is provided by default, so you do not need to care of it. Moreover, the split between the validation and train sets is done by the constructor's of the dataset, even if you can finetune it.
+With each dataset, a model architecture is provided by default, so you do not need to care of it. Moreover, the split between the validation and train sets is done by the constructor's of the dataset.
 If you want to use a homemade dataset or a homemade model, you will have to use the [dataset class](#dataset-generation).
 
 > Note: this parameter is not mandatory as the MNIST dataset is selected by default.

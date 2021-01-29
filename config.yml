@@ -1,17 +1,17 @@
 experiment_name: my_example
 n_repeats: 5
 scenario_params_list:
- - dataset_name:
-     - 'mnist'
-     - 'cifar10'
-   partners_count:
-     - 3
-   amounts_per_partner: 
-     - [0.4, 0.3, 0.3]
-   samples_split_option: 
-     - ['basic', 'random']
-     - ['basic', 'stratified']
-     - ['advanced', [[4, 'shared'], [6, 'shared'], [4, 'specific']]]
+  - dataset:
+      - 'mnist'
+      - 'cifar10'
+    partners_count:
+      - 3
+    amounts_per_partner:
+      - [ 0.4, 0.3, 0.3 ]
+    samples_split_option:
+      - [ 'basic', 'random' ]
+      - [ 'basic', 'stratified' ]
+      - [ 'advanced', [ [ 4, 'shared' ], [ 6, 'shared' ], [ 4, 'specific' ] ] ]
    multi_partner_learning_approach:
      - 'fedavg'
      - 'seq-pure'

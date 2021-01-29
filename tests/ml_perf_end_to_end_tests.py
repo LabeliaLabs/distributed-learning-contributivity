@@ -35,7 +35,7 @@ class Test_EndToEndTest:
         Test performance on titanic dataset
         """
         corruption_1 = Duplication(proportion=0.8, duplicated_partner_id=0)
-        titanic_scenario_1 = Scenario(2, [0.4, 0.6], epoch_count=3, minibatch_count=1, dataset_name='titanic')
+        titanic_scenario_1 = Scenario(2, [0.4, 0.6], epoch_count=3, minibatch_count=1, dataset='titanic')
         titanic_scenario_2 = Scenario(3, [0.2, 0.2, 0.6],
                                       corruption_parameters=['not-corrupted', corruption_1, 'not-corrupted'],
                                       epoch_count=3, minibatch_count=1, dataset_name='titanic')
@@ -59,7 +59,7 @@ class Test_EndToEndTest:
         mpl_approaches = multi_partner_learning.MULTI_PARTNER_LEARNING_APPROACHES.copy()
 
         for approach in mpl_approaches:
-            exp.add_scenario(Scenario(2, [0.25, 0.75], epoch_count=2, minibatch_count=2, dataset_name='mnist',
+            exp.add_scenario(Scenario(2, [0.25, 0.75], epoch_count=2, minibatch_count=2, dataset='mnist',
                                       dataset_proportion=0.1, multi_partner_learning_approach=approach,
                                       gradient_updates_per_pass_count=3))
         exp.run()

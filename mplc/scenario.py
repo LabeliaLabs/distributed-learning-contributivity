@@ -28,8 +28,7 @@ class Scenario:
             self,
             partners_count,
             amounts_per_partner,
-            dataset=None,
-            dataset_name=constants.MNIST,
+            dataset=constants.MNIST,
             dataset_proportion=1,
             samples_split_option='random',
             corruption_parameters=None,
@@ -54,13 +53,12 @@ class Scenario:
         :param amounts_per_partner:  [float]. Fractions of the
         original dataset each partner receives to mock a collaborative ML scenario where each partner provides data
         for the ML training.
-        :param dataset: dataset.Dataset object. Use it if you want to use your own dataset, otherwise use dataset_name.
-        :param dataset_name: str. 'mnist', 'cifar10', 'esc50' and 'titanic' are currently supported (default: mnist)
+        :param dataset: dataset.Dataset object, or its string identifier. Default is MNIST.
         :param dataset_proportion: float (default: 1)
         :param samples_split_option: Splitter object, or its string identifier (for instance 'random', or 'stratified')
                                      Define the strategy to use to split the data samples between the partners.
                                      Default, RandomSplitter.
-        :param corruption_parameters: list of Corruption object, or its string identifier, one ofr each partner.
+        :param corruption_parameters: list of Corruption object, or its string identifier, one for each partner.
                                       Enable to artificially corrupt partner's data.
                                       For instance: [Permutation(proportion=0.2), 'random', 'not-corrupted']
         :param init_model_from: None (default) or path
@@ -86,7 +84,6 @@ class Scenario:
 
         params_known = [
             "dataset",
-            "dataset_name",
             "dataset_proportion",
             "val_set",
             "test_set"
@@ -126,25 +123,27 @@ class Scenario:
         # Get and verify which dataset is configured
         if isinstance(dataset, dataset_module.Dataset):
             self.dataset = dataset
-        else:
-            # Reference the module corresponding to the dataset selected and initialize the Dataset object
-            if dataset_name == constants.MNIST:  # default
+        elif isinstance(dataset, str):
+            # Reference the object corresponding to the dataset selected and initialize it
+            if dataset == constants.MNIST:  # default
                 self.dataset = dataset_module.Mnist()
-            elif dataset_name == constants.CIFAR10:
+            elif dataset == constants.CIFAR10:
                 self.dataset = dataset_module.Cifar10()
-            elif dataset_name == constants.TITANIC:
+            elif dataset == constants.TITANIC:
                 self.dataset = dataset_module.Titanic()
-            elif dataset_name == constants.ESC50:
+            elif dataset == constants.ESC50:
                 self.dataset = dataset_module.Esc50()
-            elif dataset_name == constants.IMDB:
+            elif dataset == constants.IMDB:
                 self.dataset = dataset_module.Imdb()
             else:
                 raise Exception(
-                    f"Dataset named '{dataset_name}' is not supported (yet). You can construct your own "
+                    f"Dataset named '{dataset}' is not supported (yet). You can construct your own "
                     f"dataset object, or even add it by contributing to the project !"
                 )
             logger.debug(f"Dataset selected: {self.dataset.name}")
-
+        else:
+            raise AttributeError(f'The dataset parameter cannot be an {type(dataset)}.'
+                                 f' Please provides a Dataset instance or a string identifier')
         # Proportion of the dataset the computation will used
         self.dataset_proportion = dataset_proportion
         assert (

@@ -526,11 +526,11 @@ class SequentialAverageLearning(SequentialLearning):
             self.model_weights = self.aggregator.aggregate_model_weights()
 
 
-class MplSModel(FederatedAverageLearning):
+class FedAvgSmodel(FederatedAverageLearning):
     name = 'Federated learning with label flipping'
 
     def __init__(self, scenario, pretrain_epochs=0, epsilon=0.5, **kwargs):
-        super(MplSModel, self).__init__(scenario, **kwargs)
+        super(FedAvgSmodel, self).__init__(scenario, **kwargs)
         self.pretrain_epochs = pretrain_epochs
         self.epsilon = epsilon
         if pretrain_epochs > 0:
@@ -553,7 +553,7 @@ class MplSModel(FederatedAverageLearning):
             for p in self.partners_list:
                 confusion = np.identity(10) * (1 - self.epsilon) + (self.epsilon / 10)
                 p.noise_layer_weights = [np.log(confusion + 1e-8)]
-        super(MplSModel, self).fit()
+        super(FedAvgSmodel, self).fit()
 
     def fit_minibatch(self):
         """Proceed to a collaborative round with a S-Model federated averaging approach"""
@@ -1187,7 +1187,7 @@ MULTI_PARTNER_LEARNING_APPROACHES = {
     "seq-pure": SequentialLearning,
     "seq-with-final-agg": SequentialWithFinalAggLearning,
     "seqavg": SequentialAverageLearning,
-    "fedavg-smodel": MplSModel,
+    "fedavg-smodel": FedAvgSmodel,
     'fast-fedavg': FastFedAvg,
     'fast-fedgrads': FastFedGrad,
     'fast-fedavg-smodel': FastFedSmodel,

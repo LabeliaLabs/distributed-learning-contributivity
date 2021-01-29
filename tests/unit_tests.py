@@ -190,7 +190,7 @@ def create_Contributivity(create_Scenario):
 class Test_Experiment:
     def test_add_scenario(self, create_experiment):
         exp = create_experiment
-        sc = Scenario(2, [0.5, 0.5], dataset_name='titanic')
+        sc = Scenario(2, [0.5, 0.5], dataset='titanic')
         assert len(exp.scenarios_list) == 0, 'Scenario list should be empty when initialized'
         exp.add_scenario(sc)
         assert exp.scenarios_list[0] is sc, 'Failed to add a scenario'

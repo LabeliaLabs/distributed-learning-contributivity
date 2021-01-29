@@ -1113,7 +1113,7 @@ class Contributivity:
 
     def s_model(self):  # TOD refacto
         start = timer()
-        mpl = multi_partner_learning.MplSModel(self.scenario)
+        mpl = multi_partner_learning.FedAvgSmodel(self.scenario)
         mpl.fit()
         theta_estimated = np.zeros((mpl.partners_count,
                                     mpl.dataset.num_classes,
