@@ -132,8 +132,8 @@ class Aggregator(ABC):
         """Build the tf.function which aggregate model weights from the list of partner's models,
         with a weighted average
         """
-        aggregation_weights = self.aggregation_weights(mpl)
         self.mpl = mpl
+        aggregation_weights = self.aggregation_weights()
 
         @tf.function
         def aggregator(global_weights, local_weights):
@@ -146,7 +146,7 @@ class Aggregator(ABC):
         """Build the tf.function which aggregate gradients from the list of partner's gradients,
         with a weighted average
         """
-        self.mpl
+        self.mpl = mpl
         aggregation_weights = self.aggregation_weights()
 
         @tf.function
@@ -172,23 +172,18 @@ class Aggregator(ABC):
 class UniformAggregator(Aggregator):
     name = 'Uniform'
 
-    def aggregation_weights(self, mpl):
+    def aggregation_weights(self):
         if self._aggregation_weights:
             return self._aggregation_weights
         else:
-            temp = np.ones(mpl.partners_count, dtype='float32')
+            temp = np.ones(self.mpl.partners_count, dtype='float32')
             self._aggregation_weights = tf.constant(temp, dtype=tf.float32)
 
 
 class DataVolumeAggregator(Aggregator):
     name = 'Data volume'
 
-    def __init__(self, mpl):
-        super(DataVolumeAggregator, self).__init__(mpl)
-        partners_sizes = [partner.data_volume for partner in self.mpl.partners_list]
-        self.aggregation_weights = list((partners_sizes / np.sum(partners_sizes).astype('float32')))
-
-    def aggregation_weights(self, mpl):
+    def aggregation_weights(self):
         if self._aggregation_weights:
             return self._aggregation_weights
         else:

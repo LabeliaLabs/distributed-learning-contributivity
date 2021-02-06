@@ -240,7 +240,7 @@ class Scenario:
             self.aggregation = aggregation
         else:
             try:
-                self.aggregation = AGGREGATORS[aggregation]
+                self.aggregation = AGGREGATORS[aggregation]()
             except KeyError:
                 raise ValueError(f"aggregation approach '{aggregation}' is not a valid approach. ")
 
