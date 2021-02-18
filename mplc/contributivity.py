@@ -16,7 +16,8 @@ from loguru import logger
 from scipy.stats import norm
 from sklearn.linear_model import LinearRegression
 
-from . import multi_partner_learning, constants
+from . import constants
+from .multi_partner_learning import basic_mpl
 
 
 class KrigingModel:
@@ -106,12 +107,12 @@ class Contributivity:
                                                                      **self.scenario.mpl_kwargs
                                                                      )
             else:
-                mpl = multi_partner_learning.SinglePartnerLearning(self.scenario,
-                                                                   partner=small_partners_list[0],
-                                                                   is_early_stopping=True,
-                                                                   save_folder=None,
-                                                                   **self.scenario.mpl_kwargs
-                                                                   )
+                mpl = basic_mpl.SinglePartnerLearning(self.scenario,
+                                                      partner=small_partners_list[0],
+                                                      is_early_stopping=True,
+                                                      save_folder=None,
+                                                      **self.scenario.mpl_kwargs
+                                                      )
             mpl.fit()
             self.charac_fct_values[tuple(subset)] = mpl.history.score
             # we add the new increments
@@ -1114,7 +1115,7 @@ class Contributivity:
 
     def s_model(self):  # TOD refacto
         start = timer()
-        mpl = multi_partner_learning.FedAvgSmodel(self.scenario)
+        mpl = basic_mpl.FedAvgSmodel(self.scenario)
         mpl.fit()
         theta_estimated = np.zeros((mpl.partners_count,
                                     mpl.dataset.num_classes,
@@ -1174,19 +1175,19 @@ class Contributivity:
             self.without_replacment_SMC(sv_accuracy=sv_accuracy, alpha=alpha)
         elif method_to_compute == "Federated SBS linear":
             # Contributivity 10: step by step increments with linear importance increase
-            if self.scenario._multi_partner_learning_approach != multi_partner_learning.FederatedAverageLearning:
+            if self.scenario._multi_partner_learning_approach != basic_mpl.FederatedAverageLearning:
                 logger.warning("Step by step linear contributivity method is only suited for federated "
                                "averaging learning approach")
             self.federated_SBS_linear()
         elif method_to_compute == "Federated SBS quadratic":
             # Contributivity 11: step by step increments with quadratic importance increase
-            if self.scenario._multi_partner_learning_approach != multi_partner_learning.FederatedAverageLearning:
+            if self.scenario._multi_partner_learning_approach != basic_mpl.FederatedAverageLearning:
                 logger.warning("Step by step quadratic contributivity method is only suited for federated "
                                "averaging learning approach")
             self.federated_SBS_quadratic()
         elif method_to_compute == "Federated SBS constant":
             # Contributivity 12: step by step increments with constant importance
-            if self.scenario._multi_partner_learning_approach != multi_partner_learning.FederatedAverageLearning:
+            if self.scenario._multi_partner_learning_approach != basic_mpl.FederatedAverageLearning:
                 logger.warning("Step by step constant contributivity method is only suited for federated "
                                "averaging learning approach")
             self.federated_SBS_constant()

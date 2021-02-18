@@ -35,6 +35,13 @@ class LogisticRegression(skLR):
 
         return history
 
+    @property
+    def trainable_weights(self):
+        if self.coef_ is None:
+            return None
+        else:
+            return np.concatenate((self.coef_, self.intercept_.reshape(1, 1)), axis=1)
+
     def evaluate(self, x_eval, y_eval, **kwargs):
         if self.coef_ is None:
             model_evaluation = [0] * 2

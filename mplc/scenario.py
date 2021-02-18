@@ -14,11 +14,11 @@ import pandas as pd
 from loguru import logger
 from sklearn.preprocessing import LabelEncoder
 
+from mplc.multi_partner_learning import MULTI_PARTNER_LEARNING_APPROACHES
+from mplc.multi_partner_learning.utils import AGGREGATORS, Aggregator
 from . import contributivity, constants
 from . import dataset as dataset_module
 from .corruption import Corruption, NoCorruption, IMPLEMENTED_CORRUPTION, Duplication
-from .mpl_utils import AGGREGATORS, Aggregator
-from .multi_partner_learning import MULTI_PARTNER_LEARNING_APPROACHES
 from .partner import Partner
 from .splitter import Splitter, IMPLEMENTED_SPLITTERS
 
@@ -386,7 +386,7 @@ class Scenario:
     def copy(self, **kwargs):
         params = self.__dict__.copy()
         for key in ['partners_list',
-                    'mpl',
+                    'multi_partner_learning',
                     '_multi_partner_learning_approach',
                     'aggregation',
                     'use_saved_weights',

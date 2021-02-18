@@ -50,8 +50,8 @@ from mplc.contributivity import Contributivity
 from mplc.corruption import Permutation, PermutationCircular, Randomize, Redundancy, RandomizeUniform, Duplication
 from mplc.dataset import Mnist, Cifar10, Titanic, Imdb, Esc50
 from mplc.experiment import Experiment
-from mplc.mpl_utils import UniformAggregator
-from mplc.multi_partner_learning import FederatedAverageLearning
+from mplc.multi_partner_learning.basic_mpl import FederatedAverageLearning
+from mplc.multi_partner_learning.utils import UniformAggregator
 from mplc.partner import Partner
 from mplc.scenario import Scenario
 # create_Mpl uses create_Dataset and create_Contributivity uses create_Scenario

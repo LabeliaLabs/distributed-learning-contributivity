@@ -170,7 +170,7 @@ class Aggregator(ABC):
 
 
 class UniformAggregator(Aggregator):
-    name = 'Uniform'
+    name = 'uniform'
 
     def aggregation_weights(self):
         if self._aggregation_weights:
@@ -181,7 +181,7 @@ class UniformAggregator(Aggregator):
 
 
 class DataVolumeAggregator(Aggregator):
-    name = 'Data volume'
+    name = 'data-volume'
 
     def aggregation_weights(self):
         if self._aggregation_weights:
@@ -193,7 +193,7 @@ class DataVolumeAggregator(Aggregator):
 
 
 class ScoresAggregator(Aggregator):
-    name = 'Local scores'
+    name = 'local-score'
 
     def aggregation_function_for_model_weights(self, mpl):
         """Build the tf.function which aggregate model weights from the list of partner's models,

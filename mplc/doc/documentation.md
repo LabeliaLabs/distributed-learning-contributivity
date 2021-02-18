@@ -154,7 +154,7 @@ There is few other `History` attributes:
 
 ```python
 history.save_folder     # Path to the folder where is saved plots
-history.nb_epochs_done  # Number of epoch done in the mpl, taking into account any early stopping
+history.nb_epochs_done  # Number of epoch done in the multi_partner_learning, taking into account any early stopping
 history.score           # Final score evaluated on the test dataset at the end of the training
 history.metrics         # Metrics computed on the partners' models
 ```
