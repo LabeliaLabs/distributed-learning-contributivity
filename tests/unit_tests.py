@@ -380,17 +380,13 @@ class Test_Splitter:
                                                             [0.33, 0.33, 0.33, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0],
                                                             [0.33, 0.33, 0.33, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0]])
         partners_list = [Partner(i) for i in range(len(splitter.amounts_per_partner))]
-        if dataset.num_classes >= 10:
+        if dataset.num_classes == 10:
             splitter.split(partners_list, dataset)
             for p in partners_list:
                 assert len(p.y_val) == 0, "validation set is not empty in spite of the val_set == 'global'"
                 assert len(p.y_test) == 0, "test set is not empty in spite of the val_set == 'global'"
                 assert len(p.x_train) == len(p.y_train), 'labels and samples numbers mismatches'
-                if dataset.num_classes >= 3:
-                    assert len(p.labels) < dataset.num_classes, f'Partner {p.id} has all labels.'
-        else:
-            with pytest.raises(Exception):
-                splitter.split(partners_list, dataset)
+                assert len(p.labels) < dataset.num_classes, f'Partner {p.id} has all labels.'
 
     def test_flexible_splitter_local(self, create_all_datasets):
         dataset = create_all_datasets
@@ -400,17 +396,13 @@ class Test_Splitter:
                                                             [0.33, 0.33, 0.33, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0]],
                                     val_set='local', test_set='local')
         partners_list = [Partner(i) for i in range(len(splitter.amounts_per_partner))]
-        if dataset.num_classes >= 10:
+        if dataset.num_classes == 10:
             splitter.split(partners_list, dataset)
             for p in partners_list:
                 assert len(p.y_val) > 0, "validation set is empty in spite of the val_set == 'local'"
                 assert len(p.y_test) > 0, "test set is empty in spite of the val_set == 'local'"
                 assert len(p.x_train) == len(p.y_train), 'labels and samples numbers mismatches'
-                if dataset.num_classes >= 3:
-                    assert len(p.labels) < dataset.num_classes, f'Partner {p.id} has all labels.'
-        else:
-            with pytest.raises(Exception):
-                splitter.split(partners_list, dataset)
+                assert len(p.labels) < dataset.num_classes, f'Partner {p.id} has all labels.'
 
 
 ######
