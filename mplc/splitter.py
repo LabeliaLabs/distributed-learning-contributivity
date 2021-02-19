@@ -54,7 +54,6 @@ class Splitter(ABC):
                 f"Partner #{partner.id}: {partner.final_nb_samples} samples with labels {partner.labels}"
             )
 
-    @abstractmethod
     def _test_config_coherence(self):
         self._test_amounts_per_partner_total()
         self._test_amounts_per_partner_length()
@@ -170,10 +169,6 @@ class FlexibleSplitter(Splitter):
 class RandomSplitter(Splitter):
     name = 'Random Splitter'
 
-    def _test_config_coherence(self):
-        self._test_amounts_per_partner_total()
-        self._test_amounts_per_partner_length()
-
     def _generate_subset(self, x, y):
         if self.partners_count == 1:
             return [(x, y)]
@@ -190,10 +185,6 @@ class RandomSplitter(Splitter):
 
 class StratifiedSplitter(Splitter):
     name = 'Stratified Splitter'
-
-    def _test_config_coherence(self):
-        self._test_amounts_per_partner_total()
-        self._test_amounts_per_partner_length()
 
     def _generate_subset(self, x, y):
         if self.partners_count == 1:
@@ -218,10 +209,6 @@ class AdvancedSplitter(Splitter):
 
     def __str__(self):
         return self.name + str(list(zip(self.num_clusters, self.specific_shared)))
-
-    def _test_config_coherence(self):
-        self._test_amounts_per_partner_total()
-        self._test_amounts_per_partner_length()
 
     def _generate_subset(self, x, y):
         lb = LabelEncoder()
