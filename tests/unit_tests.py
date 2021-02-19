@@ -394,7 +394,7 @@ class Test_Splitter:
 
     def test_flexible_splitter_local(self, create_all_datasets):
         dataset = create_all_datasets
-        splitter = AdvancedSplitter([0.3, 0.3, 0.4], configuration=[
+        splitter = FlexibleSplitter([0.3, 0.3, 0.4], configuration=[
                                                             [0.33, 0.33, 0.33, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0],
                                                             [0.33, 0.33, 0.33, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0],
                                                             [0.33, 0.33, 0.33, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0]],
