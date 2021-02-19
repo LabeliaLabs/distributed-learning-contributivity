@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-This enables to parameterize unit tests - the tests are run by Travis each time you commit to the github repo
+This enables to parameterize unit tests - the tests are run by GitHub Actions each time you commit to the github repo
 """
 
 #########
@@ -55,7 +55,7 @@ from mplc.multi_partner_learning import FederatedAverageLearning
 from mplc.partner import Partner
 from mplc.scenario import Scenario
 # create_Mpl uses create_Dataset and create_Contributivity uses create_Scenario
-from mplc.splitter import AdvancedSplitter, RandomSplitter, StratifiedSplitter
+from mplc.splitter import FlexibleSplitter, AdvancedSplitter, RandomSplitter, StratifiedSplitter
 
 
 ######
@@ -91,7 +91,12 @@ def create_MultiPartnerLearning(create_all_datasets):
 @pytest.fixture(scope="class", params=(RandomSplitter([0.1, 0.2, 0.3, 0.4]),
                                        StratifiedSplitter([0.1, 0.2, 0.3, 0.4]),
                                        AdvancedSplitter([0.3, 0.5, 0.2],
-                                                        [[4, "specific"], [6, "shared"], [4, "shared"]])))
+                                                        [[4, "specific"], [6, "shared"], [4, "shared"]]),
+                                       FlexibleSplitter([1.0, 0.0, 0.0], [
+                                                            [0.33, 0.33, 0.33, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0],
+                                                            [0.33, 0.33, 0.33, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0],
+                                                            [0.33, 0.33, 0.33, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0],
+                                                        ])))
 def create_splitter(request):
     return request.param()
 
@@ -113,13 +118,15 @@ def create_Partner(create_all_datasets):
                          ['not-corrupted'] * 3),
                         (Cifar10, "random", ['not-corrupted'] * 3),
                         (Cifar10,
-                         AdvancedSplitter([0.3, 0.5, 0.2], [[4, "specific"], [6, "shared"], [4, "shared"]]),
+                         FlexibleSplitter([0.3, 0.5, 0.2], [[0.33, 0.33, 0.33, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0],
+                                                            [0.33, 0.33, 0.33, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0],
+                                                            [0.33, 0.33, 0.33, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0]]),
                          ['not-corrupted'] * 3)),
                 ids=['Mnist - basic',
                      'Mnist - basic - corrupted',
                      'Mnist - advanced',
                      'Cifar10 - basic',
-                     'Cifar10 - advanced'])
+                     'Cifar10 - flex'])
 def create_Scenario(request):
     dataset = request.param[0]()
     samples_split_option = request.param[1]
@@ -352,6 +359,45 @@ class Test_Splitter:
         splitter = AdvancedSplitter([0.3, 0.3, 0.4], configuration=[[4 * (dataset.num_classes // 10), "specific"],
                                                                     [6 * (dataset.num_classes // 10), "shared"],
                                                                     [4 * (dataset.num_classes // 10), "shared"]],
+                                    val_set='local', test_set='local')
+        partners_list = [Partner(i) for i in range(len(splitter.amounts_per_partner))]
+        if dataset.num_classes >= 10:
+            splitter.split(partners_list, dataset)
+            for p in partners_list:
+                assert len(p.y_val) > 0, "validation set is empty in spite of the val_set == 'local'"
+                assert len(p.y_test) > 0, "test set is empty in spite of the val_set == 'local'"
+                assert len(p.x_train) == len(p.y_train), 'labels and samples numbers mismatches'
+                if dataset.num_classes >= 3:
+                    assert len(p.labels) < dataset.num_classes, f'Partner {p.id} has all labels.'
+        else:
+            with pytest.raises(Exception):
+                splitter.split(partners_list, dataset)
+
+    def test_flexible_splitter_global(self, create_all_datasets):
+        dataset = create_all_datasets
+        splitter = FlexibleSplitter([0.3, 0.3, 0.4], configuration=[
+                                                            [0.33, 0.33, 0.33, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0],
+                                                            [0.33, 0.33, 0.33, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0],
+                                                            [0.33, 0.33, 0.33, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0]])
+        partners_list = [Partner(i) for i in range(len(splitter.amounts_per_partner))]
+        if dataset.num_classes >= 10:
+            splitter.split(partners_list, dataset)
+            for p in partners_list:
+                assert len(p.y_val) == 0, "validation set is not empty in spite of the val_set == 'global'"
+                assert len(p.y_test) == 0, "test set is not empty in spite of the val_set == 'global'"
+                assert len(p.x_train) == len(p.y_train), 'labels and samples numbers mismatches'
+                if dataset.num_classes >= 3:
+                    assert len(p.labels) < dataset.num_classes, f'Partner {p.id} has all labels.'
+        else:
+            with pytest.raises(Exception):
+                splitter.split(partners_list, dataset)
+
+    def test_flexible_splitter_local(self, create_all_datasets):
+        dataset = create_all_datasets
+        splitter = AdvancedSplitter([0.3, 0.3, 0.4], configuration=[
+                                                            [0.33, 0.33, 0.33, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0],
+                                                            [0.33, 0.33, 0.33, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0],
+                                                            [0.33, 0.33, 0.33, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0]],
                                     val_set='local', test_set='local')
         partners_list = [Partner(i) for i in range(len(splitter.amounts_per_partner))]
         if dataset.num_classes >= 10:
