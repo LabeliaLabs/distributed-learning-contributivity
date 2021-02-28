@@ -7,6 +7,7 @@ from loguru import logger
 from sklearn.metrics import confusion_matrix
 
 from .basic_mpl import ALLOWED_PARAMETERS
+from .utils import History
 from .. import constants
 from ..models import NoiseAdaptationChannel
 from ..partner import Partner, PartnerMpl
@@ -106,8 +107,9 @@ class FastFedAvg:
             raise Exception("This fast mpl method only handles Keras based model. Considere changing your model "
                             "definition, or using the basic equivalent of this mpl method")
 
-        self.history = {}  # TODO This history definition is not the same as current mplc def
-        self.end_test_score = {}
+        self.history = History(self)
+        self.history.history['mpl_model'] = {}  # This history definition is not the same as current mplc def
+        # , but it's close
 
         # for early stopping purpose. Those should be parameterizable
         self.is_early_stopping = True
@@ -156,19 +158,19 @@ class FastFedAvg:
             f'[{self.name}] > Epoch {str(epoch_number + 1).ljust(2)}/{self.epoch_count} -'
             f' {f"{np.round(time.time() - self.epoch_timer)} s.".ljust(6)} >'
             f' {" -- ".join(f"{key}: {str(np.round(value, 2)).ljust(5)}" for key, value in history.items())}')
-        if not self.history:
-            self.history = {key: [value] for key, value in history.items()}
+        if not self.history.history['mpl_model']:
+            self.history.history['mpl_model'] = {key: [value] for key, value in history.items()}
         else:
             for key, value in history.items():
-                self.history[key].append(value)
+                self.history.history['mpl_model'][key].append(value)
 
     def log_end_training(self):
         training_time = (time.time() - self.timer)
-        self.end_test_score = self.model.evaluate(self.test_data, return_dict=True, verbose=False)
+        self.history.score = self.model.evaluate(self.test_data, return_dict=True, verbose=False)
         logger.info(
             f'[{self.name}] > Training {self.epochs_index} epoch in {np.round(training_time, 3)} seconds.'
             f' Tests scores: '
-            f'{" -- ".join(f"{key}: {np.around(value, 3)}" for key, value in self.end_test_score.items())}')
+            f'{" -- ".join(f"{key}: {np.around(value, 3)}" for key, value in self.history.score.items())}')
         self.learning_computation_time += training_time
 
     def get_epoch_history(self):
@@ -186,9 +188,9 @@ class FastFedAvg:
         If the metric monitored decreases (or increases, depends on the metrics monitored)
         during patience epoch, we stop the learning.
         """
-        if self.monitor_op(self.history[self.monitor_value][-1] - self.min_delta, self.best):
+        if self.monitor_op(self.history.history['mpl_model'][self.monitor_value][-1] - self.min_delta, self.best):
             self.wait = 0
-            self.best = self.history[self.monitor_value][-1]
+            self.best = self.history.history['mpl_model'][self.monitor_value][-1]
         else:
             self.wait += 1
             if self.wait >= self.patience:
@@ -242,7 +244,7 @@ class FastFedAvg:
                               self.partners_weights,
                               self.aggregation_weights)
             epoch_history = self.get_epoch_history()  # compute val and train acc and loss.
-            # add the epoch history to self history, and log epoch number, and metrics values.
+            # add the epoch _history to self _history, and log epoch number, and metrics values.
             self.log_epoch(e, epoch_history)
             self.epochs_index += 1
             if self.early_stop():
@@ -364,7 +366,7 @@ class FastFedSmodel(FastFedAvg):
                                            self.partners_weights,
                                            self.aggregation_weights)
                 epoch_history = self.get_epoch_history()  # compute val and train acc and loss.
-                # add the epoch history to self history, and log epoch number, and metrics values.
+                # add the epoch _history to self _history, and log epoch number, and metrics values.
                 self.log_epoch(p_e, epoch_history)
                 self.epochs_index += 1
 
@@ -391,7 +393,7 @@ class FastFedSmodel(FastFedAvg):
                               self.smodel_list,
                               self.aggregation_weights)
             epoch_history = self.get_epoch_history()  # compute val and train acc and loss.
-            # add the epoch history to self history, and log epoch number, and metrics values.
+            # add the epoch _history to self _history, and log epoch number, and metrics values.
             self.log_epoch(e, epoch_history)
             self.epochs_index += 1
             if self.early_stop():
@@ -455,7 +457,7 @@ class FastFedGrad(FastFedAvg):
             self.epoch_timer = time.time()
             fit_epoch(self.model, self.train_dataset, self.partners_grads, self.global_grad, self.aggregation_weights)
             epoch_history = self.get_epoch_history()  # compute val and train acc and loss.
-            # add the epoch history to self history, and log epoch number, and metrics values.
+            # add the epoch _history to self _history, and log epoch number, and metrics values.
             self.log_epoch(e, epoch_history)
             self.epochs_index += 1
             if self.early_stop():
@@ -522,7 +524,7 @@ class FastGradSmodel(FastFedGrad):
                                    self.global_grad,
                                    self.aggregation_weights)
                 epoch_history = self.get_epoch_history()  # compute val and train acc and loss.
-                # add the epoch history to self history, and log epoch number, and metrics values.
+                # add the epoch _history to self _history, and log epoch number, and metrics values.
                 self.log_epoch(p_e, epoch_history)
                 self.epochs_index += 1
 
@@ -547,7 +549,7 @@ class FastGradSmodel(FastFedGrad):
                       self.global_grad,
                       self.aggregation_weights)
             epoch_history = self.get_epoch_history()  # compute val and train acc and loss.
-            # add the epoch history to self history, and log epoch number, and metrics values.
+            # add the epoch _history to self _history, and log epoch number, and metrics values.
             self.log_epoch(e, epoch_history)
             self.epochs_index += 1
             if self.early_stop():
