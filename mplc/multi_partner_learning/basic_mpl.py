@@ -163,7 +163,9 @@ class MultiPartnerLearning(ABC):
         logger.debug(f"{epoch_nb_str} > {mb_nb_str} > {partner_id_str} > val_acc: {val_acc_str}")
 
     def eval_and_log_model_val_perf(self):
+
         model = self.build_model()
+
         if self.val_set == 'global':
             hist = model.evaluate(self.val_data[0],
                                   self.val_data[1],
