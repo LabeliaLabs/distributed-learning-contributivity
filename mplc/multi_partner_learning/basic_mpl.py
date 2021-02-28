@@ -85,7 +85,7 @@ class MultiPartnerLearning(ABC):
         self.partners_list = [PartnerMpl(partner, self) for partner in self.partners_list]
 
         # Attributes related to the aggregation approach
-        self.aggregation_function = self.init_aggregation_function(scenario.aggregation)
+        self.aggregator = self.init_aggregation_function(scenario.aggregation)
 
         # Initialize History
         self.history = History(self)
@@ -108,7 +108,7 @@ class MultiPartnerLearning(ABC):
         return len(self.partners_list)
 
     def init_aggregation_function(self, aggregator):
-        return aggregator.aggregation_function_for_model_weights(self)
+        return aggregator(self)
 
     def build_model(self):
         return self.build_model_from_weights(self.model_weights)
@@ -362,10 +362,7 @@ class FederatedAverageLearning(MultiPartnerLearning):
             self.fit_minibatch()
 
             # At the end of each minibatch,aggregate the models
-            model = self.build_model()
-            self.aggregation_function(model.trainable_weights,
-                                      [p.model_weights for p in self.partners_list])
-            self.model_weights = model.get_weights()
+            self.model_weights = self.aggregator.aggregate_model_weights()
         self.minibatch_index = 0
 
     def fit_minibatch(self):
@@ -499,9 +496,7 @@ class SequentialWithFinalAggLearning(SequentialLearning):
 
         # At the end of each epoch, aggregate the models
         model = self.build_model()
-        self.aggregation_function(model.trainable_weights,
-                                  [p.model_weights for p in self.partners_list])
-        self.model_weights = model.get_weights()
+        self.model_weights = self.aggregator.aggregate_model_weights()
 
 
 class SequentialAverageLearning(SequentialLearning):
@@ -527,7 +522,7 @@ class SequentialAverageLearning(SequentialLearning):
             self.fit_minibatch()
 
             # At the end of each minibatch, aggregate the models
-            self.model_weights = self.aggregation_function.aggregate_model_weights()
+            self.model_weights = self.aggregator.aggregate_model_weights()
 
 
 class FedAvgSmodel(FederatedAverageLearning):
@@ -647,7 +642,7 @@ class FederatedGradients(MultiPartnerLearning):
                                        self.model(partner.minibatched_x_train[self.minibatch_index]))
             partner.grads = tape.gradient(loss, self.model.trainable_weights)
 
-        global_grad = self.aggregation_function(tuple([p.grads for p in self.partners_list]))
+        global_grad = self.aggregator.aggregate_gradients()
         self.model.optimizer.apply_gradients(zip(global_grad, self.model.trainable_weights))
         self.model_weights = self.model.get_weights()
 
