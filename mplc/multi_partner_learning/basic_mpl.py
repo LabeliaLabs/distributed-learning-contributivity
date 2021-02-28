@@ -495,7 +495,6 @@ class SequentialWithFinalAggLearning(SequentialLearning):
             self.fit_minibatch()
 
         # At the end of each epoch, aggregate the models
-        model = self.build_model()
         self.model_weights = self.aggregator.aggregate_model_weights()
 
 
@@ -661,7 +660,3 @@ class FederatedGradients(MultiPartnerLearning):
             self.log_partner_perf(partner.id, partner_index, history)
 
         logger.debug("End of grads-fusion collaborative round.")
-
-
-
-
