@@ -106,6 +106,7 @@ class FlexibleSplitter(Splitter):
                     "per partner from the samples_split_configuration provided.")
 
         # First we re-assemble the split configuration per cluster
+        self.configuration = configuration
         self.split_configuration = configuration
         self.samples_split_grouped_by_cluster = list(zip(*configuration))
 
@@ -204,6 +205,7 @@ class AdvancedSplitter(Splitter):
     name = 'Advanced Splitter'
 
     def __init__(self, amounts_per_partner, configuration, **kwargs):
+        self.configuration = configuration
         self.num_clusters, self.specific_shared = list(zip(*configuration))
         super().__init__(amounts_per_partner, **kwargs)
 

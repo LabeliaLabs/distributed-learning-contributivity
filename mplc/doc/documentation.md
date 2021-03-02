@@ -252,7 +252,7 @@ There are 2 ways to select a dataset. You can either choose a pre-implemented da
                        from clusters they all share data samples from
           - `'specific'`: each partner with option `'specific'` receives data samples picked 
                          from cluster(s) it is the only one to receive from  
-    Example: `samples_split_option='advanced', samples_split_configuration=[[7, 'shared'], [6, 'shared'], [2, 'specific'], [1, 'specific']]]`
+    Example: `samples_split_option='advanced', samples_split_configuration=[[7, 'shared'], [6, 'shared'], [2, 'specific'], [1, 'specific']]`
     
     - `FlexibleSplitter`: in other cases one might want to specify in detail the split among partners (partner per partner and class per class). For that the `FlexibleSplitter` can be used. It is configured by indicating, for each partner in sequence, a list of the percentage of samples for each class: `[[% for class 1, ..., % for class n]]`. As above, it can be instantiated separately and then passed to the `Scenario` instance. Or the string identifier `'flexible'` can be used for the parameter `samples_split_option`, coupled with the split configuration passed to the keyword argument `samples_split_configuration`. String identified: `'flexible'`. 
     Example: `samples_split_option='flexible', samples_split_configuration=[[0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.5, 0.5, 0.5], [0.5, 0.5, 0.5, 1.0, 1.0, 1.0, 0.5, 0.5, 0.5, 0.0]]` (this corresponds to 50% of the last 3 classes for partner 1, and 50% or 100% of each of the first 9 classes for partner 2).  
