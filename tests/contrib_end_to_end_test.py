@@ -27,7 +27,7 @@ class Test_EndToEndTest:
 
         df = test_utils.get_latest_dataframe("*end_to_end_test*")
 
-        # 2 contributivity methods X 2 parters x 2 repeats = 12
+        # 2 contributivity methods X 2 partners x 2 repeats = 12
         assert len(df) == 12
 
     def test_mnist_contrib(self):

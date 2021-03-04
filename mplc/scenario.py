@@ -174,6 +174,11 @@ class Scenario:
         # (% of samples of the dataset for each partner, ...
         # ... has to sum to 1, and number of items has to equal partners_count)
         self.amounts_per_partner = amounts_per_partner
+        if np.sum(self.amounts_per_partner) != 1:
+            raise ValueError("The sum of the amount per partners you provided isn't equal to 1")
+        if len(self.amounts_per_partner) != self.partners_count:
+            raise AttributeError(f"The amounts_per_partner list should have a size ({len(self.amounts_per_partner)}) "
+                                 f"equals to partners_count ({self.partners_count})")
 
         #  To configure how validation set and test set will be organized.
         if test_set in ['local', 'global']:
@@ -341,9 +346,11 @@ class Scenario:
             self.save_folder = Path(save_path) / self.scenario_name
         else:
             self.save_folder = None
-        # ------------------------------------------------------------------
+
+        # -------------------------------------------------------------------
         # Select in the kwargs the parameters to be transferred to sub object
-        # ------------------------------------------------------------------
+        # -------------------------------------------------------------------
+
         self.mpl_kwargs = {}
         for key, value in kwargs.items():
             if key.startswith('mpl_'):

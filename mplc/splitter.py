@@ -23,10 +23,6 @@ class Splitter(ABC):
         self.dataset = None
         self.partners_list = None
 
-        # Check the percentages of samples per partner and control its coherence
-        if np.sum(self.amounts_per_partner) != 1:
-            raise ValueError("The sum of the amount per partners you provided isn't equal to 1")
-
     @property
     def partners_count(self):
         return len(self.partners_list)
@@ -37,28 +33,39 @@ class Splitter(ABC):
     def split(self, partners_list, dataset):
         self.dataset = dataset
         self.partners_list = partners_list
-        if len(self.amounts_per_partner) != self.partners_count:
-            raise AttributeError(f"The amounts_per_partner list should have a size ({len(self.amounts_per_partner)}) "
-                                 f"equals to partners_count ({self.partners_count})")
 
-        logger.info("### Splitting data among partners:")
-        logger.info("Train data split:")
+        logger.info("Splitting data among partners: starting now.")
+        self._test_config_coherence()
+        logger.info("Coherence of config parameters: OK.")
+
+        logger.info("Train data split: starting now.")
         self._split_train()
 
         if self.val_set == 'local':
-            logger.info("Validation data split:")
+            logger.info("Validation data split: starting now.")
             self._split_val()
 
         if self.test_set == 'local':
-            logger.info("Test data split:")
+            logger.info("Test data split: starting now.")
             self._split_test()
 
         for partner in self.partners_list:
             logger.info(
-                f"   Partner #{partner.id}: "
-                f"{partner.final_nb_samples} samples "
-                f"with labels {partner.labels}"
+                f"Partner #{partner.id}: {partner.final_nb_samples} samples with labels {partner.labels}"
             )
+
+    def _test_config_coherence(self):
+        self._test_amounts_per_partner_total()
+        self._test_amounts_per_partner_length()
+
+    def _test_amounts_per_partner_total(self):
+        if np.sum(self.amounts_per_partner) != 1:
+            raise ValueError("The sum of the amount per partners you provided isn't equal to 1; it has to.")
+
+    def _test_amounts_per_partner_length(self):
+        if len(self.amounts_per_partner) != self.partners_count:
+            raise AttributeError(f"The amounts_per_partner list should have a size ({len(self.amounts_per_partner)}) "
+                                 f"equals to partners_count ({self.partners_count})")
 
     def _split_train(self):
         subsets = self._generate_subset(self.dataset.x_train, self.dataset.y_train)
@@ -89,8 +96,79 @@ class Splitter(ABC):
         return self.__copy__()
 
 
+class FlexibleSplitter(Splitter):
+    name = 'Fully Flexible Splitter'
+
+    def __init__(self, amounts_per_partner, configuration, **kwargs):
+
+        logger.info("Proceeding to a flexible split as requested. Please note that the flexible "
+                    "split currently discards the amounts_per_partner (if provided) and infers amounts of samples "
+                    "per partner from the samples_split_configuration provided.")
+
+        # First we re-assemble the split configuration per cluster
+        self.configuration = configuration
+        self.split_configuration = configuration
+        self.samples_split_grouped_by_cluster = list(zip(*configuration))
+
+        # Init of the superclass to inherit its methods
+        super().__init__(amounts_per_partner, **kwargs)
+
+    def _test_config_coherence(self):
+
+        # First, we test if the splitter configuration is coherent with the number of partners
+        if len(self.split_configuration) != self.partners_count:
+            raise AttributeError(f"The split configuration should have a size ({len(self.split_configuration)}) "
+                                 f"equals to partners_count ({self.partners_count})")
+
+        # Second, we test for each class that the amount of samples split across partners is <= 100%
+        for idx, cluster in enumerate(self.samples_split_grouped_by_cluster):
+            if np.sum(cluster) > 1:
+                raise ValueError(f"Amounts of samples of class {idx} split among partners exceed 100%, "
+                                 f"the dataset split cannot be performed.")
+
+    def _generate_subset(self, x, y):
+
+        # Convert raw labels in y to simplify operations on the dataset
+        lb = LabelEncoder()
+        y_str = lb.fit_transform([str(label) for label in y])
+        labels = list(set(y_str))
+
+        # Split the datasets (x and y) into subsets of samples of each label (called "clusters")
+        x_for_cluster, y_for_cluster, nb_samples_per_cluster = {}, {}, {}
+        for label in labels:
+            idx_in_full_set = np.where(y_str == label)
+            x_for_cluster[label] = x[idx_in_full_set]
+            y_for_cluster[label] = y[idx_in_full_set]
+            nb_samples_per_cluster[label] = len(y_for_cluster[label])
+
+        # Assemble datasets per partner by looping over partners and labels
+        res = []
+        nb_samples_split = []
+        for p_idx, p in enumerate(self.partners_list):
+
+            list_arrays_x, list_arrays_y = [], []
+
+            for idx, label in enumerate(labels):
+                nb_samples_to_pick = int(nb_samples_per_cluster[label] * self.samples_split_grouped_by_cluster[idx][
+                    p_idx])
+                list_arrays_x.append(x_for_cluster[label][:nb_samples_to_pick])
+                x_for_cluster[label] = x_for_cluster[label][nb_samples_to_pick:]
+                list_arrays_y.append(y_for_cluster[label][:nb_samples_to_pick])
+                y_for_cluster[label] = y_for_cluster[label][nb_samples_to_pick:]
+
+            res.append((np.concatenate(list_arrays_x), np.concatenate(list_arrays_y)))
+            nb_samples_split.append(len(np.concatenate(list_arrays_y)))
+
+        # Log the relative amounts of samples split among partners
+        total_nb_samples_split = np.sum(nb_samples_split)
+        relative_nb_samples = [round(nb / total_nb_samples_split, 2) for nb in nb_samples_split]
+        logger.info(f"Partners' relative number of samples: {relative_nb_samples}")
+
+        return res
+
+
 class RandomSplitter(Splitter):
-    name = 'Random samples split'
+    name = 'Random Splitter'
 
     def _generate_subset(self, x, y):
         if self.partners_count == 1:
@@ -107,7 +185,7 @@ class RandomSplitter(Splitter):
 
 
 class StratifiedSplitter(Splitter):
-    name = 'Stratified samples split'
+    name = 'Stratified Splitter'
 
     def _generate_subset(self, x, y):
         if self.partners_count == 1:
@@ -124,9 +202,10 @@ class StratifiedSplitter(Splitter):
 
 
 class AdvancedSplitter(Splitter):
-    name = 'Advanced samples split'
+    name = 'Advanced Splitter'
 
     def __init__(self, amounts_per_partner, configuration, **kwargs):
+        self.configuration = configuration
         self.num_clusters, self.specific_shared = list(zip(*configuration))
         super().__init__(amounts_per_partner, **kwargs)
 
@@ -271,6 +350,7 @@ class AdvancedSplitter(Splitter):
 
 
 IMPLEMENTED_SPLITTERS = {
+    'flexible': FlexibleSplitter,
     'random': RandomSplitter,
     'stratified': StratifiedSplitter,
     'advanced': AdvancedSplitter
