@@ -55,7 +55,7 @@ class Test_EndToEndTest:
         Test all the multi_partner_learning approaches
         """
 
-        exp = Experiment()
+        exp = Experiment(is_save=False)
         mpl_approaches = mpl.BASIC_MPL_APPROACHES.copy()
 
         for approach in mpl_approaches:

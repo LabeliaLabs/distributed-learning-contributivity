@@ -12,12 +12,12 @@ scenario_params_list:
       - 'random'
     multi_partner_learning_approach:
       - 'fedavg'
-     - 'seq-pure'
-   epoch_count: 
-     - 2
-   minibatch_count: 
-     - 10
-   gradient_updates_per_pass_count:
-     - 8
-   dataset_proportion:
-     - 0.2
+      - 'seq-pure'
+    epoch_count:
+      - 2
+    minibatch_count:
+      - 10
+    gradient_updates_per_pass_count:
+      - 8
+    dataset_proportion:
+      - 0.2
