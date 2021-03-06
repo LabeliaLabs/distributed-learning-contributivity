@@ -12,13 +12,13 @@ scenario_params_list:
       - 'random'
     multi_partner_learning_approach:
       - 'fedavg'
-   contributivity_methods:
-     - [ "Shapley values", "Independent scores", "Federated SBS linear"]
-   epoch_count: 
-     - 1
-   minibatch_count: 
-     - 10
-   gradient_updates_per_pass_count:
-     - 8
-   dataset_proportion:
-     - 0.1
+    contributivity_methods:
+      - [ "Shapley values", "Independent scores", "Federated SBS linear" ]
+    epoch_count:
+      - 1
+    minibatch_count:
+      - 10
+    gradient_updates_per_pass_count:
+      - 8
+    dataset_proportion:
+      - 0.1

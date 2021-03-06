@@ -978,8 +978,8 @@ class Contributivity:
             logger.info(f"Partners selected for the next epoch: {[p.id for p in mpl.partners_list]}")
 
             # apply one epoch with the selected partner to the previous model/ do the action
-            mpl.aggregation_function = self.scenario._aggregation_weighting(
-                mpl)  # we have to reset the weight of _aggregation
+            mpl.aggregation_function = mpl.init_aggregation_function(self.scenario.aggregation)
+            # we have to reset the weight of _aggregation
             mpl.fit_epoch()
             loss = mpl.history.history['mpl_model']['val_loss'][mpl.epoch_index, -1]
             mpl.epoch_index += 1
