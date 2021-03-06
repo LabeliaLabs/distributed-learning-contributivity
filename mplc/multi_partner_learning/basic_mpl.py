@@ -279,7 +279,7 @@ class MultiPartnerLearning(ABC):
 
 
 class SinglePartnerLearning(MultiPartnerLearning):
-    name = 'Single partner learning'
+    name = 'singlePartner learning'
 
     def __init__(self, scenario, partner, **kwargs):
         kwargs['partners_list'] = [partner]

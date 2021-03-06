@@ -386,8 +386,8 @@ class Scenario:
     def copy(self, **kwargs):
         params = self.__dict__.copy()
         for key in ['partners_list',
-                    'multi_partner_learning',
                     '_multi_partner_learning_approach',
+                    'mpl',
                     'aggregation',
                     'use_saved_weights',
                     'contributivity_list',

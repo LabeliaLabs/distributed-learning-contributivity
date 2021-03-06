@@ -52,6 +52,9 @@ class FastFedAvg:
         self.val_set = scenario.val_set
         self.test_set = scenario.test_set
 
+        # Attributes to store results
+        self.save_folder = scenario.save_folder
+
         # Attributes related to iterating at different levels
         self.epoch_count = scenario.epoch_count
         self.minibatch_count = scenario.minibatch_count
@@ -430,9 +433,6 @@ class FastFedGrad(FastFedAvg):
         self.global_grad = [tf.Variable(initial_value=w.read_value()) for w in self.model.trainable_weights]
         self.partners_optimizers = [self.model.optimizer.from_config(self.model.optimizer.get_config()) for _ in
                                     self.partners_list]
-
-    def init_aggregation_function(self, aggregator):
-        return aggregator.aggregation_function_for_model_gradients(self)
 
     def fit(self):
 

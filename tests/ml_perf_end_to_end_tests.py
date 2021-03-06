@@ -8,9 +8,9 @@ import subprocess
 import numpy as np
 import pandas as pd
 
+import mplc.multi_partner_learning as mpl
 from mplc.corruption import Duplication
 from mplc.experiment import Experiment
-from mplc.multi_partner_learning import basic_mpl
 from mplc.scenario import Scenario
 from . import test_utils
 
@@ -56,7 +56,7 @@ class Test_EndToEndTest:
         """
 
         exp = Experiment()
-        mpl_approaches = basic_mpl.MULTI_PARTNER_LEARNING_APPROACHES.copy()
+        mpl_approaches = mpl.BASIC_MPL_APPROACHES.copy()
 
         for approach in mpl_approaches:
             exp.add_scenario(Scenario(2, [0.25, 0.75], epoch_count=2, minibatch_count=2, dataset='mnist',
