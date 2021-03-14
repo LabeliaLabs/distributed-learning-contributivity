@@ -25,8 +25,8 @@ from ..partner import Partner, PartnerMpl
 # AS THESE IMPROVEMENTS RELY MOSTLY ON THE TENSORFLOW API, ONLY KERAS MODELS CAN BE USED
 #
 # The main improvements are:
-#   - We build only one model, and never re-build. Instead, we switch the weights from
-#     tensor to tensor. Note that we need to use weight stakeholders, re-initialize.
+#   - We build only one model, and never re-build the model. Instead, we keep the weights of each partners in tf tensor,
+#   and load them into the model when needed.
 #   - We benefit from tf.Dataset for the
 #     batching, shuffling, and prefetching of data.
 #   - We benefit from tf.function for the aggregation and training of an epoch. The fit_minibatch or fit_epoch method
@@ -264,7 +264,7 @@ class FastFedSmodel(FastFedAvg):
     """
     name = 'FastFedSmodel'
 
-    def __init__(self, scenario, pretrain_epochs, epsilon=0.5, **kwargs):
+    def __init__(self, scenario, pretrain_epochs=0, epsilon=0.5, **kwargs):
         super(FastFedSmodel, self).__init__(scenario, **kwargs)
 
         self.pretrain_epochs = pretrain_epochs
@@ -334,7 +334,7 @@ class FastFedSmodel(FastFedAvg):
 
                 for x, y in zip(x_minibatch, y_minibatch):  # iterate over batches
                     s_model_p = smodel_list[p_id]
-                    with tf.GradientTape() as tape:
+                    with tf.GradientTape(persistent=True) as tape:
                         yt_pred = model(x)
                         yo_pred = s_model_p(yt_pred)
                         loss = model.compiled_loss(y, yo_pred)
@@ -416,6 +416,7 @@ class FastFedGrad(FastFedAvg):
     are required and so this method performs in fact very well.
 
     """
+    name = 'FastFedGrad'
 
     def __init__(self, scenario, **kwargs):
         super(FastFedGrad, self).__init__(scenario, **kwargs)
@@ -435,7 +436,6 @@ class FastFedGrad(FastFedAvg):
                                     self.partners_list]
 
     def fit(self):
-
         # TF function definition
         @tf.function
         def fit_epoch(model, train_dataset, partners_grads, global_grad, aggregation_weights):
@@ -444,7 +444,9 @@ class FastFedGrad(FastFedAvg):
                     with tf.GradientTape() as tape:
                         y_pred = model(x_partner_batch)
                         loss = model.compiled_loss(y_partner_batch, y_pred)
-                        partners_grads[p_id] = tape.gradient(loss, model.trainable_weights)
+                        par_grad = tape.gradient(loss, model.trainable_weights)
+                        for holder, grad in zip(partners_grads[p_id], par_grad):
+                            holder.assign(grad)
                     model.compiled_metrics.update_state(y_partner_batch, y_pred)
 
                 for i, grads_per_layer in enumerate(zip(*partners_grads)):
@@ -467,7 +469,9 @@ class FastFedGrad(FastFedAvg):
 
 
 class FastGradSmodel(FastFedGrad):
-    def __init__(self, scenario, pretrain_epochs, epsilon=0.5, **kwargs):
+    name = 'FastGradSmodel'
+
+    def __init__(self, scenario, pretrain_epochs=0, epsilon=0.5, **kwargs):
         super(FastGradSmodel, self).__init__(scenario, **kwargs)
 
         self.pretrain_epochs = pretrain_epochs
@@ -490,7 +494,9 @@ class FastGradSmodel(FastFedGrad):
                     with tf.GradientTape() as tape:
                         y_pred = model(x_partner_batch)
                         loss = model.compiled_loss(y_partner_batch, y_pred)
-                        partners_grads[p_id] = tape.gradient(loss, model.trainable_weights)
+                        par_grad = tape.gradient(loss, model.trainable_weights)
+                        for holder, grad in zip(partners_grads[p_id], par_grad):
+                            holder.assign(grad)
                     model.compiled_metrics.update_state(y_partner_batch, y_pred)
                 for i, grads_per_layer in enumerate(zip(*partners_grads)):
                     global_grad[i].assign(tf.tensordot(grads_per_layer, aggregation_weights, [0, 0]))
@@ -500,12 +506,15 @@ class FastGradSmodel(FastFedGrad):
         def fit_epoch(model, train_dataset, partners_grads, smodel_list, global_grad, aggregation_weights):
             for minibatch in zip(*train_dataset):
                 for p_id, (x_partner_batch, y_partner_batch) in enumerate(minibatch):
-                    with tf.GradientTape() as tape:
+                    with tf.GradientTape(persistent=True) as tape:
                         s_model_p = smodel_list[p_id]
                         yt_pred = model(x_partner_batch)
                         yo_pred = s_model_p(yt_pred)
                         loss = model.compiled_loss(y_partner_batch, yo_pred)
-                    partners_grads[p_id] = tape.gradient(loss, model.trainable_weights)
+
+                    par_grad = tape.gradient(loss, model.trainable_weights)
+                    for holder, grad in zip(partners_grads[p_id], par_grad):
+                        holder.assign(grad)
                     s_model_p.optimizer.minimize(loss, s_model_p.trainable_weights, tape=tape)
                     model.compiled_metrics.update_state(y_partner_batch, yo_pred)
                 for i, grads_per_layer in enumerate(zip(*partners_grads)):
@@ -546,6 +555,7 @@ class FastGradSmodel(FastFedGrad):
             fit_epoch(self.model,
                       self.train_dataset,
                       self.partners_grads,
+                      self.smodel_list,
                       self.global_grad,
                       self.aggregation_weights)
             epoch_history = self.get_epoch_history()  # compute val and train acc and loss.

@@ -56,7 +56,8 @@ class Test_EndToEndTest:
         """
 
         exp = Experiment(is_save=False)
-        mpl_approaches = mpl.BASIC_MPL_APPROACHES.copy()
+        # mpl_approaches = mpl.BASIC_MPL_APPROACHES.copy()
+        mpl_approaches = mpl.MULTI_PARTNER_LEARNING_APPROACHES
 
         for approach in mpl_approaches:
             exp.add_scenario(Scenario(2, [0.25, 0.75], epoch_count=2, minibatch_count=2, dataset='mnist',
