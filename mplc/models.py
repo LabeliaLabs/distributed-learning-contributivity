@@ -98,7 +98,7 @@ class LogisticRegression(skLR):
 
 class EnsemblePredictionsModel():
     """
-    Ensemble (average) prediction of several input models
+    Ensemble (average) predictions of several input models
     """
 
     def __init__(self, partners_model_list):
@@ -124,9 +124,8 @@ class EnsemblePredictionsModel():
 
         return [loss, metric]
 
-    # TODO SAVE/LOAD method: save every partners model ?
     def save_weights(self, path):
-        pass
+        raise NotImplementedError
 
     def load_weights(self, path):
         raise NotImplementedError
@@ -135,10 +134,10 @@ class EnsemblePredictionsModel():
         raise NotImplementedError
 
     def set_weights(self, weights):
-        pass
+        raise NotImplementedError
 
     def save_model(self, path):
-        pass
+        raise NotImplementedError
 
     @staticmethod
     def load_model(path):
