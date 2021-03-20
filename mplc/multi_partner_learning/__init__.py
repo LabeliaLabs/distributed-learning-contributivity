@@ -11,12 +11,10 @@ BASIC_MPL_APPROACHES = {
     "fedavg-smodel": basic_mpl.FedAvgSmodel}
 
 FAST_TF_MPL_APPROACHES = {
-
     'fast-fedavg': fast_mpl.FastFedAvg,
     'fast-fedgrads': fast_mpl.FastFedGrad,
-    'fast-fedavg-smodel': fast_mpl.FastFedSmodel,
+    'fast-fedavg-smodel': fast_mpl.FastFedAvgSmodel,
     'fast-fedgrad-smodel': fast_mpl.FastGradSmodel
-
 }
 
 MULTI_PARTNER_LEARNING_APPROACHES = BASIC_MPL_APPROACHES.copy()

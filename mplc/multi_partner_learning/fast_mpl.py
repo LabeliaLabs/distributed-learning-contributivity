@@ -20,9 +20,9 @@ from ..partner import Partner, PartnerMpl
 ####################################################
 
 # The few methods implemented in this module benefit from few improvements,
-# which make them 5th to 10th times faster (even more for FastFedGrads).
+# which make them 5 to 10 times faster (even more for FastFedGrads).
 #
-# AS THESE IMPROVEMENTS RELY MOSTLY ON THE TENSORFLOW API, ONLY KERAS MODELS CAN BE USED
+# As these improvements rely on the tensorflow API, these methods can only be used with Keras models.
 #
 # The main improvements are:
 #   - We build only one model, and never re-build the model. Instead, we keep the weights of each partners in tf tensor,
@@ -37,7 +37,7 @@ from ..partner import Partner, PartnerMpl
 #
 
 class FastFedAvg:
-    """ This class defines a multi_partner_learning method which is theoretically the same as FedAvgSmodel.
+    """ This class defines a multi_partner_learning method which is theoretically the same as FedAvg.
      It's just way faster, due to the use of tf.Dataset, and tf.function for the training.
      In this version each partner uses its own Adam optimizer."""
 
@@ -256,16 +256,16 @@ class FastFedAvg:
         self.log_end_training()
 
 
-class FastFedSmodel(FastFedAvg):
+class FastFedAvgSmodel(FastFedAvg):
     """
     This class defines a multi_partner_learning method which is theoretically the same as FedAvgSmodel.
      It's just way faster, due to the use of tf.Dataset, and tf.function for the training.
 
     """
-    name = 'FastFedSmodel'
+    name = 'FastFedAvgSmodel'
 
     def __init__(self, scenario, pretrain_epochs=0, epsilon=0.5, **kwargs):
-        super(FastFedSmodel, self).__init__(scenario, **kwargs)
+        super(FastFedAvgSmodel, self).__init__(scenario, **kwargs)
 
         self.pretrain_epochs = pretrain_epochs
         self.epsilon = epsilon
@@ -407,7 +407,7 @@ class FastFedSmodel(FastFedAvg):
 
 class FastFedGrad(FastFedAvg):
     """
-    This class provides a multi-partner-learning method with is theoretically the same than FedGrads.
+    This class provides a multi-partner-learning method with is theoretically equivalent to FedGrads.
     Each partner computes a forward and backward propagation with its copy of the global model. Then the resulting
      gradients are aggregated, and a global optimizer uses the aggregated gradient to update the global model weights.
     Compared to FedAvg, this method requires more communications between partner (one each local batch against one
@@ -469,6 +469,15 @@ class FastFedGrad(FastFedAvg):
 
 
 class FastGradSmodel(FastFedGrad):
+    """
+        This class defines a multi_partner_learning method which combine the Smodel method, with the FedGrad algorithm
+        for the training of the global model.
+        For each partner the gradient of the whole model (global model + personal Smodel layer) is computed locally.
+        The weights of the Smodel layer are optimized according to the partial gradient of this layer.
+        The remaining part of the gradient is averaged over the partners, and used by a global optimizer to train the
+        global model, whose updated weights are then send back to each partner.
+    """
+
     name = 'FastGradSmodel'
 
     def __init__(self, scenario, pretrain_epochs=0, epsilon=0.5, **kwargs):
