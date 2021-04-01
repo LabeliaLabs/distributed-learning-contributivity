@@ -178,13 +178,13 @@ Under `scenario_params_list`, enter a list of sets of scenario(s). Each set star
 
 We defined 5 reference scenarios on which we propose to test and benchmark the different multi-partner learning approaches and contributivity measurement methods.
 
-The 5 reference scenarios are described in the following schema:
+The 5 reference scenarios are described on the following schema ([link](https://docs.google.com/drawings/d/1_ovwpBTx_Rno5FO1AcODM7cJ6a_EPaBOh9OYl952J-4/edit?usp=sharing) to editable version):
 
 ![Reference scenarios](./img/reference_scenarios.png)
 
 #### Results and benchmarks
 
-_<To be completed>_
+Results of experiments and benchmarks of multi-partner learning approaches and contributivity methods on the reference scenarios will be summarised in this section in the upcoming months. Associated notebooks and full results will be shared on [Open Science Framework](https://osf.io/89qbt/). 
 
 ### Ongoing work and improvement plan
 
