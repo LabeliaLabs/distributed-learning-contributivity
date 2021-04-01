@@ -13,6 +13,20 @@ from urllib.request import urlretrieve
 
 import numpy as np
 import pandas as pd
+<<<<<<< HEAD
+=======
+from joblib import dump, load
+from keras.datasets import cifar10, cifar100, mnist, imdb
+from keras.layers import Activation
+from keras.layers import Conv2D, GlobalAveragePooling2D, MaxPooling2D
+from keras.layers import Dense, Dropout
+from keras.layers import Embedding, Conv1D, MaxPooling1D, Flatten
+from keras.losses import categorical_crossentropy
+from keras.models import Sequential
+from keras.optimizers import RMSprop
+from keras.preprocessing import sequence
+from keras.utils import to_categorical
+>>>>>>> 0bb0faf (Add pytorch model for cifar100 [WIP])
 from librosa import load as wav_load
 from librosa.feature import mfcc
 from loguru import logger
@@ -192,6 +206,241 @@ class Cifar10(Dataset):
                       metrics=self.model_metrics_names[1:])
 
         return model
+
+
+class Cifar100(Dataset):
+    def __init__(self):
+        self.input_shape = (32, 32, 3)
+        self.num_classes = 100
+        x_test, x_train, y_test, y_train = self.load_data()
+
+        super(Cifar10, self).__init__(dataset_name='cifar100',
+                                      num_classes=self.num_classes,
+                                      input_shape=self.input_shape,
+                                      x_train=x_train,
+                                      y_train=y_train,
+                                      x_test=x_test,
+                                      y_test=y_test)
+
+    def load_data(self):
+        attempts = 0
+        while True:
+            try:
+                (x_train, y_train), (x_test, y_test) = cifar100.load_data()
+                break
+            except (HTTPError, URLError) as e:
+                if hasattr(e, 'code'):
+                    temp = e.code
+                else:
+                    temp = e.errno
+                logger.debug(
+                    f'URL fetch failure on '
+                    f'https://www.cs.toronto.edu/~kriz/cifar-100-python.tar.gz : '
+                    f'{temp} -- {e.reason}')
+                if attempts < constants.NUMBER_OF_DOWNLOAD_ATTEMPTS:
+                    sleep(2)
+                    attempts += 1
+                else:
+                    raise
+
+        # Pre-process inputs
+        x_train = self.preprocess_dataset_inputs(x_train)
+        x_test = self.preprocess_dataset_inputs(x_test)
+        y_train = self.preprocess_dataset_labels(y_train)
+        y_test = self.preprocess_dataset_labels(y_test)
+        return x_test, x_train, y_test, y_train
+
+    # Data samples pre-processing method for inputs
+    @staticmethod
+    def preprocess_dataset_inputs(x):
+        x = x.astype("float32")
+        x /= 255
+
+        return x
+
+    # Data samples pre-processing method for labels
+    def preprocess_dataset_labels(self, y):
+        y = to_categorical(y, self.num_classes)
+
+        return y
+
+    # Model structure and generation
+    def generate_new_model(self):
+        """Return a CNN model from scratch based on given batch_size"""
+
+        model = models.vgg16()
+
+        # TODO: Add new model
+        # model = Sequential()
+        # model.add(Conv2D(32, (3, 3), padding='same', input_shape=self.input_shape))
+        # model.add(Activation('relu'))
+        # model.add(Conv2D(32, (3, 3)))
+        # model.add(Activation('relu'))
+        # model.add(MaxPooling2D(pool_size=(2, 2)))
+        # model.add(Dropout(0.25))
+
+        # model.add(Conv2D(64, (3, 3), padding='same'))
+        # model.add(Activation('relu'))
+        # model.add(Conv2D(64, (3, 3)))
+        # model.add(Activation('relu'))
+        # model.add(MaxPooling2D(pool_size=(2, 2)))
+        # model.add(Dropout(0.25))
+
+        # model.add(Flatten())
+        # model.add(Dense(512))
+        # model.add(Activation('relu'))
+        # model.add(Dropout(0.5))
+        # model.add(Dense(self.num_classes))
+        # model.add(Activation('softmax'))
+
+        # # initiate RMSprop optimizer
+        # opt = RMSprop(learning_rate=0.0001, decay=1e-6)
+
+        # # Let's train the model using RMSprop
+        # model.compile(loss='categorical_crossentropy',
+        #               optimizer=opt,
+        #               metrics=['accuracy'])
+
+        return model
+
+    # train, test, val splits
+    @staticmethod
+    def train_test_split_local(x, y):
+        return train_test_split(x, y, test_size=0.1, random_state=42)
+
+    @staticmethod
+    def train_val_split_local(x, y):
+        return train_test_split(x, y, test_size=0.1, random_state=42)
+
+    
+    class cifar100_dataset(torch.utils.data.Dataset):
+
+        def __init__(self, x, y, transform=[]):
+            self.x = x
+            self.y = y
+            self.transform = transform
+
+        def __len__(self):
+            return len(self.x)
+
+        def __getitem__(self, index):
+
+            x = self.x[index]
+            y = torch.tensor(int(self.y[index]))
+
+            if self.transform:
+                x = self.transform(x)
+
+            return x, y
+
+
+    class ModelPytorch(torchvision.model.vgg16):
+        def __init__(self, optimizer, criterion):
+            super(Cifar100.ModelPytorch, self).__init__()
+            self.optimizer = optimizer
+            self.criterion = criterion
+
+        def fit(self, x_train, y_train, batch_size, validation_data, epochs=1, verbose=False):
+            train_data = cifar100_dataset(x_train, y_train)
+            train_loader = data.DataLoader(train_data, batch_size=batch_size, shuffle=True)
+
+            history = super(Cifar100.ModelPytorch, self).train()
+
+            for batch_idx, (image, label) in enumerate(trainloader):
+                images, labels = torch.autograd.Variable(image), torch.autograd.Variable(label)
+
+                outputs = model(images)
+                loss = self.criterion(outputs, labels)
+
+                self.optimizer.zero_grad()
+                loss.backward()
+                self.optimizer.step()
+
+            [loss, acc] = self.evaluate(x_train, y_train)
+            [val_loss, val_acc] = self.evaluate(*validation_data)
+            # Mimic Keras' history
+            history.history = {
+                'loss': [loss],
+                'accuracy': [acc],
+                'val_loss': [val_loss],
+                'val_accuracy': [val_acc]
+            }
+
+            return history
+
+        def evaluate(self, x_eval, y_eval, **kwargs):
+            test_data = cifar100_dataset(x_eval, y_eval)
+            test_loader = data.DataLoader(test_data, batch_size=batch_size, shuffle=True)
+
+            self.eval()
+
+            with torch.no_grad():
+
+                y_true_np = []
+                y_pred_np = []
+                count=0
+                for i, (images, labels) in enumerate(validation_loader):
+                    count+= 1
+                    N = images.size(0)
+
+                    images = torch.autograd.Variable(images)
+                    labels = torch.autograd.Variable(labels)
+
+                    outputs = model_ft(images)
+
+                    predictions = outputs.max(1, keepdim=True)[1]
+
+                    val_loss =+ criterion(outputs, labels).item()
+                    val_acc =+ (predictions.eq(labels.view_as(predictions)).sum().item() / N)
+
+                model_evaluation = [val_loss/count, val_acc/count]
+
+            return model_evaluation
+
+#TODO
+        # def save_weights(self, path):
+        #     if self.coef_ is None:
+        #         raise ValueError(
+        #             'Coef and intercept are set to None, it seems the model has not been fit properly.')
+        #     if '.h5' in path:
+        #         logger.debug('Automatically switch file format from .h5 to .npy')
+        #         path.replace('.h5', '.npy')
+        #     np.save(path, self.get_weights())
+
+        # def load_weights(self, path):
+        #     if '.h5' in path:
+        #         logger.debug('Automatically switch file format from .h5 to .npy')
+        #         path.replace('.h5', '.npy')
+        #     weights = load(path)
+        #     self.set_weights(weights)
+
+        # def get_weights(self):
+        #     if self.coef_ is None:
+        #         return None
+        #     else:
+        #         return np.concatenate((self.coef_, self.intercept_.reshape(1, 1)), axis=1)
+
+        # def set_weights(self, weights):
+        #     if weights is None:
+        #         self.coef_ = None
+        #         self.intercept_ = None
+        #     else:
+        #         self.coef_ = np.array(weights[0][:-1]).reshape(1, -1)
+        #         self.intercept_ = np.array(weights[0][-1]).reshape(1)
+
+        # def save_model(self, path):
+        #     if '.h5' in path:
+        #         logger.debug('Automatically switch file format from .h5 to .joblib')
+        #         path.replace('.h5', '.joblib')
+        #     dump(self, path)
+
+        # @staticmethod
+        # def load_model(path):
+        #     if '.h5' in path:
+        #         logger.debug('Automatically switch file format from .h5 to .joblib')
+        #         path.replace('.h5', '.joblib')
+        #     return load(path)
+
 
 
 class Titanic(Dataset):
