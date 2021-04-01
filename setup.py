@@ -18,12 +18,10 @@ requirements = [
     'ruamel.yaml==0.16.12',
     'flake8==3.8.3',
     'setuptools==50.3.0',
-    'wheel==0.35.1',
-    'twine==3.2.0'
-]
+    'wheel==0.35.1']
 
 test_requirements = [
-    'tox',
+    'tox==3.23.0',
     'pytest==6.2.2',
     'pytest-cov==2.10.1',
 ]

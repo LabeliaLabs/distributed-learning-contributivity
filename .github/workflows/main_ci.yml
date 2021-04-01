@@ -34,13 +34,15 @@ jobs:
     - name: Lint with flake8
       run: |
         flake8 --max-line-length=120
+
     - name: Run unit tests
       run: |
-        pytest -v --cov=mplc tests/unit_tests.py
+        make tests-unit
+
     - name: Run end-to-end tests
       run: |
-        pytest -v --cov=mplc --cov-append tests/ml_perf_end_to_end_tests.py
-        pytest -v --cov=mplc --cov-append tests/contrib_end_to_end_test.py
+        make tests-contrib
+        make tests-ml_perf
 
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v1
