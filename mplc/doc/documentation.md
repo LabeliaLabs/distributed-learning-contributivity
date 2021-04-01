@@ -471,7 +471,7 @@ A few parameters can be set to an `Experiment`:
 - `experiment_name`: string, default `'experiment'`. Name of the `Experiment`, will be used for the save path. The full name will be followed by creation date/time, and by a hash if the name already exists.
 - `nb_repeats`: int, number of repetition for the `Experiment` of running each scenario
 - `scenario_list`: list of scenarios to be run during the `Experiment`. Scenario can also be added via the `.add_scenario()` method
-- `is_save`: boolean. If set to True, the `Experiment` will be saved on disk.
+- `is_save`: boolean. If set to True, the results of the `Experiment` will be saved on disk.
 
 ### Save folder
 
