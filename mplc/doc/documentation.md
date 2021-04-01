@@ -460,18 +460,18 @@ Example: `methods=["Shapley values", "Independent scores", "TMCS"]`
   
 ## Experiments
 
-At some point of your use of the library you might need to launch several scenarios in a row. It the same spirit, you might want to repeat one scenario's run, to get rid of the randomness of training, and end with more meaningful results.
+At some point of your use of the library you might need to launch several scenarios in a row. In the same spirit, you might want to repeat a scenario single run, to get rid of the randomness of training, and end with more meaningful results.
 
-The `Experiment` object allows you to set a list of scenarios to run, along with a wanted number of repetition. Once instancied, scenarios can be added via the `.add_scenario()`. Eventually, all the scenarios can be run, and repeated, by calling the `.run()` method.
+The `Experiment` object allows you to set a list of scenarios to run, along with a wanted number of repetition. Once instantiated, scenarios can be added to an `Experiment` via the `.add_scenario()` method. Eventually, all the scenarios can be run, and repeated, by calling the `.run()` method of the `Experiment` object.
 
 ### Experiment's parameters
 
-Few parameters can be set:
+A few parameters can be set to an `Experiment`:
 
-- `experiment_name`: String, default `'experiment'`. Name of the experiment, will be used for the save path. The full experiment name will be followed by creation date/time, and by a hash if the experiment name already exists.
-- `nb_repeats`: int, Number of repetition for the experiment, in which each scenario will be run
-- `scenario_list`: list of scenarios to be run during the experiment. Scenario can also be added via the `.add_scenario()` method
-- `is_save`: boolean. If set to True, the experiment will be save on disk.
+- `experiment_name`: string, default `'experiment'`. Name of the `Experiment`, will be used for the save path. The full name will be followed by creation date/time, and by a hash if the name already exists.
+- `nb_repeats`: int, number of repetition for the `Experiment` of running each scenario
+- `scenario_list`: list of scenarios to be run during the `Experiment`. Scenario can also be added via the `.add_scenario()` method
+- `is_save`: boolean. If set to True, the `Experiment` will be saved on disk.
 
 ### Save folder
 

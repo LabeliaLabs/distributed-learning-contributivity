@@ -105,28 +105,37 @@ pip install -e .
 
 ### Run an experiment
 
-There are two ways to run an experiment.
+There are two ways to run an experiment of multi-partner learning approaches and/or contributivity methods on a given dataset.
 
 #### (Recommended) The notebook approach
 
-You can first use the mplc library in a notebook, or regular python script, as it is demonstrated in the [tutorials](./notebooks/tutorials).
+You can first use the mplc library in a notebook, or regular python script, as it is demonstrated in the [tutorials](./notebooks/tutorials) and in the below code snippet.
 
-```python
+````python
+from mplc.experiment import Experiment
 from mplc.scenario import Scenario
-my_scenario = Scenario(partners_count=3,
-                       amounts_per_partner=[0.2, 0.3, 0.5],
-                       dataset_name='mnist',
-                       epoch_count=10,
-                       minibatch_count=3)
-my_scenario.run()
-# (...) Results' exploration 
-```
+
+scenario0 = Scenario(partners_count=3,
+                     amounts_per_partner=[0.2, 0.3, 0.5],
+                     dataset_name='cifar10',
+                     epoch_count=10,
+                     minibatch_count=3,
+                     )
+scenario1 = Scenario(4, [0.25]*4)
+scenario2 = Scenario(10, [0.1]*10)
+scenario3 = Scenario(4, [0.8, 0.1, 0.05, 0.05])
+
+exp = Experiment(experiment_name='my_first_experiment', nb_repeats=10, scenarios_list=[scenario0, scenario1, scenario3])
+exp.add_scenario(scenario2)
+
+exp.run()
+````
 
 #### (Alternative) The `main.py` approach
 
 Alternatively, you can also use the `main.py` provided in the repository, with a `.yml` config file.
 
-1. Define your mock scenario(s) in the `config.yml` file by changing the values of the suggested parameters of the example scenario (you can browse more available parameters in [the documentation](mplc/doc/documentation.md)). For example:
+1. Define your scenario(s) in the `config.yml` file by changing the values of the suggested parameters of the example scenario (you can browse more available parameters in [the documentation](mplc/doc/documentation.md)). For example:
 
 ```yaml
 experiment_name: my_custom_experiment
