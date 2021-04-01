@@ -23,6 +23,7 @@ In short, MPLC enables to:
     - [Contributivity measurement approaches](#contributivity-measurement-approaches)
   - [Installation](#installation)
   - [Run an experiment](#run-an-experiment)
+  - [Reference scenarios](#reference-scenarios)
   - [Ongoing work and improvement plan](#ongoing-work-and-improvement-plan)
 - [Contacts, contributions, collaborations](#contacts,-contributions,-collaborations)
 
@@ -170,6 +171,30 @@ Under `scenario_params_list`, enter a list of sets of scenario(s). Each set star
 **Note**: example experiment(s) are stored in folder `/saved_experiments` to illustrate the use of the library. The notebooks include graphs, like for example the following:
 
 ![Example graphs](./img/results_graphs_example.png)
+
+### Reference scenarios
+
+#### Description of the reference scenarios
+
+We defined 5 reference scenarios on which we propose to test and benchmark the different multi-partner learning approaches and contributivity measurement methods.
+
+The 5 reference scenarios are described on the following schema ([link](https://docs.google.com/drawings/d/1_ovwpBTx_Rno5FO1AcODM7cJ6a_EPaBOh9OYl952J-4/edit?usp=sharing) to editable version):
+
+![Reference scenarios](./img/reference_scenarios.png)
+
+In brief:
+
+- Scenarios 1 and 2 with 2 partners only enable simple baselines, with different data splits (each partner having samples of different classes in the first scenario, of all classes both in the second one), and introducing corrupted data;
+
+- Scenario 3 proposes a more realistic configuration, with partners having both samples of common classes and samples of different classes each;
+
+- Scenario 4 offers a case with 5 partners, and an identical distribution of data samples of all classes, but with 1 partner having its data entirely corrupted;
+
+- Scenario 5 is more complex, with 11 partners and a mix of identical distribution of data samples of several classes for a majority of partners, data samples of different classes for certain other partners, and corrupted data also.
+
+#### Results and benchmarks
+
+Results of experiments and benchmarks of multi-partner learning approaches and contributivity methods on the reference scenarios will be summarised in this section in the upcoming months. Associated notebooks and full results will be shared on [Open Science Framework](https://osf.io/89qbt/). 
 
 ### Ongoing work and improvement plan
 
