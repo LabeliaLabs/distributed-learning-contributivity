@@ -100,7 +100,7 @@ class MultiPartnerLearning(ABC):
                 self.save_folder = self.save_folder / kwargs["custom_name"]
             else:
                 self.save_folder = self.save_folder / 'mpl'
-            self.save_folder.mkdir()
+            self.save_folder.mkdir(parents=True, exist_ok=False)
 
         logger.debug("MultiPartnerLearning object instantiated.")
 

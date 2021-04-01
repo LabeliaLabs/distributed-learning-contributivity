@@ -4,6 +4,7 @@ This enables to parameterize a desired scenario to mock a multi-partner ML proje
 """
 
 import datetime
+import os
 import re
 import uuid
 from pathlib import Path
@@ -42,7 +43,7 @@ class Scenario:
             is_early_stopping=True,
             contributivity_methods=None,
             is_quick_demo=False,
-            save_path=None,
+            save_path=constants.SINGLE_SCENARIOS_FOLDER_NAME,
             scenario_id=1,
             val_set='global',
             test_set='global',
@@ -73,7 +74,7 @@ class Scenario:
         :param is_early_stopping: boolean. Stop the training if scores on val_set reach a plateau
         :param contributivity_methods: A declarative list `[]` of the contributivity measurement methods to be executed.
         :param is_quick_demo: boolean. Useful for debugging
-        :param save_path: path where to save the scenario outputs. By default, they are not saved!
+        :param save_path: path where to save the scenario outputs (relative to current working directory)
         :param scenario_id: str
         :param **kwargs:
         """
@@ -95,7 +96,7 @@ class Scenario:
             "contributivity_methods",
             "multi_partner_learning_approach",
             "aggregation_weighting",
-        ]  # federated learning related
+        ]  # Federated learning related
         params_known += [
             "partners_count",
             "amounts_per_partner",
@@ -111,9 +112,11 @@ class Scenario:
         ]  # Computation related
         params_known += ["init_model_from"]  # Model related
         params_known += ["is_quick_demo"]
-        params_known += ["save_path",
+        params_known += ["is_run_as_part_of_an_experiment",
+                         "save_path",
                          "scenario_name",
-                         "repeat_count"]
+                         "repeat_count",
+                         ]
 
         unrecognised_parameters = [x for x in kwargs.keys() if (x not in params_known and not x.startswith('mpl_'))]
         if len(unrecognised_parameters) > 0:
@@ -342,10 +345,11 @@ class Scenario:
                 f'underscore or dash.')
         self.short_scenario_name = f"{self.partners_count}_{self.amounts_per_partner}"
 
-        if save_path is not None:
-            self.save_folder = Path(save_path) / self.scenario_name
-        else:
-            self.save_folder = None
+        # We add an attribute for logging if a scenario is run as part of an Experiment (defaulting to False)
+        self.is_run_as_part_of_an_experiment = False
+
+        # We define the save folder for graphs and results
+        self.save_folder = self.define_scenario_path(save_path)
 
         # -------------------------------------------------------------------
         # Select in the kwargs the parameters to be transferred to sub object
@@ -371,6 +375,21 @@ class Scenario:
 
         self.log_scenario_description()
 
+    def define_scenario_path(self, save_path=constants.SINGLE_SCENARIOS_FOLDER_NAME):
+        """Define the path where to save results of a scenario"""
+
+        scenario_path = Path.cwd() / save_path / self.scenario_name
+
+        # Check if scenario folder already exists
+        if scenario_path.exists():
+            logger.warning(f"Scenario folder {scenario_path} already exists")
+            scenario_path = Path(f"{scenario_path}_{uuid.uuid4().hex[:3]}")  # to distinguish identical names
+            logger.warning(f"Scenario folder has been renamed to: {scenario_path}")
+
+        # scenario_path.mkdir(parents=True, exist_ok=False)
+
+        return scenario_path
+
     @property
     def nb_samples_used(self):
         if len(self.partners_list) == 0:
@@ -393,14 +412,12 @@ class Scenario:
                     'scenario_name',
                     'short_scenario_name',
                     'save_folder',
-                    'splitter']:
+                    'splitter',
+                    ]:
             del params[key]
         if 'is_quick_demo' in kwargs and kwargs['is_quick_demo'] != self.is_quick_demo:
             raise ValueError("Attribute 'is_quick_demo' cannot be modified between copies.")
-        if self.save_folder is not None:
-            params['save_path'] = self.save_folder.parents[0]
-        else:
-            params['save_path'] = None
+        params['save_path'] = self.save_folder.parents[0]
         params['samples_split_option'] = self.splitter.copy()
 
         params.update(kwargs)
@@ -559,9 +576,11 @@ class Scenario:
         # -----------------
         # Preliminary steps
         # -----------------
-        if self.save_folder is not None:
-            self.save_folder.mkdir()
+
+        if not self.is_run_as_part_of_an_experiment:
+            self.save_folder.mkdir(parents=True, exist_ok=False)
             self.plot_data_distribution()
+
         logger.info(f"Now starting running scenario {self.scenario_name}")
 
         # -----------------------------------------------------
@@ -581,5 +600,19 @@ class Scenario:
             contrib.compute_contributivity(method)
             self.append_contributivity(contrib)
             logger.info(f"Evaluating contributivity with {method}: {contrib}")
+
+        # ------------
+        # Save results
+        # ------------
+
+        # When a scenario is run as par of an Experiment, saving results is handled by the Experiment
+        if not self.is_run_as_part_of_an_experiment:  # When a scenario is ran in a standalone way
+            df_results = self.to_dataframe()
+
+            with open(self.save_folder / constants.RUN_RESULT_FILE_NAME, "a") as f:
+                df_results.to_csv(f, header=f.tell() == 0, index=False)
+                logger.info(
+                    f"(Scenario {self.scenario_name}) Results saved to {constants.RUN_RESULT_FILE_NAME} in folder "
+                    f"{os.path.relpath(self.save_folder)}")
 
         return 0

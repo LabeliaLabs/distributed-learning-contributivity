@@ -90,7 +90,7 @@ class Experiment:
             nb_repeats=1,
             scenarios_list=[],
             is_save=True,
-            **kwargs
+            **kwargs,
     ):
         """
         :param experiment_name: string, name of the experiment
@@ -98,7 +98,7 @@ class Experiment:
                            a number of non-deterministic phenomena). Example: 5
         :param scenarios_list: list, list of scenarios to be run during the experiment.
                                Scenario can also be added via the .add_scenario() method.
-        :param is_save: boolean. If set to True, the experiment will be save on disk.
+        :param is_save: boolean. If set to True, the experiment results will be saved on disk.
         """
 
         now = datetime.datetime.now()
@@ -118,14 +118,12 @@ class Experiment:
     def define_experiment_path(self, **kwargs):
         """Define the path and create folder for saving results of the experiment"""
 
-        experiment_path = Path.cwd() / kwargs.get('experiment_path',
-                                                  constants.EXPERIMENTS_FOLDER_NAME) / self.name
+        experiment_path = Path.cwd() / kwargs.get('experiment_path', constants.EXPERIMENTS_FOLDER_NAME) / self.name
 
         # Check if experiment folder already exists
         if experiment_path.exists():
             logger.warning(f"Experiment folder {experiment_path} already exists")
-            new_experiment_name = Path(f"{experiment_path}_{uuid.uuid4().hex[:3]}")  # to distinguish identical names
-            experiment_path = Path.cwd() / constants.EXPERIMENTS_FOLDER_NAME / new_experiment_name
+            experiment_path = Path(f"{experiment_path}_{uuid.uuid4().hex[:3]}")  # to distinguish identical names
             logger.warning(f"Experiment folder has been renamed to: {experiment_path}")
 
         experiment_path.mkdir(parents=True, exist_ok=False)
@@ -155,13 +153,16 @@ class Experiment:
                 scenario_index_str = f"{scenario_idx + 1}/{len(self.scenarios_list)}"
                 logger.info(f"(Experiment {self.name}, repeat {repeat_index_str}) "
                             f"Now running scenario {scenario_index_str}")
+                blank_scenario.is_run_as_part_of_an_experiment = True
 
                 # Run the scenario
                 if self.is_save:
                     scenario = blank_scenario.copy(repeat_count=repeat_idx, save_path=self.experiment_path)
                 else:
                     scenario = blank_scenario.copy(repeat_count=repeat_idx)
+                scenario.is_run_as_part_of_an_experiment = True
                 scenario.run()
+                scenario.plot_data_distribution()
 
                 # Save scenario results
                 df_results = scenario.to_dataframe()
@@ -169,7 +170,7 @@ class Experiment:
                 df_results["scenario_index"] = scenario_idx
 
                 if self.is_save:
-                    with open(self.experiment_path / constants.EXPERIMENT_RESULT_FILE_NAME, "a") as f:
+                    with open(self.experiment_path / constants.RUN_RESULT_FILE_NAME, "a") as f:
                         df_results.to_csv(f, header=f.tell() == 0, index=False)
                         logger.info(
                             f"(Experiment {self.name}, repeat {repeat_index_str}, scenario {scenario_index_str}) "
