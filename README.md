@@ -182,6 +182,16 @@ The 5 reference scenarios are described on the following schema ([link](https://
 
 ![Reference scenarios](./img/reference_scenarios.png)
 
+In brief:
+
+- Scenarios 1 and 2 with 2 partners only enable simple baselines, with different data splits (each partner having samples of different classes in the first scenario, of all classes both in the second one), and introducing corrupted data;
+
+- Scenario 3 proposes a more realistic configuration, with partners having both samples of common classes and samples of different classes each;
+
+- Scenario 4 offers a case with 5 partners and an identical distribution of data samples of all classes, but with 1 partner having its data entirely corrupted;
+
+- Scenario 5 is more complex, with 11 partners, and a mix of identical distribution for some partners, different one for others, and corrupted data also.
+
 #### Results and benchmarks
 
 Results of experiments and benchmarks of multi-partner learning approaches and contributivity methods on the reference scenarios will be summarised in this section in the upcoming months. Associated notebooks and full results will be shared on [Open Science Framework](https://osf.io/89qbt/). 
