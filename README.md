@@ -188,9 +188,9 @@ In brief:
 
 - Scenario 3 proposes a more realistic configuration, with partners having both samples of common classes and samples of different classes each;
 
-- Scenario 4 offers a case with 5 partners and an identical distribution of data samples of all classes, but with 1 partner having its data entirely corrupted;
+- Scenario 4 offers a case with 5 partners, and an identical distribution of data samples of all classes, but with 1 partner having its data entirely corrupted;
 
-- Scenario 5 is more complex, with 11 partners, and a mix of identical distribution for some partners, different one for others, and corrupted data also.
+- Scenario 5 is more complex, with 11 partners and a mix of identical distribution of data samples of several classes for a majority of partners, data samples of different classes for certain other partners, and corrupted data also.
 
 #### Results and benchmarks
 
