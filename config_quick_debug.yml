@@ -11,7 +11,7 @@ scenario_params_list:
    samples_split_option:
      - 'random'
      - 'stratified'
-     - [ 'advanced', [ ][ 4, 'shared' ], [ 6, 'shared' ], [ 4, 'specific' ] ] ]
+     - [ 'advanced', [ [ 4, 'shared' ], [ 6, 'shared' ], [ 4, 'specific' ] ] ]
 
    multi_partner_learning_approach:
      - 'fedavg'
