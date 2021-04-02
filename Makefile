@@ -9,6 +9,6 @@ tests-ml_perf:
 	tox -e ml_perf
 
 tests-contrib:
-	tox -e contrib --parallel 8
+	tox -e contrib --parallel 4
 
 all: flake tests

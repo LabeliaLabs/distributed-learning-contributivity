@@ -37,12 +37,15 @@ jobs:
 
     - name: Run unit tests
       run: |
-        make tests-unit
+        tox -e unit
 
-    - name: Run end-to-end tests
+    - name: Run end-to-end contribution tests
       run: |
-        make tests-contrib
-        make tests-ml_perf
+        tox -e contrib
+
+    - name: Run end-to-end ml_perf tests
+      run: |
+        tox -e ml_perf
 
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v1
