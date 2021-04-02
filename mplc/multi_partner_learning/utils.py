@@ -166,7 +166,7 @@ class UniformAggregator(Aggregator):
 
     def __init__(self, mpl):
         super(UniformAggregator, self).__init__(mpl)
-        self.aggregation_weights = list(np.ones(self.mpl.partners_count, dtype='float32') * self.mpl.partners_count)
+        self.aggregation_weights = list(np.ones(self.mpl.partners_count, dtype='float32') / self.mpl.partners_count)
 
 
 class DataVolumeAggregator(Aggregator):
