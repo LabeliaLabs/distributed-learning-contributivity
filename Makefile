@@ -3,7 +3,8 @@ flake:
 	flake8 --max-line-length=120
 
 tests-unit:
-	tox -e unit --parallel 8
+	tox -e unit --parallel 4
+
 tests-ml_perf:
 	tox -e ml_perf
 
