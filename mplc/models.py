@@ -1,4 +1,5 @@
 import numpy as np
+import collections
 from joblib import dump, load
 from loguru import logger
 from sklearn.linear_model import LogisticRegression as skLR
@@ -217,11 +218,16 @@ class ModelPytorch(nn.Module):
 
 
     def get_weights(self):
-        return self.state_dict()
+        self.state_dict()
+        weights = []
+        for layer in self.state_dict().keys(): 
+            weights.append(self.state_dict()[layer].numpy())
+        return weights
 
 
     def set_weights(self, weights):
-        self.load_state_dict(weights)
+        for i, layer in enumerate(self.state_dict().keys()):
+                self.state_dict()[layer]= torch.Tensor(weights[i])
 
 
     def save_model(self, path):
