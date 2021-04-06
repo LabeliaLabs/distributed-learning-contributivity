@@ -15,10 +15,8 @@ requirements = [
     'seaborn==0.11.0',
     'loguru==0.5.3',
     'tensorflow==2.4.1',
-    'ruamel.yaml==0.16.12',
-    'flake8==3.8.3',
-    'setuptools==50.3.0',
-    'wheel==0.35.1']
+    'ruamel.yaml==0.16.12'
+]
 
 test_requirements = [
     'tox==3.23.0',
