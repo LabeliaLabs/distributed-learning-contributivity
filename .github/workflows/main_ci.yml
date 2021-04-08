@@ -1,6 +1,9 @@
 name: Build
 
-on: [push]
+on:
+  push:
+  schedule:
+    - cron: '0 0 * * * ' # Every day at 00.00
 
 jobs:
   build:
