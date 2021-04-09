@@ -125,23 +125,7 @@ class EnsemblePredictionsModel():
         return [loss, metric]
 
     def save_weights(self, path):
-        raise NotImplementedError
-
-    def load_weights(self, path):
-        raise NotImplementedError
-
-    def get_weights(self):
-        raise NotImplementedError
-
-    def set_weights(self, weights):
-        raise NotImplementedError
-
-    def save_model(self, path):
-        raise NotImplementedError
-
-    @staticmethod
-    def load_model(path):
-        raise NotImplementedError
+        pass
 
 
 class NoiseAdaptationChannel(Dense):
