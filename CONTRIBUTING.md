@@ -181,6 +181,8 @@ You will first need to install the dev dependencies with `pip3 install -r dev-re
 make tests-units
 # To run tests with custom the parallelism level, the test runner can be invoked itself
 tox -e unit --parallel n
+# Run a test suite with full log output, with the option -- --debug:
+tox -e unit -- --debug
 # Run with python
 python3 -m pytest -vv tests/unit_tests.py
 # Fall in debugger breakpoint in case of error
