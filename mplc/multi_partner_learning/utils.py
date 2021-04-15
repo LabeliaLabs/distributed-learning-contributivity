@@ -112,7 +112,7 @@ class History:
 
 #####################################
 #
-# tensorflow functions for aggregator
+# Aggregators
 #
 #####################################
 
@@ -129,6 +129,7 @@ def _tf_aggregete_grads(grads, agg_w):
 
 class Aggregator(ABC):
     name = 'abstract'
+    is_weights_constant = True
 
     def __init__(self, mpl):
         """
@@ -160,15 +161,17 @@ class Aggregator(ABC):
 
 
 class UniformAggregator(Aggregator):
-    name = 'Uniform'
+    name = 'uniform'
+    is_weights_constant = True
 
     def __init__(self, mpl):
         super(UniformAggregator, self).__init__(mpl)
-        self.aggregation_weights = list(np.ones(self.mpl.partners_count, dtype='float32') * self.mpl.partners_count)
+        self.aggregation_weights = list(np.ones(self.mpl.partners_count, dtype='float32') / self.mpl.partners_count)
 
 
 class DataVolumeAggregator(Aggregator):
-    name = 'Data volume'
+    name = 'data-volume'
+    is_weights_constant = True
 
     def __init__(self, mpl):
         super(DataVolumeAggregator, self).__init__(mpl)
@@ -177,7 +180,8 @@ class DataVolumeAggregator(Aggregator):
 
 
 class ScoresAggregator(Aggregator):
-    name = 'Local scores'
+    name = 'local-score'
+    is_weights_constant = False
 
     def __init__(self, mpl):
         super(ScoresAggregator, self).__init__(mpl)

@@ -50,8 +50,8 @@ from mplc.contributivity import Contributivity
 from mplc.corruption import Permutation, PermutationCircular, Randomize, Redundancy, RandomizeUniform, Duplication
 from mplc.dataset import Mnist, Cifar10, Titanic, Imdb, Esc50
 from mplc.experiment import Experiment
-from mplc.mpl_utils import UniformAggregator
-from mplc.multi_partner_learning import FederatedAverageLearning
+from mplc.multi_partner_learning.basic_mpl import FederatedAverageLearning
+from mplc.multi_partner_learning.utils import UniformAggregator
 from mplc.partner import Partner
 from mplc.scenario import Scenario
 # create_Mpl uses create_Dataset and create_Contributivity uses create_Scenario
@@ -80,7 +80,7 @@ def create_MultiPartnerLearning(create_all_datasets):
         epoch_count=2,
         minibatch_count=2,
         dataset=data,
-        aggregation_weighting=UniformAggregator,
+        aggregation=UniformAggregator,
         is_early_stopping=True,
         is_save_data=False,
     )
@@ -144,7 +144,7 @@ def create_Scenario(request):
         {
             "contributivity_methods": ["Shapley values", "Independent scores"],
             "multi_partner_learning_approach": "fedavg",
-            "aggregation_weighting": "uniform",
+            "aggregation": "uniform",
         }
     )
     params.update(
@@ -190,7 +190,7 @@ def create_Contributivity(create_Scenario):
 class Test_Experiment:
     def test_add_scenario(self, create_experiment):
         exp = create_experiment
-        sc = Scenario(2, [0.5, 0.5], dataset_name='titanic')
+        sc = Scenario(2, [0.5, 0.5], dataset='titanic')
         assert len(exp.scenarios_list) == 0, 'Scenario list should be empty when initialized'
         exp.add_scenario(sc)
         assert exp.scenarios_list[0] is sc, 'Failed to add a scenario'
