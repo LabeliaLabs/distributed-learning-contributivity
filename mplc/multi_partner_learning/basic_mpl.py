@@ -714,15 +714,3 @@ class EnsemblePredictions(MultiPartnerLearning):
 
     def fit_minibatch(self):
         pass
-
-
-# Supported multi-partner learning approaches
-MULTI_PARTNER_LEARNING_APPROACHES = {
-    "fedavg": FederatedAverageLearning,
-    'fedgrads': FederatedGradients,
-    "seq-pure": SequentialLearning,
-    "seq-with-final-agg": SequentialWithFinalAggLearning,
-    "seqavg": SequentialAverageLearning,
-    "smodel": FedAvgSmodel,
-    "ensembling": EnsemblePredictions
-}
