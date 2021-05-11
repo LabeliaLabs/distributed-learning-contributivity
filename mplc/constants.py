@@ -21,7 +21,7 @@ DEBUG_LOGGING_FILE_NAME = "debug.log"
 # Paths
 EXPERIMENTS_FOLDER_NAME = "experiments"
 SINGLE_SCENARIOS_FOLDER_NAME = "standalone_scenarios"
-RUN_RESULT_FILE_NAME = "results.csv"
+RESULT_FILE_NAME = "results.csv"
 
 # Number of samples for quick_demo
 TRAIN_SET_MAX_SIZE_QUICK_DEMO = 1000

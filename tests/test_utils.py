@@ -19,4 +19,4 @@ def get_latest_dataframe(pattern, path=constants.EXPERIMENTS_FOLDER_NAME):
 
     experiment_path = subfolder_list[latest_subfolder_idx]
 
-    return pd.read_csv(experiment_path / constants.RUN_RESULT_FILE_NAME)
+    return pd.read_csv(experiment_path / constants.RESULT_FILE_NAME)

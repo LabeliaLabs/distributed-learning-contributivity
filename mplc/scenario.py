@@ -611,10 +611,10 @@ class Scenario:
         if not self.is_run_as_part_of_an_experiment:  # When a scenario is ran in a standalone way
             df_results = self.to_dataframe()
 
-            with open(self.save_folder / constants.RUN_RESULT_FILE_NAME, "a") as f:
+            with open(self.save_folder / constants.RESULT_FILE_NAME, "a") as f:
                 df_results.to_csv(f, header=f.tell() == 0, index=False)
                 logger.info(
-                    f"(Scenario {self.scenario_name}) Results saved to {constants.RUN_RESULT_FILE_NAME} in folder "
+                    f"(Scenario {self.scenario_name}) Results saved to {constants.RESULT_FILE_NAME} in folder "
                     f"{os.path.relpath(self.save_folder)}")
 
         return 0
