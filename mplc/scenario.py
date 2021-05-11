@@ -15,11 +15,11 @@ import pandas as pd
 from loguru import logger
 from sklearn.preprocessing import LabelEncoder
 
+from mplc.multi_partner_learning import MULTI_PARTNER_LEARNING_APPROACHES
+from mplc.multi_partner_learning.utils import AGGREGATORS, Aggregator
 from . import contributivity, constants
 from . import dataset as dataset_module
 from .corruption import Corruption, NoCorruption, IMPLEMENTED_CORRUPTION, Duplication
-from .mpl_utils import AGGREGATORS
-from .multi_partner_learning import MULTI_PARTNER_LEARNING_APPROACHES
 from .partner import Partner
 from .splitter import Splitter, IMPLEMENTED_SPLITTERS
 
@@ -29,14 +29,13 @@ class Scenario:
             self,
             partners_count,
             amounts_per_partner,
-            dataset=None,
-            dataset_name=constants.MNIST,
+            dataset=constants.MNIST,
             dataset_proportion=1,
             samples_split_option='random',
             corruption_parameters=None,
             init_model_from="random_initialization",
             multi_partner_learning_approach="fedavg",
-            aggregation_weighting="data-volume",
+            aggregation="data-volume",
             gradient_updates_per_pass_count=constants.DEFAULT_GRADIENT_UPDATES_PER_PASS_COUNT,
             minibatch_count=constants.DEFAULT_BATCH_COUNT,
             epoch_count=constants.DEFAULT_EPOCH_COUNT,
@@ -55,19 +54,18 @@ class Scenario:
         :param amounts_per_partner:  [float]. Fractions of the
         original dataset each partner receives to mock a collaborative ML scenario where each partner provides data
         for the ML training.
-        :param dataset: dataset.Dataset object. Use it if you want to use your own dataset, otherwise use dataset_name.
-        :param dataset_name: str. 'mnist', 'cifar10', 'esc50' and 'titanic' are currently supported (default: mnist)
+        :param dataset: dataset.Dataset object, or its string identifier. Default is MNIST.
         :param dataset_proportion: float (default: 1)
         :param samples_split_option: Splitter object, or its string identifier (for instance 'random', or 'stratified')
                                      Define the strategy to use to split the data samples between the partners.
                                      Default, RandomSplitter.
-        :param corruption_parameters: list of Corruption object, or its string identifier, one ofr each partner.
+        :param corruption_parameters: list of Corruption object, or its string identifier, one for each partner.
                                       Enable to artificially corrupt partner's data.
                                       For instance: [Permutation(proportion=0.2), 'random', 'not-corrupted']
         :param init_model_from: None (default) or path
         :param multi_partner_learning_approach: 'fedavg' (default), 'seq-pure', 'seq-with-final-agg' or 'seqavg'
                                                 Define the multi-partner learning approach
-        :param aggregation_weighting: 'data_volume' (default), 'uniform' or 'local_score'
+        :param aggregation:Aggregator object, or string identifier: 'data_volume' (default), 'uniform' or 'local_score'
         :param gradient_updates_per_pass_count: int
         :param minibatch_count: int
         :param epoch_count: int
@@ -87,7 +85,6 @@ class Scenario:
 
         params_known = [
             "dataset",
-            "dataset_name",
             "dataset_proportion",
             "val_set",
             "test_set"
@@ -95,7 +92,7 @@ class Scenario:
         params_known += [
             "contributivity_methods",
             "multi_partner_learning_approach",
-            "aggregation_weighting",
+            "aggregation",
         ]  # Federated learning related
         params_known += [
             "partners_count",
@@ -129,25 +126,27 @@ class Scenario:
         # Get and verify which dataset is configured
         if isinstance(dataset, dataset_module.Dataset):
             self.dataset = dataset
-        else:
-            # Reference the module corresponding to the dataset selected and initialize the Dataset object
-            if dataset_name == constants.MNIST:  # default
+        elif isinstance(dataset, str):
+            # Reference the object corresponding to the dataset selected and initialize it
+            if dataset == constants.MNIST:  # default
                 self.dataset = dataset_module.Mnist()
-            elif dataset_name == constants.CIFAR10:
+            elif dataset == constants.CIFAR10:
                 self.dataset = dataset_module.Cifar10()
-            elif dataset_name == constants.TITANIC:
+            elif dataset == constants.TITANIC:
                 self.dataset = dataset_module.Titanic()
-            elif dataset_name == constants.ESC50:
+            elif dataset == constants.ESC50:
                 self.dataset = dataset_module.Esc50()
-            elif dataset_name == constants.IMDB:
+            elif dataset == constants.IMDB:
                 self.dataset = dataset_module.Imdb()
             else:
                 raise Exception(
-                    f"Dataset named '{dataset_name}' is not supported (yet). You can construct your own "
+                    f"Dataset named '{dataset}' is not supported (yet). You can construct your own "
                     f"dataset object, or even add it by contributing to the project !"
                 )
             logger.debug(f"Dataset selected: {self.dataset.name}")
-
+        else:
+            raise AttributeError(f'The dataset parameter cannot be an {type(dataset)}.'
+                                 f' Please provides a Dataset instance or a string identifier')
         # Proportion of the dataset the computation will used
         self.dataset_proportion = dataset_proportion
         assert (
@@ -240,11 +239,13 @@ class Scenario:
 
         # Define how federated learning aggregation steps are weighted...
         # ... Toggle between 'uniform' (default) and 'data_volume'
-        self.aggregation_weighting = aggregation_weighting
-        try:
-            self._aggregation_weighting = AGGREGATORS[aggregation_weighting]
-        except KeyError:
-            raise ValueError(f"aggregation approach '{aggregation_weighting}' is not a valid approach. ")
+        if isinstance(aggregation, Aggregator):
+            self.aggregation = aggregation
+        else:
+            try:
+                self.aggregation = AGGREGATORS[aggregation]
+            except KeyError:
+                raise ValueError(f"aggregation approach '{aggregation}' is not a valid approach. ")
 
         # Number of epochs, mini-batches and fit_batches in ML training
         self.epoch_count = epoch_count
@@ -404,9 +405,9 @@ class Scenario:
     def copy(self, **kwargs):
         params = self.__dict__.copy()
         for key in ['partners_list',
-                    'mpl',
                     '_multi_partner_learning_approach',
-                    '_aggregation_weighting',
+                    'mpl',
+                    'aggregation',
                     'use_saved_weights',
                     'contributivity_list',
                     'scenario_name',
@@ -419,6 +420,7 @@ class Scenario:
             raise ValueError("Attribute 'is_quick_demo' cannot be modified between copies.")
         params['save_path'] = self.save_folder.parents[0]
         params['samples_split_option'] = self.splitter.copy()
+        params['aggregation'] = self.aggregation.name
 
         params.update(kwargs)
 
@@ -432,7 +434,7 @@ class Scenario:
         logger.info(f"   Number of partners defined: {self.partners_count}")
         logger.info(f"   Data distribution scenario chosen: {self.splitter}")
         logger.info(f"   Multi-partner learning approach: {self.multi_partner_learning_approach}")
-        logger.info(f"   Weighting option: {self.aggregation_weighting}")
+        logger.info(f"   Weighting option: {self.aggregation.name}")
         logger.info(f"   Iterations parameters: "
                     f"{self.epoch_count} epochs > "
                     f"{self.minibatch_count} mini-batches > "
@@ -539,7 +541,7 @@ class Scenario:
 
         # Multi-partner learning approach parameters
         dict_results["multi_partner_learning_approach"] = self.multi_partner_learning_approach
-        dict_results["aggregation_weighting"] = self.aggregation_weighting
+        dict_results["aggregation_weighting"] = self.aggregation.name
         dict_results["epoch_count"] = self.epoch_count
         dict_results["minibatch_count"] = self.minibatch_count
         dict_results["gradient_updates_per_pass_count"] = self.gradient_updates_per_pass_count

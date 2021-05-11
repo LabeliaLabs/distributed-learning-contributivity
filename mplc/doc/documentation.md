@@ -81,16 +81,16 @@ At this point, you can already launch your first scenario! But before hitting th
 ### Select a pre-implemented dataset
 
 You might also want to consider other parameters such as the dataset to be used, for instance. The easiest way to select a dataset is to use those which are already implemented in `mplc`.
-Currently MNIST, CIFAR10, TITANIC, IMDB and ESC50 are supported. You can use one of those by simply passing the parameter `dataset_name` to your scenario object:
+Currently MNIST, CIFAR10, TITANIC, IMDB and ESC50 are supported. You can use one of those by simply passing a string identifier to the parameter `dataset` of your scenario object:
 
 ```python
 from mplc.scenario import Scenario
 my_scenario = Scenario(partners_count=3,
                        amounts_per_partner=[0.2, 0.3, 0.5],
-                       dataset_name='mnist')
+                       dataset='mnist')
 ```
 
-With each dataset, a model architecture is provided by default, so you do not need to care of it. Moreover, the split between the validation and train sets is done by the constructor's of the dataset, even if you can finetune it.
+With each dataset, a model architecture is provided by default, so you do not need to care of it. Moreover, the split between the validation and train sets is done by the constructor's of the dataset.
 If you want to use a homemade dataset or a homemade model, you will have to use the [dataset class](#dataset-generation).
 
 > Note: this parameter is not mandatory as the MNIST dataset is selected by default.
@@ -154,7 +154,7 @@ There is few other `History` attributes:
 
 ```python
 history.save_folder     # Path to the folder where is saved plots
-history.nb_epochs_done  # Number of epoch done in the mpl, taking into account any early stopping
+history.nb_epochs_done  # Number of epoch done in the multi_partner_learning, taking into account any early stopping
 history.score           # Final score evaluated on the test dataset at the end of the training
 history.metrics         # Metrics computed on the partners' models
 ```
@@ -460,18 +460,18 @@ Example: `methods=["Shapley values", "Independent scores", "TMCS"]`
   
 ## Experiments
 
-At some point of your use of the library you might need to launch several scenarios in a row. It the same spirit, you might want to repeat one scenario's run, to get rid of the randomness of training, and end with more meaningful results.
+At some point of your use of the library you might need to launch several scenarios in a row. In the same spirit, you might want to repeat a scenario single run, to get rid of the randomness of training, and end with more meaningful results.
 
-The `Experiment` object allows you to set a list of scenarios to run, along with a wanted number of repetition. Once instancied, scenarios can be added via the `.add_scenario()`. Eventually, all the scenarios can be run, and repeated, by calling the `.run()` method.
+The `Experiment` object allows you to set a list of scenarios to run, along with a wanted number of repetition. Once instantiated, scenarios can be added to an `Experiment` via the `.add_scenario()` method. Eventually, all the scenarios can be run, and repeated, by calling the `.run()` method of the `Experiment` object.
 
 ### Experiment's parameters
 
-Few parameters can be set:
+A few parameters can be set to an `Experiment`:
 
-- `experiment_name`: String, default `'experiment'`. Name of the experiment, will be used for the save path. The full experiment name will be followed by creation date/time, and by a hash if the experiment name already exists.
-- `nb_repeats`: int, Number of repetition for the experiment, in which each scenario will be run
-- `scenario_list`: list of scenarios to be run during the experiment. Scenario can also be added via the `.add_scenario()` method
-- `is_save`: boolean. If set to True, the experiment will be save on disk.
+- `experiment_name`: string, default `'experiment'`. Name of the `Experiment`, will be used for the save path. The full name will be followed by creation date/time, and by a hash if the name already exists.
+- `nb_repeats`: int, number of repetition for the `Experiment` of running each scenario
+- `scenario_list`: list of scenarios to be run during the `Experiment`. Scenario can also be added via the `.add_scenario()` method
+- `is_save`: boolean. If set to True, the results of the `Experiment` will be saved on disk.
 
 ### Save folder
 

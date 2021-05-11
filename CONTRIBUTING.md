@@ -177,9 +177,13 @@ Notebooks now have really efficient ways to share your code and display your out
 You will first need to install the dev dependencies with `pip3 install -r dev-requirements.txt` and then run:
 
 ```sh
-# Run unit tests
-pytest -vv tests/unit_tests.py
-# or 
+# Run unit tests with default configuration
+make tests-units
+# To run tests with custom the parallelism level, the test runner can be invoked itself
+tox -e unit --parallel n
+# Run a test suite with full log output, with the option -- --debug:
+tox -e unit -- --debug
+# Run with python
 python3 -m pytest -vv tests/unit_tests.py
 # Fall in debugger breakpoint in case of error
 pytest -vv tests/unit_tests.py --pdb

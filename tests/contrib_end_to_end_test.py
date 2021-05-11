@@ -5,9 +5,8 @@ This enables to parameterize end to end tests - the tests are run by Travis each
 
 from mplc import constants
 from mplc.experiment import Experiment
-from mplc.scenario import Scenario
 from mplc.experiment import init_experiment_from_config_file
-
+from mplc.scenario import Scenario
 from . import test_utils
 
 
@@ -18,9 +17,9 @@ class Test_EndToEndTest:
         Test contributivity score on titanic dataset
         """
 
-        titanic_scenario = Scenario(2, [0.1, 0.9], epoch_count=3, minibatch_count=1, dataset_name='titanic',
+        titanic_scenario = Scenario(2, [0.1, 0.9], epoch_count=3, minibatch_count=1, dataset='titanic',
                                     contributivity_methods=["Federated SBS linear", "Federated SBS quadratic",
-                                    "Shapley values"])
+                                                            "Shapley values"])
         exp = Experiment(experiment_name='end_to_end_test_contrib_titanic', nb_repeats=2,
                          scenarios_list=[titanic_scenario])
         exp.run()
@@ -66,7 +65,7 @@ class Test_EndToEndTest:
         all_methods.remove('AIS_Kriging_S')  # This one fails
         all_methods.remove('IS_reg_S')  # This one is handled in the test below
 
-        scenario = Scenario(2, [0.4, 0.6], epoch_count=1, minibatch_count=2, dataset_name='mnist',
+        scenario = Scenario(2, [0.4, 0.6], epoch_count=1, minibatch_count=2, dataset='mnist',
                             contributivity_methods=all_methods, dataset_proportion=0.05)
         exp = Experiment(scenarios_list=[scenario])
         exp.run()
@@ -80,7 +79,7 @@ class Test_EndToEndTest:
         This method activates only when partners_count > 4
         """
 
-        scenario = Scenario(4, [0.25, 0.25, 0.25, 0.25], epoch_count=1, minibatch_count=1, dataset_name='mnist',
+        scenario = Scenario(4, [0.25, 0.25, 0.25, 0.25], epoch_count=1, minibatch_count=1, dataset='mnist',
                             contributivity_methods=["IS_reg_S"], dataset_proportion=0.05)
         exp = Experiment(scenarios_list=[scenario])
         exp.run()

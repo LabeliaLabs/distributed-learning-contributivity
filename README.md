@@ -23,6 +23,7 @@ In short, MPLC enables to:
     - [Contributivity measurement approaches](#contributivity-measurement-approaches)
   - [Installation](#installation)
   - [Run an experiment](#run-an-experiment)
+  - [Reference scenarios](#reference-scenarios)
   - [Ongoing work and improvement plan](#ongoing-work-and-improvement-plan)
 - [Contacts, contributions, collaborations](#contacts,-contributions,-collaborations)
 
@@ -105,28 +106,45 @@ pip install -e .
 
 ### Run an experiment
 
-There are two ways to run an experiment.
+There are two ways to run an experiment of multi-partner learning approaches and/or contributivity methods.
 
-#### (Recommended) The notebook approach
+#### (Recommended) Defining an Experiment in the code
 
-You can first use the mplc library in a notebook, or regular python script, as it is demonstrated in the [tutorials](./notebooks/tutorials).
+You can first use the mplc library in a notebook, or regular python script, as it is demonstrated in the [tutorials](./notebooks/tutorials) and in the below code snippet.
 
 ```python
+import mplc
+
+from mplc.experiment import Experiment
 from mplc.scenario import Scenario
-my_scenario = Scenario(partners_count=3,
-                       amounts_per_partner=[0.2, 0.3, 0.5],
-                       dataset_name='mnist',
-                       epoch_count=10,
-                       minibatch_count=3)
-my_scenario.run()
-# (...) Results' exploration 
+
+# Let's configure different multi-partner scenarios
+scenario1 = Scenario(partners_count=3,
+                     amounts_per_partner=[0.2, 0.3, 0.5],
+                     dataset_name='cifar10',
+                     epoch_count=10,
+                     minibatch_count=3,
+                     contributivity_methods=["Shapley values", "S-Model"]
+                     )
+scenario2 = Scenario(4, [0.25]*4)  # Here attributes (e.g. dataset, epochs...) will be default values 
+scenario3 = Scenario(4, [0.8, 0.1, 0.05, 0.05])
+
+# Now let's instantiate an Experiment and add the above scenarios
+my_exp = Experiment(experiment_name='my_first_experiment',
+                    nb_repeats=10,
+                    scenarios_list=[scenario1, scenario3],
+                    )
+my_exp.add_scenario(scenario2)
+
+# Everything is now set to run the Experiment
+my_exp.run()
 ```
 
-#### (Alternative) The `main.py` approach
+#### (Alternative) Defining an Experiment with a config file
 
-Alternatively, you can also use the `main.py` provided in the repository, with a `.yml` config file.
+Alternatively, you can also use the `main.py` provided in the repository together with a `.yml` config file.
 
-1. Define your mock scenario(s) in the `config.yml` file by changing the values of the suggested parameters of the example scenario (you can browse more available parameters in [the documentation](mplc/doc/documentation.md)). For example:
+1. Define your scenario(s) in the `config.yml` file by changing the values of the suggested parameters of the example scenario (you can browse more available parameters in [the documentation](mplc/doc/documentation.md)). For example:
 
 ```yaml
 experiment_name: my_custom_experiment
@@ -170,6 +188,30 @@ Under `scenario_params_list`, enter a list of sets of scenario(s). Each set star
 **Note**: example experiment(s) are stored in folder `/saved_experiments` to illustrate the use of the library. The notebooks include graphs, like for example the following:
 
 ![Example graphs](./img/results_graphs_example.png)
+
+### Reference scenarios
+
+#### Description of the reference scenarios
+
+We defined 5 reference scenarios on which we propose to test and benchmark the different multi-partner learning approaches and contributivity measurement methods.
+
+The 5 reference scenarios are described on the following schema ([link](https://docs.google.com/drawings/d/1_ovwpBTx_Rno5FO1AcODM7cJ6a_EPaBOh9OYl952J-4/edit?usp=sharing) to editable version):
+
+![Reference scenarios](./img/reference_scenarios.png)
+
+In brief:
+
+- Scenarios 1 and 2 with 2 partners only enable simple baselines, with different data splits (each partner having samples of different classes in the first scenario, of all classes both in the second one), and introducing corrupted data;
+
+- Scenario 3 proposes a more realistic configuration, with partners having both samples of common classes and samples of different classes each;
+
+- Scenario 4 offers a case with 5 partners, and an identical distribution of data samples of all classes, but with 1 partner having its data entirely corrupted;
+
+- Scenario 5 is more complex, with 11 partners and a mix of identical distribution of data samples of several classes for a majority of partners, data samples of different classes for certain other partners, and corrupted data also.
+
+#### Results and benchmarks
+
+Results of experiments and benchmarks of multi-partner learning approaches and contributivity methods on the reference scenarios will be summarised in this section in the upcoming months. Associated notebooks and full results will be shared on [Open Science Framework](https://osf.io/89qbt/). 
 
 ### Ongoing work and improvement plan
 

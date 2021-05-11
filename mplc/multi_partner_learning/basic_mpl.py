@@ -16,16 +16,16 @@ from tensorflow.keras import Input, Model
 from tensorflow.keras.backend import clear_session
 from tensorflow.keras.callbacks import EarlyStopping
 
-from . import constants
-from .models import NoiseAdaptationChannel
-from .mpl_utils import History, Aggregator
-from .partner import Partner, PartnerMpl
+from .utils import History
+from .. import constants
+from ..models import NoiseAdaptationChannel
+from ..partner import Partner, PartnerMpl
 
 ALLOWED_PARAMETERS = ('partners_list',
                       'epoch_count',
                       'minibatch_count',
                       'dataset',
-                      'aggregation_method',
+                      'aggregation',
                       'is_early_stopping',
                       'is_save_data',
                       'save_folder',
@@ -53,9 +53,6 @@ class MultiPartnerLearning(ABC):
         self.epoch_count = scenario.epoch_count
         self.minibatch_count = scenario.minibatch_count
         self.is_early_stopping = scenario.is_early_stopping
-
-        # Attributes related to the _aggregation_weighting approach
-        self.aggregation_method = scenario._aggregation_weighting
 
         # Attributes to store results
         self.save_folder = scenario.save_folder
@@ -87,9 +84,8 @@ class MultiPartnerLearning(ABC):
             f"## Preparation of model's training on partners with ids: {['#' + str(p.id) for p in partners_list]}")
         self.partners_list = [PartnerMpl(partner, self) for partner in self.partners_list]
 
-        # Initialize aggregator
-        self.aggregator = self.aggregation_method(self)
-        assert isinstance(self.aggregator, Aggregator)
+        # Attributes related to the aggregation approach
+        self.aggregator = self.init_aggregation_function(scenario.aggregation)
 
         # Initialize History
         self.history = History(self)
@@ -99,8 +95,8 @@ class MultiPartnerLearning(ABC):
             if 'custom_name' in kwargs:
                 self.save_folder = self.save_folder / kwargs["custom_name"]
             else:
-                self.save_folder = self.save_folder / 'mpl'
-            self.save_folder.mkdir(parents=True, exist_ok=False)
+                self.save_folder = self.save_folder / 'multi_partner_learning'
+                self.save_folder.mkdir(parents=True, exist_ok=False)
 
         logger.debug("MultiPartnerLearning object instantiated.")
 
@@ -110,6 +106,9 @@ class MultiPartnerLearning(ABC):
     @property
     def partners_count(self):
         return len(self.partners_list)
+
+    def init_aggregation_function(self, aggregator):
+        return aggregator(self)
 
     def build_model(self):
         return self.build_model_from_weights(self.model_weights)
@@ -280,7 +279,7 @@ class MultiPartnerLearning(ABC):
 
 
 class SinglePartnerLearning(MultiPartnerLearning):
-    name = 'Single partner learning'
+    name = 'singlePartner learning'
 
     def __init__(self, scenario, partner, **kwargs):
         kwargs['partners_list'] = [partner]
@@ -525,11 +524,11 @@ class SequentialAverageLearning(SequentialLearning):
             self.model_weights = self.aggregator.aggregate_model_weights()
 
 
-class MplSModel(FederatedAverageLearning):
+class FedAvgSmodel(FederatedAverageLearning):
     name = 'Federated learning with label flipping'
 
     def __init__(self, scenario, pretrain_epochs=0, epsilon=0.5, **kwargs):
-        super(MplSModel, self).__init__(scenario, **kwargs)
+        super(FedAvgSmodel, self).__init__(scenario, **kwargs)
         self.pretrain_epochs = pretrain_epochs
         self.epsilon = epsilon
         if pretrain_epochs > 0:
@@ -552,7 +551,7 @@ class MplSModel(FederatedAverageLearning):
             for p in self.partners_list:
                 confusion = np.identity(10) * (1 - self.epsilon) + (self.epsilon / 10)
                 p.noise_layer_weights = [np.log(confusion + 1e-8)]
-        super(MplSModel, self).fit()
+        super(FedAvgSmodel, self).fit()
 
     def fit_minibatch(self):
         """Proceed to a collaborative round with a S-Model federated averaging approach"""
@@ -661,16 +660,3 @@ class FederatedGradients(MultiPartnerLearning):
             self.log_partner_perf(partner.id, partner_index, history)
 
         logger.debug("End of grads-fusion collaborative round.")
-
-
-# Supported multi-partner learning approaches
-
-MULTI_PARTNER_LEARNING_APPROACHES = {
-    "fedavg": FederatedAverageLearning,
-    'fedgrads': FederatedGradients,
-    "seq-pure": SequentialLearning,
-    "seq-with-final-agg": SequentialWithFinalAggLearning,
-    "seqavg": SequentialAverageLearning,
-    "smodel": MplSModel,
-
-}
