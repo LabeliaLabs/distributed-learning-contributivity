@@ -14,7 +14,7 @@ requirements = [
     'pandas==1.1.5',
     'seaborn==0.11.0',
     'loguru==0.5.3',
-    'tensorflow==2.4.1',
+    'tensorflow==2.5.0',
     'ruamel.yaml==0.16.12'
 ]
 
