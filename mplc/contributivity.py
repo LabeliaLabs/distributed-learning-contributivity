@@ -1117,7 +1117,12 @@ class Contributivity:
     def statistcal_distances_via_smodel(self):
 
         start = timer()
-        mpl = fast_mpl.FastFedAvgSmodel(self.scenario, self.scenario.mpl.pretrain_epochs)
+        try:
+            mpl_pretrain = self.scenario.mpl.pretrain_epochs
+        except AttributeError as e:
+            mpl_pretrain = 2
+
+        mpl = fast_mpl.FastFedAvgSmodel(self.scenario, mpl_pretrain)
         mpl.fit()
         cross_entropy = tf.keras.metrics.CategoricalCrossentropy()
         self.contributivity_scores = {'Kullbakc divergence': [0 for _ in mpl.partners_list],
@@ -1210,7 +1215,7 @@ class Contributivity:
             # Contributivity 10: Partner valuation by reinforcement learning
             self.PVRL(learning_rate=0.2)
         elif method_to_compute == "S-Model":
-            self.s_model()
+            self.statistcal_distances_via_smodel()
         else:
             logger.warning("Unrecognized name of method, statement ignored!")
 
