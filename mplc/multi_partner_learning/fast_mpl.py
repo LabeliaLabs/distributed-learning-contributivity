@@ -587,8 +587,9 @@ class FastFedGDO(FastFedAvg):
     """
     name = 'FastFedGDO'
 
-    def __init__(self, scenario, reset_local_optims=False, **kwargs):
+    def __init__(self, scenario, reset_local_optims=False, global_optimiser=None, **kwargs):
         super(FastFedGDO, self).__init__(scenario, **kwargs)
+        self.global_optimiser = global_optimiser
         self.reset_local_optims = reset_local_optims
 
     def init_specific_tf_variable(self):
@@ -599,6 +600,8 @@ class FastFedGDO(FastFedAvg):
         self.global_grad = [tf.Variable(initial_value=w.read_value()) for w in self.model.trainable_weights]
         self.partners_optimizers = [self.model.optimizer.from_config(self.model.optimizer.get_config()) for _ in
                                     self.partners_list]
+        if self.global_optimiser:
+            self.model.compile(optimizer=self.global_optimiser)
 
     def fit(self):
         # TF function definition
