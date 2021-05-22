@@ -1113,7 +1113,7 @@ class Contributivity:
 
         return relative_perf_matrix
 
-    def s_model(self):  # TOD refacto
+    def s_model(self):
         start = timer()
         mpl = basic_mpl.FedAvgSmodel(self.scenario)
         mpl.fit()
