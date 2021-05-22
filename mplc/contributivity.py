@@ -12,12 +12,13 @@ from math import factorial
 from timeit import default_timer as timer
 
 import numpy as np
+import tensorflow as tf
 from loguru import logger
 from scipy.stats import norm
 from sklearn.linear_model import LinearRegression
 
 from . import constants
-from .multi_partner_learning import basic_mpl
+from .multi_partner_learning import basic_mpl, fast_mpl
 
 
 class KrigingModel:
@@ -1113,23 +1114,37 @@ class Contributivity:
 
         return relative_perf_matrix
 
-    def s_model(self):
-        start = timer()
-        mpl = basic_mpl.FedAvgSmodel(self.scenario)
-        mpl.fit()
-        theta_estimated = np.zeros((mpl.partners_count,
-                                    mpl.dataset.num_classes,
-                                    mpl.dataset.num_classes))
-        for i, partnerMpl in enumerate(mpl.partners_list):
-            theta_estimated[i] = (np.exp(partnerMpl.noise_layer_weights) / np.sum(
-                np.exp(partnerMpl.noise_layer_weights), axis=2))
-        self.contributivity_scores = np.exp(- np.array([np.linalg.norm(
-            theta_estimated[i] - np.identity(mpl.dataset.num_classes)
-        ) for i in range(len(self.scenario.partners_list))]))
+    def statistcal_distances_via_smodel(self):
 
-        self.name = "S-Model"
+        start = timer()
+        mpl = fast_mpl.FastFedAvgSmodel(self.scenario, self.scenario.mpl.pretrain_epochs)
+        mpl.fit()
+        cross_entropy = tf.keras.metrics.CategoricalCrossentropy()
+        self.contributivity_scores = {'Kullbakc divergence': [0 for _ in mpl.partners_list],
+                                      'ma': [0 for _ in mpl.partners_list], 'Hennigen': [0 for _ in mpl.partners_list]}
+        for i, partnerMpl in enumerate(mpl.partners_list):
+            y_global = mpl.model.predict(partnerMpl.x_train)
+            y_local = mpl.smodel_list[i].predict(y_global)
+            cross_entropy.update_state(y_global, y_local)
+            cs = cross_entropy.result().numpy()
+            cross_entropy.reset_state()
+            cross_entropy.update_state(y_global, y_global)
+            e = cross_entropy.result().numpy()
+            cross_entropy.reset_state()
+            self.contributivity_scores['Kullbakc divergence'][i] = cs - e
+            BC = 0
+            for y_g, y_l in zip(y_global, y_local):
+                BC += np.sum(np.sqrt(y_g * y_l))
+            BC /= len(y_global)
+            self.contributivity_scores['Kullback Leiber divergence'][i] = cs - e
+            self.contributivity_scores['Bhattacharyya distance'][i] = - np.log(BC)
+            self.contributivity_scores['Hellinger metric'][i] = np.sqrt(1 - BC)
+
+        self.name = "Statistic metric via S-model"
         self.scores_std = np.zeros(mpl.partners_count)
-        self.normalized_scores = self.contributivity_scores / np.sum(self.contributivity_scores)
+        self.normalized_scores = {}
+        for key, value in self.contributivity_scores.items():
+            self.normalized_scores[key] = value / np.sum(value)
         end = timer()
         self.computation_time_sec = end - start
 
