@@ -588,9 +588,9 @@ class FastFedGDO(FastFedAvg):
     name = 'FastFedGDO'
 
     def __init__(self, scenario, reset_local_optims=False, global_optimiser=None, **kwargs):
-        super(FastFedGDO, self).__init__(scenario, **kwargs)
         self.global_optimiser = global_optimiser
         self.reset_local_optims = reset_local_optims
+        super(FastFedGDO, self).__init__(scenario, **kwargs)
 
     def init_specific_tf_variable(self):
         # generate tf Variables in which we will store the model weights
