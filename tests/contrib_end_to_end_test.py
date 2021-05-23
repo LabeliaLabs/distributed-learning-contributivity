@@ -71,7 +71,7 @@ class Test_EndToEndTest:
         exp.run()
 
         df = exp.result
-        assert len(df) == 2 * len(all_methods)
+        assert len(df) == 2 * (len(all_methods) + 2)  # the S-Model contributivity generates 3 lines per partner
 
     def test_IS_reg_S_contrib(self):
         """
