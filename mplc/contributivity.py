@@ -85,9 +85,16 @@ class Contributivity:
                 + str(self.first_charac_fct_calls_count)
                 + "\n"
         )
-        output += f"Contributivity scores: {np.round(self.contributivity_scores, 3)}\n"
-        output += f"Std of the contributivity scores: {np.round(self.scores_std, 3)}\n"
-        output += f"Normalized contributivity scores: {np.round(self.normalized_scores, 3)}\n"
+        if isinstance(self.contributivity_scores, dict):
+            for key, value in self.contributivity_scores.items():
+                output += f'Metric: {key}\n'
+                output += f"Contributivity scores : {np.round(value, 3)}\n"
+                output += f"Std of the contributivity scores: {np.round(self.scores_std[key], 3)}\n"
+                output += f"Normalized contributivity scores: {np.round(self.normalized_scores[key], 3)}\n"
+        else:
+            output += f"Contributivity scores : {np.round(self.contributivity_scores, 3)}\n"
+            output += f"Std of the contributivity scores: {np.round(self.scores_std, 3)}\n"
+            output += f"Normalized contributivity scores: {np.round(self.normalized_scores, 3)}\n"
 
         return output
 
@@ -1119,24 +1126,29 @@ class Contributivity:
         start = timer()
         try:
             mpl_pretrain = self.scenario.mpl.pretrain_epochs
-        except AttributeError as e:
+        except AttributeError:
             mpl_pretrain = 2
 
         mpl = fast_mpl.FastFedAvgSmodel(self.scenario, mpl_pretrain)
         mpl.fit()
         cross_entropy = tf.keras.metrics.CategoricalCrossentropy()
-        self.contributivity_scores = {'Kullbakc divergence': [0 for _ in mpl.partners_list],
-                                      'ma': [0 for _ in mpl.partners_list], 'Hennigen': [0 for _ in mpl.partners_list]}
+        self.contributivity_scores = {'Kullback Leiber divergence': [0 for _ in mpl.partners_list],
+                                      'Bhattacharyya distance': [0 for _ in mpl.partners_list],
+                                      'Hellinger metric': [0 for _ in mpl.partners_list]}
+        self.scores_std = {'Kullback Leiber divergence': [0 for _ in mpl.partners_list],
+                           'Bhattacharyya distance': [0 for _ in mpl.partners_list],
+                           'Hellinger metric': [0 for _ in mpl.partners_list]}
+        # TODO; The variance of our estimation is likely to be estimated.
+
         for i, partnerMpl in enumerate(mpl.partners_list):
             y_global = mpl.model.predict(partnerMpl.x_train)
             y_local = mpl.smodel_list[i].predict(y_global)
             cross_entropy.update_state(y_global, y_local)
             cs = cross_entropy.result().numpy()
-            cross_entropy.reset_state()
+            cross_entropy.reset_states()
             cross_entropy.update_state(y_global, y_global)
             e = cross_entropy.result().numpy()
-            cross_entropy.reset_state()
-            self.contributivity_scores['Kullbakc divergence'][i] = cs - e
+            cross_entropy.reset_states()
             BC = 0
             for y_g, y_l in zip(y_global, y_local):
                 BC += np.sum(np.sqrt(y_g * y_l))
@@ -1146,7 +1158,6 @@ class Contributivity:
             self.contributivity_scores['Hellinger metric'][i] = np.sqrt(1 - BC)
 
         self.name = "Statistic metric via S-model"
-        self.scores_std = np.zeros(mpl.partners_count)
         self.normalized_scores = {}
         for key, value in self.contributivity_scores.items():
             self.normalized_scores[key] = value / np.sum(value)
