@@ -544,7 +544,8 @@ class FedAvgSmodel(FederatedAverageLearning):
             for p in self.partners_list:
                 confusion = confusion_matrix(np.argmax(p.y_train, axis=1),
                                              np.argmax(pretrain_model.predict(p.x_train), axis=1),
-                                             normalize='pred')
+                                             normalize='pred',
+                                             labels=list(range(10)))
                 p.noise_layer_weights = [np.log(confusion.T + 1e-8)]
             self.model_weights[:-1] = self.pretrain_mpl.model_weights[:-1]
         else:

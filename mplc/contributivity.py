@@ -1124,12 +1124,7 @@ class Contributivity:
     def statistcal_distances_via_smodel(self):
 
         start = timer()
-        try:
-            mpl_pretrain = self.scenario.mpl.pretrain_epochs
-        except AttributeError:
-            mpl_pretrain = 2
-
-        mpl = fast_mpl.FastFedAvgSmodel(self.scenario, mpl_pretrain)
+        mpl = fast_mpl.FastFedAvgSmodel(self.scenario, **self.scenario.mpl_kwargs)
         mpl.fit()
         cross_entropy = tf.keras.metrics.CategoricalCrossentropy()
         self.contributivity_scores = {'Kullback Leiber divergence': [0 for _ in mpl.partners_list],

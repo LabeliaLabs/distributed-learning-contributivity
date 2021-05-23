@@ -376,7 +376,7 @@ class FastFedAvgSmodel(FastFedAvg):
             for p in self.partners_list:
                 confusion = confusion_matrix(np.argmax(p.y_train, axis=1),
                                              np.argmax(self.model.predict(p.x_train), axis=1),
-                                             normalize='pred')
+                                             normalize='pred', labels=list(range(10)))
                 p.noise_layer_weights = [np.log(confusion.T + 1e-8)]
         else:
             for p in self.partners_list:
@@ -549,7 +549,7 @@ class FastGradSmodel(FastFedGrad):
             for p in self.partners_list:
                 confusion = confusion_matrix(np.argmax(p.y_train, axis=1),
                                              np.argmax(self.model.predict(p.x_train), axis=1),
-                                             normalize='pred')
+                                             normalize='pred', labels=list(range(10)))
                 p.noise_layer_weights = [np.log(confusion.T + 1e-8)]
         else:
             for p in self.partners_list:
