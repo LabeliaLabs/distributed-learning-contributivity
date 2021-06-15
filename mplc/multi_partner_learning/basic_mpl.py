@@ -7,6 +7,7 @@ import operator
 import os
 from abc import ABC, abstractmethod
 from timeit import default_timer as timer
+from copy import deepcopy
 
 import numpy as np
 import tensorflow as tf
@@ -681,7 +682,8 @@ class EnsemblePredictions(MultiPartnerLearning):
         self.model = EnsemblePredictionsModel(partner_model_list)
 
         for partner in self.partners_list:
-            partner.model_weights = self.model_weights
+            partner.model_weights = deepcopy(self.model_weights)
+            print(id(partner.model_weights))
 
         logger.info("Init EnsemblePredictionsModel model")
 

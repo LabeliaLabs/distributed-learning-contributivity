@@ -8,7 +8,8 @@ BASIC_MPL_APPROACHES = {
     "seq-pure": basic_mpl.SequentialLearning,
     "seq-with-final-agg": basic_mpl.SequentialWithFinalAggLearning,
     "seqavg": basic_mpl.SequentialAverageLearning,
-    "fedavg-smodel": basic_mpl.FedAvgSmodel}
+    "fedavg-smodel": basic_mpl.FedAvgSmodel,
+    "ensemble": basic_mpl.EnsemblePredictions}
 
 FAST_TF_MPL_APPROACHES = {
     'fast-fedavg': fast_mpl.FastFedAvg,
