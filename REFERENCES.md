@@ -3,8 +3,8 @@
 ## Table of content
 
 
-- [2CP: Decentralized Protocols to Transparently Evaluate Contributivity in Blockchain Federated Learning Environments](#2CP-:-Decentralized-Protocols-to-Transparently-Evaluate-Contributivity-in-Blockchain-Federated-Learning-Environments)
-- [CAPC Learning: Confidential and Private Collaborative Learning](#CAPC-Learning-:-Confidential-and-Private-Collaborative-Learning)
+- [2CP: Decentralized Protocols to Transparently Evaluate Contributivity in Blockchain Federated Learning Environments](#2CP:-Decentralized-Protocols-to-Transparently-Evaluate-Contributivity-in-Blockchain-Federated-Learning-Environments)
+- [CAPC Learning: Confidential and Private Collaborative Learning](#CAPC-Learning:-Confidential-and-Private-Collaborative-Learning)
 - [Distributionally Robust Federated Averaging](#Distributionally-Robust-Federated-Averaging-(DRFA))
 ---
 
