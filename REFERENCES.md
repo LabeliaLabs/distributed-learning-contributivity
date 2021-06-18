@@ -3,9 +3,9 @@
 ## Table of content
 
 
-- [2CP: Decentralized Protocols to Transparently Evaluate Contributivity in Blockchain Federated Learning Environments](#2CP:-Decentralized Protocols to Transparently Evaluate Contributivity in Blockchain Federated Learning Environments)
-- [CAPC Learning: Confidential and Private Collaborative Learning](#-CAPC-Learning:-Confidential and Private Collaborative Learning)
-- [Distributionally Robust Federated Averaging](#Distributionally Robust Federated Averaging(DRFA))
+- [2CP: Decentralized Protocols to Transparently Evaluate Contributivity in Blockchain Federated Learning Environments](#2CP-:-Decentralized-Protocols-to-Transparently-Evaluate-Contributivity-in-Blockchain-Federated-Learning-Environments)
+- [CAPC Learning: Confidential and Private Collaborative Learning](#CAPC-Learning-:-Confidential-and-Private-Collaborative-Learning)
+- [Distributionally Robust Federated Averaging](#Distributionally-Robust-Federated-Averaging-(DRFA))
 ---
 
 
@@ -35,7 +35,7 @@ unlike the Crowdsource protocol, the Consortium protocol struggles to give good 
 - Learning is done through label sharing and not model weight aggregation.
 - CaPC leverages *secure multiparty computation* **(MPC)**, *homomorphic encryption* **(HE)**, and other techniques in combination with privately aggregated teacher models to provide provable confidentiality and privacy guarantee.
 
-###Experiments and results:
+### Experiments and results:
 - CaPC improves the mean accuracy across both homogeneous and heterogeneous model architectures under the uniform and non-uniform data distribution setting
 - The **privacy-utility trade-off** is determined by the number of parties involved in the protocol. Increasing the number of parties means we can issue more queries for a given privacy budget which leads to higher accuracy gains
 
