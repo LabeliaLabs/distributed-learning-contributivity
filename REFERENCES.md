@@ -51,7 +51,7 @@ unlike the Crowdsource protocol, the Consortium protocol struggles to give good 
   In the original approach, the server has to communicate with local clients at each iteration to update the global mixing parameter **λ**, which
   hinders its scalability due to communication cost. To cope with this issue, **DRFA** key technical contribution is a **randomized snapshotting schema**: **λ**, which controls
   the fraction of clients  to participate in the next training round, is only updated periodically.   
-- The gap between two consecutive **λ** is called the synchronizatin gap **τ**, which is needs to be fine-tuned to guarantee fast convergence with minimal communication cost.
+- The gap between two consecutive **λ** is called the synchronizatin gap **τ**, which needs to be fine-tuned to guarantee fast convergence with minimal communication cost.
 - **The agnostic federated learning algorithm (AFL)** can be considered a special case of DRFA when **the synchronization gap**(number of local updates in each training round) = 1.
 
 ### Experiments and results:
