@@ -3,6 +3,7 @@
 - [2CP: Decentralized Protocols to Transparently Evaluate Contributivity in Blockchain Federated Learning Environments](#2CP:-Decentralized-Protocols-to-Transparently-Evaluate-Contributivity-in-Blockchain-Federated-Learning-Environments)
 - [CAPC Learning: Confidential and Private Collaborative Learning](#CAPC-Learning:-Confidential-and-Private-Collaborative-Learning)
 - [Distributionally Robust Federated Averaging](#Distributionally-Robust-Federated-Averaging-(DRFA))
+
 ---
 
 ## 2CP: Decentralized Protocols to Transparently Evaluate Contributivity in Blockchain Federated Learning Environments
@@ -43,11 +44,9 @@ unlike the Crowdsource protocol, the Consortium protocol struggles to give good 
 
 ## Distributionally Robust Federated Averaging (DRFA)
 
-
-
 - The paper proposes the **Distributionally Robust Federated Averaging** **(DRFA)** algorithm that is distributionally robust, while being communication-efficient via **periodic averaging**, and **partial node participation**.
 - The main idea is to minimize *the empirical agnostic loss* to guarantee good performance over *the worst-combination of local distributions*.
-- **DRFA** improves on the idea of empirical agnosic loss minimization which was first adopted by [the Agnostic Federated learning](https://arxiv.org/abs/1902.00146) algorithm.
+- **DRFA** improves on the idea of empirical agnostic loss minimization which was first adopted by [the Agnostic Federated learning](https://arxiv.org/abs/1902.00146) algorithm.
   In the original approach, the server has to communicate with local clients at each iteration to update the global mixing parameter **λ**, which
   hinders its scalability due to communication cost. To cope with this issue, **DRFA** key technical contribution is a **randomized snapshotting schema**: **λ**, which controls
   the fraction of clients  to participate in the next training round, is only updated periodically.   
