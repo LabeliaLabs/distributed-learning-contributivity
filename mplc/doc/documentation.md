@@ -314,7 +314,7 @@ There are several parameters influencing how the collaborative and distributed l
     ![Schema seq](../../img/collaborative_rounds_seq.png)
 
   - `'seqavg'`: stands for sequential averaging
-    
+  
     ![Schema seqavg](../../img/collaborative_rounds_seqavg.png)
 
   Example: `multi_partner_learning_approach='seqavg'`
