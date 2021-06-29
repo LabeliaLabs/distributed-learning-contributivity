@@ -311,10 +311,10 @@ There are several parameters influencing how the collaborative and distributed l
 
   - `'seq-...'`: stands for sequential and comes with 2 variations, `'seq-pure'` with no aggregation at all, and `'seq-with-final-agg'` where an aggregation is performed before evaluating on the validation set and test set (on last mini-batch of each epoch) for mitigating impact when the very last subset on which the model is trained is of low quality, or corrupted, or just detrimental to the model performance.
 
-    - `'seq-...'`: stands for sequential and comes with 2 variations, `'seq-pure'` with no aggregation at all, and `'seq-with-final-agg'` where an aggregation is performed before evaluating on the validation set and test set (on last mini-batch of each epoch) for mitigating impact when the very last subset on which the model is trained is of low quality, or corrupted, or just detrimental to the model performance.
-
     ![Schema seq](../../img/collaborative_rounds_seq.png)
 
+  - `'seqavg'`: stands for sequential averaging
+    
     ![Schema seqavg](../../img/collaborative_rounds_seqavg.png)
 
   Example: `multi_partner_learning_approach='seqavg'`
