@@ -3,6 +3,13 @@
 - [2CP: Decentralized Protocols to Transparently Evaluate Contributivity in Blockchain Federated Learning Environments](#2CP:-Decentralized-Protocols-to-Transparently-Evaluate-Contributivity-in-Blockchain-Federated-Learning-Environments)
 - [CAPC Learning: Confidential and Private Collaborative Learning](#CAPC-Learning:-Confidential-and-Private-Collaborative-Learning)
 - [Distributionally Robust Federated Averaging](#Distributionally-Robust-Federated-Averaging-(DRFA))
+- [Towards Efficient Data Valuation Based on the Shapley Value](#Towards Efficient Data Valuation Based on the Shapley Value)
+_ [Transparent Contribution Evaluation for Secure Federated Learning on Blockchain](#Transparent Contribution Evaluation for Secure Federated Learning on Blockchain)
+- [Profit Allocation for Federated Learning](#Profit Allocation for Federated Learning)
+- [Transparent Contribution Evaluation for Secure Federated Learning on Blockchain](#Transparent Contribution Evaluation for Secure Federated Learning on Blockchain)
+- [Measure Contribution of Participants in Federated Learning](#Measure Contribution of Participants in Federated Learning)
+- [FedCM: A Real-time Contribution Measurement Method for Participants in Federated Learning](#FedCM A Real-time Contribution Measurement Method for Participants in Federated Learning)
+- [Incentive Mechanism for Reliable Federated Learning: A Joint Optimization Approach to Combining Reputation and Contract Theory](#Incentive Mechanism for Reliable Federated Learning A Joint Optimization Approach to Combining Reputation and Contract Theory)
 
 ---
 
@@ -91,8 +98,31 @@ unlike the Crowdsource protocol, the Consortium protocol struggles to give good 
 
 ## Measure Contribution of Participants in Federated Learning
 
+**Authors** Guan Wang, Charlie Xiaoqian Dang, Ziye Zhou
+2019
+
 ### Contribution:
 
 ### Experiments and results:
  
 ### Conclusion and future work:
+
+## FedCM: A Real-time Contribution Measurement Method for Participants in Federated Learning
+**Boyi Liu and Bingjie Yan, Yize Zhou, Jun Wang, Li Liu, Yuhan Zhang, Xiaolan Nie**
+2021
+### Contribution:
+
+### Experiments and results:
+ 
+### Conclusion and future work:
+
+### Incentive Mechanism for Reliable Federated Learning: A Joint Optimization Approach to Combining Reputation and Contract Theory
+**Jiawen Kang, Zehui Xiong, Dusit Niyato, Shengli Xie, Junshan Zhang**
+2019
+
+### Contribution:
+
+### Experiments and results:
+ 
+### Conclusion and future work:
+
