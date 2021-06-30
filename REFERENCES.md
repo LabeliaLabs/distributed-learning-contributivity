@@ -60,4 +60,39 @@ unlike the Crowdsource protocol, the Consortium protocol struggles to give good 
 - Pytorch implementation of the DRFA can be found [here](https://github.com/MLOPTPSU/FedTorch/).
 
 
+## Towards Efficient Data Valuation Based on the Shapley Value
+**Authors:** Ruoxi Jia, David Dao, Boxin Wang, Frances Ann Hubis, Nick Hynes, Nezihe Merve Gurel, Bo Li, Ce Zhang, Dawn Song, Costas Spanos
+2019
+### Contribution:
 
+### Experiments and results:
+ 
+### Conclusion and future work:
+
+## Profit Allocation for Federated Learning
+
+**Authors:** Tianshu Song, Yongxin Tong, Shuyue Wei
+2019
+### Contribution:
+
+### Experiments and results:
+ 
+### Conclusion and future work:
+
+## Transparent Contribution Evaluation for Secure Federated Learning on Blockchain
+
+**Authors:** Shuaicheng Ma, Yang Cao, Li Xiong
+2019
+### Contribution:
+
+### Experiments and results:
+ 
+### Conclusion and future work:
+
+## Measure Contribution of Participants in Federated Learning
+
+### Contribution:
+
+### Experiments and results:
+ 
+### Conclusion and future work:
