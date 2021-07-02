@@ -620,8 +620,6 @@ class Fmnist(Dataset):
     def __init__(self, proportion=1,
                  val_proportion=0.1):
 
-        super().__init__(proportion,
-                         val_proportion)
         self.img_width = 28
         self.img_height = 28
         self.input_shape = (self.img_height, self.img_width, 1)
