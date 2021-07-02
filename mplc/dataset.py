@@ -17,9 +17,9 @@ from librosa import load as wav_load
 from librosa.feature import mfcc
 from loguru import logger
 from sklearn.model_selection import train_test_split
-from tensorflow.keras.datasets import cifar10, mnist, imdb
+from tensorflow.keras.datasets import cifar10, mnist, imdb, fashion_mnist
 from tensorflow.keras.layers import Activation
-from tensorflow.keras.layers import Conv2D, GlobalAveragePooling2D, MaxPooling2D
+from tensorflow.keras.layers import Conv2D, GlobalAveragePooling2D, MaxPooling2D, BatchNormalization
 from tensorflow.keras.layers import Dense, Dropout
 from tensorflow.keras.layers import Embedding, Conv1D, MaxPooling1D, Flatten
 from tensorflow.keras.losses import categorical_crossentropy
@@ -613,3 +613,103 @@ class Esc50(Dataset):
             metrics=self.model_metrics_names[1:],
         )
         return model
+
+
+class Fmnist(Dataset):
+
+    def __init__(self, proportion=1,
+                 val_proportion=0.1):
+
+        super().__init__(proportion,
+                         val_proportion)
+        self.img_width = 28
+        self.img_height = 28
+        self.input_shape = (self.img_height, self.img_width, 1)
+        self.num_classes = 10
+        x_train, y_train, x_test, y_test = self.load_data()
+
+        super(Fmnist, self).__init__(dataset_name='fmnist',
+                                     num_classes=self.num_classes,
+                                     input_shape=(self.img_height, self.img_width, 1),
+                                     x_train=x_train,
+                                     y_train=y_train,
+                                     x_test=x_test,
+                                     y_test=y_test,
+                                     proportion=proportion,
+                                     val_proportion=val_proportion
+                                     )
+
+    def load_data(self):
+        attempts = 0
+        while True:
+            try:
+                (x_train, y_train), (x_test, y_test) = fashion_mnist.load_data()
+                break
+            except (HTTPError, URLError) as e:
+                if hasattr(e, 'code'):
+                    temp = e.code
+                else:
+                    temp = e.errno
+                logger.debug(
+                    f'URL fetch failure on '
+                    f''
+                    f'{temp} -- {e.reason}')
+                if attempts < constants.NUMBER_OF_DOWNLOAD_ATTEMPTS:
+                    sleep(2)
+                    attempts += 1
+                else:
+                    raise
+
+        # Pre-process inputs
+        x_train = self.preprocess_dataset_inputs(x_train)
+        x_test = self.preprocess_dataset_inputs(x_test)
+        y_train = self.preprocess_dataset_labels(y_train)
+        y_test = self.preprocess_dataset_labels(y_test)
+
+        return x_train, y_train, x_test, y_test
+
+    def preprocess_dataset_inputs(self, x):
+        x = x.astype("float32") / 255.0
+        return x.reshape(x.shape[0], self.img_width, self.img_height, 1)
+
+    def preprocess_dataset_labels(self, y):
+        return to_categorical(y, self.num_classes)
+
+    def generate_new_model(self):
+        """
+        Using a variation of the VGG16 model with batch normalization
+        """
+        model = Sequential()
+
+        model.add(Conv2D(32, (3, 3), padding="same", input_shape=self.input_shape), activation="relu")
+
+        model.add(BatchNormalization(axis=-1))
+        model.add(Conv2D(32, (3, 3), padding="same"), activation="relu")
+        model.add(BatchNormalization(axis=-1))
+        model.add(MaxPooling2D(pool_size=(2, 2)))
+        model.add(Dropout(0.25))
+
+        model.add(Conv2D(64, (3, 3), padding="same"), activation="relu")
+        model.add(BatchNormalization(axis=-1))
+        model.add(Conv2D(64, (3, 3), padding="same"), activation="relu")
+        model.add(BatchNormalization(axis=-1))
+        model.add(MaxPooling2D(pool_size=(2, 2)))
+        model.add(Dropout(0.25))
+
+        model.add(Flatten())
+        model.add(Dense(512))
+        model.add(Activation("relu"))
+        model.add(BatchNormalization())
+        model.add(Dropout(0.5))
+
+        model.add(Dense(self.num_classes))
+        model.add(Activation("softmax"))
+
+        model.compile(
+            loss=categorical_crossentropy,
+            optimizer="adam",
+            metrics=self.model_metrics_names[1:],
+        )
+
+        return model
+
