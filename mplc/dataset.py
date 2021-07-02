@@ -682,8 +682,8 @@ class Fmnist(Dataset):
         model = Sequential()
 
         model.add(Conv2D(32, (3, 3), padding="same", input_shape=self.input_shape), activation="relu")
-
         model.add(BatchNormalization(axis=-1))
+
         model.add(Conv2D(32, (3, 3), padding="same"), activation="relu")
         model.add(BatchNormalization(axis=-1))
         model.add(MaxPooling2D(pool_size=(2, 2)))
@@ -691,6 +691,7 @@ class Fmnist(Dataset):
 
         model.add(Conv2D(64, (3, 3), padding="same"), activation="relu")
         model.add(BatchNormalization(axis=-1))
+
         model.add(Conv2D(64, (3, 3), padding="same"), activation="relu")
         model.add(BatchNormalization(axis=-1))
         model.add(MaxPooling2D(pool_size=(2, 2)))
@@ -710,6 +711,4 @@ class Fmnist(Dataset):
             optimizer="adam",
             metrics=self.model_metrics_names[1:],
         )
-
         return model
-
