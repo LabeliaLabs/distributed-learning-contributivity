@@ -676,6 +676,7 @@ class Fmnist(Dataset):
     def generate_new_model(self):
         """
         Using a variation of the VGG16 model with batch normalization
+        'https://www.pyimagesearch.com/2019/02/11/fashion-mnist-with-keras-and-deep-learning/'
         """
         model = Sequential()
 
