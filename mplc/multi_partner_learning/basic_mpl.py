@@ -414,6 +414,9 @@ class FederatedAverageLearning(MultiPartnerLearning):
 
 
 class DistributionallyRobustFederatedAveragingLearning(FederatedAverageLearning):
+    """
+
+    """
     name = "Distributionally Robust Federated Averaging"
 
     def __init__(self, scenario, **kwargs ):
@@ -425,7 +428,7 @@ class DistributionallyRobustFederatedAveragingLearning(FederatedAverageLearning)
         self.global_lambda_initialization = scenario.global_lambda_initialization
         self.active_partners_list = self.update_active_partners_list()
         self.local_steps = scenario.gradient_updates_per_pass_count
-        self.γ = γ = 8e-3
+        self.gamma = gamma = 8e-3
 
     def fit_epoch(self):
         # Clear Keras' old models
@@ -476,7 +479,6 @@ class DistributionallyRobustFederatedAveragingLearning(FederatedAverageLearning)
         if self.global_lambda_initialization == "weighted":
             a = np.random.random(self.partners_count)
 
-
         a = np.random.random(self.partners_count)
         return a/a.sum()
 
@@ -484,14 +486,13 @@ class DistributionallyRobustFederatedAveragingLearning(FederatedAverageLearning)
         return 0
 
     def update_active_partners_list(self):
-        zipped = zip(self.partners_list, self.global_lambda_vector)
+        zipped_partners_lambdas = list(map(list, zip(self.partners_list, self.global_lambda_vector)))
+
+
 
 
     def projection(self, v):
         return 0
-
-
-
 
 
 class SequentialLearning(MultiPartnerLearning):  # seq-pure
