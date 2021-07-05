@@ -412,6 +412,88 @@ class FederatedAverageLearning(MultiPartnerLearning):
         logger.debug("End of fedavg collaborative round.")
 
 
+
+class DistributionallyRobustFederatedAveragingLearning(FederatedAverageLearning):
+    name = "Distributionally Robust Federated Averaging"
+
+    def __init__(self, scenario, **kwargs ):
+        super(MultiPartnerLearning, self).__init__(scenario, **kwargs)
+        if self.partners_count == 1:
+            raise ValueError('Only one partner is provided. Please use the dedicated SinglePartnerLearning class')
+        self.m = scenario.active_partners_count
+        self.global_lambda_vector = self.init_lambda()
+        self.global_lambda_initialization = scenario.global_lambda_initialization
+        self.active_partners_list = self.update_active_partners_list()
+        self.local_steps = scenario.gradient_updates_per_pass_count
+        self.γ = γ = 8e-3
+
+    def fit_epoch(self):
+        # Clear Keras' old models
+        clear_session()
+
+        # Split the train dataset in mini-batches
+        self.split_in_minibatches()
+
+        # Iterate over mini-batches and train
+        for i in range(self.minibatch_count):
+            self.minibatch_index = i
+            self.fit_minibatch()
+
+            # call update_lambda here
+            # call update_active_partners
+
+            # At the end of each minibatch,aggregate the models
+            self.model_weights = self.aggregator.aggregate_model_weights()
+
+        self.minibatch_index = 0
+
+    def fit_minibatch(self):
+        """Proceed to a collaborative round with a distributionally robust federated averaging approach"""
+
+        logger.debug("Start new fedavg collaborative round ...")
+
+        # Starting model for each partner is the aggregated model from the previous mini-batch iteration
+        logger.info(f"(fedavg) Minibatch n°{self.minibatch_index} of epoch n°{self.epoch_index}, "
+                    f"init each partner's models with a copy of the global model")
+
+        for partner in self.partners_list:
+            partner.model_weights = self.model_weights
+
+        # Evaluate and store accuracy of mini-batch start model
+        self.eval_and_log_model_val_perf()
+
+        # Iterate over partners for training each individual model
+        for partner_index, partner in enumerate(self.active_partners_list):
+            # Reference the partner's model
+            partner_model = partner.build_model()
+
+
+
+        pass
+
+    def init_lambda(self):
+
+        if self.global_lambda_initialization == "weighted":
+            a = np.random.random(self.partners_count)
+
+
+        a = np.random.random(self.partners_count)
+        return a/a.sum()
+
+    def update_lambda(self):
+        return 0
+
+    def update_active_partners_list(self):
+        zipped = zip(self.partners_list, self.global_lambda_vector)
+
+
+    def projection(self, v):
+        return 0
+
+
+
+
+
 class SequentialLearning(MultiPartnerLearning):  # seq-pure
     name = 'Sequential learning'
 
