@@ -415,7 +415,10 @@ class FederatedAverageLearning(MultiPartnerLearning):
 
 class DistributionallyRobustFederatedAveragingLearning(FederatedAverageLearning):
     """
-
+    - This class implements the Distributionally Robust Federated Averaging (DRFA) Algorithm, this can be considered a
+    variant of Federated Averaging where only a subset of partners are chosen based on a global mixing partner called
+    lambda- to participate in a given collaborative learning round.
+    - Lambda is updated periodically at the end of each collaborative learning round.
     """
     name = "Distributionally Robust Federated Averaging"
 
@@ -427,8 +430,11 @@ class DistributionallyRobustFederatedAveragingLearning(FederatedAverageLearning)
         self.global_lambda_vector = self.init_lambda()
         self.global_lambda_initialization = scenario.global_lambda_initialization
         self.active_partners_list = self.update_active_partners_list()
+        self.dataset_proportions = scenario.amounts_per_partner
         self.local_steps = scenario.gradient_updates_per_pass_count
+        # This is the learning rate for lambda
         self.gamma = gamma = 8e-3
+
 
     def fit_epoch(self):
         # Clear Keras' old models
@@ -444,7 +450,6 @@ class DistributionallyRobustFederatedAveragingLearning(FederatedAverageLearning)
 
             # call update_lambda here
             # call update_active_partners
-
             # At the end of each minibatch,aggregate the models
             self.model_weights = self.aggregator.aggregate_model_weights()
 
@@ -461,6 +466,8 @@ class DistributionallyRobustFederatedAveragingLearning(FederatedAverageLearning)
 
         for partner in self.partners_list:
             partner.model_weights = self.model_weights
+
+        # convert partners to MplPartners
 
         # Evaluate and store accuracy of mini-batch start model
         self.eval_and_log_model_val_perf()
@@ -486,7 +493,10 @@ class DistributionallyRobustFederatedAveragingLearning(FederatedAverageLearning)
         return 0
 
     def update_active_partners_list(self):
+        # First convert partner objects to MplPartner objects
+
         zipped_partners_lambdas = list(map(list, zip(self.partners_list, self.global_lambda_vector)))
+        return 0
 
 
 
