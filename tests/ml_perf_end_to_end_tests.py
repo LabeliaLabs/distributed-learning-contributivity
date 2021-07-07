@@ -57,13 +57,21 @@ class Test_EndToEndTest:
 
         exp = Experiment(is_save=False)
         # mpl_approaches = mpl.BASIC_MPL_APPROACHES.copy()
-        mpl_approaches = mpl.MULTI_PARTNER_LEARNING_APPROACHES
-
+        mpl_approaches = mpl.MULTI_PARTNER_LEARNING_APPROACHES.copy()
+        _ = mpl_approaches.pop("single-partner")
         for approach in mpl_approaches:
             exp.add_scenario(Scenario(2, [0.25, 0.75], epoch_count=2, minibatch_count=2, dataset='mnist',
                                       dataset_proportion=0.1, multi_partner_learning_approach=approach,
                                       gradient_updates_per_pass_count=3))
+        exp.add_scenario(Scenario(1,
+                                  [1],
+                                  epoch_count=2,
+                                  minibatch_count=2,
+                                  dataset='mnist',
+                                  dataset_proportion=0.1,
+                                  multi_partner_learning_approach='single-partner',
+                                  gradient_updates_per_pass_count=3))
         exp.run()
 
         df = exp.result
-        assert len(df) == len(mpl_approaches)
+        assert len(df) == len(mpl.MULTI_PARTNER_LEARNING_APPROACHES)
