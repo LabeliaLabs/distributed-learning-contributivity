@@ -17,7 +17,7 @@ from librosa import load as wav_load
 from librosa.feature import mfcc
 from loguru import logger
 from sklearn.model_selection import train_test_split
-from tensorflow.keras.datasets import cifar10, mnist, imdb
+from tensorflow.keras.datasets import cifar10, cifar100, mnist, imdb
 from tensorflow.keras.layers import Activation
 from tensorflow.keras.layers import Conv2D, GlobalAveragePooling2D, MaxPooling2D
 from tensorflow.keras.layers import Dense, Dropout
@@ -29,7 +29,8 @@ from tensorflow.keras.preprocessing import sequence
 from tensorflow.keras.utils import to_categorical
 
 from . import constants
-from .models import LogisticRegression
+from .models import LogisticRegression, ModelPytorch
+from torchvision import models
 
 
 class Dataset(ABC):
@@ -192,6 +193,77 @@ class Cifar10(Dataset):
                       metrics=self.model_metrics_names[1:])
 
         return model
+
+
+class Cifar100(Dataset):
+    def __init__(self):
+        self.input_shape = (3, 32, 32)
+        self.num_classes = 100
+        x_test, x_train, y_test, y_train = self.load_data()
+
+        super(Cifar100, self).__init__(dataset_name='cifar100',
+                                      num_classes=self.num_classes,
+                                      input_shape=self.input_shape,
+                                      x_train=x_train,
+                                      y_train=y_train,
+                                      x_test=x_test,
+                                      y_test=y_test)
+
+    def load_data(self):
+        attempts = 0
+        while True:
+            try:
+                (x_train, y_train), (x_test, y_test) = cifar100.load_data()
+                break
+            except (HTTPError, URLError) as e:
+                if hasattr(e, 'code'):
+                    temp = e.code
+                else:
+                    temp = e.errno
+                logger.debug(
+                    f'URL fetch failure on '
+                    f'https://www.cs.toronto.edu/~kriz/cifar-100-python.tar.gz : '
+                    f'{temp} -- {e.reason}')
+                if attempts < constants.NUMBER_OF_DOWNLOAD_ATTEMPTS:
+                    sleep(2)
+                    attempts += 1
+                else:
+                    raise
+
+        # Pre-process inputs
+        x_train = self.preprocess_dataset_inputs(x_train)
+        x_test = self.preprocess_dataset_inputs(x_test)
+        # y_train = self.preprocess_dataset_labels(y_train)
+        # y_test = self.preprocess_dataset_labels(y_test)
+        return x_test, x_train, y_test, y_train
+
+    # Data samples pre-processing method for inputs
+    @staticmethod
+    def preprocess_dataset_inputs(x):
+        x = x.astype("float32")
+        x /= 255
+
+        return x
+
+    # Data samples pre-processing method for labels
+    def preprocess_dataset_labels(self, y):
+        y = to_categorical(y, self.num_classes)
+
+        return y
+
+    # Model structure and generation
+    def generate_new_model(self):
+        model = ModelPytorch()
+        return model
+
+    # train, test, val splits
+    @staticmethod
+    def train_test_split_local(x, y):
+        return train_test_split(x, y, test_size=0.1, random_state=42)
+
+    @staticmethod
+    def train_val_split_local(x, y):
+        return train_test_split(x, y, test_size=0.1, random_state=42)
 
 
 class Titanic(Dataset):

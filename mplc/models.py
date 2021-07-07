@@ -1,10 +1,16 @@
 import numpy as np
+import collections
 from joblib import dump, load
 from loguru import logger
 from sklearn.linear_model import LogisticRegression as skLR
 from sklearn.metrics import accuracy_score, log_loss
 from tensorflow.keras.backend import dot
 from tensorflow.keras.layers import Dense
+import torch, torchvision
+import torch.nn as nn
+import torch.optim as optim
+import torch.utils.data as data
+import torchvision.transforms as transforms
 
 
 class LogisticRegression(skLR):
@@ -94,6 +100,157 @@ class LogisticRegression(skLR):
             logger.debug('Automatically switch file format from .h5 to .joblib')
             path.replace('.h5', '.joblib')
         return load(path)
+
+class cifar100_dataset(torch.utils.data.Dataset):
+
+    def __init__(self, x, y, transform=[]):
+        self.x = x
+        self.y = y
+        self.transform = transform
+
+    def __len__(self):
+        return len(self.x)
+
+    def __getitem__(self, index):
+
+        x = self.x[index]
+        y = torch.tensor(int(self.y[index][0]))
+
+        if self.transform:
+            x = self.transform(x)
+
+        return x, y
+
+class ModelPytorch(nn.Module):
+    def __init__(self):
+        super(ModelPytorch, self).__init__()
+        model = torchvision.models.vgg16()
+        self.features = nn.Sequential(model.features)
+        self.avgpool = nn.AdaptiveAvgPool2d(output_size=(7, 7))
+        self.classifier = nn.Sequential(
+            nn.Linear(25088, 4096),
+            nn.ReLU(inplace=True),
+            nn.Dropout(p=0.5, inplace=False),
+            nn.Linear(4096, 4096),
+            nn.ReLU(inplace=True),
+            nn.Dropout(p=0.5, inplace=False),
+            nn.Linear(4096, 1000)
+        )
+        self.optimizer = optim.Adam(model.parameters(), lr=1e-3)
+
+
+    def forward(self, x):
+        x = self.features(x)
+        x = self.avgpool(x)
+        x = x.view(x.size(0), -1)
+        return self.classifier(x)
+
+
+    def fit(self, x_train, y_train, batch_size, validation_data, epochs=1, verbose=False, callbacks=None):
+        criterion = nn.CrossEntropyLoss()
+        transform = transforms.Compose([transforms.ToTensor()])
+
+        train_data = cifar100_dataset(x_train, y_train, transform)
+        train_loader = data.DataLoader(train_data, batch_size=int(batch_size), shuffle=True)
+
+        history = super(ModelPytorch, self).train()
+
+        for batch_idx, (image, label) in enumerate(train_loader):
+            images, labels = torch.autograd.Variable(image), torch.autograd.Variable(label)
+
+            outputs = self.forward(images)
+            loss = criterion(outputs, labels)
+
+            self.optimizer.zero_grad()
+            loss.backward()
+            self.optimizer.step()
+
+        [loss, acc] = self.evaluate(x_train, y_train)
+        [val_loss, val_acc] = self.evaluate(*validation_data)
+        # Mimic Keras' history
+        history.history = {
+            'loss': [loss],
+            'accuracy': [acc],
+            'val_loss': [val_loss],
+            'val_accuracy': [val_acc]
+        }
+
+        return history
+
+    def evaluate(self, x_eval, y_eval, **kwargs):
+        criterion = nn.CrossEntropyLoss()
+        transform = transforms.Compose([transforms.ToTensor()])
+
+        test_data = cifar100_dataset(x_eval, y_eval, transform)
+        test_loader = data.DataLoader(test_data, shuffle=True)
+
+        self.eval()
+
+        with torch.no_grad():
+
+            y_true_np = []
+            y_pred_np = []
+            count=0
+            for i, (images, labels) in enumerate(test_loader):
+                count+= 1
+                N = images.size(0)
+
+                images = torch.autograd.Variable(images)
+                labels = torch.autograd.Variable(labels)
+
+                outputs = self(images)
+                predictions = outputs.max(1, keepdim=True)[1]
+
+                val_loss =+ criterion(outputs, labels).item()
+                val_acc =+ (predictions.eq(labels.view_as(predictions)).sum().item() / N)
+
+            model_evaluation = [val_loss/count, val_acc/count]
+
+        return model_evaluation
+
+
+    def save_weights(self, path):
+        if '.h5' in path:
+            logger.debug('Automatically switch file format from .h5 to .pth')
+            path.replace('.h5', '.pth')
+        torch.save(self.state_dict(), path)
+
+
+    def load_weights(self, path):
+        if '.h5' in path:
+            logger.debug('Automatically switch file format from .h5 to .pth')
+            path.replace('.h5', '.pth')
+        weights = torch.load(path)
+        self.set_weights(weights)
+
+
+    def get_weights(self):
+        self.state_dict()
+        weights = []
+        for layer in self.state_dict().keys(): 
+            weights.append(self.state_dict()[layer].numpy())
+        return weights
+
+
+    def set_weights(self, weights):
+        for i, layer in enumerate(self.state_dict().keys()):
+                self.state_dict()[layer]= torch.Tensor(weights[i])
+
+
+    def save_model(self, path):
+        if '.h5' in path:
+            logger.debug('Automatically switch file format from .h5 to .pth')
+            path.replace('.h5', '.pth')
+        torch.save(self, path)
+
+
+    @staticmethod
+    def load_model(path):
+        if '.h5' in path:
+            logger.debug('Automatically switch file format from .h5 to .pth')
+            path.replace('.h5', '.pth')
+        model = torch.load(path)
+        return model.eval()
 
 
 class EnsemblePredictionsModel():

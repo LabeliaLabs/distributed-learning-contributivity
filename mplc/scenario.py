@@ -135,6 +135,8 @@ class Scenario:
                 self.dataset = dataset_module.Esc50()
             elif dataset == constants.IMDB:
                 self.dataset = dataset_module.Imdb()
+            elif dataset_name == constants.CIFAR100:
+                self.dataset = dataset_module.Cifar100()
             else:
                 raise Exception(
                     f"Dataset named '{dataset}' is not supported (yet). You can construct your own "
