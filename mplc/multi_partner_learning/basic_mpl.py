@@ -284,12 +284,11 @@ class MultiPartnerLearning(ABC):
 class SinglePartnerLearning(MultiPartnerLearning):
     name = 'Single Partner learning'
 
-    def __init__(self, scenario, partner, **kwargs):
-        kwargs['partners_list'] = [partner]
+    def __init__(self, scenario, **kwargs):
         super(SinglePartnerLearning, self).__init__(scenario, **kwargs)
-        if type(partner) == list:
+        if self.partners_count != 1:
             raise ValueError('More than one partner is provided')
-        self.partner = partner
+        self.partner = self.partners_list[0]
 
     def fit(self):
         """Return the score on test data of a model trained on a single partner"""
