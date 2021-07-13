@@ -650,7 +650,7 @@ class Fmnist(Dataset):
                     temp = e.errno
                 logger.debug(
                     f'URL fetch failure on '
-                    f''
+                    f'https://github.com/zalandoresearch/fashion-mnist/tree/master/data/fashion'
                     f'{temp} -- {e.reason}')
                 if attempts < constants.NUMBER_OF_DOWNLOAD_ATTEMPTS:
                     sleep(2)
