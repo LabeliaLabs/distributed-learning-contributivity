@@ -14,6 +14,10 @@ _ [Transparent Contribution Evaluation for Secure Federated Learning on Blockcha
 ---
 
 ## 2CP: Decentralized Protocols to Transparently Evaluate Contributivity in Blockchain Federated Learning Environments
+
+- **Authors**: Harry Cai, Daniel Rueckert, Jonathan Passerat-Palmbach
+- **Publication date:** Nov-15-2020
+
 ### Contribution:
 
 - The paper proposes two new protocols for blockchain-based Federated Learning: **the Crowdsource Protocol** and **the Consortium Protocol**, both implemented using software framework **2CP**.
@@ -37,6 +41,10 @@ unlike the Crowdsource protocol, the Consortium protocol struggles to give good 
 
 ## CAPC Learning: Confidential and Private Collaborative Learning
 
+- **Authors**:  Christopher A. Choquette-Choo, Natalie Dullerud, Adam Dziedzic, Yunxiang Zhang, Somesh Jha, 
+Nicolas Papernot, Xiao Wang
+- **Publication date:** Mar-19-2021
+
 ### Contribution:
 
 - The paper proposes a collaborative and confidential learning protocol that improves on other techniques like **PATE** and **Federated Learning**.
@@ -50,6 +58,11 @@ unlike the Crowdsource protocol, the Consortium protocol struggles to give good 
 - The **privacy-utility trade-off** is determined by the number of parties involved in the protocol. Increasing the number of parties means we can issue more queries for a given privacy budget which leads to higher accuracy gains
 
 ## Distributionally Robust Federated Averaging (DRFA)
+
+- **Authors**: Yuyang Deng, Mohammad Mahdi Kamani, Mehrdad Mahdavi
+- **Publication date:** Feb-25-2021
+
+### Contribution
 
 - The paper proposes the **Distributionally Robust Federated Averaging** **(DRFA)** algorithm that is distributionally robust, while being communication-efficient via **periodic averaging**, and **partial node participation**.
 - The main idea is to minimize *the empirical agnostic loss* to guarantee good performance over *the worst-combination of local distributions*.
