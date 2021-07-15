@@ -18,13 +18,12 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
-
-sns.set_style("white")
 import pylab
 
-pylab.rcParams.update({'font.size': 18})
-
 from . import constants
+
+sns.set_style("white")
+pylab.rcParams.update({'font.size': 18})
 
 
 def load_cfg(yaml_filepath):
@@ -198,17 +197,14 @@ def create_data_distribution_graph(name, ratio_partner_per_class,
 
     # Create a dataframe containing the partners' data distribution for each class and plot it
     for i in range(num_classes - 1, -1, -1):
-        df = (
-            pd
-                .DataFrame(data=ratio_partner_per_class[i, :], columns=['partner_part'])
-                .assign(before_part=lambda df: df['partner_part'].cumsum().shift(fill_value=0))
-                .assign(after_part=lambda df: 1 - df['partner_part'].cumsum())
-                .reindex(['before_part', 'partner_part', 'after_part'], axis=1)
-                .cumsum(axis=1).add(i, axis=1)
-                .rename_axis('partner_num').reset_index()
-                .melt(id_vars=['partner_num'], value_vars=['partner_part', 'before_part', 'after_part'],
-                      var_name='chunk', value_name='value')
-        )
+        df = pd.DataFrame(data=ratio_partner_per_class[i, :], columns=['partner_part'])\
+               .assign(before_part=lambda df: df['partner_part'].cumsum().shift(fill_value=0))\
+               .assign(after_part=lambda df: 1 - df['partner_part'].cumsum())\
+               .reindex(['before_part', 'partner_part', 'after_part'], axis=1)\
+               .cumsum(axis=1).add(i, axis=1)\
+               .rename_axis('partner_num').reset_index()\
+               .melt(id_vars=['partner_num'], value_vars=['partner_part', 'before_part', 'after_part'],
+                     var_name='chunk', value_name='value')
         for part, cols in zip(["after_part", "partner_part", "before_part"],
                               [['white'] * num_partners, palette, ['white'] * num_partners]):
             bars = sns.barplot(data=df.query('chunk=="' + part + '"'), y='partner_num', x='value',
