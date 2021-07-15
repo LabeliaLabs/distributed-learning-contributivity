@@ -489,30 +489,30 @@ class Scenario:
         for partner in self.partners_list:
             if not isinstance(partner.corruption, NoCorruption):
                 corrupted_partners[partner.id] = partner.corruption.proportion
-                num_occ_partner_per_class.append(np.bincount(np.argmax(partner.y_train_true, axis=1), 
+                num_occ_partner_per_class.append(np.bincount(np.argmax(partner.y_train_true, axis=1),
                                                              minlength=self.dataset.num_classes))
-            else : 
-                num_occ_partner_per_class.append(np.bincount(np.argmax(partner.y_train, axis=1), 
+            else:
+                num_occ_partner_per_class.append(np.bincount(np.argmax(partner.y_train, axis=1),
                                                              minlength=self.dataset.num_classes))
-            num_occ_partner_per_class_corrupted.append(np.bincount(np.argmax(partner.y_train, axis=1), 
+            num_occ_partner_per_class_corrupted.append(np.bincount(np.argmax(partner.y_train, axis=1),
                                                                    minlength=self.dataset.num_classes))
 
         # Plot the train set distribution of the train set without corruption
-        num_occ_per_class_train = np.bincount(np.argmax(self.dataset.y_train, axis=1), 
-                                                        minlength=self.dataset.num_classes)
+        num_occ_per_class_train = np.bincount(np.argmax(self.dataset.y_train, axis=1),
+                                              minlength=self.dataset.num_classes)
         num_occ_partner_per_class = np.transpose(num_occ_partner_per_class)
         ratio_partner_per_class = num_occ_partner_per_class / num_occ_per_class_train[:, None]
-        utils.create_data_distribution_graph('train_set_ground_truth', ratio_partner_per_class, 
-                                             corrupted_partners=corrupted_partners, 
+        utils.create_data_distribution_graph('train_set_ground_truth', ratio_partner_per_class,
+                                             corrupted_partners=corrupted_partners,
                                              save_folder=save_folder, display=display)
-                                              
+
         # Plot the train set distribution of the train set with corruption
         if len(corrupted_partners) != 0:
             num_occ_partner_per_class_corrupted = np.transpose(num_occ_partner_per_class_corrupted)
             num_occ_per_class_train += np.sum(num_occ_partner_per_class_corrupted - num_occ_partner_per_class, axis=1)
             ratio_partner_per_class = num_occ_partner_per_class_corrupted / num_occ_per_class_train[:, None]
-            utils.create_data_distribution_graph('train_set_corrupted_ground_truth', ratio_partner_per_class, 
-                                                 corrupted_partners=corrupted_partners, 
+            utils.create_data_distribution_graph('train_set_corrupted_ground_truth', ratio_partner_per_class,
+                                                 corrupted_partners=corrupted_partners,
                                                  save_folder=save_folder, display=display)
 
     def compute_batch_sizes(self):
