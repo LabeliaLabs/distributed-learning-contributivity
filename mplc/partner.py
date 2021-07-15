@@ -6,6 +6,7 @@ This enables to parameterize the partners that participate to the simulated fede
 import numpy as np
 from loguru import logger
 from tensorflow.keras.utils import to_categorical
+import copy
 
 from . import constants
 from .corruption import NoCorruption
@@ -18,6 +19,7 @@ class Partner:
         #  Corruption related attributes
         self.corruption = kwargs.get('corruption', NoCorruption())
         self.corruption.set_partner(self)
+        self.y_train_true = []  # used only if y_train is corrupted
 
         self.id = partner_id
 
@@ -63,6 +65,7 @@ class Partner:
         else:
             one_label = False
 
+        self.y_train_true = copy.deepcopy(self.y_train)
         self.corruption.apply()
 
         if one_label:
