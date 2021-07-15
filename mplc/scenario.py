@@ -9,11 +9,9 @@ import re
 import uuid
 from pathlib import Path
 
-import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from loguru import logger
-from sklearn.preprocessing import LabelEncoder
 
 from mplc.multi_partner_learning import MULTI_PARTNER_LEARNING_APPROACHES
 from mplc.multi_partner_learning.utils import AGGREGATORS, Aggregator

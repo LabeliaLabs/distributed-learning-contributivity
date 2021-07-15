@@ -239,7 +239,7 @@ def create_data_distribution_graph(name, ratio_partner_per_class,
     plt.xticks(np.arange(0.5, num_classes + 0.5, 1), labels=np.arange(num_classes))
     plt.xlabel('Class')
     y_labels = [f'Partner {i + 1}' for i in range(num_partners)]
-    plt.yticks(np.arange(num_partners), labels=[l + c for l, c in zip(y_labels, corr_labels)])
+    plt.yticks(np.arange(num_partners), labels=[lab + c for lab, c in zip(y_labels, corr_labels)])
     plt.ylabel('')
     plt.title(name)
 
