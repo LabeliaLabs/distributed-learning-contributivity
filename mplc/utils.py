@@ -213,7 +213,6 @@ def create_data_distribution_graph(name, ratio_partner_per_class,
         # Add corruption hatches
         corr_labels = ['']*num_partners
         for corr, ratio in corrupted_partners.items():
-            print(corr)
             selection = [c*num_partners*3 + 1*num_partners + corr for c in range(num_classes)]
             keys = np.array(list(hatches.keys()))
             hatch = hatches[keys[np.argmin(np.abs(keys - ratio))]]

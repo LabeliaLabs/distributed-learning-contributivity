@@ -9,6 +9,7 @@ Table of content:
   - [My first scenario](#my-first-scenario)
   - [Select a pre-implemented dataset](#select-a-pre-implemented-dataset)
   - [Set some ML parameters](#set-some-ml-parameters)
+  - [Plot data distribution](#plot-data-distribution)
   - [Run it](#run-it)
   - [Results](#Browsing-results)
   - [Contributivity measurement methods](#contributivity-measurement-methods)
@@ -108,6 +109,16 @@ my_scenario = Scenario(partners_count=3,
                        epoch_count=10,
                        minibatch_count=3)
 ```
+
+### Plot data distribution
+
+If you whish to visualize the partners' ground truth distribution of the train set per class (with and without corruption if there is any), you can use the method `plot_data_distribution()`. You may choose whether you want to display the plot straight away (`display` is `True` by default) or save it (`save` is `False` by default).
+
+```python
+my_scenario.plot_data_distribution(save=False, display=True)
+```
+
+> Note: the plot is automatically saved when calling the `run()` method described below.
 
 ### Run it
 
