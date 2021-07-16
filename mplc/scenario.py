@@ -12,6 +12,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 from loguru import logger
+from sklearn.preprocessing import LabelEncoder
 
 from mplc.multi_partner_learning import MULTI_PARTNER_LEARNING_APPROACHES
 from mplc.multi_partner_learning.utils import AGGREGATORS, Aggregator
@@ -479,7 +480,9 @@ class Scenario:
         save_folder = None
         if save:
             save_folder = self.save_folder / 'graphs'
-        
+
+        lb = LabelEncoder().fit([str(y) for y in self.dataset.y_train])
+
         # Get the list and ratio of corrupted partners
         corrupted_partners = {}
         num_occ_partner_per_class = []
@@ -487,16 +490,16 @@ class Scenario:
         for partner in self.partners_list:
             if not isinstance(partner.corruption, NoCorruption):
                 corrupted_partners[partner.id] = partner.corruption.proportion
-                num_occ_partner_per_class.append(np.bincount(np.argmax(partner.y_train_true, axis=1),
+                num_occ_partner_per_class.append(np.bincount(lb.transform([str(y) for y in partner.y_train_true]),
                                                              minlength=self.dataset.num_classes))
             else:
-                num_occ_partner_per_class.append(np.bincount(np.argmax(partner.y_train, axis=1),
+                num_occ_partner_per_class.append(np.bincount(lb.transform([str(y) for y in partner.y_train]),
                                                              minlength=self.dataset.num_classes))
-            num_occ_partner_per_class_corrupted.append(np.bincount(np.argmax(partner.y_train, axis=1),
+            num_occ_partner_per_class_corrupted.append(np.bincount(lb.transform([str(y) for y in partner.y_train]),
                                                                    minlength=self.dataset.num_classes))
 
         # Plot the train set distribution of the train set without corruption
-        num_occ_per_class_train = np.bincount(np.argmax(self.dataset.y_train, axis=1),
+        num_occ_per_class_train = np.bincount(lb.transform([str(y) for y in self.dataset.y_train]),
                                               minlength=self.dataset.num_classes)
         num_occ_partner_per_class = np.transpose(num_occ_partner_per_class)
         ratio_partner_per_class = num_occ_partner_per_class / num_occ_per_class_train[:, None]

@@ -58,6 +58,8 @@ class Partner:
             return np.unique(np.argmax(self.y_train, axis=1))
 
     def corrupt(self):
+        self.y_train_true = copy.deepcopy(self.y_train)
+
         # Check if the labels are encoded into categorical. If not, convert them
         if self.y_train.ndim == 1:
             self.y_train = to_categorical(self.y_train.reshape(-1, 1))
@@ -65,7 +67,6 @@ class Partner:
         else:
             one_label = False
 
-        self.y_train_true = copy.deepcopy(self.y_train)
         self.corruption.apply()
 
         if one_label:
