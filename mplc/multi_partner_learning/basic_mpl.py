@@ -412,7 +412,6 @@ class FederatedAverageLearning(MultiPartnerLearning):
         logger.debug("End of fedavg collaborative round.")
 
 
-
 class DistributionallyRobustFederatedAveragingLearning(FederatedAverageLearning):
     """
     - This class implements the Distributionally Robust Federated Averaging (DRFA) Algorithm, this can be considered a
@@ -422,19 +421,26 @@ class DistributionallyRobustFederatedAveragingLearning(FederatedAverageLearning)
     """
     name = "Distributionally Robust Federated Averaging"
 
-    def __init__(self, scenario, **kwargs ):
-        super(MultiPartnerLearning, self).__init__(scenario, **kwargs)
+    def __init__(self, scenario, **kwargs):
+        super(DistributionallyRobustFederatedAveragingLearning, self).__init__(scenario, **kwargs)
         if self.partners_count == 1:
             raise ValueError('Only one partner is provided. Please use the dedicated SinglePartnerLearning class')
-        self.m = scenario.active_partners_count
+        self.active_partners_count = scenario.active_partners_count
+
+        self.active_partners_list = self.update_active_partners_list()
+        self.local_steps = scenario.gradient_updates_per_pass_count
+        self.partners_datasets = {}
         self.global_lambda_vector = self.init_lambda()
         self.global_lambda_initialization = scenario.global_lambda_initialization
-        self.active_partners_list = self.update_active_partners_list()
-        self.dataset_proportions = scenario.amounts_per_partner
-        self.local_steps = scenario.gradient_updates_per_pass_count
-        # This is the learning rate for lambda
-        self.gamma = gamma = 8e-3
+        self.gamma = 8e-3  # This is the learning rate for lambda
 
+        self.communication_rounds = self.minibatch_count * self.epoch_count
+        self.communication_rounds_index = 0
+        self.local_steps_index = 0
+        """
+        add possibility to choose the number of communication rounds by the user, from which we can compute the epoch
+        count 
+        """
 
     def fit_epoch(self):
         # Clear Keras' old models
@@ -443,9 +449,23 @@ class DistributionallyRobustFederatedAveragingLearning(FederatedAverageLearning)
         # Split the train dataset in mini-batches
         self.split_in_minibatches()
 
+        # convert partners training data into tf ones, reference: fast_mpl
+        # make sure to use only the cpu for data preprocessing and save the gpu for the training
+        with tf.device('/cpu:0'):
+            for partner_id, partner in enumerate(self.partners_list):
+                self.partners_datasets[partner_id] = []
+                for minibatch_index in range(self.minibatch_count):
+                    dataset = tf.data.Dataset.from_tensor_slices((partner.minibatched_x_train[minibatch_index],
+                                                                  partner.minibatched_y_train[minibatch_index]))
+                    dataset = dataset.shuffle(len(partner.minibatched_x_train[minibatch_index]))
+                    dataset = dataset.batch(partner.batch_size)
+                    dataset = dataset.prefetch(1)
+                    self.partners_datasets[partner_id].append(dataset)
+
         # Iterate over mini-batches and train
         for i in range(self.minibatch_count):
             self.minibatch_index = i
+            logger.info(f"Starting communication round n°{self.communication_rounds_index}")
             self.fit_minibatch()
 
             # call update_lambda here
@@ -453,29 +473,33 @@ class DistributionallyRobustFederatedAveragingLearning(FederatedAverageLearning)
             # At the end of each minibatch,aggregate the models
             self.model_weights = self.aggregator.aggregate_model_weights()
 
+
         self.minibatch_index = 0
 
     def fit_minibatch(self):
         """Proceed to a collaborative round with a distributionally robust federated averaging approach"""
 
-        logger.debug("Start new fedavg collaborative round ...")
-
         # Starting model for each partner is the aggregated model from the previous mini-batch iteration
-        logger.info(f"(fedavg) Minibatch n°{self.minibatch_index} of epoch n°{self.epoch_index}, "
+        logger.info(f"(drfa) Minibatch n°{self.minibatch_index} of epoch n°{self.epoch_index}, "
                     f"init each partner's models with a copy of the global model")
 
         for partner in self.partners_list:
             partner.model_weights = self.model_weights
-
-        # convert partners to MplPartners
 
         # Evaluate and store accuracy of mini-batch start model
         self.eval_and_log_model_val_perf()
 
         # Iterate over partners for training each individual model
         for partner_index, partner in enumerate(self.active_partners_list):
-            # Reference the partner's model
             partner_model = partner.build_model()
+            partner_dataset = self.partners_datasets[partner.id]
+            # loop through each partner's minibatch
+            for minibatched_x_y in partner_dataset:
+                for idx, batch_x_y in enumerate(minibatched_x_y):
+                    with tf.GradientTape as tape:
+                        loss = partner_model.loss(batch_x_y[1], partner_model(batch_x_y[0]))
+                    partner_model.optimizer.minimize(loss, partner_model.trainable_weights, tape=tape)
+
 
 
 
@@ -487,7 +511,7 @@ class DistributionallyRobustFederatedAveragingLearning(FederatedAverageLearning)
             a = np.random.random(self.partners_count)
 
         a = np.random.random(self.partners_count)
-        return a/a.sum()
+        return a / a.sum()
 
     def update_lambda(self):
         return 0
@@ -497,9 +521,6 @@ class DistributionallyRobustFederatedAveragingLearning(FederatedAverageLearning)
 
         zipped_partners_lambdas = list(map(list, zip(self.partners_list, self.global_lambda_vector)))
         return 0
-
-
-
 
     def projection(self, v):
         return 0
