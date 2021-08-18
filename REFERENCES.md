@@ -17,6 +17,7 @@ _ [Transparent Contribution Evaluation for Secure Federated Learning on Blockcha
 
 - **Authors**: Harry Cai, Daniel Rueckert, Jonathan Passerat-Palmbach
 - **Publication date:** Nov-15-2020
+- **Link to paper:** https://arxiv.org/abs/2011.07516
 
 ### Contribution:
 
@@ -44,6 +45,7 @@ unlike the Crowdsource protocol, the Consortium protocol struggles to give good 
 - **Authors**:  Christopher A. Choquette-Choo, Natalie Dullerud, Adam Dziedzic, Yunxiang Zhang, Somesh Jha, 
 Nicolas Papernot, Xiao Wang
 - **Publication date:** Mar-19-2021
+- **Link to paper:** https://arxiv.org/abs/2102.05188
 
 ### Contribution:
 
@@ -61,6 +63,7 @@ Nicolas Papernot, Xiao Wang
 
 - **Authors**: Yuyang Deng, Mohammad Mahdi Kamani, Mehrdad Mahdavi
 - **Publication date:** Feb-25-2021
+- **Link to paper:** https://arxiv.org/abs/2102.12660
 
 ### Contribution
 
