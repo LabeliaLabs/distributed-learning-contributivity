@@ -36,8 +36,6 @@ class ScenarioList(list):
             scenario_to_add.scenario_id = new_id
             if self.experiment.is_save:
                 scenario_to_add.save_folder = self.experiment.experiment_path / scenario_to_add.scenario_name
-            else:
-                scenario_to_add.save_folder = None
             super(ScenarioList, self).append(scenario_to_add)
         else:
             raise Exception(f"The scenario {scenario_to_add} you are trying to add is not an instance of"
@@ -58,8 +56,6 @@ class ScenarioList(list):
             __scenario_to_insert.scenario_id = new_id
             if self.experiment.is_save:
                 __scenario_to_insert.save_folder = self.experiment.experiment_path / __scenario_to_insert.scenario_name
-            else:
-                __scenario_to_insert.save_folder = None
             super(ScenarioList, self).insert(__index, __scenario_to_insert)
         else:
             raise Exception(f"The scenario {__scenario_to_insert} you are trying to add is not an instance of"
@@ -74,8 +70,6 @@ class ScenarioList(list):
             scenario_to_set.scenario_id = new_id
             if self.experiment.is_save:
                 scenario_to_set.save_folder = self.experiment.experiment_path / scenario_to_set.scenario_name
-            else:
-                scenario_to_set.save_folder = None
             return super(ScenarioList, self).__setitem__(key, scenario_to_set)
         else:
             raise Exception(f"The scenario {scenario_to_set} you are trying to add is not an instance of"

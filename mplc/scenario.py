@@ -351,6 +351,7 @@ class Scenario:
 
         # We define the save folder for graphs and results
         self.save_folder = self.define_scenario_path(save_path)
+        print(self.save_folder)
 
         # -------------------------------------------------------------------
         # Select in the kwargs the parameters to be transferred to sub object
