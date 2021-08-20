@@ -2,7 +2,7 @@ import numpy as np
 from joblib import dump, load
 from loguru import logger
 from sklearn.linear_model import LogisticRegression as skLR
-from sklearn.metrics import log_loss
+from sklearn.metrics import accuracy_score, log_loss
 from tensorflow.keras.backend import dot
 from tensorflow.keras.layers import Dense
 
@@ -94,6 +94,38 @@ class LogisticRegression(skLR):
             logger.debug('Automatically switch file format from .h5 to .joblib')
             path.replace('.h5', '.joblib')
         return load(path)
+
+
+class EnsemblePredictionsModel():
+    """
+    Ensemble (average) predictions of several input models
+    """
+
+    def __init__(self, partners_model_list):
+        self.partners_model_list = partners_model_list
+
+    def fit(self, x_train, y_train, batch_size, validation_data, epochs=1, verbose=False, callbacks=None):
+        pass
+
+    def evaluate(self, x_eval, y_eval, **kwargs):
+        predictions_list = []
+        for model in self.partners_model_list:
+
+            predictions = model.predict(x_eval)
+            predictions_list.append(predictions)
+
+        y_pred = np.mean(predictions_list, axis=0)
+
+        loss = log_loss(y_eval, y_pred)
+
+        y_true = np.argmax(y_eval, axis=1)
+        y_pred = np.argmax(y_pred, axis=1)
+        metric = accuracy_score(y_true, y_pred)
+
+        return [loss, metric]
+
+    def save_weights(self, path):
+        pass
 
 
 class NoiseAdaptationChannel(Dense):
