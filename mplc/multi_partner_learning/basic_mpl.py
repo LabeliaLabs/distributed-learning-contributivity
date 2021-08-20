@@ -437,6 +437,12 @@ class DistributionallyRobustFederatedAveragingLearning(FederatedAverageLearning)
         self.communication_rounds = self.minibatch_count * self.epoch_count
         self.communication_rounds_index = 0
         self.local_steps_index = 0
+        self.local_steps_index_t = 0
+
+        self.global_model_at_index_t = None
+        self.model_weights_at_index_t = list()
+
+
         """
         add possibility to choose the number of communication rounds by the user, from which we can compute the epoch
         count 
@@ -453,7 +459,7 @@ class DistributionallyRobustFederatedAveragingLearning(FederatedAverageLearning)
         # make sure to use only the cpu for data preprocessing and save the gpu for the training
         with tf.device('/cpu:0'):
             for partner_id, partner in enumerate(self.partners_list):
-                self.partners_datasets[partner_id] = []
+                self.partners_datasets[partner_id] = list()
                 for minibatch_index in range(self.minibatch_count):
                     dataset = tf.data.Dataset.from_tensor_slices((partner.minibatched_x_train[minibatch_index],
                                                                   partner.minibatched_y_train[minibatch_index]))
@@ -465,14 +471,12 @@ class DistributionallyRobustFederatedAveragingLearning(FederatedAverageLearning)
         # Iterate over mini-batches and train
         for i in range(self.minibatch_count):
             self.minibatch_index = i
+
+            self.local_steps_index = 0
+            self.local_steps_index_t = np.random.randint(0, self.local_steps-1)
             logger.info(f"Starting communication round n°{self.communication_rounds_index}")
+
             self.fit_minibatch()
-
-            # call update_lambda here
-            # call update_active_partners
-            # At the end of each minibatch,aggregate the models
-            self.model_weights = self.aggregator.aggregate_model_weights()
-
 
         self.minibatch_index = 0
 
@@ -494,13 +498,26 @@ class DistributionallyRobustFederatedAveragingLearning(FederatedAverageLearning)
             partner_model = partner.build_model()
             partner_dataset = self.partners_datasets[partner.id]
             # loop through each partner's minibatch
-            for minibatched_x_y in partner_dataset:
-                for idx, batch_x_y in enumerate(minibatched_x_y):
-                    with tf.GradientTape as tape:
-                        loss = partner_model.loss(batch_x_y[1], partner_model(batch_x_y[0]))
-                    partner_model.optimizer.minimize(loss, partner_model.trainable_weights, tape=tape)
+            minibatched_x_y = self.partners_datasets[partner.id][self.minibatch_index]
+            for idx, batch_x_y in enumerate(minibatched_x_y):
+                with tf.GradientTape as tape:
+                    loss = partner_model.loss(batch_x_y[1], partner_model(batch_x_y[0]))
+                partner_model.optimizer.minimize(loss, partner_model.trainable_weights, tape=tape)
 
+                self.local_steps_index += 1
+                if self.local_steps_index == self.local_steps_index_t:
+                    # save model weights for each partner
+                    self.model_weights_at_index_t.append(partner.model_weights)
 
+            self.local_steps_index = 0
+
+        # aggregate global model weights
+        self.model_weights = self.aggregate_model_weights(self.active_partners_list)
+
+        # aggregate models weights at index t
+        models_at_index_t = [self.build_model_from_weights(model_weights) for model_weights in
+                             self.model_weights_at_index_t ]
+        self.global_model_at_index_t = self.aggregate_model_weights(models_at_index_t)
 
 
         pass
@@ -518,12 +535,29 @@ class DistributionallyRobustFederatedAveragingLearning(FederatedAverageLearning)
 
     def update_active_partners_list(self):
         # First convert partner objects to MplPartner objects
-
         zipped_partners_lambdas = list(map(list, zip(self.partners_list, self.global_lambda_vector)))
         return 0
 
     def projection(self, v):
         return 0
+
+    @staticmethod
+    def aggregate_model_weights(partners_list):
+        """This method is identical to the one in the aggregator class with few modifications
+         - I couldn't use the original aggregator method since it operates on the entire list of partners and
+         DRFA requires model aggregation over a subset of partners list only
+        """
+        aggregation_weights = np.zeros(len(partners_list), dtype='float32')
+        weights_per_layer = list(zip(*[partner.model_weights for partner in partners_list]))
+        new_weights = list()
+
+        for weights_for_layer in weights_per_layer:
+            avg_weights_for_layer = np.average(
+                np.array(weights_for_layer), axis=0, weights=aggregation_weights
+            )
+            new_weights.append(avg_weights_for_layer)
+
+        return new_weights
 
 
 class SequentialLearning(MultiPartnerLearning):  # seq-pure
