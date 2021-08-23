@@ -486,7 +486,7 @@ class Scenario:
         plt.suptitle("Data distribution")
         plt.xlabel("Digits")
 
-        (self.save_folder / 'graphs').mkdir(exist_ok=True)
+        (self.save_folder / 'graphs').mkdir(parents=True, exist_ok=True)
         plt.savefig(self.save_folder / "graphs" / "data_distribution.png")
         plt.close()
 
