@@ -414,10 +414,10 @@ class FederatedAverageLearning(MultiPartnerLearning):
 
 class DistributionallyRobustFederatedAveragingLearning(FederatedAverageLearning):
     """
-    - This class implements the Distributionally Robust Federated Averaging (DRFA) Algorithm, this can be considered a
-    variant of Federated Averaging where only a subset of partners are chosen based on a global mixing partner called
-    lambda- to participate in a given collaborative learning round.
-    - Lambda is updated periodically at the end of each collaborative learning round.
+    -This class implements the Distributionally Robust Federated Averaging (DRFA) Algorithm, this can be considered a
+     variant of Federated Averaging where only a subset of partners are chosen to participate in a given collaborative
+     learning round. based on a global mixing partner called lambda.
+     Lambda is updated periodically at the end of each collaborative learning round
     """
     name = "Distributionally Robust Federated Averaging"
 
@@ -430,9 +430,9 @@ class DistributionallyRobustFederatedAveragingLearning(FederatedAverageLearning)
         self.active_partners_list = self.update_active_partners_list()
         self.local_steps = scenario.gradient_updates_per_pass_count
         self.partners_datasets = {}
-        self.global_lambda_vector = self.init_lambda()
-        self.global_lambda_initialization = scenario.global_lambda_initialization
-        self.gamma = 8e-3  # This is the learning rate for lambda
+        self.lambda_vector = self.init_lambda()
+        self.lambda_initialization = scenario.global_lambda_initialization
+        self.lambda_learning_rate = 8e-3
 
         self.communication_rounds = self.minibatch_count * self.epoch_count
         self.communication_rounds_index = 0
@@ -441,8 +441,9 @@ class DistributionallyRobustFederatedAveragingLearning(FederatedAverageLearning)
 
         self.global_model_at_index_t = None
         self.model_weights_at_index_t = list()
-
-
+        self.loss_for_model_at_index_t = np.zeros(self.partners_count)
+        self.subset_u_partners = list()
+        self.loss_vector_v = list()
         """
         add possibility to choose the number of communication rounds by the user, from which we can compute the epoch
         count 
@@ -473,10 +474,16 @@ class DistributionallyRobustFederatedAveragingLearning(FederatedAverageLearning)
             self.minibatch_index = i
 
             self.local_steps_index = 0
-            self.local_steps_index_t = np.random.randint(0, self.local_steps-1)
+            self.local_steps_index_t = np.random.randint(0, self.local_steps - 1)
             logger.info(f"Starting communication round n°{self.communication_rounds_index}")
+            logger.info(f"local step index t :{self.local_steps_index_t}")
+            logger.info(f"Active partner in this round {self.active_partners_list} according to lambda vector "
+                        f"{self.lambda_vector}")
 
             self.fit_minibatch()
+
+            self.update_lambda()
+            self.update_active_partners_list()
 
         self.minibatch_index = 0
 
@@ -496,7 +503,6 @@ class DistributionallyRobustFederatedAveragingLearning(FederatedAverageLearning)
         # Iterate over partners for training each individual model
         for partner_index, partner in enumerate(self.active_partners_list):
             partner_model = partner.build_model()
-            partner_dataset = self.partners_datasets[partner.id]
             # loop through each partner's minibatch
             minibatched_x_y = self.partners_datasets[partner.id][self.minibatch_index]
             for idx, batch_x_y in enumerate(minibatched_x_y):
@@ -512,38 +518,63 @@ class DistributionallyRobustFederatedAveragingLearning(FederatedAverageLearning)
             self.local_steps_index = 0
 
         # aggregate global model weights
-        self.model_weights = self.aggregate_model_weights(self.active_partners_list)
+        self.model_weights = self.aggregator.aggregate_model_weights(self.active_partners_list)
 
         # aggregate models weights at index t
-        models_at_index_t = [self.build_model_from_weights(model_weights) for model_weights in
-                             self.model_weights_at_index_t ]
-        self.global_model_at_index_t = self.aggregate_model_weights(models_at_index_t)
+        self.global_model_at_index_t = self.aggregate_model_weights([self.build_model_from_weights(model_weights)
+                                                                     for model_weights in
+                                                                     self.model_weights_at_index_t])
+        # sample a new subset of partners of size active_partners_count
+        subset_index = np.random.randint(0, self.partners_count - 1, self.active_partners_count)
+        self.subset_u_partners = [self.partners_list[index] for index in subset_index]
 
-
-        pass
+        # compute losses over a random batch using the global model at index t
+        for partner, index in zip(self.subset_u_partners, subset_index):
+            random_minibatch_index = np.random.randint(0, self.minibatch_count - 1)
+            random_minibatch = self.partners_datasets[partner.id][random_minibatch_index]
+            random_batch_index = np.random.randint(0, len(random_minibatch) - 1)
+            random_batch = list(random_minibatch)[random_batch_index]
+            partner_model = self.build_model_from_weights(self.global_model_at_index_t)
+            loss = partner_model.loss(random_batch[1], (random_batch[0]))
+            self.loss_for_model_at_index_t[index] = ((self.partners_count / self.active_partners_count) * loss.numpy())
 
     def init_lambda(self):
-
-        if self.global_lambda_initialization == "weighted":
-            a = np.random.random(self.partners_count)
-
+        """
+        initialize lambda vector => a probability vector of size partners_count
+        """
+        # if self.global_lambda_initialization == "weighted":
+        #   a = np.random.random(self.partners_count)
         a = np.random.random(self.partners_count)
-        return a / a.sum()
+        lambda_vector = a / a.sum()
+        logger.info(f"Initial lambda vector {lambda_vector}")
+        return lambda_vector
+
+    @staticmethod
+    def projection():
+        """
+        OPTIONAL: perform a projection on the simplex of a vector
+        """
+        # TODO
+        pass
 
     def update_lambda(self):
-        return 0
+        """
+        The update rule for lambda is : lambda_vector(i) = lambda_vector(i-1) + (local_step_index_t *
+        lambda_learning_rate * local_losses_at_index_t)
+        """
+        self.lambda_vector = self.lambda_vector + (
+                self.local_steps_index_t * self.lambda_learning_rate * self.loss_for_model_at_index_t)
 
     def update_active_partners_list(self):
-        # First convert partner objects to MplPartner objects
-        zipped_partners_lambdas = list(map(list, zip(self.partners_list, self.global_lambda_vector)))
-        return 0
-
-    def projection(self, v):
-        return 0
+        """
+        Update the active partners list according to lambda vector
+        """
+        active_partners_indices = (-self.lambda_vector).argsort()[:self.active_partners_count]
+        self.active_partners_list = [self.partners_list[index] for index in active_partners_indices]
 
     @staticmethod
     def aggregate_model_weights(partners_list):
-        """This method is identical to the one in the aggregator class with few modifications
+        """ This method is identical to the one in the aggregator class with few modifications
          - I couldn't use the original aggregator method since it operates on the entire list of partners and
          DRFA requires model aggregation over a subset of partners list only
         """
