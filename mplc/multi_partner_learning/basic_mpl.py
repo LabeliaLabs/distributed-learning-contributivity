@@ -583,7 +583,7 @@ class DistributionallyRobustFederatedAveragingLearning(FederatedAverageLearning)
          DRFA requires model aggregation over a subset of partners list only
         """
         # TODO to be deleted, not needed
-        aggregation_weights = np.zeros(len(partners_list), dtype='float32')
+        aggregation_weights = np.ones(len(partners_list), dtype='float32')
         weights_per_layer = list(zip(*[partner.model_weights for partner in partners_list]))
         new_weights = list()
 
