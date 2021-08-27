@@ -545,7 +545,7 @@ class DistributionallyRobustFederatedAveragingLearning(FederatedAverageLearning)
             print(self.partners_count)
             print(self.active_partners_list)
             print(loss.numpy())
-            self.loss_for_model_at_index_t[index] = ((self.partners_count / self.active_partners_count) * loss.numpy())
+            self.loss_for_model_at_index_t[index] = ((self.partners_count / self.active_partners_count) * np.mean(loss.numpy()))
 
     def init_lambda(self):
         """
