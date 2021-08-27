@@ -513,7 +513,6 @@ class DistributionallyRobustFederatedAveragingLearning(FederatedAverageLearning)
                     loss = partner_model.loss(batch_x_y[1], partner_model(batch_x_y[0]))
                 partner_model.optimizer.minimize(loss, partner_model.trainable_weights, tape=tape)
 
-
                 if self.local_steps_index == self.local_steps_index_t:
                     # save model weights for each partner at local step t
                     self.model_weights_at_index_t.append(partner.model_weights)
@@ -525,9 +524,11 @@ class DistributionallyRobustFederatedAveragingLearning(FederatedAverageLearning)
         self.model_weights = self.aggregate_model_weights(self.active_partners_list)
 
         # aggregate models weights at index t
-        self.global_model_at_index_t = self.aggregate_model_weights([self.build_model_from_weights(model_weights)
-                                                                     for model_weights in
-                                                                     self.model_weights_at_index_t])
+        for active_partner, weights_t in zip(self.active_partners_list, self.model_weights_at_index_t):
+            active_partner.model_weights = weights_t
+
+        self.global_model_at_index_t = self.aggregate_model_weights(self.active_partners_list)
+
         # sample a new subset of partners of size active_partners_count
         subset_index = np.random.randint(0, self.partners_count - 1, self.active_partners_count)
         self.subset_u_partners = [self.partners_list[index] for index in subset_index]
