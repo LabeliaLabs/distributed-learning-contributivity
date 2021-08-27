@@ -542,6 +542,9 @@ class DistributionallyRobustFederatedAveragingLearning(FederatedAverageLearning)
             random_batch = list(random_minibatch)[random_batch_index]
             partner_model = self.build_model_from_weights(self.global_model_at_index_t)
             loss = partner_model.loss(random_batch[1], partner_model(random_batch[0]))
+            print(self.partners_count)
+            print(self.active_partners_list)
+            print(loss.numpy())
             self.loss_for_model_at_index_t[index] = ((self.partners_count / self.active_partners_count) * loss.numpy())
 
     def init_lambda(self):
