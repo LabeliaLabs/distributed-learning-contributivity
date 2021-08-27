@@ -434,7 +434,7 @@ class DistributionallyRobustFederatedAveragingLearning(FederatedAverageLearning)
         self.local_steps = scenario.gradient_updates_per_pass_count
         self.partners_datasets = {}
 
-        self.lambda_initialization = scenario.global_lambda_initialization
+        #self.lambda_initialization = scenario.global_lambda_initialization
         self.lambda_learning_rate = 8e-3
 
         self.communication_rounds = self.minibatch_count * self.epoch_count
