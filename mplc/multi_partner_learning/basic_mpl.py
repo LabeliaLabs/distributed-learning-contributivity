@@ -509,7 +509,7 @@ class DistributionallyRobustFederatedAveragingLearning(FederatedAverageLearning)
             # loop through each partner's minibatch
             minibatched_x_y = self.partners_datasets[partner.id][self.minibatch_index]
             for idx, batch_x_y in enumerate(minibatched_x_y):
-                with tf.GradientTape as tape:
+                with tf.GradientTape() as tape:
                     loss = partner_model.loss(batch_x_y[1], partner_model(batch_x_y[0]))
                 partner_model.optimizer.minimize(loss, partner_model.trainable_weights, tape=tape)
 
