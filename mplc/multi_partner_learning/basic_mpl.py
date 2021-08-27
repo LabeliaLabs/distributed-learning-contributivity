@@ -521,7 +521,7 @@ class DistributionallyRobustFederatedAveragingLearning(FederatedAverageLearning)
             self.local_steps_index = 0
 
         # aggregate global model weights
-        self.model_weights = self.aggregator.aggregate_model_weights(self.active_partners_list)
+        self.model_weights = self.aggregate_model_weights(self.active_partners_list)
 
         # aggregate models weights at index t
         self.global_model_at_index_t = self.aggregate_model_weights([self.build_model_from_weights(model_weights)
