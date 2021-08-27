@@ -427,12 +427,13 @@ class DistributionallyRobustFederatedAveragingLearning(FederatedAverageLearning)
             raise ValueError('Only one partner is provided. Please use the dedicated SinglePartnerLearning class')
         self.active_partners_count = scenario.active_partners_count
 
+        self.lambda_vector = self.init_lambda()
         self.active_partners_list = list()
         self.update_active_partners_list()
 
         self.local_steps = scenario.gradient_updates_per_pass_count
         self.partners_datasets = {}
-        self.lambda_vector = self.init_lambda()
+
         self.lambda_initialization = scenario.global_lambda_initialization
         self.lambda_learning_rate = 8e-3
 
