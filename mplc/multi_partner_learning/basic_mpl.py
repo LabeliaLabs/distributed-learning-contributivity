@@ -513,10 +513,11 @@ class DistributionallyRobustFederatedAveragingLearning(FederatedAverageLearning)
                     loss = partner_model.loss(batch_x_y[1], partner_model(batch_x_y[0]))
                 partner_model.optimizer.minimize(loss, partner_model.trainable_weights, tape=tape)
 
-                self.local_steps_index += 1
+
                 if self.local_steps_index == self.local_steps_index_t:
                     # save model weights for each partner at local step t
                     self.model_weights_at_index_t.append(partner.model_weights)
+                self.local_steps_index += 1
 
             self.local_steps_index = 0
 
