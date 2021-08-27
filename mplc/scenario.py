@@ -172,7 +172,7 @@ class Scenario:
         # Number of active partners per collaborative learning round
         self.active_partners_count = active_partners_count
         assert (
-                1 <= self.active_partners_count < self.partners_count
+                1 <= self.active_partners_count < partners_count
         ), "Number of active partners must be strictly smaller than the total number of partners"
 
         # --------------------------------------

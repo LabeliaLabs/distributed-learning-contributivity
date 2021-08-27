@@ -414,10 +414,10 @@ class FederatedAverageLearning(MultiPartnerLearning):
 
 class DistributionallyRobustFederatedAveragingLearning(FederatedAverageLearning):
     """
-    -This class implements the Distributionally Robust Federated Averaging (DRFA) Algorithm, this can be considered a
+     -This class implements the Distributionally Robust Federated Averaging (DRFA) Algorithm, this can be considered a
      variant of Federated Averaging where only a subset of partners are chosen to participate in a given collaborative
-     learning round. based on a global mixing partner called lambda.
-     Lambda is updated periodically at the end of each collaborative learning round
+     learning round. based on a global mixing parameter called lambda.
+     - Lambda is updated at the end of each collaborative learning round
     """
     name = "Distributionally Robust Federated Averaging"
 
@@ -427,7 +427,9 @@ class DistributionallyRobustFederatedAveragingLearning(FederatedAverageLearning)
             raise ValueError('Only one partner is provided. Please use the dedicated SinglePartnerLearning class')
         self.active_partners_count = scenario.active_partners_count
 
-        self.active_partners_list = self.update_active_partners_list()
+        self.active_partners_list = list()
+        self.update_active_partners_list()
+
         self.local_steps = scenario.gradient_updates_per_pass_count
         self.partners_datasets = {}
         self.lambda_vector = self.init_lambda()
@@ -457,7 +459,7 @@ class DistributionallyRobustFederatedAveragingLearning(FederatedAverageLearning)
         self.split_in_minibatches()
 
         # convert partners training data into tf ones, reference: fast_mpl
-        # make sure to use only the cpu for data preprocessing and save the gpu for the training
+        # use only the cpu for data preprocessing and save the gpu for the training
         with tf.device('/cpu:0'):
             for partner_id, partner in enumerate(self.partners_list):
                 self.partners_datasets[partner_id] = list()
@@ -476,7 +478,7 @@ class DistributionallyRobustFederatedAveragingLearning(FederatedAverageLearning)
             self.local_steps_index = 0
             self.local_steps_index_t = np.random.randint(0, self.local_steps - 1)
             logger.info(f"Starting communication round n°{self.communication_rounds_index}")
-            logger.info(f"local step index t :{self.local_steps_index_t}")
+            logger.info(f"Local step index t :{self.local_steps_index_t}")
             logger.info(f"Active partner in this round {self.active_partners_list} according to lambda vector "
                         f"{self.lambda_vector}")
 
@@ -512,7 +514,7 @@ class DistributionallyRobustFederatedAveragingLearning(FederatedAverageLearning)
 
                 self.local_steps_index += 1
                 if self.local_steps_index == self.local_steps_index_t:
-                    # save model weights for each partner
+                    # save model weights for each partner at local step t
                     self.model_weights_at_index_t.append(partner.model_weights)
 
             self.local_steps_index = 0
@@ -527,6 +529,7 @@ class DistributionallyRobustFederatedAveragingLearning(FederatedAverageLearning)
         # sample a new subset of partners of size active_partners_count
         subset_index = np.random.randint(0, self.partners_count - 1, self.active_partners_count)
         self.subset_u_partners = [self.partners_list[index] for index in subset_index]
+        logger.info(f"Subset U of partners chosen for lambda update {self.subset_u_partners}")
 
         # compute losses over a random batch using the global model at index t
         for partner, index in zip(self.subset_u_partners, subset_index):
@@ -578,6 +581,7 @@ class DistributionallyRobustFederatedAveragingLearning(FederatedAverageLearning)
          - I couldn't use the original aggregator method since it operates on the entire list of partners and
          DRFA requires model aggregation over a subset of partners list only
         """
+        # TODO to be deleted, not needed
         aggregation_weights = np.zeros(len(partners_list), dtype='float32')
         weights_per_layer = list(zip(*[partner.model_weights for partner in partners_list]))
         new_weights = list()
