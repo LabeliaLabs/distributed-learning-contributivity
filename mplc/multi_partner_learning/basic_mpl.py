@@ -480,7 +480,7 @@ class DistributionallyRobustFederatedAveragingLearning(FederatedAverageLearning)
             self.local_steps_index_t = np.random.randint(0, self.local_steps - 1)
             logger.info(f"Starting communication round n°{self.communication_rounds_index}")
             logger.info(f"Local step index t :{self.local_steps_index_t}")
-            logger.info(f"Active partner in this round {self.active_partners_list} according to lambda vector "
+            logger.info(f"Active partner in this round {[active_partner for active_partner in self.active_partners_list]} according to lambda vector "
                         f"{self.lambda_vector}")
 
             self.fit_minibatch()
@@ -532,7 +532,7 @@ class DistributionallyRobustFederatedAveragingLearning(FederatedAverageLearning)
         # sample a new subset of partners of size active_partners_count
         subset_index = np.random.randint(0, self.partners_count - 1, self.active_partners_count)
         self.subset_u_partners = [self.partners_list[index] for index in subset_index]
-        logger.info(f"Subset U of partners chosen for lambda update {self.subset_u_partners}")
+        logger.info(f"Subset U of partners chosen for lambda update {[partner.id for partner in self.subset_u_partners]}")
 
         # compute losses over a random batch using the global model at index t
         for partner, index in zip(self.subset_u_partners, subset_index):
@@ -542,9 +542,6 @@ class DistributionallyRobustFederatedAveragingLearning(FederatedAverageLearning)
             random_batch = list(random_minibatch)[random_batch_index]
             partner_model = self.build_model_from_weights(self.global_model_at_index_t)
             loss = partner_model.loss(random_batch[1], partner_model(random_batch[0]))
-            print(self.partners_count)
-            print(self.active_partners_list)
-            print(loss.numpy())
             self.loss_for_model_at_index_t[index] = ((self.partners_count / self.active_partners_count) * np.mean(loss.numpy()))
 
     def init_lambda(self):
