@@ -2,7 +2,7 @@
 
 - [2CP: Decentralized Protocols to Transparently Evaluate Contributivity in Blockchain Federated Learning Environments](#2CP-Decentralized-Protocols-to-Transparently-Evaluate-Contributivity-in-Blockchain-Federated-Learning-Environments)
 - [CAPC Learning: Confidential and Private Collaborative Learning](#CAPC-Learning-Confidential-and-Private-Collaborative-Learning)
-- [Distributionally Robust Federated Averaging](#Distributionally-Robust-Federated-Averaging-(DRFA))
+- [Distributionally Robust Federated Averaging](#Distributionally-Robust-Federated-Averaging)
 - [Towards Efficient Data Valuation Based on the Shapley Value](#Towards Efficient Data Valuation Based on the Shapley Value)
 _ [Transparent Contribution Evaluation for Secure Federated Learning on Blockchain](#Transparent Contribution Evaluation for Secure Federated Learning on Blockchain)
 - [Profit Allocation for Federated Learning](#Profit Allocation for Federated Learning)
@@ -59,7 +59,7 @@ Nicolas Papernot, Xiao Wang
 - CaPC improves the mean accuracy across both homogeneous and heterogeneous model architectures under the uniform and non-uniform data distribution setting
 - The **privacy-utility trade-off** is determined by the number of parties involved in the protocol. Increasing the number of parties means we can issue more queries for a given privacy budget which leads to higher accuracy gains
 
-## Distributionally Robust Federated Averaging (DRFA)
+## Distributionally Robust Federated Averaging
 
 - **Authors**: Yuyang Deng, Mohammad Mahdi Kamani, Mehrdad Mahdavi
 - **Publication date:** Feb-25-2021
