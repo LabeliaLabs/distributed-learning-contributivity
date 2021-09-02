@@ -10,6 +10,7 @@ from copy import deepcopy
 from timeit import default_timer as timer
 
 import numpy as np
+import random
 import tensorflow as tf
 from loguru import logger
 from sklearn.metrics import confusion_matrix
@@ -530,7 +531,7 @@ class DistributionallyRobustFederatedAveragingLearning(FederatedAverageLearning)
         self.global_model_at_index_t = self.aggregate_model_weights(self.active_partners_list)
 
         # sample a new subset of partners of size active_partners_count
-        subset_index = np.random.randint(0, self.partners_count - 1, self.active_partners_count)
+        subset_index = random.sample(range(self.partners_count), self.active_partners_count)
         self.subset_u_partners = [self.partners_list[index] for index in subset_index]
         logger.info(f"Subset U of partners chosen for lambda update {[partner.id for partner in self.subset_u_partners]}")
 
@@ -552,7 +553,6 @@ class DistributionallyRobustFederatedAveragingLearning(FederatedAverageLearning)
         #   a = np.random.random(self.partners_count)
         a = np.random.random(self.partners_count)
         lambda_vector = a / a.sum()
-        logger.info(f"Initial lambda vector {lambda_vector}")
         return lambda_vector
 
     @staticmethod
@@ -576,6 +576,7 @@ class DistributionallyRobustFederatedAveragingLearning(FederatedAverageLearning)
         Update the active partners list according to lambda vector
         """
         active_partners_indices = (-self.lambda_vector).argsort()[:self.active_partners_count]
+        logger.info(f"active partners indices after lambda update {active_partners_indices}")
         self.active_partners_list = [self.partners_list[index] for index in active_partners_indices]
 
     @staticmethod
