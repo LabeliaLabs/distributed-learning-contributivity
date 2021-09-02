@@ -462,16 +462,15 @@ class DistributionallyRobustFederatedAveragingLearning(FederatedAverageLearning)
 
         # convert partners training data into tf ones, reference: fast_mpl
         # use only the cpu for data preprocessing and save the gpu for the training
-        with tf.device('/cpu:0'):
-            for partner_id, partner in enumerate(self.partners_list):
-                self.partners_datasets[partner_id] = list()
-                for minibatch_index in range(self.minibatch_count):
-                    dataset = tf.data.Dataset.from_tensor_slices((partner.minibatched_x_train[minibatch_index],
-                                                                  partner.minibatched_y_train[minibatch_index]))
-                    dataset = dataset.shuffle(len(partner.minibatched_x_train[minibatch_index]))
-                    dataset = dataset.batch(partner.batch_size)
-                    dataset = dataset.prefetch(1)
-                    self.partners_datasets[partner_id].append(dataset)
+        for partner_id, partner in enumerate(self.partners_list):
+            self.partners_datasets[partner.id] = list()
+            for minibatch_index in range(self.minibatch_count):
+                dataset = tf.data.Dataset.from_tensor_slices((partner.minibatched_x_train[minibatch_index],
+                                                              partner.minibatched_y_train[minibatch_index]))
+                dataset = dataset.shuffle(len(partner.minibatched_x_train[minibatch_index]))
+                dataset = dataset.batch(partner.batch_size)
+                dataset = dataset.prefetch(1)
+                self.partners_datasets[partner.id].append(dataset)
 
         # Iterate over mini-batches and train
         for i in range(self.minibatch_count):
@@ -533,6 +532,7 @@ class DistributionallyRobustFederatedAveragingLearning(FederatedAverageLearning)
         # sample a new subset of partners of size active_partners_count
         subset_index = random.sample(range(self.partners_count), self.active_partners_count)
         self.subset_u_partners = [self.partners_list[index] for index in subset_index]
+        logger.info(f"subset U indexes :{subset_index}")
         logger.info(f"Subset U of partners chosen for lambda update {[partner.id for partner in self.subset_u_partners]}")
 
         # compute losses over a random batch using the global model at index t
@@ -568,8 +568,9 @@ class DistributionallyRobustFederatedAveragingLearning(FederatedAverageLearning)
         The update rule for lambda is : lambda_vector(i) = lambda_vector(i-1) + (local_step_index_t *
         lambda_learning_rate * local_losses_at_index_t)
         """
-        self.lambda_vector = self.lambda_vector + (
-                self.local_steps_index_t * self.lambda_learning_rate * self.loss_for_model_at_index_t)
+        self.lambda_vector = (self.lambda_vector + (
+                self.local_steps_index_t * self.lambda_learning_rate
+                * self.loss_for_model_at_index_t))/np.sum(self.lambda_vector)
 
     def update_active_partners_list(self):
         """
