@@ -478,10 +478,10 @@ class DistributionallyRobustFederatedAveragingLearning(FederatedAverageLearning)
 
             self.local_steps_index = 0
             self.local_steps_index_t = np.random.randint(0, self.local_steps - 1)
-            logger.info(f"Starting communication round n°{self.communication_rounds_index}")
+
             logger.info(f"Local step index t :{self.local_steps_index_t}")
-            logger.info(f"Active partner in this round {[active_partner for active_partner in self.active_partners_list]} according to lambda vector "
-                        f"{self.lambda_vector}")
+            logger.info(f"Lambda vector for this round : {self.lambda_vector}")
+            logger.info(f"Active partner in this round {[active_partner.id for active_partner in self.active_partners_list]} according to lambda vector {self.lambda_vector}")
 
             self.fit_minibatch()
 
