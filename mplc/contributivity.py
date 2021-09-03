@@ -12,12 +12,13 @@ from math import factorial
 from timeit import default_timer as timer
 
 import numpy as np
+import tensorflow as tf
 from loguru import logger
 from scipy.stats import norm
 from sklearn.linear_model import LinearRegression
 
 from . import constants
-from .multi_partner_learning import basic_mpl
+from .multi_partner_learning import basic_mpl, fast_mpl
 
 
 class KrigingModel:
@@ -84,9 +85,16 @@ class Contributivity:
                 + str(self.first_charac_fct_calls_count)
                 + "\n"
         )
-        output += f"Contributivity scores: {np.round(self.contributivity_scores, 3)}\n"
-        output += f"Std of the contributivity scores: {np.round(self.scores_std, 3)}\n"
-        output += f"Normalized contributivity scores: {np.round(self.normalized_scores, 3)}\n"
+        if isinstance(self.contributivity_scores, dict):
+            for key, value in self.contributivity_scores.items():
+                output += f'Metric: {key}\n'
+                output += f"Contributivity scores : {np.round(value, 3)}\n"
+                output += f"Std of the contributivity scores: {np.round(self.scores_std[key], 3)}\n"
+                output += f"Normalized contributivity scores: {np.round(self.normalized_scores[key], 3)}\n"
+        else:
+            output += f"Contributivity scores : {np.round(self.contributivity_scores, 3)}\n"
+            output += f"Std of the contributivity scores: {np.round(self.scores_std, 3)}\n"
+            output += f"Normalized contributivity scores: {np.round(self.normalized_scores, 3)}\n"
 
         return output
 
@@ -1113,23 +1121,41 @@ class Contributivity:
 
         return relative_perf_matrix
 
-    def s_model(self):  # TOD refacto
-        start = timer()
-        mpl = basic_mpl.FedAvgSmodel(self.scenario)
-        mpl.fit()
-        theta_estimated = np.zeros((mpl.partners_count,
-                                    mpl.dataset.num_classes,
-                                    mpl.dataset.num_classes))
-        for i, partnerMpl in enumerate(mpl.partners_list):
-            theta_estimated[i] = (np.exp(partnerMpl.noise_layer_weights) / np.sum(
-                np.exp(partnerMpl.noise_layer_weights), axis=2))
-        self.contributivity_scores = np.exp(- np.array([np.linalg.norm(
-            theta_estimated[i] - np.identity(mpl.dataset.num_classes)
-        ) for i in range(len(self.scenario.partners_list))]))
+    def statistcal_distances_via_smodel(self):
 
-        self.name = "S-Model"
-        self.scores_std = np.zeros(mpl.partners_count)
-        self.normalized_scores = self.contributivity_scores / np.sum(self.contributivity_scores)
+        start = timer()
+        mpl = fast_mpl.FastFedAvgSmodel(self.scenario, **self.scenario.mpl_kwargs)
+        mpl.fit()
+        cross_entropy = tf.keras.metrics.CategoricalCrossentropy()
+        self.contributivity_scores = {'Kullback Leiber divergence': [0 for _ in mpl.partners_list],
+                                      'Bhattacharyya distance': [0 for _ in mpl.partners_list],
+                                      'Hellinger metric': [0 for _ in mpl.partners_list]}
+        self.scores_std = {'Kullback Leiber divergence': [0 for _ in mpl.partners_list],
+                           'Bhattacharyya distance': [0 for _ in mpl.partners_list],
+                           'Hellinger metric': [0 for _ in mpl.partners_list]}
+        # TODO; The variance of our estimation is likely to be estimated.
+
+        for i, partnerMpl in enumerate(mpl.partners_list):
+            y_global = mpl.model.predict(partnerMpl.x_train)
+            y_local = mpl.smodel_list[i].predict(y_global)
+            cross_entropy.update_state(y_global, y_local)
+            cs = cross_entropy.result().numpy()
+            cross_entropy.reset_states()
+            cross_entropy.update_state(y_global, y_global)
+            e = cross_entropy.result().numpy()
+            cross_entropy.reset_states()
+            BC = 0
+            for y_g, y_l in zip(y_global, y_local):
+                BC += np.sum(np.sqrt(y_g * y_l))
+            BC /= len(y_global)
+            self.contributivity_scores['Kullback Leiber divergence'][i] = cs - e
+            self.contributivity_scores['Bhattacharyya distance'][i] = - np.log(BC)
+            self.contributivity_scores['Hellinger metric'][i] = np.sqrt(1 - BC)
+
+        self.name = "Statistic metric via S-model"
+        self.normalized_scores = {}
+        for key, value in self.contributivity_scores.items():
+            self.normalized_scores[key] = value / np.sum(value)
         end = timer()
         self.computation_time_sec = end - start
 
@@ -1195,7 +1221,7 @@ class Contributivity:
             # Contributivity 10: Partner valuation by reinforcement learning
             self.PVRL(learning_rate=0.2)
         elif method_to_compute == "S-Model":
-            self.s_model()
+            self.statistcal_distances_via_smodel()
         else:
             logger.warning("Unrecognized name of method, statement ignored!")
 

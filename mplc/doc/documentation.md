@@ -316,6 +316,20 @@ There are several parameters influencing how the collaborative and distributed l
   - `'seqavg'`: stands for sequential averaging
 
     ![Schema seqavg](../../img/collaborative_rounds_seqavg.png)
+    
+  The previous methods are implemented to be agnostic to the model used. However, some of these methods are also implemented within the tensorflow interface, at a lower level. These implementations are usually faster, especially if you are using a GPU. Unfortunately, those methods are only compatible with tensorflow.keras-based models. The mplc-native dataset `Titanic` cannot be used.
+  
+  Available methods:
+    - `'fast-fedavg'`: equivalent to FedAvg.
+    - `'fast-fedgrads'`: equivalent to FedGrad.
+    - `'fast-fedavg-smodel'`: equivalent to FedAvg, with smodel
+    - `'fast-fedgrad-smodel'`: equivalent to FedGrad with smodel
+    - `'fast-fedgdo'`: Stand for Federated averaging with double optimizers. This method is inspired from Federated gradient, but with modification on the local computation of the gradient.
+    A local optimizer (partner-specific) is used to do several minimization steps (local minibatches) of the local-loss
+    during a global-minibatch. We use the sum of these weighs-updates as the gradient which is sent to the global optimizer.
+    The global optimizer aggregates these gradients, which have been sent by the partners,
+    and performs a optimization step with this aggregated gradient.
+       
 
   Example: `multi_partner_learning_approach='seqavg'`
 

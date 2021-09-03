@@ -539,22 +539,39 @@ class Scenario:
             df = df.append(dict_results, ignore_index=True)
 
         for contrib in self.contributivity_list:
-
             # Contributivity data
-            dict_results["contributivity_method"] = contrib.name
-            dict_results["contributivity_scores"] = contrib.contributivity_scores
-            dict_results["contributivity_stds"] = contrib.scores_std
-            dict_results["computation_time_sec"] = contrib.computation_time_sec
-            dict_results["first_characteristic_calls_count"] = contrib.first_charac_fct_calls_count
+            if isinstance(contrib.contributivity_scores, dict):
+                for key, value in contrib.contributivity_scores.items():
+                    dict_results["contributivity_method"] = f'{contrib.name} - {key}'
+                    dict_results["contributivity_scores"] = value
+                    dict_results["contributivity_stds"] = contrib.scores_std[key]
+                    dict_results["computation_time_sec"] = contrib.computation_time_sec
+                    dict_results["first_characteristic_calls_count"] = contrib.first_charac_fct_calls_count
 
-            for i in range(self.partners_count):
-                # Partner-specific data
-                dict_results["partner_id"] = i
-                dict_results["dataset_fraction_of_partner"] = self.amounts_per_partner[i]
-                dict_results["contributivity_score"] = contrib.contributivity_scores[i]
-                dict_results["contributivity_std"] = contrib.scores_std[i]
+                    for i in range(self.partners_count):
+                        # Partner-specific data
+                        dict_results["partner_id"] = i
+                        dict_results["dataset_fraction_of_partner"] = self.amounts_per_partner[i]
+                        dict_results["contributivity_score"] = value[i]
+                        dict_results["contributivity_std"] = contrib.scores_std[key][i]
 
-                df = df.append(dict_results, ignore_index=True)
+                        df = df.append(dict_results, ignore_index=True)
+
+            else:
+                dict_results["contributivity_method"] = contrib.name
+                dict_results["contributivity_scores"] = contrib.contributivity_scores
+                dict_results["contributivity_stds"] = contrib.scores_std
+                dict_results["computation_time_sec"] = contrib.computation_time_sec
+                dict_results["first_characteristic_calls_count"] = contrib.first_charac_fct_calls_count
+
+                for i in range(self.partners_count):
+                    # Partner-specific data
+                    dict_results["partner_id"] = i
+                    dict_results["dataset_fraction_of_partner"] = self.amounts_per_partner[i]
+                    dict_results["contributivity_score"] = contrib.contributivity_scores[i]
+                    dict_results["contributivity_std"] = contrib.scores_std[i]
+
+                    df = df.append(dict_results, ignore_index=True)
 
         return df
 
