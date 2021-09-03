@@ -413,7 +413,7 @@ class FederatedAverageLearning(MultiPartnerLearning):
         logger.debug("End of fedavg collaborative round.")
 
 
-class DistributionallyRobustFederatedAveragingLearning(FederatedAverageLearning):
+class DistributionallyRobustFederatedAveragingLearning(MultiPartnerLearning):
     """
      -This class implements the Distributionally Robust Federated Averaging (DRFA) Algorithm, this can be considered a
      variant of Federated Averaging where only a subset of partners are chosen to participate in a given collaborative
@@ -454,8 +454,6 @@ class DistributionallyRobustFederatedAveragingLearning(FederatedAverageLearning)
         """
 
     def fit_epoch(self):
-        # Clear Keras' old models
-        clear_session()
 
         # Split the train dataset in mini-batches
         self.split_in_minibatches()
@@ -501,9 +499,9 @@ class DistributionallyRobustFederatedAveragingLearning(FederatedAverageLearning)
             partner.model_weights = self.model_weights
 
         # Evaluate and store accuracy of mini-batch start model
-        self.eval_and_log_model_val_perf()
+        # self.eval_and_log_model_val_perf()
 
-        # Iterate over partners for training each individual model
+        # Iterate over partners for training
         for partner_index, partner in enumerate(self.active_partners_list):
             partner_model = partner.build_model()
             print(f"Evaluate on test data for partner {partner.id}")
