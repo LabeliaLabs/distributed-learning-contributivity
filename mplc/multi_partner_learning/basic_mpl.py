@@ -506,6 +506,10 @@ class DistributionallyRobustFederatedAveragingLearning(FederatedAverageLearning)
         # Iterate over partners for training each individual model
         for partner_index, partner in enumerate(self.active_partners_list):
             partner_model = partner.build_model()
+            print(f"Evaluate on test data for partner {partner.id}")
+            results = partner_model.evaluate(partner.x_test, partner.y_test, batch_size=128)
+            print(f"test loss, test acc for partner {partner.id}: ", results)
+
             # loop through each partner's minibatch
             minibatched_x_y = self.partners_datasets[partner.id][self.minibatch_index]
             for idx, batch_x_y in enumerate(minibatched_x_y):
