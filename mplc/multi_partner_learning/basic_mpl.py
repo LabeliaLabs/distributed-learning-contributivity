@@ -498,15 +498,12 @@ class DistributionallyRobustFederatedAveragingLearning(MultiPartnerLearning):
         for partner in self.partners_list:
             partner.model_weights = self.model_weights
 
-        # Evaluate and store accuracy of mini-batch start model
-        # self.eval_and_log_model_val_perf()
-
         # Iterate over partners for training
         for partner_index, partner in enumerate(self.active_partners_list):
             partner_model = partner.build_model()
             print(f"Evaluate on test data for partner {partner.id}")
-            results = partner_model.evaluate(partner.x_test, partner.y_test, batch_size=128)
-            print(f"test loss, test acc for partner {partner.id}: ", results)
+            #results = partner_model.evaluate(partner.x_test, partner.y_test, batch_size=128)
+            #print(f"test loss, test acc for partner {partner.id}: ", results)
 
             # loop through each partner's minibatch
             minibatched_x_y = self.partners_datasets[partner.id][self.minibatch_index]
