@@ -506,14 +506,14 @@ class DistributionallyRobustFederatedAveragingLearning(MultiPartnerLearning):
 
             # loop through each partner's minibatch
             minibatched_x_y = self.partners_datasets[partner.id][self.minibatch_index]
-            logger.info(f"partner: {partner.id} process it minibatch {self.minibatch_index}")
+            logger.info(f"partner: {partner.id} process its minibatch of index : {self.minibatch_index}")
             for idx, batch_x_y in enumerate(minibatched_x_y):
                 with tf.GradientTape() as tape:
                     p_pred = partner_model(batch_x_y[0])
                     loss = partner_model.loss(batch_x_y[1], p_pred)
-                    logger.info(f"partner batch {batch_x_y[0]}")
-                    logger.info(f"partner prediction {partner_model(batch_x_y[0])}")
-                    logger.info(f"true labels {batch_x_y[1]}")
+                    logger.info(f"partner batch {batch_x_y[0].shape}")
+                    logger.info(f"partner prediction {partner_model(batch_x_y[0].shape)}")
+                    logger.info(f"true labels {batch_x_y[1].shape}")
 
                 partner_model.compiled_metrics.update_state(batch_x_y[1], p_pred)
                 partner_model.optimizer.minimize(loss, partner_model.trainable_weights, tape=tape)
