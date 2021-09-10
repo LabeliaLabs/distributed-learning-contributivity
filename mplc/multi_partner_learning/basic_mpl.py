@@ -501,28 +501,28 @@ class DistributionallyRobustFederatedAveragingLearning(MultiPartnerLearning):
         # Iterate over partners for training
         for partner_index, partner in enumerate(self.active_partners_list):
             partner_model = partner.build_model()
-            logger.debug(f"Partner : {partner.id} with index : {partner_index} takes a local step at"
+            logger.info(f"Partner : {partner.id} with index : {partner_index} takes a local step at"
                          f" : {self.local_steps_index}")
 
             # loop through each partner's minibatch
             minibatched_x_y = self.partners_datasets[partner.id][self.minibatch_index]
-            logger.debug(f"partner: {partner.id} process it minibatch {self.minibatch_index}")
+            logger.info(f"partner: {partner.id} process it minibatch {self.minibatch_index}")
             for idx, batch_x_y in enumerate(minibatched_x_y):
                 with tf.GradientTape() as tape:
                     p_pred = partner_model(batch_x_y[0])
                     loss = partner_model.loss(batch_x_y[1], p_pred)
-                    logger.debug(f"partner batch {batch_x_y[0]}")
-                    logger.debug(f"partner prediction {partner_model(batch_x_y[0])}")
-                    logger.debug(f"true labels {batch_x_y[1]}")
+                    logger.info(f"partner batch {batch_x_y[0]}")
+                    logger.info(f"partner prediction {partner_model(batch_x_y[0])}")
+                    logger.info(f"true labels {batch_x_y[1]}")
 
                 partner_model.compiled_metrics.update_state(batch_x_y[1], p_pred)
                 partner_model.optimizer.minimize(loss, partner_model.trainable_weights, tape=tape)
-                hist_partner = partner_model.evaluate(partner.x_val,
-                                              partner.y_val,
-                                              batch_size=constants.DEFAULT_BATCH_SIZE,
-                                              verbose=0,
-                                              )
-                logger.debug(f"Partner {partner.id} hist : {hist_partner}")
+                # hist_partner = partner_model.evaluate(partner.x_val,
+                #                               partner.y_val,
+                #                               batch_size=constants.DEFAULT_BATCH_SIZE,
+                #                               verbose=0,
+                #                               )
+                logger.info(f"Partner {partner.id} hist : {hist_partner}")
                 # if self.local_steps_index == self.local_steps_index_t:
                 #     # save model weights for each partner at local step t
                 #     self.model_weights_at_index_t.append(partner.model_weights)
