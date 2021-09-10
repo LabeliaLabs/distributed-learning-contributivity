@@ -483,8 +483,8 @@ class DistributionallyRobustFederatedAveragingLearning(MultiPartnerLearning):
 
             self.fit_minibatch()
 
-            self.update_lambda()
-            self.update_active_partners_list()
+            #self.update_lambda()
+            #self.update_active_partners_list()
 
         self.minibatch_index = 0
 
@@ -510,11 +510,12 @@ class DistributionallyRobustFederatedAveragingLearning(MultiPartnerLearning):
             for idx, batch_x_y in enumerate(minibatched_x_y):
                 with tf.GradientTape() as tape:
                     loss = partner_model.loss(batch_x_y[1], partner_model(batch_x_y[0]))
+
                 partner_model.optimizer.minimize(loss, partner_model.trainable_weights, tape=tape)
 
-                if self.local_steps_index == self.local_steps_index_t:
-                    # save model weights for each partner at local step t
-                    self.model_weights_at_index_t.append(partner.model_weights)
+                # if self.local_steps_index == self.local_steps_index_t:
+                #     # save model weights for each partner at local step t
+                #     self.model_weights_at_index_t.append(partner.model_weights)
                 self.local_steps_index += 1
 
             self.local_steps_index = 0
@@ -522,27 +523,27 @@ class DistributionallyRobustFederatedAveragingLearning(MultiPartnerLearning):
         # aggregate global model weights
         self.model_weights = self.aggregate_model_weights(self.active_partners_list)
 
-        # aggregate models weights at index t
-        for active_partner, weights_t in zip(self.active_partners_list, self.model_weights_at_index_t):
-            active_partner.model_weights = weights_t
-
-        self.global_model_at_index_t = self.aggregate_model_weights(self.active_partners_list)
-
-        # sample a new subset of partners of size active_partners_count
-        subset_index = random.sample(range(self.partners_count), self.active_partners_count)
-        self.subset_u_partners = [self.partners_list[index] for index in subset_index]
-        logger.info(f"subset U indexes :{subset_index}")
-        logger.info(f"Subset U of partners chosen for lambda update {[partner.id for partner in self.subset_u_partners]}")
-
-        # compute losses over a random batch using the global model at index t
-        for partner, index in zip(self.subset_u_partners, subset_index):
-            random_minibatch_index = np.random.randint(0, self.minibatch_count - 1)
-            random_minibatch = self.partners_datasets[partner.id][random_minibatch_index]
-            random_batch_index = np.random.randint(0, len(random_minibatch) - 1)
-            random_batch = list(random_minibatch)[random_batch_index]
-            partner_model = self.build_model_from_weights(self.global_model_at_index_t)
-            loss = partner_model.loss(random_batch[1], partner_model(random_batch[0]))
-            self.loss_for_model_at_index_t[index] = ((self.partners_count / self.active_partners_count) * np.mean(loss.numpy()))
+        # # aggregate models weights at index t
+        # for active_partner, weights_t in zip(self.active_partners_list, self.model_weights_at_index_t):
+        #     active_partner.model_weights = weights_t
+        #
+        # self.global_model_at_index_t = self.aggregate_model_weights(self.active_partners_list)
+        #
+        # # sample a new subset of partners of size active_partners_count
+        # subset_index = random.sample(range(self.partners_count), self.active_partners_count)
+        # self.subset_u_partners = [self.partners_list[index] for index in subset_index]
+        # logger.info(f"subset U indexes :{subset_index}")
+        # logger.info(f"Subset U of partners chosen for lambda update {[partner.id for partner in self.subset_u_partners]}")
+        #
+        # # compute losses over a random batch using the global model at index t
+        # for partner, index in zip(self.subset_u_partners, subset_index):
+        #     random_minibatch_index = np.random.randint(0, self.minibatch_count - 1)
+        #     random_minibatch = self.partners_datasets[partner.id][random_minibatch_index]
+        #     random_batch_index = np.random.randint(0, len(random_minibatch) - 1)
+        #     random_batch = list(random_minibatch)[random_batch_index]
+        #     partner_model = self.build_model_from_weights(self.global_model_at_index_t)
+        #     loss = partner_model.loss(random_batch[1], partner_model(random_batch[0]))
+        #     self.loss_for_model_at_index_t[index] = ((self.partners_count / self.active_partners_count) * np.mean(loss.numpy()))
 
     def init_lambda(self):
         """
