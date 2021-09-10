@@ -522,7 +522,7 @@ class DistributionallyRobustFederatedAveragingLearning(MultiPartnerLearning):
                 #                               batch_size=constants.DEFAULT_BATCH_SIZE,
                 #                               verbose=0,
                 #                               )
-                logger.info(f"Partner {partner.id} hist : {hist_partner}")
+                #logger.info(f"Partner {partner.id} hist : {hist_partner}")
                 # if self.local_steps_index == self.local_steps_index_t:
                 #     # save model weights for each partner at local step t
                 #     self.model_weights_at_index_t.append(partner.model_weights)
