@@ -22,6 +22,7 @@ import pylab
 
 from . import constants
 
+# Graphics configuration
 sns.set_style("white")
 pylab.rcParams.update({'font.size': 18})
 

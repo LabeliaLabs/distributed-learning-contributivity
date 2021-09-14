@@ -112,11 +112,16 @@ my_scenario = Scenario(partners_count=3,
 
 ### Plot data distribution
 
-If you whish to visualize the partners' ground truth distribution of the train set per class (with and without corruption if there is any), you can use the method `plot_data_distribution()`. You may choose whether you want to display the plot straight away (`display` is `True` by default) or save it (`save` is `False` by default).
+If you wish to visualize the partners' ground truth distribution of the train set per class (with and without corruption if there is any), you can use the method `plot_data_distribution()`. You may choose whether you want to display the plot straight away (`display` is `True` by default) or save it (`save` is `False` by default).
 
 ```python
 my_scenario.plot_data_distribution(save=False, display=True)
 ```
+
+![Example of the train set distribution for a scenario with 3 partners as specified by the user](../../img/train_set_ground_truth.png)
+![Example of the train set distribution after corruption](../../img/train_set_corrupted_ground_truth.png)
+
+See the [Reference Scenarios](https://github.com/SubstraFoundation/distributed-learning-contributivity/blob/master/notebooks/reference_scenarios/benchmarks.ipynb) notebook for examples.
 
 > Note: the plot is automatically saved when calling the `run()` method described below.
 
