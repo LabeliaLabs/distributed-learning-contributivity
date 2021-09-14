@@ -160,7 +160,7 @@ class Experiment:
                     scenario = blank_scenario.copy(repeat_count=repeat_idx)
                 scenario.is_run_as_part_of_an_experiment = True
                 scenario.run()
-                scenario.plot_data_distribution()
+                scenario.plot_data_distribution(save=True, display=False)
 
                 # Save scenario results
                 df_results = scenario.to_dataframe()
