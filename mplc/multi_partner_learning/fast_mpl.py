@@ -583,7 +583,8 @@ class FastFedGDO(FastFedAvg):
     In this version we use a local optimizer (partner-specific) to do several minimization steps of the local-loss
     during a minibatch. We use the sum of these weighs-updates as the gradient which is sent to the global optimizer.
     The global optimizer aggregates these gradients-like which have been sent by the partners,
-    and performs a optimization step with this aggregated gradient.
+    and performs a optimization step with this aggregated gradient. FedGDO stands for Federated Gradient with double
+    optimizers.
     """
     name = 'FastFedGDO'
 
@@ -642,8 +643,7 @@ class FastFedGDO(FastFedAvg):
             model.optimizer.apply_gradients(
                 zip(global_grad, model.trainable_weights))
 
-            # Execution
-
+        # Execution
         self.timer = time.time()
         for e in range(self.epoch_count):
             self.epoch_timer = time.time()
