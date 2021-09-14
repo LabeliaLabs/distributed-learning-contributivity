@@ -461,6 +461,16 @@ class Test_Corruption:
 
 #####
 #
+# Test saving results (both standalone scenario and experiments)
+#
+######
+
+class _TestSavingResults:
+    pass
+
+
+#####
+#
 # Test Demo and config files
 #
 ######
