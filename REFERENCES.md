@@ -86,6 +86,9 @@ Nicolas Papernot, Xiao Wang
 ## Towards Efficient Data Valuation Based on the Shapley Value
 **Authors:** Ruoxi Jia, David Dao, Boxin Wang, Frances Ann Hubis, Nick Hynes, Nezihe Merve Gurel, Bo Li, Ce Zhang, Dawn Song, Costas Spanos
 2019
+
+**(TO BE COMPLETED)**
+
 ### Contribution:
 
 ### Experiments and results:
@@ -96,6 +99,9 @@ Nicolas Papernot, Xiao Wang
 
 **Authors:** Tianshu Song, Yongxin Tong, Shuyue Wei
 2019
+
+**(TO BE COMPLETED)**
+
 ### Contribution:
 
 ### Experiments and results:
@@ -106,6 +112,9 @@ Nicolas Papernot, Xiao Wang
 
 **Authors:** Shuaicheng Ma, Yang Cao, Li Xiong
 2019
+
+**(TO BE COMPLETED)**
+
 ### Contribution:
 
 ### Experiments and results:
@@ -117,6 +126,8 @@ Nicolas Papernot, Xiao Wang
 **Authors** Guan Wang, Charlie Xiaoqian Dang, Ziye Zhou
 2019
 
+**(TO BE COMPLETED)**
+
 ### Contribution:
 
 ### Experiments and results:
@@ -124,8 +135,11 @@ Nicolas Papernot, Xiao Wang
 ### Conclusion and future work:
 
 ## FedCM: A Real-time Contribution Measurement Method for Participants in Federated Learning
-**Boyi Liu and Bingjie Yan, Yize Zhou, Jun Wang, Li Liu, Yuhan Zhang, Xiaolan Nie**
+**Authors** Boyi Liu and Bingjie Yan, Yize Zhou, Jun Wang, Li Liu, Yuhan Zhang, Xiaolan Nie
 2021
+
+**(TO BE COMPLETED)**
+
 ### Contribution:
 
 ### Experiments and results:
@@ -133,8 +147,10 @@ Nicolas Papernot, Xiao Wang
 ### Conclusion and future work:
 
 ### Incentive Mechanism for Reliable Federated Learning: A Joint Optimization Approach to Combining Reputation and Contract Theory
-**Jiawen Kang, Zehui Xiong, Dusit Niyato, Shengli Xie, Junshan Zhang**
+**Authors** Jiawen Kang, Zehui Xiong, Dusit Niyato, Shengli Xie, Junshan Zhang
 2019
+
+**(TO BE COMPLETED)** 
 
 ### Contribution:
 
