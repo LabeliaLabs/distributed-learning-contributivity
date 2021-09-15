@@ -11,6 +11,7 @@ from shutil import copyfile
 
 import matplotlib.pyplot as plt
 import pandas as pd
+import tensorflow as tf
 from loguru import logger
 
 from . import scenario as scenario_module
@@ -144,6 +145,9 @@ class Experiment:
 
             # Loop over scenarios in scenarios_list
             for scenario_idx, blank_scenario in enumerate(self.scenarios_list):
+                # Remove previous tensorflow graphes to free memory
+                tf.keras.backend.clear_session()
+
                 scenario_index_str = f"{scenario_idx + 1}/{len(self.scenarios_list)}"
                 logger.info(f"(Experiment {self.name}, repeat {repeat_index_str}) "
                             f"Now running scenario {scenario_index_str}")

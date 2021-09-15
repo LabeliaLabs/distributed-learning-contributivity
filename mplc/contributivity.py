@@ -108,7 +108,7 @@ class Contributivity:
                                                                      )
             else:
                 mpl = basic_mpl.SinglePartnerLearning(self.scenario,
-                                                      partner=small_partners_list[0],
+                                                      partners_list=small_partners_list,
                                                       is_early_stopping=True,
                                                       save_folder=None,
                                                       **self.scenario.mpl_kwargs

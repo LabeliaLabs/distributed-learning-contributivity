@@ -6,8 +6,8 @@ Functions for model training and evaluation (single-partner and multi-partner ca
 import operator
 import os
 from abc import ABC, abstractmethod
-from timeit import default_timer as timer
 from copy import deepcopy
+from timeit import default_timer as timer
 
 import numpy as np
 import tensorflow as tf
@@ -282,14 +282,13 @@ class MultiPartnerLearning(ABC):
 
 
 class SinglePartnerLearning(MultiPartnerLearning):
-    name = 'singlePartner learning'
+    name = 'Single Partner learning'
 
-    def __init__(self, scenario, partner, **kwargs):
-        kwargs['partners_list'] = [partner]
+    def __init__(self, scenario, **kwargs):
         super(SinglePartnerLearning, self).__init__(scenario, **kwargs)
-        if type(partner) == list:
+        if self.partners_count != 1:
             raise ValueError('More than one partner is provided')
-        self.partner = partner
+        self.partner = self.partners_list[0]
 
     def fit(self):
         """Return the score on test data of a model trained on a single partner"""
