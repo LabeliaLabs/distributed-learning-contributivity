@@ -248,7 +248,7 @@ def create_data_distribution_graph(name, ratio_partner_per_class,
     plt.tight_layout()
     if save_folder is not None:
         save_folder = Path(save_folder)
-        save_folder.mkdir(exist_ok=True)
+        save_folder.mkdir(parents=True, exist_ok=True)
         plt.savefig(save_folder / (name + ".png"))
     if display:
         plt.show()
