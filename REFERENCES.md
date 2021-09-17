@@ -4,7 +4,7 @@
 - [CAPC Learning: Confidential and Private Collaborative Learning](#CAPC-Learning-Confidential-and-Private-Collaborative-Learning)
 - [Distributionally Robust Federated Averaging](#Distributionally-Robust-Federated-Averaging)
 - [Towards Efficient Data Valuation Based on the Shapley Value](#Towards-Efficient-Data-Valuation-Based-on-the-Shapley-Value)
-_ [Transparent Contribution Evaluation for Secure Federated Learning on Blockchain](#Transparent-contribution-Evaluation-for-Secure-Federated-Learning-on-Blockchain)
+- [Transparent Contribution Evaluation for Secure Federated Learning on Blockchain](#Transparent-contribution-Evaluation-for-Secure-Federated-Learning-on-Blockchain)
 - [Profit Allocation for Federated Learning](#Profit-Allocation-for-Federated-Learning)
 - [Transparent Contribution Evaluation for Secure Federated Learning on Blockchain](#Transparent-Contribution-Evaluation-for-Secure-Federated-Learning-on-Blockchain)
 - [Measure Contribution of Participants in Federated Learning](#Measure-Contribution-of-Participants-in-Federated-Learning)
