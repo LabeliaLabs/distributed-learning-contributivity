@@ -3,13 +3,13 @@
 - [2CP: Decentralized Protocols to Transparently Evaluate Contributivity in Blockchain Federated Learning Environments](#2CP-Decentralized-Protocols-to-Transparently-Evaluate-Contributivity-in-Blockchain-Federated-Learning-Environments)
 - [CAPC Learning: Confidential and Private Collaborative Learning](#CAPC-Learning-Confidential-and-Private-Collaborative-Learning)
 - [Distributionally Robust Federated Averaging](#Distributionally-Robust-Federated-Averaging)
-- [Towards Efficient Data Valuation Based on the Shapley Value](#Towards Efficient Data Valuation Based on the Shapley Value)
-_ [Transparent Contribution Evaluation for Secure Federated Learning on Blockchain](#Transparent Contribution Evaluation for Secure Federated Learning on Blockchain)
-- [Profit Allocation for Federated Learning](#Profit Allocation for Federated Learning)
-- [Transparent Contribution Evaluation for Secure Federated Learning on Blockchain](#Transparent Contribution Evaluation for Secure Federated Learning on Blockchain)
-- [Measure Contribution of Participants in Federated Learning](#Measure Contribution of Participants in Federated Learning)
-- [FedCM: A Real-time Contribution Measurement Method for Participants in Federated Learning](#FedCM A Real-time Contribution Measurement Method for Participants in Federated Learning)
-- [Incentive Mechanism for Reliable Federated Learning: A Joint Optimization Approach to Combining Reputation and Contract Theory](#Incentive Mechanism for Reliable Federated Learning A Joint Optimization Approach to Combining Reputation and Contract Theory)
+- [Towards Efficient Data Valuation Based on the Shapley Value](#Towards-Efficient-Data-Valuation-Based-on-the-Shapley-Value)
+_ [Transparent Contribution Evaluation for Secure Federated Learning on Blockchain](#Transparent-contribution-Evaluation-for-Secure-Federated-Learning-on-Blockchain)
+- [Profit Allocation for Federated Learning](#Profit-Allocation-for-Federated-Learning)
+- [Transparent Contribution Evaluation for Secure Federated Learning on Blockchain](#Transparent-Contribution-Evaluation-for-Secure-Federated-Learning-on-Blockchain)
+- [Measure Contribution of Participants in Federated Learning](#Measure-Contribution-of-Participants-in-Federated-Learning)
+- [FedCM: A Real-time Contribution Measurement Method for Participants in Federated Learning](#FedCM-A-Real-time-Contribution-Measurement-Method-for-Participants-in-Federated-Learning)
+- [Incentive Mechanism for Reliable Federated Learning: A Joint Optimization Approach to Combining Reputation and Contract Theory](#Incentive-Mechanism-for-Reliable-Federated-Learning-A-Joint-Optimization-Approach-to-Combining-Reputation-and-Contract-Theory)
 
 ---
 
