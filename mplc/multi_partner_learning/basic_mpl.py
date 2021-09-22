@@ -474,6 +474,7 @@ class DistributionallyRobustFederatedAveragingLearning(MultiPartnerLearning):
 
             # convert val data
             data_val = tf.data.Dataset.from_tensor_slices((partner.x_val, partner.y_val))
+            logger.info(f"size of validation data for {partner.id}: {len(partner.x_val)}")
             data_val = data_val.shuffle(len(partner.x_val))
             data_val = data_val.batch(partner.batch_size)
             data_val = data_val.prefetch(1)
