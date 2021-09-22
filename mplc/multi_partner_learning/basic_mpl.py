@@ -471,13 +471,13 @@ class DistributionallyRobustFederatedAveragingLearning(MultiPartnerLearning):
                 self.partners_training_data[partner.id].append(data_train)
 
             # convert val data
-            self.val_data = tf.data.Dataset.from_tensor_slices(self.val_data)
+            self.val_data = tf.data.Dataset.from_tensor_slices((self.dataset.x_val, self.dataset.y_val))
             self.val_data = self.val_data.shuffle(len(self.dataset.x_val))
             self.val_data = self.val_data.batch(partner.batch_size)
             self.val_data = self.val_data.prefetch(1)
 
             # convert test data
-            self.test_data = tf.data.Dataset.from_tensor_slices(self.test_data)
+            self.test_data = tf.data.Dataset.from_tensor_slices((self.dataset.x_test, self.dataset.y_test))
             self.test_data = self.test_data.shuffle(len(self.dataset.x_test))
             self.test_data = self.test_data.batch(partner.batch_size)
             self.test_data = self.test_data.prefetch(1)
