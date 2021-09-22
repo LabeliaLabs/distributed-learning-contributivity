@@ -527,7 +527,7 @@ class DistributionallyRobustFederatedAveragingLearning(MultiPartnerLearning):
                     p_pred = partner_model(batch_x_y[0])
                     loss = partner_model.loss(batch_x_y[1], p_pred)
                     logger.info(f"partner batch {tf.shape(batch_x_y[0])}")
-                    logger.info(f"partner prediction {partner_model(tf.shape(batch_x_y[0]))}")
+                    logger.info(f"partner prediction {tf.shape(partner_model(batch_x_y[0]))}")
                     logger.info(f"true labels {tf.shape(batch_x_y[1])}")
 
                 partner_model.compiled_metrics.update_state(batch_x_y[1], p_pred)
