@@ -434,6 +434,8 @@ class DistributionallyRobustFederatedAveragingLearning(MultiPartnerLearning):
 
         self.local_steps = scenario.gradient_updates_per_pass_count
         self.partners_training_data = {}
+        self.partners_val_data = None
+        self.partners_test_data = None
 
         # self.lambda_initialization = scenario.global_lambda_initialization
         self.lambda_learning_rate = 8e-3
@@ -471,16 +473,16 @@ class DistributionallyRobustFederatedAveragingLearning(MultiPartnerLearning):
                 self.partners_training_data[partner.id].append(data_train)
 
             # convert val data
-            self.val_data = tf.data.Dataset.from_tensor_slices((self.dataset.x_val, self.dataset.y_val))
-            self.val_data = self.val_data.shuffle(len(self.dataset.x_val))
-            self.val_data = self.val_data.batch(partner.batch_size)
-            self.val_data = self.val_data.prefetch(1)
+            self.partners_val_data = tf.data.Dataset.from_tensor_slices((self.dataset.x_val, self.dataset.y_val))
+            self.partners_val_data = self.partners_val_data.shuffle(len(self.dataset.x_val))
+            self.partners_val_data = self.partners_val_data.batch(partner.batch_size)
+            self.partners_val_data = self.partners_val_data.prefetch(1)
 
             # convert test data
-            self.test_data = tf.data.Dataset.from_tensor_slices((self.dataset.x_test, self.dataset.y_test))
-            self.test_data = self.test_data.shuffle(len(self.dataset.x_test))
-            self.test_data = self.test_data.batch(partner.batch_size)
-            self.test_data = self.test_data.prefetch(1)
+            self.partners_test_data = tf.data.Dataset.from_tensor_slices((self.dataset.x_test, self.dataset.y_test))
+            self.partners_test_data = self.partners_test_data.shuffle(len(self.dataset.x_test))
+            self.partners_test_data = self.partners_test_data.batch(partner.batch_size)
+            self.partners_test_data = self.partners_test_data.prefetch(1)
 
         # Iterate over mini-batches and train
         for i in range(self.minibatch_count):
@@ -520,9 +522,6 @@ class DistributionallyRobustFederatedAveragingLearning(MultiPartnerLearning):
         # Iterate over partners for training
         for partner_index, partner in enumerate(self.active_partners_list):
             partner_model = partner.build_model()
-            logger.info(f"Partner : {partner.id} with index : {partner_index} takes a local step at"
-                        f" : {self.local_steps_index}")
-
             # loop through each partner's minibatch
             minibatched_x_y = self.partners_training_data[partner.id][self.minibatch_index]
             logger.info(f"partner: {partner.id} process its minibatch of index : {self.minibatch_index}")
@@ -530,14 +529,15 @@ class DistributionallyRobustFederatedAveragingLearning(MultiPartnerLearning):
                 with tf.GradientTape() as tape:
                     p_pred = partner_model(batch_x_y[0])
                     loss = partner_model.loss(batch_x_y[1], p_pred)
-                    # logger.info(f"partner batch shape :{tf.shape(batch_x_y[0])}")
-                    # logger.info(f"partner prediction {partner_model(batch_x_y[0])}")
-                    # logger.info(f"true labels {batch_x_y[1]}")
 
                 partner_model.compiled_metrics.update_state(batch_x_y[1], p_pred)
                 partner_model.optimizer.minimize(loss, partner_model.trainable_weights, tape=tape)
 
                 self.local_steps_index += 1
+                if self.local_steps_index == self.local_steps_index_t:
+                    # save model weights for each partner at local step t
+                    self.model_weights_at_index_t.append(partner.model_weights)
+
             val_hist = partner_model.evaluate(self.val_data,
                                               return_dict=True,
                                               verbose=False)
@@ -545,17 +545,6 @@ class DistributionallyRobustFederatedAveragingLearning(MultiPartnerLearning):
                         f"after training on minibatch {self.minibatch_index}"
                         f" {val_hist}")
             partner.model_weights = partner_model.get_weights()
-
-            # hist_partner = partner_model.evaluate(partner.x_val,
-            #                               partner.y_val,
-            #                               batch_size=constants.DEFAULT_BATCH_SIZE,
-            #                               verbose=0,
-            #                               )
-            # logger.info(f"Partner {partner.id} hist : {hist_partner}")
-            # if self.local_steps_index == self.local_steps_index_t:
-            #     # save model weights for each partner at local step t
-            #     self.model_weights_at_index_t.append(partner.model_weights)
-
             self.local_steps_index = 0
 
         # aggregate global model weights
@@ -581,7 +570,8 @@ class DistributionallyRobustFederatedAveragingLearning(MultiPartnerLearning):
             random_batch = list(random_minibatch)[random_batch_index]
             partner_model = self.build_model_from_weights(self.global_model_at_index_t)
             loss = partner_model.loss(random_batch[1], partner_model(random_batch[0]))
-            self.loss_for_model_at_index_t[index] = ((self.partners_count / self.active_partners_count) * np.mean(loss.numpy()))
+            self.loss_for_model_at_index_t[index] = \
+                ((self.partners_count / self.active_partners_count) * np.mean(loss.numpy()))
 
     def init_lambda(self):
         """
