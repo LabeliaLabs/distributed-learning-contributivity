@@ -536,21 +536,24 @@ class DistributionallyRobustFederatedAveragingLearning(MultiPartnerLearning):
 
                 partner_model.compiled_metrics.update_state(batch_x_y[1], p_pred)
                 partner_model.optimizer.minimize(loss, partner_model.trainable_weights, tape=tape)
-                val_hist = partner_model.evaluate(self.partners_val_test_data[partner.id][0],
-                                                  return_dict=True,
-                                                  verbose=False)
-                self.local_steps_index += 1
 
-            logger.info(f"evaluation on val data: {val_hist}")
-                # hist_partner = partner_model.evaluate(partner.x_val,
-                #                               partner.y_val,
-                #                               batch_size=constants.DEFAULT_BATCH_SIZE,
-                #                               verbose=0,
-                #                               )
-                # logger.info(f"Partner {partner.id} hist : {hist_partner}")
-                # if self.local_steps_index == self.local_steps_index_t:
-                #     # save model weights for each partner at local step t
-                #     self.model_weights_at_index_t.append(partner.model_weights)
+                self.local_steps_index += 1
+            val_hist = partner_model.evaluate(self.partners_val_test_data[partner.id][0],
+                                              return_dict=True,
+                                              verbose=False)
+            logger.info(f"evaluation on val data of partner {partner.id} "
+                        f"after training on minibatch {self.minibatch_index}"
+                        f" {val_hist}")
+
+            # hist_partner = partner_model.evaluate(partner.x_val,
+            #                               partner.y_val,
+            #                               batch_size=constants.DEFAULT_BATCH_SIZE,
+            #                               verbose=0,
+            #                               )
+            # logger.info(f"Partner {partner.id} hist : {hist_partner}")
+            # if self.local_steps_index == self.local_steps_index_t:
+            #     # save model weights for each partner at local step t
+            #     self.model_weights_at_index_t.append(partner.model_weights)
 
 
             self.local_steps_index = 0
