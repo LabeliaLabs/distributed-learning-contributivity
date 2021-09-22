@@ -502,6 +502,10 @@ class DistributionallyRobustFederatedAveragingLearning(MultiPartnerLearning):
             # self.update_active_partners_list()
 
         self.minibatch_index = 0
+        test_hist = self.build_model_from_weights(self.model_weights).evaluate(self.test_data,
+                                                  return_dict=True,
+                                                  verbose=False)
+        logger.info(f"global model evaluation on test data at the end of epoch {self.epoch_index} : {test_hist}")
 
     def fit_minibatch(self):
         """Proceed to a collaborative round with a distributionally robust federated averaging approach"""
@@ -526,9 +530,9 @@ class DistributionallyRobustFederatedAveragingLearning(MultiPartnerLearning):
                 with tf.GradientTape() as tape:
                     p_pred = partner_model(batch_x_y[0])
                     loss = partner_model.loss(batch_x_y[1], p_pred)
-                    logger.info(f"partner batch {tf.shape(batch_x_y[0])}")
-                    logger.info(f"partner prediction {tf.shape(partner_model(batch_x_y[0]))}")
-                    logger.info(f"true labels {tf.shape(batch_x_y[1])}")
+                    logger.info(f"partner batch shape :{tf.shape(batch_x_y[0])}")
+                    logger.info(f"partner prediction {partner_model(batch_x_y[0])}")
+                    logger.info(f"true labels {batch_x_y[1]}")
 
                 partner_model.compiled_metrics.update_state(batch_x_y[1], p_pred)
                 partner_model.optimizer.minimize(loss, partner_model.trainable_weights, tape=tape)
@@ -540,6 +544,7 @@ class DistributionallyRobustFederatedAveragingLearning(MultiPartnerLearning):
             logger.info(f"evaluation on val data of partner {partner.id} "
                         f"after training on minibatch {self.minibatch_index}"
                         f" {val_hist}")
+            partner.model_weights = partner_model.get_weights()
 
             # hist_partner = partner_model.evaluate(partner.x_val,
             #                               partner.y_val,
@@ -555,6 +560,7 @@ class DistributionallyRobustFederatedAveragingLearning(MultiPartnerLearning):
 
         # aggregate global model weights
         self.model_weights = self.aggregate_model_weights(self.active_partners_list)
+
 
         # # aggregate models weights at index t
         # for active_partner, weights_t in zip(self.active_partners_list, self.model_weights_at_index_t):
