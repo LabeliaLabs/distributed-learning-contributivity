@@ -581,7 +581,7 @@ class DistributionallyRobustFederatedAveragingLearning(MultiPartnerLearning):
                                                     * self.lambda_learning_rate
                                                     * self.loss_for_model_at_index_t))
         logger.info(f"updated lambda vector before projection: {self.lambda_vector}, {self.lambda_vector.shape}")
-        self.lambda_vector = project_onto_the_simplex(self.lambda_vector)
+        #self.lambda_vector = project_onto_the_simplex(self.lambda_vector)
         if np.sum(self.lambda_vector) > 1:
             self.lambda_vector = self.lambda_vector / np.sum(self.lambda_vector)
 
