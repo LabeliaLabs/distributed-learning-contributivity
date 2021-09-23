@@ -27,8 +27,8 @@ class Scenario:
     def __init__(
             self,
             partners_count,
-            active_partners_count,
             amounts_per_partner,
+            active_partners_count=1,
             dataset=constants.MNIST,
             dataset_proportion=1,
             samples_split_option='random',

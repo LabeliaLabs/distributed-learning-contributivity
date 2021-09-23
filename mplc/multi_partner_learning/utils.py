@@ -144,11 +144,7 @@ class Aggregator(ABC):
     def aggregate_model_weights(self, partial_partners_list=None):
         """Aggregate model weights from the list or partial list of partner's models, with a weighted average"""
 
-        if partial_partners_list is None:
-            weights_per_layer = list(zip(*[partner.model_weights for partner in self.mpl.partners_list]))
-        else:
-            weights_per_layer = list(zip(*[partner.model_weights for partner in partial_partners_list]))
-
+        weights_per_layer = list(zip(*[partner.model_weights for partner in self.mpl.partners_list]))
         new_weights = list()
 
         for weights_for_layer in weights_per_layer:
