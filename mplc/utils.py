@@ -268,18 +268,14 @@ def project_onto_the_simplex(v, s=1):
     Returns:
         the projected vector
     """
-    n, = v.shape
-    if v.sum() == s and (v >= 0).all():
-        return v
-    u = np.flip(np.sort(v, axis=0), axis=0)
-    cssv = np.cumsum(u, axis=0)
-    non_zero_vector = np.nonzero(u * np.arange(1, n+1) > (cssv - s))
-    if len(non_zero_vector) == 0:
-        rho = 0.0
-    else:
-        rho = non_zero_vector[-1].squeeze()
-    theta = (cssv[rho] - s) / (rho + 1.0)
-    w = (v - theta).clip(min=0)
+    n_features = v.shape[0]
+    u = np.sort(v)[::-1]
+    cssv = np.cumsum(u) - s
+    ind = np.arange(n_features) + 1
+    cond = u - cssv / ind > 0
+    rho = ind[cond][-1]
+    theta = cssv[cond][-1] / float(rho)
+    w = np.maximum(v - theta, 0)
 
     return w
 
