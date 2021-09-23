@@ -19,6 +19,7 @@ from tensorflow.keras.backend import clear_session
 from tensorflow.keras.callbacks import EarlyStopping
 
 from .utils import History
+from ..utils import project_onto_the_simplex
 from .. import constants
 from ..models import NoiseAdaptationChannel, EnsemblePredictionsModel
 from ..partner import Partner, PartnerMpl
@@ -491,12 +492,11 @@ class DistributionallyRobustFederatedAveragingLearning(MultiPartnerLearning):
             self.local_steps_index = 0
             self.local_steps_index_t = np.random.randint(0, self.local_steps - 1)
 
-            logger.info(f"Local step index t :{self.local_steps_index_t}")
-            logger.info(f"Lambda vector for this round : {self.lambda_vector}")
             logger.info(
                 f"Active partner in this round "
                 f"{[active_partner.id for active_partner in self.active_partners_list]} "
                 f"according to lambda vector {self.lambda_vector}")
+            logger.info(f"Local step index t :{self.local_steps_index_t}")
 
             self.fit_minibatch()
 
@@ -504,10 +504,6 @@ class DistributionallyRobustFederatedAveragingLearning(MultiPartnerLearning):
             self.update_active_partners_list()
 
         self.minibatch_index = 0
-        test_hist = self.build_model_from_weights(self.model_weights).evaluate(self.test_data,
-                                                  return_dict=True,
-                                                  verbose=False)
-        logger.info(f"global model evaluation on test data at the end of epoch {self.epoch_index} : {test_hist}")
 
     def fit_minibatch(self):
         """Proceed to a collaborative round with a distributionally robust federated averaging approach"""
@@ -538,12 +534,6 @@ class DistributionallyRobustFederatedAveragingLearning(MultiPartnerLearning):
                     # save model weights for each partner at local step t
                     self.model_weights_at_index_t.append(partner.model_weights)
 
-            val_hist = partner_model.evaluate(self.val_data,
-                                              return_dict=True,
-                                              verbose=False)
-            logger.info(f"evaluation on val data of partner {partner.id} "
-                        f"after training on minibatch {self.minibatch_index}"
-                        f" {val_hist}")
             partner.model_weights = partner_model.get_weights()
             self.local_steps_index = 0
 
@@ -560,7 +550,8 @@ class DistributionallyRobustFederatedAveragingLearning(MultiPartnerLearning):
         subset_index = random.sample(range(self.partners_count), self.active_partners_count)
         self.subset_u_partners = [self.partners_list[index] for index in subset_index]
         logger.info(f"subset U indexes :{subset_index}")
-        logger.info(f"Subset U of partners chosen for lambda update {[partner.id for partner in self.subset_u_partners]}")
+        logger.info(
+            f"Subset U of partners chosen for lambda update {[partner.id for partner in self.subset_u_partners]}")
 
         # compute losses over a random batch using the global model at index t
         for partner, index in zip(self.subset_u_partners, subset_index):
@@ -577,28 +568,21 @@ class DistributionallyRobustFederatedAveragingLearning(MultiPartnerLearning):
         """
         initialize lambda vector => a probability vector of size partners_count
         """
-        # if self.global_lambda_initialization == "weighted":
-        #   a = np.random.random(self.partners_count)
         a = np.random.random(self.partners_count)
         lambda_vector = a / a.sum()
         return lambda_vector
-
-    @staticmethod
-    def projection():
-        """
-        OPTIONAL: perform a projection on the simplex of a vector
-        """
-        # TODO
-        pass
 
     def update_lambda(self):
         """
         The update rule for lambda is : lambda_vector(i) = lambda_vector(i-1) + (local_step_index_t *
         lambda_learning_rate * local_losses_at_index_t)
         """
-        self.lambda_vector = (self.lambda_vector + (
-                self.local_steps_index_t * self.lambda_learning_rate
-                * self.loss_for_model_at_index_t)) / np.sum(self.lambda_vector)
+        self.lambda_vector = (self.lambda_vector + (self.local_steps_index_t
+                                                    * self.lambda_learning_rate
+                                                    * self.loss_for_model_at_index_t))
+        self.lambda_vector = project_onto_the_simplex(self.lambda_vector, 1)
+        if np.sum(self.lambda_vector) > 1:
+            self.lambda_vector = self.lambda_vector / np.sum(self.lambda_vector)
 
     def update_active_partners_list(self):
         """
@@ -614,7 +598,6 @@ class DistributionallyRobustFederatedAveragingLearning(MultiPartnerLearning):
          - I couldn't use the original aggregator method since it operates on the entire list of partners and
          DRFA requires model aggregation over a subset of partners list only
         """
-        # TODO to be deleted, not needed
         aggregation_weights = np.ones(len(partners_list), dtype='float32')
         weights_per_layer = list(zip(*[partner.model_weights for partner in partners_list]))
         new_weights = list()

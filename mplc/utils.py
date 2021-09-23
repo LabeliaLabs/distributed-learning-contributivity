@@ -9,6 +9,7 @@ import sys
 from itertools import product
 
 import tensorflow as tf
+import numpy as np
 from loguru import logger
 from ruamel.yaml import YAML
 
@@ -253,3 +254,32 @@ def create_data_distribution_graph(name, ratio_partner_per_class,
     if display:
         plt.show()
     plt.close()
+
+
+def project_onto_the_simplex(v, s=1):
+    """
+     Reference : https://github.com/MLOPTPSU/FedTorch/blob/
+     ab8068dbc96804a5c1a8b898fd115175cfebfe75/fedtorch/comms/utils/flow_utils.py#L52
+     and also :
+     https://gist.github.com/mblondel/6f3b7aaad90606b98f71
+    Args:
+        v: the vector to project on the simplex, should be a 1D numpy array
+        s: the radius of the simplex , default = 1
+    Returns:
+        the projected vector
+    """
+    n, = v.shape
+    if v.sum() == s and (v >= 0).all():
+        return v
+    u = np.flip(np.sort(v, axis=0), axis=0)
+    cssv = np.cumsum(u, axis=0)
+    non_zero_vector = np.nonzero(u * np.arange(1, n+1) > (cssv - s))
+    if len(non_zero_vector) == 0:
+        rho = 0.0
+    else:
+        rho = non_zero_vector[-1].squeeze()
+    theta = (cssv[rho] - s) / (rho + 1.0)
+    w = (v - theta).clip(min=0)
+
+    return w
+
