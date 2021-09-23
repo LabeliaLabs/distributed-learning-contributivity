@@ -443,6 +443,7 @@ class DistributionallyRobustFederatedAveragingLearning(MultiPartnerLearning):
 
         self.communication_rounds = self.minibatch_count * self.epoch_count
         self.communication_rounds_index = 0
+
         self.local_steps_index = 0
         self.local_steps_index_t = 0
 
@@ -473,17 +474,17 @@ class DistributionallyRobustFederatedAveragingLearning(MultiPartnerLearning):
                 data_train = data_train.prefetch(1)
                 self.partners_training_data[partner.id].append(data_train)
 
-            # convert val data
-            self.partners_val_data = tf.data.Dataset.from_tensor_slices((self.dataset.x_val, self.dataset.y_val))
-            self.partners_val_data = self.partners_val_data.shuffle(len(self.dataset.x_val))
-            self.partners_val_data = self.partners_val_data.batch(partner.batch_size)
-            self.partners_val_data = self.partners_val_data.prefetch(1)
-
-            # convert test data
-            self.partners_test_data = tf.data.Dataset.from_tensor_slices((self.dataset.x_test, self.dataset.y_test))
-            self.partners_test_data = self.partners_test_data.shuffle(len(self.dataset.x_test))
-            self.partners_test_data = self.partners_test_data.batch(partner.batch_size)
-            self.partners_test_data = self.partners_test_data.prefetch(1)
+            # # convert val data
+            # self.partners_val_data = tf.data.Dataset.from_tensor_slices((self.dataset.x_val, self.dataset.y_val))
+            # self.partners_val_data = self.partners_val_data.shuffle(len(self.dataset.x_val))
+            # self.partners_val_data = self.partners_val_data.batch(partner.batch_size)
+            # self.partners_val_data = self.partners_val_data.prefetch(1)
+            #
+            # # convert test data
+            # self.partners_test_data = tf.data.Dataset.from_tensor_slices((self.dataset.x_test, self.dataset.y_test))
+            # self.partners_test_data = self.partners_test_data.shuffle(len(self.dataset.x_test))
+            # self.partners_test_data = self.partners_test_data.batch(partner.batch_size)
+            # self.partners_test_data = self.partners_test_data.prefetch(1)
 
         # Iterate over mini-batches and train
         for i in range(self.minibatch_count):
@@ -520,7 +521,6 @@ class DistributionallyRobustFederatedAveragingLearning(MultiPartnerLearning):
             partner_model = partner.build_model()
             # loop through each partner's minibatch
             minibatched_x_y = self.partners_training_data[partner.id][self.minibatch_index]
-            logger.info(f"partner: {partner.id} process its minibatch of index : {self.minibatch_index}")
             for idx, batch_x_y in enumerate(minibatched_x_y):
                 with tf.GradientTape() as tape:
                     p_pred = partner_model(batch_x_y[0])
@@ -537,19 +537,19 @@ class DistributionallyRobustFederatedAveragingLearning(MultiPartnerLearning):
             partner.model_weights = partner_model.get_weights()
             self.local_steps_index = 0
 
-        # aggregate global model weights
+        # aggregate final global model weights
         self.model_weights = self.aggregate_model_weights(self.active_partners_list)
 
-        # aggregate models weights at index t
+        # build the model for each partner using weights gathered at index t
         for active_partner, weights_t in zip(self.active_partners_list, self.model_weights_at_index_t):
             active_partner.model_weights = weights_t
 
+        # aggregate global model weights at index t
         self.global_model_at_index_t = self.aggregate_model_weights(self.active_partners_list)
 
         # sample a new subset of partners of size active_partners_count
         subset_index = random.sample(range(self.partners_count), self.active_partners_count)
         self.subset_u_partners = [self.partners_list[index] for index in subset_index]
-        logger.info(f"subset U indexes :{subset_index}")
         logger.info(
             f"Subset U of partners chosen for lambda update {[partner.id for partner in self.subset_u_partners]}")
 
