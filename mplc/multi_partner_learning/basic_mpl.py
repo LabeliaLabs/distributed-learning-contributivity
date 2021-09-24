@@ -504,7 +504,7 @@ class DistributionallyRobustFederatedAveragingLearning(MultiPartnerLearning):
 
             self.update_lambda()
             self.update_active_partners_list()
-            self.log_partners_participation_rate()
+        self.log_partners_participation_rate()
 
         self.minibatch_index = 0
 
@@ -583,7 +583,7 @@ class DistributionallyRobustFederatedAveragingLearning(MultiPartnerLearning):
             epoch_participation_vector += vect
         logger.info(f"Partners {['#'+ str(p.id) for p in self.partners_list]} "
                     f"have the following participation rates, respectively : "
-                    f"{[str(np.round(p_v/self.minibatch_count, 2))+' %' for p_v in list(epoch_participation_vector)]} "
+                    f"{[str(np.round(p_v/self.minibatch_count, 2)*100)+' %' for p_v in list(epoch_participation_vector)]} "
                     f"at the end of Epoch > {self.epoch_index}")
 
         final_participation_vector = np.zeros(self.partners_count)
@@ -593,7 +593,7 @@ class DistributionallyRobustFederatedAveragingLearning(MultiPartnerLearning):
                     final_participation_vector += vect
             logger.info(f"Partners {['#' + str(p.id) for p in self.partners_list]} "
                         f"have the following participation rates : "
-                        f"{[str(np.round(f_p_v / (self.minibatch_count * self.epoch_count),2))+'%' for f_p_v in list(final_participation_vector)]} "
+                        f"{[str(np.round(f_p_v / (self.minibatch_count * self.epoch_count),2)*100)+'%' for f_p_v in list(final_participation_vector)]} "
                         f"during the training")
 
     def init_lambda(self):
