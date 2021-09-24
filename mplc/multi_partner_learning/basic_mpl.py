@@ -571,9 +571,9 @@ class DistributionallyRobustFederatedAveragingLearning(MultiPartnerLearning):
 
     def initialize_participation_dict(self):
         participation = {}
-        for epoch_index in self.epoch_count:
+        for epoch_index in range(self.epoch_count):
             participation[epoch_index] = {}
-            for minibatch_index in self.minibatch_count:
+            for minibatch_index in range(self.minibatch_count):
                 participation[epoch_index][minibatch_index] = np.zeros(self.partners_count)
         return participation
 
@@ -588,7 +588,7 @@ class DistributionallyRobustFederatedAveragingLearning(MultiPartnerLearning):
 
         final_participation_vector = np.zeros(self.partners_count)
         if self.epoch_index == self.epoch_count - 1:
-            for epoch_index in self.epoch_count:
+            for epoch_index in range(self.epoch_count):
                 for minibatch_index, vect in self.partners_participation[epoch_index].items():
                     final_participation_vector += vect
             logger.info(f"Partners {['#' + p.id for p in self.partners_list]} "
