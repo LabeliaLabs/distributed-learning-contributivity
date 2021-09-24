@@ -492,7 +492,7 @@ class DistributionallyRobustFederatedAveragingLearning(MultiPartnerLearning):
 
             logger.info(
                 f"Active partner in this round "
-                f"{['#'+active_partner.id for active_partner in self.active_partners_list]} "
+                f"{['#'+str(active_partner.id) for active_partner in self.active_partners_list]} "
                 f"according to lambda vector > {self.lambda_vector}")
             logger.info(f"Local step index t > {self.local_steps_index_t}")
 
@@ -556,7 +556,7 @@ class DistributionallyRobustFederatedAveragingLearning(MultiPartnerLearning):
         subset_index = random.sample(range(self.partners_count), self.active_partners_count)
         self.subset_u_partners = [self.partners_list[index] for index in subset_index]
         logger.info(
-            f"Subset U of partners chosen for lambda update {['#'+ partner.id for partner in self.subset_u_partners]}")
+            f"Subset U of partners chosen for lambda update {['#'+ str(partner.id) for partner in self.subset_u_partners]}")
 
         # compute losses over a random batch using the global model at index t
         for partner, index in zip(self.subset_u_partners, subset_index):
@@ -624,7 +624,6 @@ class DistributionallyRobustFederatedAveragingLearning(MultiPartnerLearning):
         Update the active partners list according to lambda vector
         """
         active_partners_indices = (-self.lambda_vector).argsort()[:self.active_partners_count]
-        logger.info(f"active partners indices after lambda update: {active_partners_indices}")
         self.active_partners_list = [self.partners_list[index] for index in active_partners_indices]
 
     @staticmethod
