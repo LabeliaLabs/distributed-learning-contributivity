@@ -492,9 +492,9 @@ class DistributionallyRobustFederatedAveragingLearning(MultiPartnerLearning):
 
             logger.info(
                 f"Active partner in this round "
-                f"{[active_partner.id for active_partner in self.active_partners_list]} "
-                f"according to lambda vector {self.lambda_vector}")
-            logger.info(f"Local step index t :{self.local_steps_index_t}")
+                f"{['#'+active_partner.id for active_partner in self.active_partners_list]} "
+                f"according to lambda vector > {self.lambda_vector}")
+            logger.info(f"Local step index t > {self.local_steps_index_t}")
 
             self.fit_minibatch()
 
@@ -555,7 +555,7 @@ class DistributionallyRobustFederatedAveragingLearning(MultiPartnerLearning):
         subset_index = random.sample(range(self.partners_count), self.active_partners_count)
         self.subset_u_partners = [self.partners_list[index] for index in subset_index]
         logger.info(
-            f"Subset U of partners chosen for lambda update {[partner.id for partner in self.subset_u_partners]}")
+            f"Subset U of partners chosen for lambda update {['#'+ partner.id for partner in self.subset_u_partners]}")
 
         # compute losses over a random batch using the global model at index t
         for partner, index in zip(self.subset_u_partners, subset_index):
@@ -577,9 +577,24 @@ class DistributionallyRobustFederatedAveragingLearning(MultiPartnerLearning):
         return participation
 
     def log_partners_participation_rate(self, epoch_index):
+        epoch_participation_vector = np.zeros(self.partners_count)
         for minibatch_index, vect in self.partners_participation[epoch_index].items():
-            pass
-        return 0
+            epoch_participation_vector += vect
+        logger.info(f"Partners {['#'+p.id for p in self.partners_list]} "
+                    f"have the following participation rates, respectively : "
+                    f"{[np.round(p_v/self.minibatch_count)+' %' for p_v in list(epoch_participation_vector)]} "
+                    f"at the end of Epoch > {epoch_index}")
+
+        final_participation_vector = np.zeros(self.partners_count)
+        if epoch_index == self.epoch_count - 1:
+            for epoch_index in self.epoch_count:
+                for minibatch_index, vect in self.partners_participation[epoch_index].items():
+                    final_participation_vector += vect
+
+            logger.info(f"Partners {['#' + p.id for p in self.partners_list]} "
+                        f"have the following participation rates : "
+                        f"{[np.round(f_p_v / (self.minibatch_count * self.epoch_count)) + '%' for f_p_v in list(final_participation_vector)]} "
+                        f"during the training")
 
     def init_lambda(self):
         """
@@ -591,15 +606,17 @@ class DistributionallyRobustFederatedAveragingLearning(MultiPartnerLearning):
 
     def update_lambda(self):
         """
-        The update rule for lambda is : lambda_vector(i) = lambda_vector(i-1) + (local_step_index_t *
-        lambda_learning_rate * local_losses_at_index_t)
+        The update rule for lambda is : lambda_vector(i) =
+        Projection(lambda_vector(i-1) + (local_step_index_t * lambda_learning_rate * local_losses_at_index_t))
         """
         self.lambda_vector = (self.lambda_vector + (self.local_steps_index_t
                                                     * self.lambda_learning_rate
                                                     * self.loss_for_model_at_index_t))
         self.lambda_vector = project_onto_the_simplex(self.lambda_vector)
+
         # avoid zero probabilities
-        self.lambda_vector[self.lambda_vector < 1e-3] = 1e-3
+        self.lambda_vector[self.lambda_vector == 0] = np.random.random(1)
+        # normalize the probability vector
         self.lambda_vector = self.lambda_vector / np.sum(self.lambda_vector)
 
     def update_active_partners_list(self):
@@ -607,7 +624,7 @@ class DistributionallyRobustFederatedAveragingLearning(MultiPartnerLearning):
         Update the active partners list according to lambda vector
         """
         active_partners_indices = (-self.lambda_vector).argsort()[:self.active_partners_count]
-        logger.info(f"active partners indices after lambda update {active_partners_indices}")
+        logger.info(f"active partners indices after lambda update: {active_partners_indices}")
         self.active_partners_list = [self.partners_list[index] for index in active_partners_indices]
 
     @staticmethod
