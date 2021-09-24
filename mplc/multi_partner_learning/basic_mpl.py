@@ -435,8 +435,9 @@ class DistributionallyRobustFederatedAveragingLearning(MultiPartnerLearning):
 
         self.local_steps = scenario.gradient_updates_per_pass_count
         self.partners_training_data = {}
-        self.partners_val_data = None
-        self.partners_test_data = None
+        # self.partners_val_data = None
+        # self.partners_test_data = None
+        self.partners_participation = self.initialize_participation_dict()
 
         # self.lambda_initialization = scenario.global_lambda_initialization
         self.lambda_learning_rate = 8e-3
@@ -452,10 +453,6 @@ class DistributionallyRobustFederatedAveragingLearning(MultiPartnerLearning):
         self.loss_for_model_at_index_t = np.zeros(self.partners_count)
         self.subset_u_partners = list()
         self.loss_vector_v = list()
-        """
-        add possibility to choose the number of communication rounds by the user, from which we can compute the epoch
-        count 
-        """
 
     def fit_epoch(self):
 
@@ -501,6 +498,10 @@ class DistributionallyRobustFederatedAveragingLearning(MultiPartnerLearning):
 
             self.fit_minibatch()
 
+            # update partner participations
+            self.partners_participation[self.epoch_index][self.minibatch_index][[p.id for p
+                                                                                 in self.active_partners_list]] = 1
+
             self.update_lambda()
             self.update_active_partners_list()
 
@@ -515,6 +516,9 @@ class DistributionallyRobustFederatedAveragingLearning(MultiPartnerLearning):
 
         for partner in self.partners_list:
             partner.model_weights = self.model_weights
+
+        # Evaluate and store accuracy of mini-batch start model
+        self.eval_and_log_model_val_perf()
 
         # Iterate over partners for training
         for partner_index, partner in enumerate(self.active_partners_list):
@@ -563,6 +567,19 @@ class DistributionallyRobustFederatedAveragingLearning(MultiPartnerLearning):
             loss = partner_model.loss(random_batch[1], partner_model(random_batch[0]))
             self.loss_for_model_at_index_t[index] = \
                 ((self.partners_count / self.active_partners_count) * np.mean(loss.numpy()))
+
+    def initialize_participation_dict(self):
+        participation = {}
+        for epoch_index in self.epoch_count:
+            participation[epoch_index] = {}
+            for minibatch_index in self.minibatch_count:
+                participation[epoch_index][minibatch_index] = np.zeros(self.partners_count)
+        return participation
+
+    def log_partners_participation_rate(self, epoch_index):
+        for minibatch_index, vect in self.partners_participation[epoch_index].items():
+            pass
+        return 0
 
     def init_lambda(self):
         """
