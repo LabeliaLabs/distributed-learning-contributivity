@@ -504,6 +504,7 @@ class DistributionallyRobustFederatedAveragingLearning(MultiPartnerLearning):
 
             self.update_lambda()
             self.update_active_partners_list()
+            self.log_partners_participation_rate()
 
         self.minibatch_index = 0
 
@@ -576,24 +577,23 @@ class DistributionallyRobustFederatedAveragingLearning(MultiPartnerLearning):
                 participation[epoch_index][minibatch_index] = np.zeros(self.partners_count)
         return participation
 
-    def log_partners_participation_rate(self, epoch_index):
+    def log_partners_participation_rate(self):
         epoch_participation_vector = np.zeros(self.partners_count)
-        for minibatch_index, vect in self.partners_participation[epoch_index].items():
+        for minibatch_index, vect in self.partners_participation[self.epoch_index].items():
             epoch_participation_vector += vect
         logger.info(f"Partners {['#'+p.id for p in self.partners_list]} "
                     f"have the following participation rates, respectively : "
-                    f"{[np.round(p_v/self.minibatch_count)+' %' for p_v in list(epoch_participation_vector)]} "
-                    f"at the end of Epoch > {epoch_index}")
+                    f"{[np.round(p_v/self.minibatch_count, 2)+' %' for p_v in list(epoch_participation_vector)]} "
+                    f"at the end of Epoch > {self.epoch_index}")
 
         final_participation_vector = np.zeros(self.partners_count)
-        if epoch_index == self.epoch_count - 1:
+        if self.epoch_index == self.epoch_count - 1:
             for epoch_index in self.epoch_count:
                 for minibatch_index, vect in self.partners_participation[epoch_index].items():
                     final_participation_vector += vect
-
             logger.info(f"Partners {['#' + p.id for p in self.partners_list]} "
                         f"have the following participation rates : "
-                        f"{[np.round(f_p_v / (self.minibatch_count * self.epoch_count)) + '%' for f_p_v in list(final_participation_vector)]} "
+                        f"{[np.round(f_p_v / (self.minibatch_count * self.epoch_count),2) + '%' for f_p_v in list(final_participation_vector)]} "
                         f"during the training")
 
     def init_lambda(self):
