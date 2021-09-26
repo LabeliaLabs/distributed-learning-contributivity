@@ -531,7 +531,6 @@ class DistributionallyRobustFederatedAveragingLearning(MultiPartnerLearning):
                     p_pred = partner_model(batch_x_y[0])
                     loss = partner_model.loss(batch_x_y[1], p_pred)
 
-                partner_model.compiled_metrics.update_state(batch_x_y[1], p_pred)
                 partner_model.optimizer.minimize(loss, partner_model.trainable_weights, tape=tape)
 
                 self.local_steps_index += 1
@@ -556,7 +555,8 @@ class DistributionallyRobustFederatedAveragingLearning(MultiPartnerLearning):
         subset_index = random.sample(range(self.partners_count), self.active_partners_count)
         self.subset_u_partners = [self.partners_list[index] for index in subset_index]
         logger.info(
-            f"Subset U of partners chosen for lambda update {['#'+ str(partner.id) for partner in self.subset_u_partners]}")
+            f"Subset of partners chosen for lambda update "
+            f"{['#'+ str(partner.id) for partner in self.subset_u_partners]}")
 
         # compute losses over a random batch using the global model at index t
         for partner, index in zip(self.subset_u_partners, subset_index):
@@ -615,7 +615,7 @@ class DistributionallyRobustFederatedAveragingLearning(MultiPartnerLearning):
         self.lambda_vector = project_onto_the_simplex(self.lambda_vector)
 
         # avoid zero probabilities
-        self.lambda_vector[self.lambda_vector == 0] = np.random.random(1)
+        self.lambda_vector[self.lambda_vector < 1e-3] = 1e-3
         # normalize the probability vector
         self.lambda_vector = self.lambda_vector / np.sum(self.lambda_vector)
 
