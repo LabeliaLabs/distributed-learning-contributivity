@@ -471,18 +471,6 @@ class DistributionallyRobustFederatedAveragingLearning(MultiPartnerLearning):
                 data_train = data_train.prefetch(1)
                 self.partners_training_data[partner.id].append(data_train)
 
-            # # convert val data
-            # self.partners_val_data = tf.data.Dataset.from_tensor_slices((self.dataset.x_val, self.dataset.y_val))
-            # self.partners_val_data = self.partners_val_data.shuffle(len(self.dataset.x_val))
-            # self.partners_val_data = self.partners_val_data.batch(partner.batch_size)
-            # self.partners_val_data = self.partners_val_data.prefetch(1)
-            #
-            # # convert test data
-            # self.partners_test_data = tf.data.Dataset.from_tensor_slices((self.dataset.x_test, self.dataset.y_test))
-            # self.partners_test_data = self.partners_test_data.shuffle(len(self.dataset.x_test))
-            # self.partners_test_data = self.partners_test_data.batch(partner.batch_size)
-            # self.partners_test_data = self.partners_test_data.prefetch(1)
-
         # Iterate over mini-batches and train
         for i in range(self.minibatch_count):
             self.minibatch_index = i
@@ -528,7 +516,9 @@ class DistributionallyRobustFederatedAveragingLearning(MultiPartnerLearning):
             minibatched_x_y = self.partners_training_data[partner.id][self.minibatch_index]
             for idx, batch_x_y in enumerate(minibatched_x_y):
                 with tf.GradientTape() as tape:
+                    logger.info(f"type : {type(partner_model)}")
                     p_pred = partner_model(batch_x_y[0])
+                    logger.info(f"type : { type(partner_model)}")
                     loss = partner_model.loss(batch_x_y[1], p_pred)
 
                 partner_model.optimizer.minimize(loss, partner_model.trainable_weights, tape=tape)
