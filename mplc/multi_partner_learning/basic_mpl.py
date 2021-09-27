@@ -435,22 +435,15 @@ class DistributionallyRobustFederatedAveragingLearning(MultiPartnerLearning):
 
         self.local_steps = scenario.gradient_updates_per_pass_count
         self.partners_training_data = {}
-        # self.partners_val_data = None
-        # self.partners_test_data = None
         self.partners_participation = self.initialize_participation_dict()
-
-        # self.lambda_initialization = scenario.global_lambda_initialization
         self.lambda_learning_rate = 8e-3
-
-        self.communication_rounds = self.minibatch_count * self.epoch_count
-        self.communication_rounds_index = 0
 
         self.local_steps_index = 0
         self.local_steps_index_t = 0
-
         self.global_model_at_index_t = None
         self.model_weights_at_index_t = list()
         self.loss_for_model_at_index_t = np.zeros(self.partners_count)
+
         self.subset_u_partners = list()
         self.loss_vector_v = list()
 
@@ -516,10 +509,8 @@ class DistributionallyRobustFederatedAveragingLearning(MultiPartnerLearning):
             minibatched_x_y = self.partners_training_data[partner.id][self.minibatch_index]
             for idx, batch_x_y in enumerate(minibatched_x_y):
                 with tf.GradientTape() as tape:
-                    logger.info(f"type : {type(partner_model)}")
                     p_pred = partner_model(batch_x_y[0])
-                    logger.info(f"type : { type(partner_model)}")
-                    loss = partner_model.loss(batch_x_y[1], p_pred)
+                    loss = partner_model.compiled_loss(batch_x_y[1], p_pred)
 
                 partner_model.optimizer.minimize(loss, partner_model.trainable_weights, tape=tape)
 
