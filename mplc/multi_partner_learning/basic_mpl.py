@@ -49,6 +49,7 @@ class MultiPartnerLearning(ABC):
         self.partners_list = scenario.partners_list
         self.init_model_from = scenario.init_model_from
         self.use_saved_weights = scenario.use_saved_weights
+        self.amounts_per_partner = scenario.amounts_per_partner
         self.val_set = scenario.val_set
         self.test_set = scenario.test_set
 
@@ -558,32 +559,12 @@ class DistributionallyRobustFederatedAveragingLearning(MultiPartnerLearning):
                 participation[epoch_index][minibatch_index] = np.zeros(self.partners_count)
         return participation
 
-    def log_partners_participation_rate(self):
-        epoch_participation_vector = np.zeros(self.partners_count)
-        for minibatch_index, vect in self.partners_participation[self.epoch_index].items():
-            epoch_participation_vector += vect
-        logger.info(f"Partners {['#'+ str(p.id) for p in self.partners_list]} "
-                    f"have the following participation rates, respectively : "
-                    f"{[str(np.round(p_v/self.minibatch_count, 2)*100)+' %' for p_v in list(epoch_participation_vector)]} "
-                    f"at the end of Epoch > {self.epoch_index}")
-
-        final_participation_vector = np.zeros(self.partners_count)
-        if self.epoch_index == self.epoch_count - 1:
-            for epoch_index in range(self.epoch_count):
-                for minibatch_index, vect in self.partners_participation[epoch_index].items():
-                    final_participation_vector += vect
-            logger.info(f"Partners {['#' + str(p.id) for p in self.partners_list]} "
-                        f"have the following participation rates : "
-                        f"{[str(np.round(f_p_v / (self.minibatch_count * self.epoch_count),2)*100)+'%' for f_p_v in list(final_participation_vector)]} "
-                        f"during the training")
-
     def init_lambda(self):
         """
-        initialize lambda vector => a probability vector of size partners_count
+        - initialize lambda vector according to each partner's dataset size
+        - this is  a probability vector of size partners_count
         """
-        a = np.random.random(self.partners_count)
-        lambda_vector = a / a.sum()
-        return lambda_vector
+        return np.array(self.amounts_per_partner)
 
     def update_lambda(self):
         """
@@ -596,9 +577,10 @@ class DistributionallyRobustFederatedAveragingLearning(MultiPartnerLearning):
         self.lambda_vector = project_onto_the_simplex(self.lambda_vector)
 
         # avoid zero probabilities
-        self.lambda_vector[self.lambda_vector < 1e-3] = 1e-3
-        # normalize the probability vector
-        self.lambda_vector = self.lambda_vector / np.sum(self.lambda_vector)
+        if any(self.lambda_vector < 1e-3):
+            self.lambda_vector[self.lambda_vector < 1e-3] = 1e-3
+            # normalize the probability vector
+            self.lambda_vector = self.lambda_vector / np.sum(self.lambda_vector)
 
     def update_active_partners_list(self):
         """
@@ -606,6 +588,25 @@ class DistributionallyRobustFederatedAveragingLearning(MultiPartnerLearning):
         """
         active_partners_indices = (-self.lambda_vector).argsort()[:self.active_partners_count]
         self.active_partners_list = [self.partners_list[index] for index in active_partners_indices]
+
+    def log_partners_participation_rate(self):
+        epoch_participation_vector = np.zeros(self.partners_count)
+        for minibatch_index, vect in self.partners_participation[self.epoch_index].items():
+            epoch_participation_vector += vect
+        logger.info(f"Partners {['#' + str(p.id) for p in self.partners_list]} "
+                    f"have the following participation rates, respectively : "
+                    f"{[str(np.round(p_v / self.minibatch_count, 2) * 100) + ' %' for p_v in list(epoch_participation_vector)]} "
+                    f"at the end of Epoch > {self.epoch_index}")
+
+        final_participation_vector = np.zeros(self.partners_count)
+        if self.epoch_index == self.epoch_count - 1:
+            for epoch_index in range(self.epoch_count):
+                for minibatch_index, vect in self.partners_participation[epoch_index].items():
+                    final_participation_vector += vect
+            logger.info(f"Partners {['#' + str(p.id) for p in self.partners_list]} "
+                        f"have the following participation rates : "
+                        f"{[str(np.round(f_p_v / (self.minibatch_count * self.epoch_count), 2) * 100) + '%' for f_p_v in list(final_participation_vector)]} "
+                        f"during the training")
 
     @staticmethod
     def aggregate_model_weights(partners_list):
