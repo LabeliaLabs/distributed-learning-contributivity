@@ -539,14 +539,14 @@ class DistributionallyRobustFederatedAveragingLearning(MultiPartnerLearning):
             f"Subset of partners chosen for lambda update "
             f"{['#'+ str(partner.id) for partner in self.subset_u_partners]}")
 
-        # compute losses over a random batch using the global model at index t
+        # compute losses over a random batch using the global model at index t and add them to the loss vector
         for partner, index in zip(self.subset_u_partners, subset_index):
             random_minibatch_index = np.random.randint(0, self.minibatch_count - 1)
             random_minibatch = self.partners_training_data[partner.id][random_minibatch_index]
             random_batch_index = np.random.randint(0, len(random_minibatch) - 1)
             random_batch = list(random_minibatch)[random_batch_index]
             partner_model = self.build_model_from_weights(self.global_model_at_index_t)
-            loss = partner_model.loss(random_batch[1], partner_model(random_batch[0]))
+            loss = partner_model.compiled_loss(random_batch[1], partner_model(random_batch[0]))
             self.loss_for_model_at_index_t[index] = \
                 ((self.partners_count / self.active_partners_count) * np.mean(loss.numpy()))
 
