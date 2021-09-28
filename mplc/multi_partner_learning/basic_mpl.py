@@ -551,14 +551,6 @@ class DistributionallyRobustFederatedAveragingLearning(MultiPartnerLearning):
             self.loss_for_model_at_index_t[index] = \
                 ((self.partners_count / self.active_partners_count) * np.mean(loss.numpy()))
 
-    def initialize_participation_dict(self):
-        participation = {}
-        for epoch_index in range(self.epoch_count):
-            participation[epoch_index] = {}
-            for minibatch_index in range(self.minibatch_count):
-                participation[epoch_index][minibatch_index] = np.zeros(self.partners_count)
-        return participation
-
     def init_lambda(self):
         """
         - initialize lambda vector according to each partner's dataset size
@@ -571,9 +563,7 @@ class DistributionallyRobustFederatedAveragingLearning(MultiPartnerLearning):
         The update rule for lambda is : lambda_vector(i) =
         Projection(lambda_vector(i-1) + (local_step_index_t * lambda_learning_rate * local_losses_at_index_t))
         """
-        self.lambda_vector = (self.lambda_vector + (self.local_steps_index_t
-                                                    * self.lambda_learning_rate
-                                                    * self.loss_for_model_at_index_t))
+        self.lambda_vector += (self.local_steps_index_t * self.lambda_learning_rate * self.loss_for_model_at_index_t)
         self.lambda_vector = project_onto_the_simplex(self.lambda_vector)
 
         # avoid zero probabilities
@@ -588,6 +578,14 @@ class DistributionallyRobustFederatedAveragingLearning(MultiPartnerLearning):
         """
         active_partners_indices = (-self.lambda_vector).argsort()[:self.active_partners_count]
         self.active_partners_list = [self.partners_list[index] for index in active_partners_indices]
+
+    def initialize_participation_dict(self):
+        participation = {}
+        for epoch_index in range(self.epoch_count):
+            participation[epoch_index] = {}
+            for minibatch_index in range(self.minibatch_count):
+                participation[epoch_index][minibatch_index] = np.zeros(self.partners_count)
+        return participation
 
     def log_partners_participation_rate(self):
         epoch_participation_vector = np.zeros(self.partners_count)
