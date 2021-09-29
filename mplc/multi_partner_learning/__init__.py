@@ -11,7 +11,6 @@ BASIC_MPL_APPROACHES = {
     "fedavg-smodel": basic_mpl.FedAvgSmodel,
     "ensemble": basic_mpl.EnsemblePredictions,
     "single-partner": basic_mpl.SinglePartnerLearning,
-    "fedavg-smodel": basic_mpl.FedAvgSmodel,
     "drfa": basic_mpl.DistributionallyRobustFederatedAveragingLearning}
 
 FAST_TF_MPL_APPROACHES = {
