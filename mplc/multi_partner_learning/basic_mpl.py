@@ -417,10 +417,11 @@ class FederatedAverageLearning(MultiPartnerLearning):
 
 class DistributionallyRobustFederatedAveragingLearning(MultiPartnerLearning):
     """
-     -This class implements the Distributionally Robust Federated Averaging (DRFA) Algorithm, this can be considered a
-     variant of Federated Averaging where only a subset of partners are chosen to participate in a given collaborative
+     -This class implements the Distributionally Robust Federated Averaging (DRFA) Algorithm,
+      only a subset of partners are chosen to participate in a given collaborative
      learning round. based on a global mixing parameter called lambda.
-     - Lambda is updated at the end of each collaborative learning round
+     - Lambda is updated at the end of each collaborative learning round using its own update rule
+     - DRFA is considered a framework under which we can implement other FL algorithms such as FedAvg
     """
     name = "Distributionally Robust Federated Averaging"
 
@@ -589,11 +590,14 @@ class DistributionallyRobustFederatedAveragingLearning(MultiPartnerLearning):
 
     def log_partners_participation_rate(self):
         epoch_participation_vector = np.zeros(self.partners_count)
+        percentages = []
         for minibatch_index, vect in self.partners_participation[self.epoch_index].items():
             epoch_participation_vector += vect
+            percentages = [str(np.round(p_v / self.minibatch_count, 2) * 100) + ' %'
+                           for p_v in list(epoch_participation_vector)]
         logger.info(f"Partners {['#' + str(p.id) for p in self.partners_list]} "
                     f"have the following participation rates, respectively : "
-                    f"{[str(np.round(p_v / self.minibatch_count, 2) * 100) + ' %' for p_v in list(epoch_participation_vector)]} "
+                    f"{percentages} "
                     f"at the end of Epoch > {self.epoch_index}")
 
         final_participation_vector = np.zeros(self.partners_count)
@@ -601,9 +605,11 @@ class DistributionallyRobustFederatedAveragingLearning(MultiPartnerLearning):
             for epoch_index in range(self.epoch_count):
                 for minibatch_index, vect in self.partners_participation[epoch_index].items():
                     final_participation_vector += vect
+                    percentages = [str(np.round(f_p_v / (self.minibatch_count * self.epoch_count), 2) * 100) + '%'
+                                   for f_p_v in list(final_participation_vector)]
             logger.info(f"Partners {['#' + str(p.id) for p in self.partners_list]} "
                         f"have the following participation rates : "
-                        f"{[str(np.round(f_p_v / (self.minibatch_count * self.epoch_count), 2) * 100) + '%' for f_p_v in list(final_participation_vector)]} "
+                        f"{percentages} "
                         f"during the training")
 
     @staticmethod
