@@ -169,12 +169,6 @@ class Scenario:
                 f"Computation use the full dataset for scenario #{scenario_id}"
             )
 
-        # Number of active partners per collaborative learning round
-        self.active_partners_count = active_partners_count
-        assert (
-                1 <= self.active_partners_count < partners_count
-        ), "Number of active partners must be strictly smaller than the total number of partners"
-
         # --------------------------------------
         #  Definition of collaborative scenarios
         # --------------------------------------
@@ -247,6 +241,13 @@ class Scenario:
             for key in MULTI_PARTNER_LEARNING_APPROACHES.keys():
                 text_error += f"{key}, "
             raise KeyError(text_error)
+
+        # Number of active partners per collaborative learning round
+        self.active_partners_count = active_partners_count
+        if self._multi_partner_learning_approach == 'drfa':
+            assert (
+                    1 <= self.active_partners_count < partners_count
+            ), "Number of active partners must be strictly smaller than the total number of partners"
 
         # Define how federated learning aggregation steps are weighted...
         # ... Toggle between 'uniform' (default) and 'data_volume'
