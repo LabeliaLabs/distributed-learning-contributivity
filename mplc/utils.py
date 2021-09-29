@@ -9,7 +9,6 @@ import sys
 from itertools import product
 
 import tensorflow as tf
-import numpy as np
 from loguru import logger
 from ruamel.yaml import YAML
 
@@ -278,4 +277,3 @@ def project_onto_the_simplex(v, s=1):
     w = np.maximum(v - theta, 0)
 
     return w
-
