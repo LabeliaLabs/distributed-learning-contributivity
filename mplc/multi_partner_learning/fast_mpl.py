@@ -602,6 +602,8 @@ class FastFedGDO(FastFedAvg):
         self.partners_optimizers = [self.model.optimizer.from_config(self.model.optimizer.get_config()) for _ in
                                     self.partners_list]
         if self.global_optimiser:
+            # If the global optimizer is specified in the kwargs. If not the global optimizer used is the
+            # default one, same as the local optimizer, and we don't need to re-compile the model
             self.model.compile(optimizer=self.global_optimiser)
 
     def fit(self):
