@@ -26,7 +26,7 @@ test_requirements = [
 
 setup(
     name="mplc",
-    version='0.3.1',
+    version='0.4.0',
     author="LabeliaLabs",
     author_email="contact@substra.org",
     description="A distributed-learning package for the study of contributivity",
