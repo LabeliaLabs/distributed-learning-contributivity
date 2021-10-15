@@ -27,12 +27,12 @@ test_requirements = [
 setup(
     name="mplc",
     version='0.3.1',
-    author="SubstraFoundation",
+    author="LabeliaLabs",
     author_email="contact@substra.org",
     description="A distributed-learning package for the study of contributivity",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/SubstraFoundation/distributed-learning-contributivity",
+    url="https://github.com/LabeliaLabs/distributed-learning-contributivity.git",
     packages=find_packages(),
     classifiers=[
         "Programming Language :: Python :: 3",
