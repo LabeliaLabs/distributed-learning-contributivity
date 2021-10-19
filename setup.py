@@ -29,7 +29,8 @@ setup(
     version='0.4.0',
     author="LabeliaLabs",
     author_email="contact@labelia.org",
-    description="A distributed-learning package for the study of multi-partner learning approaches and contributivity measurement methods",
+    description="A distributed-learning package for the study of multi-partner learning approaches "
+                "and contributivity measurement methods",
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/LabeliaLabs/distributed-learning-contributivity.git",
