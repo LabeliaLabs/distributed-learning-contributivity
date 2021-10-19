@@ -4,17 +4,17 @@ with open("README.md", "r") as fh:
     long_description = fh.read()
 
 requirements = [
-    'h5py==2.10.0',
+    'h5py~=3.1.0',
     'joblib==1.0.0',
-    'librosa==0.8.0',
+    'librosa==0.8.1',
     'matplotlib==3.3.3',
-    'numpy==1.19.4',
+    'numpy==1.19.5',
     'scipy==1.5.4',
     'scikit-learn==0.23.2',
     'pandas==1.1.5',
     'seaborn==0.11.0',
     'loguru==0.5.3',
-    'tensorflow==2.4.1',
+    'tensorflow==2.5.1',
     'ruamel.yaml==0.16.12'
 ]
 
