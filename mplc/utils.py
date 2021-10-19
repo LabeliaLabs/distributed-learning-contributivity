@@ -290,5 +290,5 @@ def project_onto_the_simplex(v, s=1):
     theta = (cssv[rho] - s) / (rho + 1.0)
 
     # compute the projection by thresholding v using theta
-    w = np.clip(v - theta, a_min = 0, a_max = None)
+    w = np.clip(v - theta, a_min=0, a_max=None)
     return w
