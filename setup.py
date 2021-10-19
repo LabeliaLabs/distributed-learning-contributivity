@@ -4,17 +4,17 @@ with open("README.md", "r") as fh:
     long_description = fh.read()
 
 requirements = [
-    'h5py==2.10.0',
+    'h5py~=3.1.0',
     'joblib==1.0.0',
-    'librosa==0.8.0',
+    'librosa==0.8.1',
     'matplotlib==3.3.3',
-    'numpy==1.19.4',
+    'numpy==1.19.5',
     'scipy==1.5.4',
     'scikit-learn==0.23.2',
     'pandas==1.1.5',
     'seaborn==0.11.0',
     'loguru==0.5.3',
-    'tensorflow==2.4.1',
+    'tensorflow==2.5.1',
     'ruamel.yaml==0.16.12'
 ]
 
@@ -28,8 +28,8 @@ setup(
     name="mplc",
     version='0.4.0',
     author="LabeliaLabs",
-    author_email="contact@substra.org",
-    description="A distributed-learning package for the study of contributivity",
+    author_email="contact@labelia.org",
+    description="A distributed-learning package for the study of multi-partner learning approaches and contributivity measurement methods",
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/LabeliaLabs/distributed-learning-contributivity.git",
@@ -40,6 +40,7 @@ setup(
     ],
     keywords=['library',
               'substra',
+              'labelia',
               'machine learning',
               'contributivity',
               'multi-partner learning',
