@@ -269,7 +269,7 @@ def project_onto_the_simplex(v, s=1):
     assert s > 0, "Radius s must be strictly positive (%d <= 0)" % s
     n, = v.shape
     # check if we are already on the simplex
-    if np.sum(v) == s and  np.all((v >= 0)):
+    if np.sum(v) == s and np.all((v >= 0)):
         # best projection: itself!
         return v
     # get the array of cumulative sums of a sorted v (in descending order)
@@ -282,7 +282,7 @@ def project_onto_the_simplex(v, s=1):
     # get the number of non-zero elements of the optimal solution
     non_zero_vector = np.nonzero(opt)
     if len(non_zero_vector) == 0:
-        rho=0.0
+        rho = 0.0
     else:
         rho = np.squeeze(non_zero_vector[0][-1])
 
@@ -290,5 +290,5 @@ def project_onto_the_simplex(v, s=1):
     theta = (cssv[rho] - s) / (rho + 1.0)
 
     # compute the projection by thresholding v using theta
-    w = np.clip(v - theta, a_min = 0, a_max=None)
+    w = np.clip(v - theta, a_min = 0, a_max = None)
     return w
