@@ -417,11 +417,12 @@ class FederatedAverageLearning(MultiPartnerLearning):
 
 class DistributionallyRobustFederatedAveragingLearning(MultiPartnerLearning):
     """
-     -This class implements the Distributionally Robust Federated Averaging (DRFA) Algorithm,
+     - This class implements the Distributionally Robust Federated Averaging (DRFA) Algorithm,
       only a subset of partners are chosen to participate in a given collaborative
      learning round. based on a global mixing parameter called lambda.
      - Lambda is updated at the end of each collaborative learning round using its own update rule
      - DRFA is considered a framework under which we can implement other FL algorithms such as FedAvg
+     - Link to the paper : https://arxiv.org/abs/2102.12660
     """
     name = "Distributionally Robust Federated Averaging"
 
