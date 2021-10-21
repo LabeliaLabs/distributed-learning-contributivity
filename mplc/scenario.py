@@ -54,8 +54,9 @@ class Scenario:
         :param amounts_per_partner:  [float]. Fractions of the
         original dataset each partner receives to mock a collaborative ML scenario where each partner provides data
         for the ML training.
-        :param active_partners_count: int, the size of the subset of partners that will participate in each collaborative learning
-                                      round, this parameter is only used when 'drfa' is specified as a learning approach
+        :param active_partners_count: int, the size of the subset of partners that will participate in
+        each collaborative learning round, this parameter is only used when 'drfa' is specified as a
+        learning approach.
         :param dataset: dataset.Dataset object, or its string identifier. Default is MNIST.
         :param dataset_proportion: float (default: 1)
         :param samples_split_option: Splitter object, or its string identifier (for instance 'random', or 'stratified')
