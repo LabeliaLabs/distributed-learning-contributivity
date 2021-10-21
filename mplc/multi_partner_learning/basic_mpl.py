@@ -419,7 +419,7 @@ class DistributionallyRobustFederatedAveragingLearning(MultiPartnerLearning):
     """
      - This class implements the Distributionally Robust Federated Averaging (DRFA) Algorithm,
       only a subset of partners are chosen to participate in a given collaborative
-     learning round. based on a global mixing parameter called lambda.
+     learning round. based on a global mixing parameter called lambda
      - Lambda is updated at the end of each collaborative learning round using its own update rule
      - DRFA is considered a framework under which we can implement other FL algorithms such as FedAvg
      - Link to the paper : https://arxiv.org/abs/2102.12660
@@ -570,7 +570,8 @@ class DistributionallyRobustFederatedAveragingLearning(MultiPartnerLearning):
         self.lambda_vector += (self.local_steps_index_t * self.lambda_learning_rate * self.loss_for_model_at_index_t)
         self.lambda_vector = project_onto_the_simplex(self.lambda_vector)
 
-        # avoid zero probabilities
+        # The projection can produce zero probabilities for certain partners which prevents them from
+        # participating in the training. To avoid this, we assign 1e-3 to each probability smaller than this value.
         if any(self.lambda_vector < 1e-3):
             self.lambda_vector[self.lambda_vector < 1e-3] = 1e-3
             # normalize the probability vector
@@ -617,8 +618,8 @@ class DistributionallyRobustFederatedAveragingLearning(MultiPartnerLearning):
 
     @staticmethod
     def aggregate_model_weights(partners_list):
-        """ This method is identical to the one in the aggregator class with few modifications
-         - I couldn't use the original aggregator method since it operates on the entire list of partners and
+        """ This method is identical to the one in the aggregator class with few modifications.
+         I couldn't use the original aggregator method since it operates on the entire list of partners and
          DRFA requires model aggregation over a subset of partners list only
         """
         aggregation_weights = np.ones(len(partners_list), dtype='float32')
