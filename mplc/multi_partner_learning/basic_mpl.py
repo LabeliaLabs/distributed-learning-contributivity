@@ -10,6 +10,7 @@ from copy import deepcopy
 from timeit import default_timer as timer
 
 import numpy as np
+import random
 import tensorflow as tf
 from loguru import logger
 from sklearn.metrics import confusion_matrix
@@ -18,6 +19,7 @@ from tensorflow.keras.backend import clear_session
 from tensorflow.keras.callbacks import EarlyStopping
 
 from .utils import History
+from ..utils import project_onto_the_simplex
 from .. import constants
 from ..models import NoiseAdaptationChannel, EnsemblePredictionsModel
 from ..partner import Partner, PartnerMpl
@@ -47,6 +49,7 @@ class MultiPartnerLearning(ABC):
         self.partners_list = scenario.partners_list
         self.init_model_from = scenario.init_model_from
         self.use_saved_weights = scenario.use_saved_weights
+        self.amounts_per_partner = scenario.amounts_per_partner
         self.val_set = scenario.val_set
         self.test_set = scenario.test_set
 
@@ -410,6 +413,226 @@ class FederatedAverageLearning(MultiPartnerLearning):
             partner.model_weights = partner_model.get_weights()
 
         logger.debug("End of fedavg collaborative round.")
+
+
+class DistributionallyRobustFederatedAveragingLearning(MultiPartnerLearning):
+    """
+     - This class implements the Distributionally Robust Federated Averaging (DRFA) Algorithm,
+      only a subset of partners are chosen to participate in a given collaborative
+     learning round. based on a global mixing parameter called lambda
+     - Lambda is updated at the end of each collaborative learning round using its own update rule
+     - DRFA is considered a framework under which we can implement other FL algorithms such as FedAvg
+     - Link to the paper : https://arxiv.org/abs/2102.12660
+    """
+    name = "Distributionally Robust Federated Averaging"
+
+    def __init__(self, scenario, **kwargs):
+        super(DistributionallyRobustFederatedAveragingLearning, self).__init__(scenario, **kwargs)
+        if self.partners_count == 1:
+            raise ValueError('Only one partner is provided. Please use the dedicated SinglePartnerLearning class')
+        self.active_partners_count = scenario.active_partners_count
+
+        self.lambda_vector = self.init_lambda()
+        self.active_partners_list = list()
+        self.update_active_partners_list()
+
+        self.local_steps = scenario.gradient_updates_per_pass_count
+        self.partners_training_data = {}
+        self.partners_participation = self.initialize_participation_dict()
+        self.lambda_learning_rate = 8e-3
+
+        self.local_steps_index = 0
+        self.local_steps_index_t = 0
+        self.global_model_at_index_t = None
+        self.model_weights_at_index_t = list()
+        self.loss_for_model_at_index_t = np.zeros(self.partners_count)
+
+        self.subset_u_partners = list()
+        self.loss_vector_v = list()
+
+    def fit_epoch(self):
+
+        # Split the train dataset in mini-batches
+        self.split_in_minibatches()
+
+        # convert partners training data into tf Dataset, reference: fast_mpl
+        for partner_id, partner in enumerate(self.partners_list):
+            self.partners_training_data[partner.id] = list()
+            for minibatch_index in range(self.minibatch_count):
+                # convert training data
+                data_train = tf.data.Dataset.from_tensor_slices((partner.minibatched_x_train[minibatch_index],
+                                                                 partner.minibatched_y_train[minibatch_index]))
+                data_train = data_train.shuffle(len(partner.minibatched_x_train[minibatch_index]))
+                data_train = data_train.batch(partner.batch_size)
+                data_train = data_train.prefetch(1)
+                self.partners_training_data[partner.id].append(data_train)
+
+        # Iterate over mini-batches and train
+        for i in range(self.minibatch_count):
+            self.minibatch_index = i
+
+            self.local_steps_index = 0
+            self.local_steps_index_t = np.random.randint(0, self.local_steps - 1)
+
+            logger.info(
+                f"Active partner in this round "
+                f"{['#'+str(active_partner.id) for active_partner in self.active_partners_list]} "
+                f"according to lambda vector > {self.lambda_vector}")
+            logger.info(f"Local step index t > {self.local_steps_index_t}")
+
+            self.fit_minibatch()
+
+            # update partner participations
+            self.partners_participation[self.epoch_index][self.minibatch_index][[p.id for p
+                                                                                 in self.active_partners_list]] = 1
+
+            self.update_lambda()
+            self.update_active_partners_list()
+        self.log_partners_participation_rate()
+
+        self.minibatch_index = 0
+
+    def fit_minibatch(self):
+        """Proceed to a collaborative round with a distributionally robust federated averaging approach"""
+
+        # Starting model for each partner is the aggregated model from the previous mini-batch iteration
+        logger.info(f"(drfa) Minibatch n°{self.minibatch_index} of epoch n°{self.epoch_index}, "
+                    f"init each partner's models with a copy of the global model")
+
+        for partner in self.partners_list:
+            partner.model_weights = self.model_weights
+
+        # Evaluate and store accuracy of mini-batch start model
+        self.eval_and_log_model_val_perf()
+
+        # Iterate over partners for training
+        for partner_index, partner in enumerate(self.active_partners_list):
+            partner_model = partner.build_model()
+            # loop through each partner's minibatch
+            minibatched_x_y = self.partners_training_data[partner.id][self.minibatch_index]
+            for idx, batch_x_y in enumerate(minibatched_x_y):
+                with tf.GradientTape() as tape:
+                    p_pred = partner_model(batch_x_y[0])
+                    loss = partner_model.compiled_loss(batch_x_y[1], p_pred)
+
+                partner_model.optimizer.minimize(loss, partner_model.trainable_weights, tape=tape)
+
+                self.local_steps_index += 1
+                if self.local_steps_index == self.local_steps_index_t:
+                    # save model weights for each partner at local step t
+                    self.model_weights_at_index_t.append(partner.model_weights)
+
+            partner.model_weights = partner_model.get_weights()
+            self.local_steps_index = 0
+
+        # aggregate final global model weights
+        self.model_weights = self.aggregate_model_weights(self.active_partners_list)
+
+        # build the model for each partner using weights gathered at index t
+        for active_partner, weights_t in zip(self.active_partners_list, self.model_weights_at_index_t):
+            active_partner.model_weights = weights_t
+
+        # aggregate global model weights at index t
+        self.global_model_at_index_t = self.aggregate_model_weights(self.active_partners_list)
+
+        # sample a new subset of partners of size active_partners_count
+        subset_index = random.sample(range(self.partners_count), self.active_partners_count)
+        self.subset_u_partners = [self.partners_list[index] for index in subset_index]
+        logger.info(
+            f"Subset of partners chosen for lambda update "
+            f"{['#'+ str(partner.id) for partner in self.subset_u_partners]}")
+
+        # compute losses over a random batch using the global model at index t
+        for partner, index in zip(self.subset_u_partners, subset_index):
+            random_minibatch_index = np.random.randint(0, self.minibatch_count - 1)
+            random_minibatch = self.partners_training_data[partner.id][random_minibatch_index]
+            random_batch_index = np.random.randint(0, len(random_minibatch) - 1)
+            random_batch = list(random_minibatch)[random_batch_index]
+            partner_model = self.build_model_from_weights(self.global_model_at_index_t)
+            loss = partner_model.compiled_loss(random_batch[1], partner_model(random_batch[0]))
+            # compute (n/m)*loss and add it to the loss vector
+            # n is the total number of partners, m is the number of active partners
+            self.loss_for_model_at_index_t[index] = \
+                ((self.partners_count / self.active_partners_count) * np.mean(loss.numpy()))
+
+    def init_lambda(self):
+        """
+        - initialize lambda vector according to each partner's dataset size
+        - this is  a probability vector of size partners_count
+        """
+        return np.array(self.amounts_per_partner)
+
+    def update_lambda(self):
+        """
+        The update rule for lambda is : lambda_vector(i) =
+        Projection(lambda_vector(i-1) + (local_step_index_t * lambda_learning_rate * local_losses_at_index_t))
+        """
+        self.lambda_vector += (self.local_steps_index_t * self.lambda_learning_rate * self.loss_for_model_at_index_t)
+        self.lambda_vector = project_onto_the_simplex(self.lambda_vector)
+
+        # The projection can produce zero probabilities for certain partners which prevents them from
+        # participating in the training. To avoid this, we assign 1e-3 to each probability smaller than this value.
+        if any(self.lambda_vector < 1e-3):
+            self.lambda_vector[self.lambda_vector < 1e-3] = 1e-3
+            # normalize the probability vector
+            self.lambda_vector = self.lambda_vector / np.sum(self.lambda_vector)
+
+    def update_active_partners_list(self):
+        """
+        Update the active partners list according to lambda vector
+        """
+        active_partners_indices = (-self.lambda_vector).argsort()[:self.active_partners_count]
+        self.active_partners_list = [self.partners_list[index] for index in active_partners_indices]
+
+    def initialize_participation_dict(self):
+        participation = {}
+        for epoch_index in range(self.epoch_count):
+            participation[epoch_index] = {}
+            for minibatch_index in range(self.minibatch_count):
+                participation[epoch_index][minibatch_index] = np.zeros(self.partners_count)
+        return participation
+
+    def log_partners_participation_rate(self):
+        epoch_participation_vector = np.zeros(self.partners_count)
+        percentages = []
+        for minibatch_index, vect in self.partners_participation[self.epoch_index].items():
+            epoch_participation_vector += vect
+            percentages = [str(np.round(p_v / self.minibatch_count, 2) * 100) + ' %'
+                           for p_v in list(epoch_participation_vector)]
+        logger.info(f"Partners {['#' + str(p.id) for p in self.partners_list]} "
+                    f"have the following participation rates, respectively : "
+                    f"{percentages} "
+                    f"at the end of Epoch > {self.epoch_index}")
+
+        final_participation_vector = np.zeros(self.partners_count)
+        if self.epoch_index == self.epoch_count - 1:
+            for epoch_index in range(self.epoch_count):
+                for minibatch_index, vect in self.partners_participation[epoch_index].items():
+                    final_participation_vector += vect
+                    percentages = [str(np.round(f_p_v / (self.minibatch_count * self.epoch_count), 2) * 100) + '%'
+                                   for f_p_v in list(final_participation_vector)]
+            logger.info(f"Partners {['#' + str(p.id) for p in self.partners_list]} "
+                        f"have the following participation rates : "
+                        f"{percentages} "
+                        f"during the training")
+
+    @staticmethod
+    def aggregate_model_weights(partners_list):
+        """ This method is identical to the one in the aggregator class with few modifications.
+         I couldn't use the original aggregator method since it operates on the entire list of partners and
+         DRFA requires model aggregation over a subset of partners list only
+        """
+        aggregation_weights = np.ones(len(partners_list), dtype='float32')
+        weights_per_layer = list(zip(*[partner.model_weights for partner in partners_list]))
+        new_weights = list()
+
+        for weights_for_layer in weights_per_layer:
+            avg_weights_for_layer = np.average(
+                np.array(weights_for_layer), axis=0, weights=aggregation_weights
+            )
+            new_weights.append(avg_weights_for_layer)
+
+        return new_weights
 
 
 class SequentialLearning(MultiPartnerLearning):  # seq-pure

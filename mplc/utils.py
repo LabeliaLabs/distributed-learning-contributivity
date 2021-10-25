@@ -253,3 +253,42 @@ def create_data_distribution_graph(name, ratio_partner_per_class,
     if display:
         plt.show()
     plt.close()
+
+
+def project_onto_the_simplex(v, s=1):
+    """
+    Project a vector v onto a simplex of radius s.
+    The implementation is adapted to be used with numpy from :
+    https://github.com/MLOPTPSU/FedTorch/blob
+    /ab8068dbc96804a5c1a8b898fd115175cfebfe75/fedtorch/comms/utils/flow_utils.py#L52.
+    This algorithm is based on this paper : https://stanford.edu/~jduchi/projects/DuchiShSiCh08.pdf
+
+    :param v : 1-D numpy array of size n
+    :param s : the radius of the simplex on which v will be projected
+    """
+    assert s > 0, "Radius s must be strictly positive (%d <= 0)" % s
+    n, = v.shape
+    # check if we are already on the simplex
+    if np.sum(v) == s and np.all((v >= 0)):
+        # best projection: itself!
+        return v
+    # get the array of cumulative sums of a sorted v (in descending order)
+    u = np.flip(np.sort(v))
+    cssv = np.cumsum(u)
+
+    # get the optimal solution vector
+    opt = u * np.arange(1, n+1) > (cssv - s)
+
+    # get the number of non-zero elements of the optimal solution
+    non_zero_vector = np.nonzero(opt)
+    if len(non_zero_vector) == 0:
+        rho = 0.0
+    else:
+        rho = np.squeeze(non_zero_vector[0][-1])
+
+    # compute the Lagrange multiplier associated to the simplex constraint
+    theta = (cssv[rho] - s) / (rho + 1.0)
+
+    # compute the projection by thresholding v using theta
+    w = np.clip(v - theta, a_min=0, a_max=None)
+    return w

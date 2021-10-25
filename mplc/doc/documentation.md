@@ -45,7 +45,7 @@ If you want to install `mplc` from the repository:
 ```sh
 git clone https://github.com/SubstraFoundation/distributed-learning-contributivity.git
 cd distributed-learning-contributivity
-pip install -e . 
+pip install -e .
 ```
 
 ## Quick start
@@ -139,7 +139,7 @@ After a run, every information regarding the training and testing will be availa
 Each `MultiPartnerLearning` object holds a `History` object, which stores all the information related to training and testing.
 
 ```python
-history = my_scenario.mpl.history 
+history = my_scenario.mpl.history
 ```
 
 The main attribute of the `history` object is an `history` dictionary, which is structured as followed:
@@ -152,7 +152,7 @@ history.history = { 1: {'val_accuracy' : matrix[epoch, minibatch]
                     n: { ... }
           'mpl_model':{ 'val_accuracy' : matrix[epoch, minibatch]
                         'val_loss'     : matrix[epoch, minibatch] }
-                   } 
+                   }
 ```
 
 The n first keys correspond to the partner id, and the data referenced by the `'mpl_model'` key are those of the global model.
@@ -228,9 +228,9 @@ There are 2 ways to select a dataset. You can either choose a pre-implemented da
 
 - `dataset_name`: `'mnist'` (default), `'cifar10'`, `'esc50'`, `'imdb'` or `'titanic'`  
   MNIST, CIFAR10, ESC50, IMDB and Titanic are currently supported. They come as subclass of the `Dataset` object (`./mplc/dataset.py`), with their corresponding methods for loading data, pre-processing inputs, define a model architecture, etc.
-  
+
   > Note: the pre-implemented example based on the Titanic dataset uses a SKLearn `LogisticRegression()`. PLease note that it requires a dataset partitioning where each partner gets samples from both classes (otherwise you'll get: `ValueError: This solver needs samples of at least 2 classes in the data, but the data contains only one class`).
-  
+
 - `init_model_from`: `'random_initialization'` (default) or `'path/to/weights'`  
   For each dataset, it is possible to provide a path to pre-existing model weights. Use `'random_initialization'` (or an empty value) if you want a random initialization of the model.  
   Example: `init_model_from='./my_previously_trained_models/weights_super_model.h5'`
@@ -256,23 +256,23 @@ There are 2 ways to select a dataset. You can either choose a pre-implemented da
 <a id="sample_split_option"></a>
 - `samples_split_option`: Used to set the strategy of samples data split. You can either instantiate a `Splitter` before passing it to `Scenario`, or you can pass it by its string identifier. In the latter case, the default parameters for the `Splitter` selected will be used.
   How the original dataset data samples are split among partners:
-  
+
     - `RandomSplitter`: the dataset is shuffled and partners receive data samples selected randomly. String identifier: `'random'`
-      
+
     - `StratifiedSplitter`: the dataset is stratified per class and each partner receives certain classes only (note: depending on the `amounts_per_partner` specified, there might be some overlap of classes). String identifier: `'stratified'`
-    
+
     - `AdvancedSplitter`: in certain cases it might be interesting to split the dataset among partners in a more elaborate way. For that we consider the data samples from the initial dataset as split in clusters per data labels. The advanced split is configured by indicating, for each partner in sequence, the following 2 elements: `[[nb of clusters (int), 'shared' or 'specific']]`. Practically, you can either instantiate your `AdvancedSplitter` object, and pass this list `[[nb of clusters (int), 'shared' or 'specific']]` to the keyword argument `description`, or use the string identifier and pass the list `[[nb of clusters (int), 'shared' or 'specific']]` to the `Scenario` via the keyword argument `samples_split_configuration`. String identifier:`'advanced'`. Configuration:  
         - `nb of clusters (int)`: the given partner will receive data samples from that many different clusters (clusters of data samples per labels/classes)
         - `'shared'` or `'specific'`:
           - `'shared'`: all partners with option `'shared'` receive data samples picked
                        from clusters they all share data samples from
-          - `'specific'`: each partner with option `'specific'` receives data samples picked 
+          - `'specific'`: each partner with option `'specific'` receives data samples picked
                          from cluster(s) it is the only one to receive from  
     Example: `samples_split_option='advanced', samples_split_configuration=[[7, 'shared'], [6, 'shared'], [2, 'specific'], [1, 'specific']]`
-    
-    - `FlexibleSplitter`: in other cases one might want to specify in detail the split among partners (partner per partner and class per class). For that the `FlexibleSplitter` can be used. It is configured by indicating, for each partner in sequence, a list of the percentage of samples for each class: `[[% for class 1, ..., % for class n]]`. As above, it can be instantiated separately and then passed to the `Scenario` instance. Or the string identifier `'flexible'` can be used for the parameter `samples_split_option`, coupled with the split configuration passed to the keyword argument `samples_split_configuration`. String identified: `'flexible'`. 
+
+    - `FlexibleSplitter`: in other cases one might want to specify in detail the split among partners (partner per partner and class per class). For that the `FlexibleSplitter` can be used. It is configured by indicating, for each partner in sequence, a list of the percentage of samples for each class: `[[% for class 1, ..., % for class n]]`. As above, it can be instantiated separately and then passed to the `Scenario` instance. Or the string identifier `'flexible'` can be used for the parameter `samples_split_option`, coupled with the split configuration passed to the keyword argument `samples_split_configuration`. String identified: `'flexible'`.
     Example: `samples_split_option='flexible', samples_split_configuration=[[0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.5, 0.5, 0.5], [0.5, 0.5, 0.5, 1.0, 1.0, 1.0, 0.5, 0.5, 0.5, 0.0]]` (this corresponds to 50% of the last 3 classes for partner 1, and 50% or 100% of each of the first 9 classes for partner 2).  
-    Note: in the list of % for each class, one shouldn't interpret the order of its inputs as any human-readable order of the samples (e.g. alphabetical, numerical...). The implementation uses the order in which the samples appear in the dataset. As such, note that one can artificially enforce a certain order if desired, by sorting the dataset beforehand. 
+    Note: in the list of % for each class, one shouldn't interpret the order of its inputs as any human-readable order of the samples (e.g. alphabetical, numerical...). The implementation uses the order in which the samples appear in the dataset. As such, note that one can artificially enforce a certain order if desired, by sorting the dataset beforehand.
 
 ![Example of the advanced split option](../../img/advanced_split_example.png)
 
@@ -293,7 +293,7 @@ There are 2 ways to select a dataset. You can either choose a pre-implemented da
     - String id: `'duplication'`
   - `Redundancy`: The data are replaced by a copy of a unique data.
     - String id: `'redundancy'`
-      
+
 All of these can use the parameter `'proportion'`: 1. (default), float between 0. and 1. Indicating the proportion of partner's data to corrupt
 
 Example with 4 partners:
@@ -319,10 +319,12 @@ There are several parameters influencing how the collaborative and distributed l
   - `'fedavg'`: stands for federated averaging
 
     ![Schema fedavg](../../img/collaborative_rounds_fedavg.png)
-    
+
+  - `'drfa'`: stands for distributionally robust federated averaging, this is a general federated learning framework under which we can implement other federated learning algorithms such as FedAvg. The essential idea is to only include a subset of partners in each collaborative training round, we call them active partners. The active partners are chosen using a global parameter with the main goal being to train the global model on the worst combination of local distributions each time. Therefore, an additional parameter called `active_partners_count` needs to be specified before running this method (otherwise it defaults to 1). You can find a benchmark for this approach in this [notebook](https://github.com/LabeliaLabs/distributed-learning-contributivity/blob/DRFA-AFL/notebooks/reference_scenarios/benchmark_DRFA.ipynb) as well as a link to the paper [here](https://arxiv.org/abs/2102.12660).
+
   - `'fedgrads'`: stands for gradient averaging, quite similar to federated averaging, but the partner-loss's gradients are averaged before the optimization step, instead of averaged the model's weights after the optimization step.
-  Warning : This method needs a Keras model to work with. The `gradient_pass_per_update` is set to 1 in the current implementation. 
- 
+  Warning : This method needs a Keras model to work with. The `gradient_pass_per_update` is set to 1 in the current implementation.
+
   - `'ensemble'`: stands for ensembling strategy and is one of the simplest way to train a machine learning model collaboratively. Every partner trains its model independently and the final predictions are the average of every partner's predictions.
 
   - `'seq-...'`: stands for sequential and comes with 2 variations, `'seq-pure'` with no aggregation at all, and `'seq-with-final-agg'` where an aggregation is performed before evaluating on the validation set and test set (on last mini-batch of each epoch) for mitigating impact when the very last subset on which the model is trained is of low quality, or corrupted, or just detrimental to the model performance.
@@ -332,9 +334,9 @@ There are several parameters influencing how the collaborative and distributed l
   - `'seqavg'`: stands for sequential averaging
 
     ![Schema seqavg](../../img/collaborative_rounds_seqavg.png)
-    
+
   The previous methods are implemented to be agnostic to the model used. However, some of these methods are also implemented within the tensorflow interface, at a lower level. These implementations are usually faster, especially if you are using a GPU. Unfortunately, those methods are only compatible with tensorflow.keras-based models. The mplc-native dataset `Titanic` cannot be used.
-  
+
   Available methods:
     - `'fast-fedavg'`: equivalent to FedAvg.
     - `'fast-fedgrads'`: equivalent to FedGrad.
@@ -345,7 +347,7 @@ There are several parameters influencing how the collaborative and distributed l
     during a global-minibatch. We use the sum of these weighs-updates as the gradient which is sent to the global optimizer.
     The global optimizer aggregates these gradients, which have been sent by the partners,
     and performs a optimization step with this aggregated gradient.
-       
+
 
   Example: `multi_partner_learning_approach='seqavg'`
 
@@ -462,18 +464,18 @@ The methods are detailed below:
   Initial rounds (10%) and final rounds (10%) are discarded from calculation as performance increments from the first minibatches might be huge and increments form the last minibatches might be very noisy. Discarded proportions are for now set in the code.
 
     3 contributivity methods are proposed to adjust the importance of last computation rounds compared to the first ones:
-    
+
     - `["Federated SBS linear"]` - Linear importance increase between computation rounds (1000th round weights 1000 times first round)
     - `["Federated SBS quadratic"]` - Quadratic importance increase between computation rounds (1000th round weights 10e6 times first round)
     - `["Federated SBS constant"]`- Constant importance increase between computation rounds (1000th round weights same as first round)
-    
+
 - **Detection of mislabelled datasets**
-    
+
     The S-model method provides a way to detect mislabelled datasets.
     In this method, we assume the label provided in the partner dataset are possibly noisy labels. The model is trained by maximizing the likelihood of these noisy data. This requires to learn, while training the model, the probability that a label have been flipped in another, inside each partner dataset.  
-    A contributivity measure can be inferred from partner's matrices of flip-probability, by computing the exponential inverse of the Frobenius distance to the identity. 
-    However this measure is to be handle carefully, the method is not designed specifically for contributivity measurement, but for mislabelled dataset detection. 
-    
+    A contributivity measure can be inferred from partner's matrices of flip-probability, by computing the exponential inverse of the Frobenius distance to the identity.
+    However this measure is to be handle carefully, the method is not designed specifically for contributivity measurement, but for mislabelled dataset detection.
+
     - `["S-Model"]` - Learning method robust to noisy label in the datasets
 
 > Note: when `methods` is omitted in the config file only the distributed learning is run.
@@ -485,11 +487,11 @@ Example: `methods=["Shapley values", "Independent scores", "TMCS"]`
 - `is_quick_demo`: `True` or `False` (default)  
   When set to `True`, the amount of data samples and the number of epochs and mini-batches are significantly reduced, to minimize the duration of the run. This is particularly useful for quick demos or simply for debugging.  
   Example: `is_quick_demo=True`
-  
+
 - `val_set`: `'local'` or `'global'`. If set to global, the validation set used is the one of the dataset. If local, the global validation set is splitted between partners, according to the samples split option. The validation data are also corrupted according to the partner-corruption's configuration.
 
-- `test_set`: `'local'` or `'global'`.Same as `val_set` but for test dataset. 
-  
+- `test_set`: `'local'` or `'global'`.Same as `val_set` but for test dataset.
+
 ## Experiments
 
 At some point of your use of the library you might need to launch several scenarios in a row. In the same spirit, you might want to repeat a scenario single run, to get rid of the randomness of training, and end with more meaningful results.
@@ -524,7 +526,7 @@ experiment_name
         ├── scenario_k_repeat_n_...                         <- Folder result of the last scenario, last repetition
         ├── debug.log                                       <- Record of the log output, debug level
         ├── info.log                                        <- Record of the log output, info level
-        └── result.csv                                      <- Result of all the scenarios, all repeats. 
+        └── result.csv                                      <- Result of all the scenarios, all repeats.
 ```
 
 ### Example
@@ -550,14 +552,14 @@ The `Dataset` object is useful if you want to define custom datasets and related
 ### Dataset
 
 The `Dataset` abstract class implements most of the methods needed by the library. To use a custom dataset, you must define a new class, which inherit from the `Dataset` one
-Don't forget to call the `Dataset.__init__()` via the super function. It will require some parameters. 
+Don't forget to call the `Dataset.__init__()` via the super function. It will require some parameters.
 Here is the structure of the `Dataset` generator:
 
 ```python
 from mplc.dataset import Dataset
 class MyDataset(Dataset):
     def __init__(self):
-        #  load and preprocess the train and test data. 
+        #  load and preprocess the train and test data.
         super().__init__('dataset_name',
                          input_shape,
                          num_classes,
@@ -565,11 +567,11 @@ class MyDataset(Dataset):
                          y_train,
                          x_test,
                          y_test)
-   
+
     def generate_new_model(self):
-        # Initialize a model 
-        return model 
-     
+        # Initialize a model
+        return model
+
 ```
 
 ### Model generator
@@ -599,7 +601,7 @@ You will first need to install the dev dependencies with `pip3 install -r dev-re
 ```sh
 # Run unit tests
 pytest -vv tests/unit_tests.py
-# or 
+# or
 python3 -m pytest -vv tests/unit_tests.py
 
 # Fall in debugger breakpoint in case of error

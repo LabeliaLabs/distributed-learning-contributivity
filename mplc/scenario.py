@@ -28,6 +28,7 @@ class Scenario:
             self,
             partners_count,
             amounts_per_partner,
+            active_partners_count=1,
             dataset=constants.MNIST,
             dataset_proportion=1,
             samples_split_option='random',
@@ -53,6 +54,9 @@ class Scenario:
         :param amounts_per_partner:  [float]. Fractions of the
         original dataset each partner receives to mock a collaborative ML scenario where each partner provides data
         for the ML training.
+        :param active_partners_count: int, the size of the subset of partners that will participate in
+        each collaborative learning round, this parameter is only used when 'drfa' is specified as a
+        learning approach.
         :param dataset: dataset.Dataset object, or its string identifier. Default is MNIST.
         :param dataset_proportion: float (default: 1)
         :param samples_split_option: Splitter object, or its string identifier (for instance 'random', or 'stratified')
@@ -95,6 +99,7 @@ class Scenario:
         ]  # Federated learning related
         params_known += [
             "partners_count",
+            "active_partners_count",
             "amounts_per_partner",
             "corruption_parameters",
             "samples_split_option",
@@ -237,6 +242,13 @@ class Scenario:
             for key in MULTI_PARTNER_LEARNING_APPROACHES.keys():
                 text_error += f"{key}, "
             raise KeyError(text_error)
+
+        # Number of active partners per collaborative learning round
+        self.active_partners_count = active_partners_count
+        if self._multi_partner_learning_approach == 'drfa':
+            assert (
+                    1 <= self.active_partners_count < partners_count
+            ), "Number of active partners must be strictly smaller than the total number of partners"
 
         # Define how federated learning aggregation steps are weighted...
         # ... Toggle between 'uniform' (default) and 'data_volume'

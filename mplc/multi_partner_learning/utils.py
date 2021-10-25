@@ -141,8 +141,8 @@ class Aggregator(ABC):
     def __str__(self):
         return f'{self.name} aggregator'
 
-    def aggregate_model_weights(self):
-        """Aggregate model weights from the list of partner's models, with a weighted average"""
+    def aggregate_model_weights(self, partial_partners_list=None):
+        """Aggregate model weights from the list or partial list of partner's models, with a weighted average"""
 
         weights_per_layer = list(zip(*[partner.model_weights for partner in self.mpl.partners_list]))
         new_weights = list()
