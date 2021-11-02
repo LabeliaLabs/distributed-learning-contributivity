@@ -1,7 +1,7 @@
-[![Build Status](https://github.com/SubstraFoundation/distributed-learning-contributivity/workflows/Build/badge.svg)](https://github.com/SubstraFoundation/distributed-learning-contributivity/actions?query=branch%3Amaster)
-[![Code Coverage](https://codecov.io/gh/SubstraFoundation/distributed-learning-contributivity/branch/master/graphs/badge.svg)](https://codecov.io/gh/SubstraFoundation/distributed-learning-contributivity)
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/SubstraFoundation/distributed-learning-contributivity/blob/master/run_experiment_on_google_collab.ipynb)
-[![Discuss on Slack](https://img.shields.io/badge/chat-on%20slack-orange)](https://substra.us18.list-manage.com/track/click?e=2effed55c9&id=fa49875322&u=385fa3f9736ea94a1fcca969f)
+[![Build Status](https://github.com/LabeliaLabs/distributed-learning-contributivity/workflows/Build/badge.svg)](https://github.com/LabeliaLabs/distributed-learning-contributivity/actions?query=branch%3Amaster)
+[![Code Coverage](https://codecov.io/gh/LabeliaLabs/distributed-learning-contributivity/branch/master/graphs/badge.svg)](https://codecov.io/gh/LabeliaLabs/distributed-learning-contributivity)
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/LabeliaLabs/distributed-learning-contributivity/blob/master/run_experiment_on_google_collab.ipynb)
+[![Discuss on Slack](https://img.shields.io/badge/chat-on%20slack-orange)](https://labelia.slack.com/messages/workgroup-mpl-contributivity)
 
 # MPLC: Multi-Partner Learning and Contributivity
 
@@ -50,7 +50,7 @@ It depends in what capacity you are interested! For example:
 
 - If you'd like to experiment right now by yourself multi-partner learning approaches and contributivity measurement methods, jump to section **[Run an experiment](#run-an-experiment)**.
 - If you'd like to get in touch with active members of the workgroup, jump to section **[Contacts, contributions, collaborations](#contacts-contributions-collaborations)**. If you are a student or a teacher, we are used to discuss student projects related to the `mplc` library.
-- If you are already familiar with this type of projects, you can either have a look at section **[Ongoing work and improvement plan](#ongoing-work-and-improvement-plan)** or head towards [issues](https://github.com/SubstraFoundation/distributed-learning-contributivity/issues) and [PRs](https://github.com/SubstraFoundation/distributed-learning-contributivity/pulls) to see what's going on these days. We use the `help wanted` tag to flag issues on which help is particularly wanted, but other open issues would also very much welcome contributions. There is also a [`CONTRIBUTING.md`](./CONTRIBUTING.md) with indications and best practices we recommend.
+- If you are already familiar with this type of projects, you can either have a look at section **[Ongoing work and improvement plan](#ongoing-work-and-improvement-plan)** or head towards [issues](https://github.com/LabeliaLabs/distributed-learning-contributivity/issues) and [PRs](https://github.com/LabeliaLabs/distributed-learning-contributivity/pulls) to see what's going on these days. We use the `help wanted` tag to flag issues on which help is particularly wanted, but other open issues would also very much welcome contributions. There is also a [`CONTRIBUTING.md`](./CONTRIBUTING.md) with indications and best practices we recommend.
 
 Should you have any question, don't hesitate [reach out](#contacts-contributions-collaborations), we'll be happy to discuss how we could help.
 
@@ -72,7 +72,7 @@ This library can be schematically broken down into 3 blocks:
 
 #### Scenarios
 
-A key capability is to easily define and simulate different multi-partner settings to be able to experiment on them. For that, the library enables to configure scenarios by specifying the number of partners, how the dataset is partitioned among them, etc. See the [first tutorial](https://github.com/SubstraFoundation/distributed-learning-contributivity/blob/master/notebooks/tutorials/Tutorial-1_Run_your_first_scenario.ipynb), and the related documentation's section [Definition of collaborative scenarios](mplc/doc/documentation.md#definition-of-collaborative-scenarios) for all available parameters.
+A key capability is to easily define and simulate different multi-partner settings to be able to experiment on them. For that, the library enables to configure scenarios by specifying the number of partners, how the dataset is partitioned among them, etc. See the [first tutorial](https://github.com/LabeliaLabs/distributed-learning-contributivity/blob/master/notebooks/tutorials/Tutorial-1_Run_your_first_scenario.ipynb), and the related documentation's section [Definition of collaborative scenarios](mplc/doc/documentation.md#definition-of-collaborative-scenarios) for all available parameters.
 
 #### Multi-partner learning approaches
 
@@ -99,7 +99,7 @@ If you want to install mplc from the repository, make sure that you got the late
 Then clone the repository, and trigger the installation from local sources.
 
 ```sh
-git clone https://github.com/SubstraFoundation/distributed-learning-contributivity.git
+git clone https://github.com/LabeliaLabs/distributed-learning-contributivity.git
 cd distributed-learning-contributivity
 pip install -e . 
 ```
@@ -217,12 +217,12 @@ Results of experiments and benchmarks of multi-partner learning approaches and c
 
 The current work focuses on the following 4 priorities:
 
-1. Design and implement new **[multi-partner learning approaches](https://github.com/SubstraFoundation/distributed-learning-contributivity/projects/4)**
-1. Design and implement new **[contributivity measurement methods](https://github.com/SubstraFoundation/distributed-learning-contributivity/projects/3)**
-1. Perform **[experiments](https://github.com/SubstraFoundation/distributed-learning-contributivity/projects/1)** and gain experience about best-suited multi-partner learning approaches and contributivity measurement methods in different situations
-1. Make the library **[agnostic/compatible with other datasets and model architectures](https://github.com/SubstraFoundation/distributed-learning-contributivity/projects/2)**
+1. Design and implement new **[multi-partner learning approaches](https://github.com/LabeliaLabs/distributed-learning-contributivity/projects/4)**
+1. Design and implement new **[contributivity measurement methods](https://github.com/LabeliaLabs/distributed-learning-contributivity/projects/3)**
+1. Perform **[experiments](https://github.com/LabeliaLabs/distributed-learning-contributivity/projects/1)** and gain experience about best-suited multi-partner learning approaches and contributivity measurement methods in different situations
+1. Make the library **[agnostic/compatible with other datasets and model architectures](https://github.com/LabeliaLabs/distributed-learning-contributivity/projects/2)**
 
-There is also a transverse, continuous improvement effort on **[code quality, readability, optimization](https://github.com/SubstraFoundation/distributed-learning-contributivity/projects/5)**.
+There is also a transverse, continuous improvement effort on **[code quality, readability, optimization](https://github.com/LabeliaLabs/distributed-learning-contributivity/projects/5)**.
 
 This work is collaborative, enthusiasts are welcome to comment open issues and PRs or open new ones.
 
@@ -231,7 +231,7 @@ This work is collaborative, enthusiasts are welcome to comment open issues and P
 Should you be interested in this open effort and would like to share any question, suggestion or input, you can use the following channels:
 
 - This Github repository (issues or PRs)
-- Substra Foundation's [Slack workspace](https://substra-workspace.slack.com/join/shared_invite/zt-cpyedcab-FHYgpy08efKJ2FCadE2yCA), channel `#workgroup-mpl-contributivity`
-- Email: <hello@substra.org>
+- Labelia Labs' (ex- Substra Foundation) [Slack workspace](https://join.slack.com/t/labelia/shared_invite/zt-cpyedcab-FHYgpy08efKJ2FCadE2yCA), channel `#workgroup-mpl-contributivity`
+- Email: <contact@labelia.org>
 
- ![logo Substra Foundation](./img/substra_logo_couleur_rvb_w150px.png)
+ ![logo Labelia Labs](./img/labelia_substra_logo_rvb_w350px.png)
