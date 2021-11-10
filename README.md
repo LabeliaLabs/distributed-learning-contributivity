@@ -150,7 +150,7 @@ Alternatively, you can also use the `main.py` provided in the repository togethe
 experiment_name: my_custom_experiment
 n_repeats: 5
 scenario_params_list:
-  - dataset_name:
+  - dataset:
     'mnist':
     - 'random_initialization'
     'cifar10':
@@ -166,10 +166,10 @@ scenario_params_list:
       - ['advanced', [[7, 'shared'], [6, 'shared'], [2, 'specific']]]
     multi_partner_learning_approach:
       - 'fedavg'
-    aggregation_weighting:
-      - 'data_volume'
+    aggregation:
+      - 'data-volume'
       - 'uniform'
-    methods:
+    contributivity_methods:
       - ["Shapley values", "Independent scores", "TMCS"]
     epoch_count:
       - 20
@@ -179,7 +179,7 @@ scenario_params_list:
       - 8
 ```
 
-Under `scenario_params_list`, enter a list of sets of scenario(s). Each set starts with `- dataset_name:` and must have only one `partners_count` value. The length of `amount_per_partners`, `corrupted_datasets` (and `samples_split_option` when the advanced definition is used) must match the `partner_counts` value. If for a given parameter multiple values are specified, e.g. like for `agregation_weighting` in the example scenario above, all possible combinations of parameters will be assembled as separate scenarios and run.
+Under `scenario_params_list`, enter a list of sets of scenario(s). Each set starts with `- dataset:` and must have only one `partners_count` value. The length of `amount_per_partners`, `corrupted_datasets` (and `samples_split_option` when the advanced definition is used) must match the `partner_counts` value. If for a given parameter multiple values are specified, e.g. like for `aggregation` in the example scenario above, all possible combinations of parameters will be assembled as separate scenarios and run.
 
 2. Then execute `main.py -f config.yml`. Add the `-v` argument if you want a more verbose output.
 
