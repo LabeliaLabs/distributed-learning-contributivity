@@ -12,10 +12,9 @@ scenario_params_list:
      - 'random'
      - 'stratified'
      - [ 'advanced', [ [ 4, 'shared' ], [ 6, 'shared' ], [ 4, 'specific' ] ] ]
-
    multi_partner_learning_approach:
      - 'fedavg'
-   aggregation_weighting:
+   aggregation:
      - 'uniform'
    contributivity_methods:
      - [ "Federated SBS constant", "Federated SBS linear", "Federated SBS quadratic", "Shapley values", "Independent scores", "TMCS" ]
