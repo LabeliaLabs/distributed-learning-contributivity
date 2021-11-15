@@ -351,7 +351,7 @@ There are several parameters influencing how the collaborative and distributed l
 
   Example: `multi_partner_learning_approach='seqavg'`
 
-- `aggregation`: `'uniform'` (default), `'data_volume'` or `'local_score'`  
+- `aggregation`: `'uniform'` (default), `'data-volume'` or `'local_score'`  
   After a training iteration over a given mini-batch, how individual models of each partner are aggregated:
 
   - `'uniform'`: simple average (non-weighted)
