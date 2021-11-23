@@ -26,7 +26,7 @@ test_requirements = [
 
 setup(
     name="mplc",
-    version='0.4.1',
+    version='0.4.2',
     author="LabeliaLabs",
     author_email="contact@labelia.org",
     description="A distributed-learning package for the study of multi-partner learning approaches "
