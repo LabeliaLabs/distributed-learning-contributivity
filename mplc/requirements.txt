@@ -1,5 +1,5 @@
 h5py~=3.1.0
-joblib==1.0.0
+joblib==1.2.0
 librosa==0.8.1
 matplotlib==3.3.3
 numpy==1.19.5
